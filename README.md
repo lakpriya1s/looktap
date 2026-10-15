@@ -120,6 +120,8 @@ simwright tap "General" --ls
 simwright shot general
 ```
 
+Or try it without installing anything: `npx simwright doctor` (any command works the same way).
+
 To add the agent skill, which teaches Claude Code how to use simwright:
 
 ```bash
@@ -540,7 +542,8 @@ simwright mcp --config      # prints a ready-to-paste client config with absolut
 - **Where to paste it:**
   - Claude Desktop: `~/Library/Application Support/Claude/claude_desktop_config.json`
   - Cursor: `~/.cursor/mcp.json`
-  - Claude Code: `claude mcp add simwright -- <node> <simwright.js> mcp`
+  - Claude Code: `claude mcp add simwright -- npx -y simwright mcp` (no install needed: it runs the latest
+    version from npm). Or the absolute paths: `claude mcp add simwright -- <node> <simwright.js> mcp`
 - **Why absolute paths:** desktop apps start servers with a minimal `PATH`. `simwright` also finds `adb` in the
   Android SDK by itself.
 - **The tools:**

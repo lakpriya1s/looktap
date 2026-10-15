@@ -155,7 +155,7 @@ function docsPage(page, html, headings, all, version, titleId) {
 <a class="skip" href="#content">Skip to content</a>
 <header class="topbar">
   <a class="brand" href="../index.html" aria-label="simwright home"><img src="../favicon.svg" alt="" width="26" height="26"><span>simwright</span></a>
-  <span class="version">v${version}</span>
+  <a class="version" href="https://www.npmjs.com/package/simwright" rel="noopener" title="simwright on npm">v${version}</a>
   <nav class="topnav" aria-label="Site">
     <a href="../index.html#story">Features</a>
     <a href="quick-start.html">Docs</a>

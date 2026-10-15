@@ -21,7 +21,7 @@
 
 <header class="topbar">
   <a class="brand" href="#top" aria-label="simwright home"><img src="favicon.svg" alt="" width="26" height="26"><span>simwright</span></a>
-  <span class="version" data-version></span>
+  <a class="version" data-version href="https://www.npmjs.com/package/simwright" rel="noopener" title="simwright on npm"></a>
   <nav class="topnav" aria-label="Site">
     <a href="#story">Features</a>
     <a href="docs/quick-start.html">Docs</a>
@@ -47,6 +47,7 @@
           <code id="install-cmd">npm install -g simwright</code>
           <button type="button" data-copy="#install-cmd">Copy</button>
         </div>
+        <p class="try">Or without installing: <code>npx simwright doctor</code></p>
         <p class="cta"><a class="btn" href="docs/quick-start.html">Read the docs</a><a class="btn ghost" href="#start">Kickstart your agent</a></p>
         <dl class="stats">
           <div><dt>~1 KB</dt><dd>per screen read</dd></div>
@@ -131,6 +132,7 @@
           <li><span>Teach your agent</span><code>simwright skill --install</code></li>
           <li><span>Drive</span><code>simwright launch com.apple.Preferences --ls</code></li>
         </ol>
+        <p class="req">Prefer MCP? Claude Code: <code>claude mcp add simwright -- npx -y simwright mcp</code>. Chat apps without a shell (Claude Desktop, Cursor): <code>simwright mcp --config</code> prints a ready-to-paste config.</p>
         <p class="req">Node 18+. iOS: macOS with Xcode. Android: adb, with an emulator or a device. <a href="docs/quick-start.html#requirements">Requirements</a> · <a href="docs/quick-start.html">Quick start</a> · <a href="docs/agents.html">For AI agents</a></p>
       </div>
       <div class="prompt-card">
@@ -155,6 +157,7 @@ Rules: never type real credentials, OTPs or card numbers. When the app needs a s
       <a href="docs/quick-start.html">Quick start</a><a href="docs/examples.html">Examples</a><a href="docs/commands.html">Commands</a>
       <a href="docs/agents.html">For AI agents</a><a href="docs/agent-guide.html">Agent guide</a><a href="docs/how-it-works.html">How it works</a>
       <a href="docs/troubleshooting.html">Troubleshooting</a><a href="docs/safety.html">Safety rules</a><a href="docs/contributing.html">Contributing</a>
+      <a href="https://www.npmjs.com/package/simwright" rel="noopener">npm</a><a href="https://github.com/lakpriya1s/simwright" rel="noopener">GitHub</a>
     </nav>
     <p class="legal">AGPL-3.0-only. Not affiliated with Apple, Google or the Appium project. The phone above is an animation of a fictional demo app; the commands and outputs are simwright's.</p>
   </div>

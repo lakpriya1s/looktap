@@ -625,7 +625,8 @@ function mcpConfig() {
 Paste into your MCP client's config, e.g.
   Claude Desktop: ~/Library/Application Support/Claude/claude_desktop_config.json
   Cursor:         ~/.cursor/mcp.json
-  Claude Code:    claude mcp add simwright -- ${process.execPath} ${script} mcp`);
+  Claude Code:    claude mcp add simwright -- ${process.execPath} ${script} mcp
+                  (or, from npm without installing: claude mcp add simwright -- npx -y simwright mcp)`);
 }
 
 /** Several commands in this one process: one helper connection, no per-command startup. */
