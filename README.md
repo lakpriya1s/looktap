@@ -301,8 +301,9 @@ simwright crashes
 `--since 5m` sets a fixed window instead.
 
 **What's in the log:**
-- **iOS:** what the app's own code logged, plus errors and faults from anything in its process. `--all` adds
-  Apple frameworks' messages. A read takes about 1–2 s.
+- **iOS:** what the app's own code logged, plus errors and faults from anything in its process. The simulator's
+  own noise (low-level networking, the keyboard) is hidden. `--all` shows everything, Apple frameworks included.
+  A read takes about 1–2 s.
 - **Android:** everything logcat has for the app's uid, so restarts are covered. A read takes about 0.1 s.
 
 **What `crashes` reports:**
@@ -311,10 +312,12 @@ simwright crashes
 - **Android:** Java crashes, native tombstones, ANRs, and exits that leave no crash report, low-memory kills above
   all.
 
-**React Native:**
-- **Android:** JS `console.*` output is in `logs` (tag `ReactNativeJS`).
-- **iOS:** recent React Native versions send it only to the debugger, not to the system log. Native modules' logs
-  show on both platforms.
+**React Native:** in development builds, JS `console.*` output and uncaught JS errors are in `logs` on both
+platforms:
+- **iOS:** as `[com.facebook.react.log:javascript]` lines.
+- **Android:** as `ReactNativeJS` lines.
+
+A red box is also on screen, so `ls` reads its message and call stack.
 
 **Swift:** `print()` writes to stdout, not to the log. Use `os.Logger` or `NSLog` for messages `logs` should see.
 
@@ -521,7 +524,6 @@ Precedence: command-line option, then environment variable, then config file, th
 | Android screenshot is black | That screen is `FLAG_SECURE`: use `shot` without `--plain` on an emulator. System PIN and biometric sheets stay black in every mode |
 | App sits on the splash screen (Android, React Native) | Metro isn't reachable: `simwright setup` (adds `adb reverse tcp:8081`), make sure Metro runs, then `simwright launch` |
 | `launch` says `no launchable activity` | The app isn't installed or the id is wrong: `adb shell pm list packages`, or `xcrun simctl listapps booted` |
-| `logs` shows nothing from your JS (iOS, React Native) | Recent RN versions send `console.*` only to the debugger. Native logs and errors still show |
 | `type` fails on non-ASCII text (Android) | Type those characters on the device. On iOS, simwright pastes what it can't type |
 
 ## FAQ
@@ -583,7 +585,6 @@ continue. The skill tells agents exactly that. See [Safety rules](#safety-rules)
 
 ## Roadmap
 
-- React Native JS `console.*` and red-box errors on iOS, through Metro's debugger connection
 - App state for repros: install a build, clear app data, grant or revoke permissions
 - Simulated conditions: location, dark mode, push notifications
 - A warning after any action when the app has died (instead of the agent noticing a home screen)
