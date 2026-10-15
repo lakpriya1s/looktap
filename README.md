@@ -249,7 +249,8 @@ Change this with `--wait <seconds>`, or `--wait 0` to fail at once.
 `fill` finds the field by its label (on iOS also its identifier), or the first
 field at or below a matching label, clears it, and types. On
 Android it also presses Enter, because React Native fields only blur (and show
-validation) on Enter or a focus change. Back just hides the keyboard.
+validation) on Enter or a focus change. It leaves the keyboard as it is: run
+`hidekb` to dismiss it.
 
 ### Wait instead of sleeping
 

@@ -139,7 +139,6 @@ public final class Server {
                 reply(out, ok().put("version", version).put("pid", android.os.Process.myPid()), null);
                 return;
             case "tree":
-                clearCache(); // ~15 ms: a cached node can outlive its window after an app restart
                 reply(out, ok().put("nodes", tree(req.optBoolean("all"))), null);
                 return;
             case "tap":
@@ -203,12 +202,29 @@ public final class Server {
         } else {
             AccessibilityNodeInfo r = null;
             for (int i = 0; i < 10 && r == null; i++) {
-                r = ua.getRootInActiveWindow();
+                r = activeRoot();
                 if (r == null) SystemClock.sleep(50);
             }
             if (r != null) walk(r, outNodes);
         }
         return outNodes;
+    }
+
+    static int lastWindowId = Integer.MIN_VALUE;
+
+    /**
+     The active window's root. The node cache is dropped when the active window changes — a cached node
+     can outlive its window after an app restart — but not on every read: rebuilding a web page's
+     accessibility tree on each poll is heavy enough to make Chrome stop responding.
+     */
+    static AccessibilityNodeInfo activeRoot() {
+        AccessibilityNodeInfo r = ua.getRootInActiveWindow();
+        if (r != null && r.getWindowId() != lastWindowId) {
+            lastWindowId = r.getWindowId();
+            clearCache();
+            r = ua.getRootInActiveWindow();
+        }
+        return r;
     }
 
     /** Drop cached nodes so the next read comes from the app (UiAutomation.clearCache, API 34+; hidden before). */
