@@ -9,8 +9,8 @@ import { Ios, bootedSimulators } from '../lib/ios.js';
 import { clock, grepper, startOf, tail, whichApp } from '../lib/logs.js';
 import { ACTIONS as PERMISSION_ACTIONS } from '../lib/permissions.js';
 import { coordinates, pushPayload, textSize } from '../lib/conditions.js';
-import { appGone, center, coveringAt, formatRow, isRef, lastFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, visibleRows, waitFor } from '../lib/screen.js';
-import { UsageError, has, loadConfig, pickMatch, run, shotPath, sleep, splitScript, waitFor as retry } from '../lib/util.js';
+import { appGone, center, coveringAt, forgetFront, formatRow, isRef, lastFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, visibleRows, waitFor } from '../lib/screen.js';
+import { ADB, HOME, UsageError, has, loadConfig, pickMatch, run, shotPath, sleep, splitScript, waitFor as retry } from '../lib/util.js';
 
 const SKILL = new URL('../skills/simwright/SKILL.md', import.meta.url);
 
@@ -79,6 +79,8 @@ conditions
                                   text for an alert (Android pushes need Firebase)
 
 batch & agents
+  mcp [--config]                  serve these commands over MCP (stdio), for AI clients without a shell.
+                                  --config prints a client config with absolute paths
   run '<cmd>; <cmd> …'            several commands in one process (or: run - < script). Stops at the
                                   first failure, which it names
   skill [--install]               print the AI-agent guide (--install: ~/.claude/skills/simwright/SKILL.md)
@@ -117,7 +119,7 @@ function parse(argv) {
     else if (a === '--since') opts.since = val();
     else if (a === '--grep') opts.grep = val();
     else if (a === '--lines') opts.lines = Number(val());
-    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant'].includes(a)) opts.flags.add(a.slice(2));
+    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config'].includes(a)) opts.flags.add(a.slice(2));
     else if (a === '--') pos.push(...argv.slice(i + 1)), (i = argv.length);
     else pos.push(a);
   }
@@ -175,8 +177,8 @@ function doctor() {
       console.log(`  iOS input: ${process.env.SIMWRIGHT_IOS_HID || (modern ? 'dtuhid' : 'indigo')} (CoreSimulator ${cs})`);
     }
   }
-  const adb = has('adb');
-  ok(adb, 'adb (Android)', 'install Android SDK platform-tools and put them on PATH');
+  const adb = ADB !== 'adb' || has('adb');
+  ok(adb, `adb (Android)${ADB !== 'adb' ? `: ${ADB}` : ''}`, 'install Android SDK platform-tools (or set ANDROID_HOME)');
   if (adb) {
     const d = adbDevices();
     ok(d.length > 0, `adb devices: ${d.map((x) => x.id).join(', ') || 'none'}`, 'start an emulator');
@@ -213,6 +215,7 @@ async function main() {
 
   if (cmd === 'doctor') return doctor();
   if (cmd === 'skill') return skill(opts);
+  if (cmd === 'mcp') return opts.flags.has('config') ? mcpConfig() : mcp(opts);
   if (cmd === 'devices') {
     for (const s of bootedSimulators()) console.log(`ios      ${s.id}  ${s.name}`);
     for (const d of adbDevices()) console.log(`android  ${d.id}`);
@@ -247,7 +250,11 @@ async function list(d, opts, snap) {
   const rows = visibleRows(snap.elements, { all }).sort((a, b) => a.y - b.y || a.x - b.x);
   // An app that died since the last look (after a command returned) is named here, before its absence confuses.
   const front = await d.frontApp().catch(() => null);
-  if (!opts.checked) warnIfGone(await appGone(d, lastFront(deviceId(d))));
+  if (!opts.checked) {
+    const last = lastFront(deviceId(d));
+    const ago = last && (Date.now() - last.at) / 60000;
+    warnIfGone(await appGone(d, last), ago >= 1 ? `it was in front at the last ls, ${Math.round(ago)} min ago` : '');
+  }
   saveRefs(deviceId(d), rows, front);
   if (opts.flags.has('json'))
     return console.log(JSON.stringify({ screen: snap.screen, elements: rows.map((e, i) => ({ ref: `@${i + 1}`, ...e })) }));
@@ -275,8 +282,8 @@ async function waitForApp(d, app, ms) {
   }
 }
 
-function warnIfGone(app) {
-  if (app) console.error(`simwright: warning: ${app} is no longer running — it crashed or was killed. See: simwright crashes ${app}`);
+function warnIfGone(app, when = '') {
+  if (app) console.error(`simwright: warning: ${app} is no longer running${when ? ` (${when})` : ''} — it crashed or was killed. See: simwright crashes ${app}`);
 }
 
 async function dispatch(d, cmd, args, opts) {
@@ -286,6 +293,7 @@ async function dispatch(d, cmd, args, opts) {
   const before = look ? await d.snapshot({ all }) : null;
   const app = WATCHED.has(cmd) ? await d.frontApp().catch(() => null) : null;
   await act(d, cmd, args, opts);
+  if (['launch', 'reset', 'uninstall', 'install'].includes(cmd)) forgetFront(deviceId(d));
   // A cold start can take seconds, and the old screen may still be animating: wait for the app itself.
   if (look && cmd === 'launch') await waitForApp(d, args[0] || d.app, 6000);
   const after = look ? await settle(d, { all, before, changeTimeout: cmd === 'launch' || cmd === 'open' ? 6000 : 1500 }) : null;
@@ -482,6 +490,87 @@ async function showApp(d, arg) {
     const pid = await d.pidOf(app);
     console.log(pid ? `${app}: running in the background, pid ${pid}` : `${app}: not running — if it was, check: simwright crashes`);
   }
+}
+
+/**
+ `simwright mcp`: serve the commands over MCP (stdio). Each call's output — console.log/error anywhere
+ in simwright — becomes the tool result; stdout carries nothing but protocol messages.
+ */
+async function mcp(outer) {
+  const { serveMcp } = await import('../lib/mcp.js');
+  const config = loadConfig();
+  // A client's working directory may be anywhere (even /): screenshots go to a fixed place by default.
+  const base = { ...outer, out: outer.out || process.env.SIMWRIGHT_OUT || config.out || join(HOME, 'shots') };
+  const drivers = new Map();
+  let last = null; // a call that names no device uses the one the previous call used
+  const driverFor = (where) => {
+    if (!where.platform && !where.device && last) return last;
+    const key = `${where.platform || base.platform || ''}|${where.device || base.device || ''}`;
+    if (!drivers.has(key)) drivers.set(key, pickDriver({ ...base, platform: where.platform || base.platform, device: where.device || base.device }, config));
+    return (last = drivers.get(key));
+  };
+
+  let sink = null;
+  const capture = (...a) => (sink ? sink.push(a.join(' ')) : process.stderr.write(a.join(' ') + '\n'));
+  console.log = console.error = console.warn = console.info = capture;
+
+  const exec = async (words, where) => {
+    sink = [];
+    try {
+      const { opts, cmd, args } = parse(words);
+      if (!cmd || cmd === 'help') capture(HELP);
+      else if (cmd === 'doctor') doctor();
+      else if (cmd === 'devices') {
+        for (const s of bootedSimulators()) capture(`ios      ${s.id}  ${s.name}`);
+        for (const a of adbDevices()) capture(`android  ${a.id}`);
+      } else if (['mcp', 'skill'].includes(cmd)) throw new UsageError(`${cmd} isn't available over MCP`);
+      else {
+        const d = driverFor({ platform: opts.platform || where.platform, device: opts.device || where.device });
+        await dispatch(d, cmd, args, { ...base, ...opts, wait: opts.wait ?? base.wait, flags: opts.flags });
+      }
+      return { text: sink.join('\n') };
+    } catch (e) {
+      // A device that went away (or any failure that isn't a usage problem) gets a fresh driver next time.
+      if (!(e instanceof UsageError)) {
+        for (const [k, d] of drivers) d.close?.(), drivers.delete(k);
+        last = null;
+      }
+      // Name the tool parameters, not the command-line flags.
+      const msg = e.message.replace('pass -p ios|android', 'pass platform: "ios" or "android"').replace(/pass -d one of/, 'pass device: one of');
+      return { text: [...sink, `simwright: ${msg}`].join('\n'), error: true };
+    } finally {
+      sink = null;
+    }
+  };
+
+  const script = (text, where) => {
+    const steps = splitScript(text || '');
+    if (!steps.length) return { text: 'simwright: empty command', error: true };
+    return steps.length === 1 ? exec(steps[0], where) : exec(['run', text], where);
+  };
+
+  const shot = async (scale, where) => {
+    const r = await exec(['shot', `mcp_${Date.now()}`, '--scale', String(scale)], where);
+    if (r.error) return { error: r.text };
+    const path = r.text.trim().split('\n').pop();
+    return { path, png: readFileSync(path) };
+  };
+
+  await serveMcp({ version: pkg.version, exec, script, shot });
+  for (const d of drivers.values()) d.close?.();
+}
+
+/** A client config for `simwright mcp` with absolute paths: GUI apps start servers with a minimal PATH. */
+function mcpConfig() {
+  const script = new URL(import.meta.url).pathname;
+  const dirs = [dirname(process.execPath), ADB !== 'adb' ? dirname(ADB) : null, '/usr/bin', '/bin', '/usr/sbin', '/sbin'].filter(Boolean);
+  const server = { command: process.execPath, args: [script, 'mcp'], env: { PATH: [...new Set(dirs)].join(':') } };
+  console.log(JSON.stringify({ mcpServers: { simwright: server } }, null, 2));
+  console.error(`
+Paste into your MCP client's config, e.g.
+  Claude Desktop: ~/Library/Application Support/Claude/claude_desktop_config.json
+  Cursor:         ~/.cursor/mcp.json
+  Claude Code:    claude mcp add simwright -- ${process.execPath} ${script} mcp`);
 }
 
 /** Several commands in this one process: one helper connection, no per-command startup. */

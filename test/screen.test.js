@@ -88,3 +88,13 @@ test('the keyboard collapses to one row; bars above it and status-bar buttons st
   assert.equal(keyboardArea(els.filter((e) => !e.id)), null);
   assert.equal(visibleRows(els, { all: true }).length, els.length);
 });
+
+test('sliding: a page-wide element off x = 0 is a transition; narrow cards are not', async () => {
+  const { sliding } = await import('../lib/screen.js');
+  const screen = { w: 411, h: 923 };
+  assert.equal(sliding({ screen, elements: [{ x: 71, y: 54, w: 412, h: 179 }] }), true);
+  assert.equal(sliding({ screen, elements: [{ x: 0, y: 54, w: 411, h: 179 }] }), false);
+  assert.equal(sliding({ screen, elements: [{ x: 300, y: 54, w: 200, h: 100 }] }), false);
+  assert.equal(sliding({ screen, elements: [{ x: 24, y: 684, w: 371, h: 79 }] }), false); // an inset row
+  assert.equal(sliding({ screen, elements: [{ x: -300, y: 54, w: 411, h: 179 }] }), true); // sliding out left
+});

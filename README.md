@@ -486,8 +486,46 @@ An agent spends seconds per turn, so **turns** matter more than milliseconds. si
 - **Hints when the screen isn't what it seems.** When a passcode or permission prompt covers the app, `ls`
   prints a hint rather than an empty list.
 
-Why a CLI and not an MCP server? Any agent with a shell can use it with no configuration, and its output is
-already as small as it gets. An MCP server is on the [roadmap](#roadmap) for clients without a shell.
+### MCP server, for clients without a shell
+
+Agents with a shell (Claude Code, Codex, Cursor's agent, …) are best served by the CLI and the skill above.
+For **chat apps and other clients without a shell**, such as Claude Desktop, simwright is also an MCP server:
+
+```bash
+simwright mcp --config      # prints a ready-to-paste client config with absolute paths
+```
+
+```json
+{
+  "mcpServers": {
+    "simwright": {
+      "command": "/path/to/node",
+      "args": ["/path/to/simwright/bin/simwright.js", "mcp"],
+      "env": { "PATH": "/path/to/node/bin:/path/to/Android/sdk/platform-tools:/usr/bin:/bin" }
+    }
+  }
+}
+```
+
+- **Where to paste it:**
+  - Claude Desktop: `~/Library/Application Support/Claude/claude_desktop_config.json`
+  - Cursor: `~/.cursor/mcp.json`
+  - Claude Code: `claude mcp add simwright -- <node> <simwright.js> mcp`
+- **Why absolute paths:** desktop apps start servers with a minimal `PATH`. `simwright` also finds `adb` in the
+  Android SDK by itself.
+- **The tools:**
+  - `ls`, `tap`, `tap_xy`, `long_press`, `fill`, `type`, `key`, `hide_keyboard`, `swipe`, `scroll_to`, `back`
+    and `wait`;
+  - `screenshot`, which returns the image itself;
+  - `logs` and `crashes`;
+  - `simwright`, for any other command line, or several separated by `;`.
+- **Actions return the settled screen** unless `ls: false`.
+- **The device is remembered:** name a `platform` (or `device`) once when both an iPhone and an Android are
+  booted.
+- **Speed:** the server keeps each device's helper connection open, so a warm `ls` takes a few milliseconds.
+
+Why a CLI first? Any agent with a shell can use it with no configuration, and its output is already as small as
+it gets.
 
 ## Commands
 
@@ -529,6 +567,7 @@ already as small as it gets. An MCP server is on the [roadmap](#roadmap) for cli
 | `simwright statusbar clean\|live` | A screenshot-clean status bar (9:41, full battery and Wi-Fi), or back to live values |
 | `simwright push <app> <payload>` | iOS: a remote notification. The payload can be a `.json` file, inline JSON, or plain text for an alert |
 | **Batch, setup & info** | |
+| `simwright mcp [--config]` | Serves these commands over MCP (stdio) for clients without a shell. `--config` prints a client config |
 | `simwright run '<cmd>; <cmd> …'` | Several commands in one process. `run -` reads them from stdin. Stops at the first failure and names it |
 | `simwright skill [--install]` | Prints the AI-agent guide, or installs it as a Claude Code skill |
 | `simwright devices` | Booted simulators and adb devices |
@@ -670,9 +709,10 @@ continue. The skill tells agents exactly that. See [Safety rules](#safety-rules)
 
 ## Roadmap
 
-- A warning after any action when the app has died (instead of the agent noticing a home screen)
 - Verified Xcode 27 input
-- An MCP server for agents without a shell
+- Landscape: rotate the device, and keep coordinates right while rotated
+- Screen recording (video) next to `burst`
+- Slow or offline network conditions
 
 Ideas and votes welcome in [Issues](https://github.com/lakpriya1s/simwright/issues).
 
