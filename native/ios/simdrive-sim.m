@@ -317,7 +317,10 @@ static NSArray *tree(BOOL all, BOOL settle) {
 static BOOL keyboardShown(void) {
   for (NSDictionary *n in tree(NO, NO)) {
     NSString *ident = n[@"id"];
-    if ([ident isEqualToString:@"delete"] || [ident isEqualToString:@"space"] || [ident isEqualToString:@"shift"]) return YES;
+    // UIKeyboardLayout… is on every layout (letters, number pad); the key ids are a fallback.
+    if ([ident hasPrefix:@"UIKeyboardLayout"] || [ident isEqualToString:@"delete"] || [ident isEqualToString:@"space"] ||
+        [ident isEqualToString:@"shift"])
+      return YES;
   }
   return NO;
 }

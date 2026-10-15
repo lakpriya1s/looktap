@@ -415,7 +415,7 @@ matter more than milliseconds):
 | `simdrive type <text>` | Types into the currently focused field |
 | `simdrive key <name> …` | Presses keys: `return`, `escape`, `delete`, `tab`, `space`. Android also takes `back`, `home` and any `KEYCODE_*`. iOS also takes `selectall` and `paste` |
 | `simdrive fill <label\|@ref> <text> [--exact]` | Focuses the field at `<label>` (same matching as `tap`) or `@ref`, clears it, types `<text>`. Empty text just clears |
-| `simdrive hidekb` | Dismisses the keyboard with its own Done/Return key, then checks. Prints `keyboard hidden` / `no keyboard`. **Exits 2 if the keyboard is still up** (e.g. an iOS search keyboard has no such key), never a false success |
+| `simdrive hidekb` | Dismisses the keyboard: its own Done/Return key, else (iOS) the ✓ on a web form's Previous/Next bar, else a tap on plain text above it. Checks after each. Prints `keyboard hidden` / `no keyboard`. **Exits 2 if the keyboard is still up** (e.g. an iOS search keyboard has no such key), never a false success |
 | `simdrive swipe <x1> <y1> <x2> <y2> [ms]` | Drags from one point to another. Default 150 ms on iOS, 300 ms on Android |
 | `simdrive back` | Android system Back. iOS: the navigation bar's back button |
 | `simdrive open <url>` | Opens a deep link (e.g. `myapp://…`) |
