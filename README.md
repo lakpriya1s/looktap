@@ -3,7 +3,7 @@
 <img src="https://raw.githubusercontent.com/lakpriya1s/simwright/main/assets/simwright-logo.svg" alt="simwright — hands on the simulator, for AI agents" width="560">
 
 **Let AI agents drive an iOS simulator or Android emulator from the shell**<br>
-Read the screen, tap, type, swipe, screenshot, and read logs and crashes. No Appium, no WebDriverAgent, nothing installed on the device.
+Read the screen, tap, type, swipe, screenshot, and read logs and crashes. Nothing to install on the device and no server to start.
 
 [![npm](https://img.shields.io/npm/v/simwright.svg?color=cb3837&logo=npm)](https://www.npmjs.com/package/simwright)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://github.com/lakpriya1s/simwright/blob/main/LICENSE)
@@ -67,7 +67,7 @@ It's just as handy by hand, or in a shell script for screenshot sweeps and bug r
 | 🌍 | **Simulated conditions.** `location <lat> <lon>`, `appearance dark`, `textsize xxl` (Dynamic Type / font scale), `statusbar clean` (9:41 for screenshots), `rotate landscape` (`ls`, taps and screenshots follow the turned screen), Android `network offline`, and iOS `push` notifications |
 | 🧹 | **App state for repros.** `install` a build, `reset` an app to a fresh install, `uninstall`, and `permission grant\|revoke\|reset camera\|location\|photos\|…`, with the same names on both platforms |
 | 🤖 | **Built for agents.** `--ls` on any action, `run` to batch steps, `--json`, and a [Claude Code skill](#for-ai-agents) you install with one command |
-| 🧩 | **Nothing to install on the device**, no Appium server, no WebDriverAgent, no npm dependencies. The helpers start on first use |
+| 🧩 | **Nothing to install on the device**, no server to run, no npm dependencies. The helpers start on first use |
 | ⚠️ | **Honest failures.** A tap that's covered by a toast prints a warning, a stale `@ref` is an error rather than a wrong tap, a system prompt over the app is reported as one, and **an app that dies is named the moment simwright notices** |
 
 ## simwright vs Appium

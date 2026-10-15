@@ -16,7 +16,7 @@ const SKILL = new URL('../skills/simwright/SKILL.md', import.meta.url);
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
-const HELP = `simwright ${pkg.version} — drive an iOS simulator or Android emulator from the shell, no Appium.
+const HELP = `simwright ${pkg.version} — drive an iOS simulator or Android emulator from the shell.
 
 usage: simwright [options] <command> [args]
 

@@ -505,7 +505,7 @@ export const SCENES = [
     id: 'setup',
     kicker: '13 · Setup',
     title: 'Nothing to install on the device',
-    body: `<p>No Appium server, no WebDriverAgent, no npm dependencies. simwright's own small helpers start on first use: a macOS helper that speaks to the simulator through Apple's frameworks, and an 8 KB Android helper run with <code>app_process</code>.</p>
+    body: `<p>No server to run and no npm dependencies. simwright's own small helpers start on first use: a macOS helper that speaks to the simulator through Apple's frameworks, and an 8 KB Android helper run with <code>app_process</code>.</p>
 <p>First command in about a tenth of a second, against 7–39 s for an Appium session.</p>`,
     covers: ['doctor', 'devices', 'setup', 'teardown'],
     start: (p) => p.show('springboard'),
