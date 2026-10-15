@@ -36,7 +36,7 @@ function setPlatform(p) {
   root.dataset.platform = p;
   store('sw-platform', p);
   for (const b of $$('[data-platform-set]')) b.setAttribute('aria-pressed', String(b.dataset.platformSet === p));
-  $('[data-term-title]').textContent = p === 'ios' ? 'agent ➜ iPhone 16 simulator' : 'agent ➜ Pixel 9a emulator';
+  $('[data-term-title]').textContent = p === 'ios' ? 'agent ➜ iPhone 18 Pro simulator' : 'agent ➜ Pixel 11 emulator';
   phone.fit();
   if (active) play(active, { restart: true });
 }

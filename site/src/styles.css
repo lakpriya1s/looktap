@@ -109,6 +109,13 @@ a.version:hover { color: var(--accent); border-color: var(--accent); }
 .topnav { display: flex; gap: 22px; margin-left: auto; }
 .topnav a { color: var(--ink-2); text-decoration: none; font-size: 15px; font-weight: 500; }
 .topnav a:hover, .topnav a[aria-current='page'] { color: var(--accent); }
+/* Brand logos (Simple Icons), inline so they take the text colour in both themes. */
+.ico { width: 1.05em; height: 1.05em; flex: none; }
+.topnav .ico-link { display: inline-flex; align-items: center; gap: 7px; }
+.seg button { display: inline-flex; align-items: center; gap: 6px; }
+.seg .ico { width: 13px; height: 13px; }
+.eyebrow .plat { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.eyebrow .ico { width: 14px; height: 14px; }
 .seg { display: flex; border: 1px solid var(--line-2); border-radius: 99px; padding: 2px; }
 .seg button { font: 500 12px var(--mono); border: 0; background: none; color: var(--muted); padding: 5px 11px; border-radius: 99px; cursor: pointer; }
 .seg button[aria-pressed='true'] { background: var(--ink); color: var(--bg); }
@@ -277,7 +284,14 @@ a.version:hover { color: var(--accent); border-color: var(--accent); }
 }
 @media (max-width: 640px) {
   body { font-size: 16px; }
-  .topnav a:not(:nth-child(2)) { display: none; }
+  /* Phones: Docs, plus GitHub and npm as icons only. */
+  .topnav a:not(:nth-child(2)):not(.ico-link) { display: none; }
+  .topnav .ico-link span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .topnav .ico-link .ico { width: 19px; height: 19px; }
+  /* The platform switch shows just the logos. */
+  .seg button span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .seg button { padding: 6px 10px; }
+  .seg .ico { width: 16px; height: 16px; }
   .version { display: none; }
   .topbar { gap: 10px; }
   .rig [data-phone], .term { height: 40vh; }

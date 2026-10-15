@@ -514,10 +514,10 @@ export const SCENES = [
         cmd: 'simwright doctor',
         run: async (p, c) =>
           c.ios
-            ? [ok('✓ node 22.11.0 (needs ≥ 18)'), ok('✓ xcrun (iOS)'), ok('✓ booted simulators: iPhone 16'), ok('✓ CoreSimulator.framework (iOS helper)'), dim('  iOS input: indigo (CoreSimulator 1048)')]
+            ? [ok('✓ node 22.11.0 (needs ≥ 18)'), ok('✓ xcrun (iOS)'), ok('✓ booted simulators: iPhone 18 Pro'), ok('✓ CoreSimulator.framework (iOS helper)'), dim('  iOS input: indigo (CoreSimulator 1048)')]
             : [ok('✓ node 22.11.0 (needs ≥ 18)'), ok('✓ adb (Android)'), ok('✓ adb devices: emulator-5554')],
       },
-      { cmd: 'simwright devices', run: async (p, c) => [c.ios ? 'ios      9F1C2A44-…-77E0  iPhone 16' : 'android  emulator-5554'] },
+      { cmd: 'simwright devices', run: async (p, c) => [c.ios ? 'ios      9F1C2A44-…-77E0  iPhone 18 Pro' : 'android  emulator-5554'] },
       {
         cmd: 'simwright setup',
         run: async (p, c) => [c.ios ? 'simwright iOS helper ready on 9F1C2A44-…-77E0' : 'adb emulator-5554 ready · scale 2.625 (dp = px ÷ 2.625) · reverse tcp:8081 · helper on · emulator gRPC frames'],
