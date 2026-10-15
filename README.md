@@ -45,7 +45,7 @@ It's just as handy by hand, or in a shell script for screenshot sweeps and bug r
 - [🤖 Kickstart with your AI agent](#-kickstart-with-your-ai-agent): one prompt and your agent takes it from there
 - [Requirements](#requirements)
 - [How it works](#how-it-works)
-- [Examples](#examples): tap by label, forms, waiting, scrolling, debugging, bursts, several devices
+- [Examples](#examples): tap by label, forms, waiting, scrolling, debugging, bursts and video, several devices
 - [For AI agents](#for-ai-agents)
 - [Commands](#commands) · [Options & config](#options-environment-variables-config-file)
 - [Troubleshooting](#troubleshooting) · [FAQ](#faq) · [Roadmap](#roadmap)
@@ -186,6 +186,8 @@ simwright ships its own small helper for each platform. **Nothing is installed o
 | Read the screen | `simwright-sim`, a macOS helper that reads the simulator's accessibility tree through Apple's simulator frameworks (CoreSimulator, AccessibilityPlatformTranslation). Web content is found by probing the screen | `simwright-server.jar`, an 8 KB helper pushed to `/data/local/tmp` and run with `app_process`. It keeps one UiAutomation connection open |
 | Tap, type, swipe, keys | The same helper, as touch and keyboard events through SimulatorKit | The same helper, as input events through UiAutomation |
 | Screenshots, `burst` | The simulator display's framebuffer, read in-process | Emulators: the emulator's gRPC API, which also gets past `FLAG_SECURE`. Devices: the helper |
+| Video (`record`) | `simctl io recordVideo` | `screenrecord` on the device |
+| Orientation (`rotate`) | The orientation event Simulator.app sends to the guest. Coordinates and frames are converted, so everything simwright prints and takes is as the user sees the screen | `settings` (user rotation, auto-rotate off). The helper reports the turned display size |
 | Logs, crashes | `log show` inside the simulator, and its `.ips` crash reports | `logcat` (by app uid), the crash buffer, and `dumpsys activity exit-info` |
 | Deep links, launch, biometrics | `xcrun simctl` | `adb` and the emulator console |
 
@@ -558,6 +560,7 @@ it gets.
 | `simwright scrollto <label> [--up]` | Swipes until the element is fully on screen. Fails at the end of the list, or after 15 swipes |
 | `simwright shot <name> [--plain] [--scale f]` | Saves `<out>/<name>.png` and prints its path |
 | `simwright burst <dir> <seconds>` | A frame each time the screen changes. Only distinct frames are kept |
+| `simwright record start [name]` · `record stop` | An MP4 of everything in between, saved to `<out>/<name>.mp4`; `stop` prints the path and the length. Android: at most 3 minutes, `FLAG_SECURE` screens black |
 | **Act** (add `--ls` to print the settled screen afterwards) | |
 | `simwright tap <label\|@ref> [--exact]` | `@ref` from the last `ls`, or a label: exact, else a prefix/contains match that names a single label (ambiguous → exit 2). Prints what it tapped |
 | `simwright longpress <label\|@ref\|x y> [ms]` | Holds the touch for `ms` (default 800). Same targets as `tap`, or a point |
@@ -572,6 +575,7 @@ it gets.
 | `simwright open <url>` | Opens a deep link |
 | `simwright launch [app]` | (Re)starts the app |
 | `simwright bio match\|nomatch` | Face ID (iOS) or fingerprint (Android) |
+| `simwright rotate [portrait\|landscape\|left\|right\|upsidedown]` | Turns the device (`landscape` = `left`, turned counter-clockwise). `ls`, taps and screenshots follow the turned screen. Says so if the app doesn't support the orientation. Without an argument, prints the current one |
 | **Debug** (`[app]` defaults to `--app` / config, else the app in front) | |
 | `simwright logs [app] [--errors] [--grep re] [--since 5m] [--lines n] [--all]` | The app's log since the last `logs` (the first call covers the last minute). At most 80 lines, newest kept |
 | `simwright crashes [app] [--since 1h]` | Crashes, ANRs and low-memory kills since the last `crashes` (the first call covers the last hour) |
@@ -586,6 +590,7 @@ it gets.
 | `simwright appearance [dark\|light]` | Dark mode. Without an argument, prints the current mode |
 | `simwright textsize [size]` | Dynamic Type (iOS) / font scale (Android): `xs s m l xl xxl xxxl ax1…ax5`, or iOS names such as `accessibility-large`. Without an argument, prints the current size |
 | `simwright statusbar clean\|live` | A screenshot-clean status bar (9:41, full battery and Wi-Fi), or back to live values |
+| `simwright network [offline\|online]` | Android only: airplane mode on or off, waiting until the device has lost (or regained) its connection. Without an argument, prints the current state |
 | `simwright push <app> <payload>` | iOS: a remote notification. The payload can be a `.json` file, inline JSON, or plain text for an alert |
 | **Batch, setup & info** | |
 | `simwright mcp [--config]` | Serves these commands over MCP (stdio) for clients without a shell. `--config` prints a client config |
@@ -596,8 +601,8 @@ it gets.
 | `simwright setup` | Starts the helper ahead of time. Android: also `adb reverse tcp:8081` for Metro |
 | `simwright teardown` | Stops the helper. Android: also removes `adb reverse` rules |
 
-**`--ls`** works on `tap`, `longpress`, `zoom`, `tapxy`, `fill`, `type`, `key`, `hidekb`, `swipe`, `back`, `open`, `launch`, `bio` and
-`scrollto`. After the action it waits for the screen to change (up to 1.5 s, or 6 s for `launch`/`open`), then for
+**`--ls`** works on `tap`, `longpress`, `zoom`, `tapxy`, `fill`, `type`, `key`, `hidekb`, `swipe`, `back`, `open`, `launch`, `bio`,
+`rotate` and `scrollto`. After the action it waits for the screen to change (up to 1.5 s, or 6 s for `launch`/`open`), then for
 it to stop changing, then prints it like `ls`.
 
 **Exit codes:** `0` means OK. `2` means a usage problem: bad arguments, element not found, no device, or the
@@ -609,7 +614,7 @@ helper can't start. `1` means anything else failed. A script can `set -e` and st
 |---|---|
 | `-p, --platform ios\|android` | Default: whichever has a booted device. Required when both do |
 | `-d, --device <udid\|serial>` | Default: the only booted one |
-| `-o, --out <dir>` | Screenshot folder (default `shots`) |
+| `-o, --out <dir>` | Folder for screenshots and videos (default `shots`) |
 | `--wait <seconds>` | How long `tap`, `fill` and `back` look for their target (default `3`). An ambiguous match fails at once |
 | `--app <id>` | App id for `launch`, `open`, `logs`, `crashes`, `app`, `uninstall`, `reset` and `permission` |
 | `-h, --help` · `-v, --version` | |
@@ -731,9 +736,7 @@ continue. The skill tells agents exactly that. See [Safety rules](#safety-rules)
 ## Roadmap
 
 - Verified Xcode 27 input
-- Landscape: rotate the device, and keep coordinates right while rotated
-- Screen recording (video) next to `burst`
-- Slow or offline network conditions
+- Rotation verified on iPad simulators
 
 Ideas and votes welcome in [Issues](https://github.com/lakpriya1s/simwright/issues).
 
@@ -741,7 +744,7 @@ Ideas and votes welcome in [Issues](https://github.com/lakpriya1s/simwright/issu
 
 - **Never script a sign-in with real credentials,** whether from a shell script or an AI agent. A person signs in
   and enters OTPs, then simwright takes over.
-- **Never `burst` a sign-in or passcode screen.** The frames capture what's typed.
+- **Never `burst` or `record` a sign-in or passcode screen.** The frames capture what's typed.
 - **Against a live backend, every tap is real.** Use the smallest amounts, then undo what you created.
 - **Logs can contain tokens and personal data.** Quote only the lines that matter, and don't commit screenshots of
   real customer data.
