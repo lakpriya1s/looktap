@@ -142,7 +142,11 @@ public final class Server {
                 reply(out, ok().put("nodes", tree(req.optBoolean("all"))), null);
                 return;
             case "tap":
-                tap(req.getInt("x"), req.getInt("y"));
+                tap(req.getInt("x"), req.getInt("y"), req.optInt("hold", 50));
+                reply(out, ok(), null);
+                return;
+            case "pinch":
+                pinch(req.getInt("x"), req.getInt("y"), req.getInt("r0"), req.getInt("r1"), req.optInt("ms", 400));
                 reply(out, ok(), null);
                 return;
             case "swipe":
@@ -411,10 +415,49 @@ public final class Server {
         e.recycle();
     }
 
-    static void tap(int x, int y) {
+    /** A tap, or with a long `hold` a long press: the finger stays down that long. */
+    static void tap(int x, int y, int hold) {
         long down = SystemClock.uptimeMillis();
         touch(MotionEvent.ACTION_DOWN, down, down, x, y);
-        touch(MotionEvent.ACTION_UP, down, down + 50, x, y);
+        if (hold > 100) SystemClock.sleep(hold);
+        touch(MotionEvent.ACTION_UP, down, Math.max(down + hold, SystemClock.uptimeMillis()), x, y);
+    }
+
+    /** A two-pointer event: fingers at (cx ∓ r, cy). Pointer 1 is added/removed with POINTER_DOWN/UP. */
+    static void touch2(int action, long down, long at, float cx, float cy, float r, int count) {
+        MotionEvent.PointerProperties[] props = new MotionEvent.PointerProperties[count];
+        MotionEvent.PointerCoords[] coords = new MotionEvent.PointerCoords[count];
+        for (int i = 0; i < count; i++) {
+            props[i] = new MotionEvent.PointerProperties();
+            props[i].id = i;
+            props[i].toolType = MotionEvent.TOOL_TYPE_FINGER;
+            coords[i] = new MotionEvent.PointerCoords();
+            coords[i].x = i == 0 ? cx - r : cx + r;
+            coords[i].y = cy;
+            coords[i].pressure = 1;
+            coords[i].size = 1;
+        }
+        MotionEvent e = MotionEvent.obtain(down, at, action, count, props, coords, 0, 0, 1, 1, 0, 0, InputDevice.SOURCE_TOUCHSCREEN, 0);
+        inject(e, action != MotionEvent.ACTION_MOVE);
+        e.recycle();
+    }
+
+    /** Two fingers on a horizontal line through (cx, cy), from r0 to r1 px either side: r1 > r0 zooms in. */
+    static void pinch(int cx, int cy, int r0, int r1, int ms) {
+        int steps = Math.max(2, ms / 10);
+        int second = 1 << MotionEvent.ACTION_POINTER_INDEX_SHIFT;
+        long down = SystemClock.uptimeMillis();
+        touch2(MotionEvent.ACTION_DOWN, down, down, cx, cy, r0, 1);
+        touch2(MotionEvent.ACTION_POINTER_DOWN | second, down, down, cx, cy, r0, 2);
+        for (int i = 1; i <= steps; i++) {
+            long at = down + (long) ms * i / steps;
+            long wait = at - SystemClock.uptimeMillis();
+            if (wait > 0) SystemClock.sleep(wait);
+            touch2(MotionEvent.ACTION_MOVE, down, at, cx, cy, r0 + (r1 - r0) * (float) i / steps, 2);
+        }
+        long end = SystemClock.uptimeMillis();
+        touch2(MotionEvent.ACTION_POINTER_UP | second, down, end, cx, cy, r1, 2);
+        touch2(MotionEvent.ACTION_UP, down, end, cx, cy, r1, 1);
     }
 
     static void swipe(int x1, int y1, int x2, int y2, int ms) {

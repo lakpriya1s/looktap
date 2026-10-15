@@ -388,6 +388,23 @@ static void *touchMessage(double x, double y, BOOL down) {
   return m;
 }
 
+/**
+ Two fingers. Passing a second point makes SimulatorKit build a three-payload multi-touch message:
+ finger 1, a digitizer summary mirroring it, finger 2 (wire offsets 0x20, 0xC0, 0x160; idb's layout).
+ Every contact's ratios are set explicitly rather than trusting the builder's normalisation.
+ */
+static void *twoFingerMessage(double x1, double y1, double x2, double y2, BOOL down) {
+  CGPoint r1 = ratioFor(x1, y1), r2 = ratioFor(x2, y2);
+  char *m = indigoMouse(&r1, &r2, 0x32, down ? 1 : 2, CGSizeMake(1, 1), 0);
+  const int at[3] = {0x20, 0xC0, 0x160};
+  const CGPoint r[3] = {r1, r1, r2};
+  for (int i = 0; i < 3; i++) {
+    *(double *)(m + at[i] + 0x1c) = r[i].x; // payload.event.touch.xRatio
+    *(double *)(m + at[i] + 0x24) = r[i].y; // payload.event.touch.yRatio
+  }
+  return m;
+}
+
 // ── DTUHID (Xcode 27) ── wire format: facebook/idb FBSimulatorControl/HID/DTUHIDModels.swift
 
 static NSString *const DTU_SERVICE = @"com.apple.coredevice.feature.remote.hid.digitizer";
@@ -415,14 +432,22 @@ static xpc_object_t dtuKeyMessage(int usage, BOOL down, BOOL barrier) {
   return dtuMessage("IndigoKeyboardButtonEvent", p, barrier);
 }
 
-/** IndigoDigitizerEvent: one contact in normalized top-left coordinates, eventType start/position/end. */
-static xpc_object_t dtuTouchMessage(TouchPhase phase, double x, double y) {
+static xpc_object_t dtuPoint(double x, double y) {
   CGPoint r = ratioFor(x, y);
   xpc_object_t pt = xpc_dictionary_create(NULL, NULL, 0);
   xpc_dictionary_set_double(pt, "x", r.x);
   xpc_dictionary_set_double(pt, "y", r.y);
+  return pt;
+}
+
+/**
+ IndigoDigitizerEvent: one contact (pointOne), or two (+ pointTwo, x2 ≥ 0), in normalized top-left
+ coordinates; eventType start/position/end.
+ */
+static xpc_object_t dtuTouchMessage(TouchPhase phase, double x, double y, double x2, double y2) {
   xpc_object_t p = xpc_dictionary_create(NULL, NULL, 0);
-  xpc_dictionary_set_value(p, "pointOne", pt);
+  xpc_dictionary_set_value(p, "pointOne", dtuPoint(x, y));
+  if (x2 >= 0) xpc_dictionary_set_value(p, "pointTwo", dtuPoint(x2, y2));
   xpc_dictionary_set_uint64(p, "eventType", (uint64_t)phase);
   xpc_dictionary_set_uint64(p, "edge", 0);
   xpc_dictionary_set_uint64(p, "target", 0);
@@ -494,8 +519,14 @@ static void requireInput(void) {
 
 static void touch(TouchPhase phase, double x, double y) {
   requireInput();
-  if (dtuConnection) xpc_connection_send_message(dtuConnection, dtuTouchMessage(phase, x, y));
+  if (dtuConnection) xpc_connection_send_message(dtuConnection, dtuTouchMessage(phase, x, y, -1, -1));
   else indigoSend(touchMessage(x, y, phase != TouchEnd));
+}
+
+static void touch2(TouchPhase phase, double x1, double y1, double x2, double y2) {
+  requireInput();
+  if (dtuConnection) xpc_connection_send_message(dtuConnection, dtuTouchMessage(phase, x1, y1, x2, y2));
+  else indigoSend(twoFingerMessage(x1, y1, x2, y2, phase != TouchEnd));
 }
 
 static void keyEvent(int usage, BOOL down) {
@@ -539,6 +570,26 @@ static void swipe(double x1, double y1, double x2, double y2, int ms) {
   usleep(gap);
   touch(TouchMove, x2, y2);
   touch(TouchEnd, x2, y2);
+  hidSync();
+}
+
+/**
+ Two fingers on a horizontal line through (cx, cy), from `r0` to `r1` points either side of it: r1 > r0
+ spreads them (zoom in), r1 < r0 brings them together (zoom out). idb's pinch: a contact every ~10
+ points of travel, the last one repeated before lifting (no inertia).
+ */
+static void pinch(double cx, double cy, double r0, double r1, int ms) {
+  int steps = MAX(2, (int)(fabs(r1 - r0) / 10));
+  useconds_t gap = (useconds_t)(ms * 1000.0 / (steps + 2));
+  touch2(TouchStart, cx - r0, cy, cx + r0, cy);
+  for (int i = 1; i <= steps; i++) {
+    usleep(gap);
+    double r = r0 + (r1 - r0) * i / steps;
+    touch2(TouchMove, cx - r, cy, cx + r, cy);
+  }
+  usleep(gap);
+  touch2(TouchMove, cx - r1, cy, cx + r1, cy);
+  touch2(TouchEnd, cx - r1, cy, cx + r1, cy);
   hidSync();
 }
 
@@ -702,6 +753,10 @@ static void handle(int fd, NSDictionary *r) {
   }
   if ([op isEqualToString:@"tap"]) {
     tap(num(r, @"x", 0), num(r, @"y", 0), (int)num(r, @"hold", 50));
+    return reply(fd, @{@"ok" : @YES}, nil);
+  }
+  if ([op isEqualToString:@"pinch"]) {
+    pinch(num(r, @"x", 0), num(r, @"y", 0), num(r, @"r0", 40), num(r, @"r1", 100), (int)num(r, @"ms", 400));
     return reply(fd, @{@"ok" : @YES}, nil);
   }
   if ([op isEqualToString:@"swipe"]) {

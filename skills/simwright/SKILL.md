@@ -102,7 +102,7 @@ Conditions: `location <lat> <lon>` · `appearance dark|light` · `textsize xxl|a
 
 ## Other commands
 
-`type <text>` (into the focused field) · `key return|escape|delete|tab|space` · `hidekb` · `swipe x1 y1 x2 y2 [ms]` · `back` · `open <url>` (deep
+`longpress <label|@ref|x y> [ms]` · `zoom in|out [x y]` (two-finger pinch) · `type <text>` (into the focused field) · `key return|escape|delete|tab|space` · `hidekb` · `swipe x1 y1 x2 y2 [ms]` · `back` · `open <url>` (deep
 link) · `launch [app]` · `bio match|nomatch` · `burst <dir> <seconds>` (frames of a transient state) ·
 `devices` · `doctor`. Pass `-p ios|android` and `-d <id>` when more than one device is booted. Run
 `simwright --help` for everything.

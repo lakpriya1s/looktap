@@ -38,6 +38,8 @@ look
 act                               add --ls to any of these to print the settled screen afterwards
   tap <label|@ref> [--exact]      @ref: a row from the last ls. Label: exact, else a prefix/contains
                                   match that names one label (ambiguous → error). Prints what it tapped
+  longpress <label|@ref|x y> [ms] hold for ms (default 800)
+  zoom in|out [x y] [--scale f]   two-finger pinch around a point (default: the screen centre; scale 2.5)
   tapxy <x> <y>                   iOS points / Android dp
   type <text>                     into the focused field
   key <name> …                    return, escape, delete, tab, space (Android: also back, home,
@@ -227,7 +229,7 @@ async function main() {
 }
 
 const deviceId = (d) => d.udid || d.serial;
-const ACTIONS = new Set(['tap', 'tapxy', 'type', 'key', 'fill', 'hidekb', 'swipe', 'back', 'open', 'launch', 'bio', 'scrollto']);
+const ACTIONS = new Set(['tap', 'longpress', 'zoom', 'tapxy', 'type', 'key', 'fill', 'hidekb', 'swipe', 'back', 'open', 'launch', 'bio', 'scrollto']);
 
 /** Print the listing (text or --json) and remember its @refs. `snap` defaults to a fresh read. */
 async function list(d, opts, snap) {
@@ -341,6 +343,37 @@ async function act(d, cmd, args, opts) {
       for (const c of coveringAt(snap.elements, e, at))
         console.error(`simwright: warning: ${JSON.stringify(c.label || c.type)} at ${c.x},${c.y} ${c.w}x${c.h} covers that point and may have taken the tap`);
       return;
+    }
+    case 'longpress': {
+      need(1, 'longpress <label|@ref|x y> [ms]');
+      const num = (v) => /^\d+(\.\d+)?$/.test(v ?? '');
+      // Two leading numbers are a point; a trailing number is the hold time, unless it is the whole target.
+      const xy = num(args[0]) && num(args[1]);
+      const timed = args.length > (xy ? 2 : 1) && /^\d+$/.test(args.at(-1));
+      const ms = timed ? Number(args.at(-1)) : 800;
+      let at, what;
+      if (xy) (at = [Number(args[0]), Number(args[1])]), (what = `${at.join(',')}`);
+      else {
+        const words = timed ? args.slice(0, -1) : args;
+        const { e } = await target(d, isRef(words[0]) ? words[0] : words.join(' '), opts);
+        (at = center(e)), (what = `${JSON.stringify(e.label || e.type)} at ${at.join(',')}`);
+      }
+      await d.longpress(...at, ms);
+      return console.log(`long-pressed ${what} for ${ms} ms`);
+    }
+    case 'zoom': {
+      const usage = 'zoom in|out [x y] [--scale f]';
+      if (!['in', 'out'].includes(args[0])) throw new UsageError(`usage: simwright ${usage}`);
+      const scale = opts.scale ?? 2.5;
+      if (!(scale > 1)) throw new UsageError('zoom --scale takes a factor above 1, e.g. --scale 3 (default 2.5)');
+      const { w, h } = (await d.snapshot()).screen;
+      const [x, y] = args.length >= 3 ? [Number(args[1]), Number(args[2])] : [Math.round(w / 2), Math.round(h / 2)];
+      if (!(x >= 0 && x <= w && y >= 0 && y <= h)) throw new UsageError(`usage: simwright ${usage} — x y within the screen (${w}x${h})`);
+      // Fingers on a horizontal line through the point, kept on screen.
+      const room = Math.max(20, Math.min(x, w - x) - 8);
+      const near = Math.min(40, room / scale), far = Math.min(near * scale, room);
+      await d.pinch(x, y, ...(args[0] === 'in' ? [near, far] : [far, near]));
+      return console.log(`zoomed ${args[0]} at ${x},${y} (fingers ${Math.round(2 * near)} ↔ ${Math.round(2 * far)} apart)`);
     }
     case 'tapxy': need(2, 'tapxy <x> <y>'); return d.tapxy(Number(args[0]), Number(args[1]));
     case 'type': need(1, 'type <text>'); return d.type(args.join(' '));

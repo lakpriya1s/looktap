@@ -58,7 +58,7 @@ It's just as handy by hand, or in a shell script for screenshot sweeps and bug r
 | 👀 | **Read the screen as text.** `ls` lists what's visible, one row per element: `@ref  type  x,y  w×h  label  = value`. It reads native screens, React Native screens and web content (Safari, in-app browsers, web views) |
 | 👆 | **Tap by label.** Exact match first, then a prefix or substring that names exactly one label. An ambiguous match is an error, never a guess. Also by `@ref` from the last `ls`, or by `x y` coordinates |
 | ⌨️ | **Type and fill.** `type` into the focused field, `fill` to clear a field and type, `key return\|escape\|delete\|tab\|…`, and `hidekb`, which never reports success while the keyboard is still up |
-| 🧭 | **Navigate.** `swipe`, `scrollto <label>`, `back`, `open <deep link>`, `launch <app>` |
+| 🧭 | **Navigate and gesture.** `swipe`, `scrollto <label>`, `back`, `open <deep link>`, `launch <app>`, `longpress`, and two-finger `zoom in\|out` |
 | ⏱️ | **Wait instead of sleep.** `wait "Welcome"`, `wait "Loading" --gone`. Actions already wait up to 3 s for their target |
 | 📸 | **Screenshots.** `shot` saves a PNG and prints its path, with `--scale 0.5` for fewer image tokens. On Android emulators it also captures `FLAG_SECURE` screens |
 | 🎞️ | **Burst capture.** `burst` saves a frame each time the screen changes, to catch spinners, toasts and transitions |
@@ -253,6 +253,19 @@ simwright tapxy 205 874                # when ls doesn't list it at all
   ("no longer on screen — run: simwright ls") rather than tapping something else.
 - **If another element covers the tap point** (a toast, a dev-warning banner, a floating bar), `tap` prints a
   warning, because the tap probably landed on the cover instead.
+
+### Long press and pinch-zoom
+
+```bash
+simwright longpress "Photo"               # context menus, drag handles, "edit" modes (default 800 ms)
+simwright longpress @4 1500               # by ref, held 1.5 s
+simwright longpress 120 470               # a point, e.g. to drop a pin on a map
+simwright zoom in                         # two fingers spreading at the screen centre (maps, photos, PDFs)
+simwright zoom out 200 400 --scale 4      # pinch around a point; --scale is how far the fingers travel
+```
+
+`zoom` is a real two-finger gesture on both platforms. On Android it needs simwright's helper, because
+`adb input` has no multi-touch.
 
 ### Fill a form and capture its validation errors
 
@@ -488,6 +501,8 @@ already as small as it gets. An MCP server is on the [roadmap](#roadmap) for cli
 | `simwright burst <dir> <seconds>` | A frame each time the screen changes. Only distinct frames are kept |
 | **Act** (add `--ls` to print the settled screen afterwards) | |
 | `simwright tap <label\|@ref> [--exact]` | `@ref` from the last `ls`, or a label: exact, else a prefix/contains match that names a single label (ambiguous → exit 2). Prints what it tapped |
+| `simwright longpress <label\|@ref\|x y> [ms]` | Holds the touch for `ms` (default 800). Same targets as `tap`, or a point |
+| `simwright zoom in\|out [x y] [--scale f]` | Two-finger pinch around a point (default: the screen centre). `--scale` sets how far apart the fingers end up (default 2.5) |
 | `simwright tapxy <x> <y>` | Taps a point (iOS points / Android dp) |
 | `simwright type <text>` | Types into the focused field. On iOS, characters the keyboard can't type are pasted |
 | `simwright key <name> …` | `return`, `escape`, `delete`, `tab`, `space`. Android also `back`, `home`, any `KEYCODE_*`. iOS also `selectall`, `paste` |
@@ -521,7 +536,7 @@ already as small as it gets. An MCP server is on the [roadmap](#roadmap) for cli
 | `simwright setup` | Starts the helper ahead of time. Android: also `adb reverse tcp:8081` for Metro |
 | `simwright teardown` | Stops the helper. Android: also removes `adb reverse` rules |
 
-**`--ls`** works on `tap`, `tapxy`, `fill`, `type`, `key`, `hidekb`, `swipe`, `back`, `open`, `launch`, `bio` and
+**`--ls`** works on `tap`, `longpress`, `zoom`, `tapxy`, `fill`, `type`, `key`, `hidekb`, `swipe`, `back`, `open`, `launch`, `bio` and
 `scrollto`. After the action it waits for the screen to change (up to 1.5 s, or 6 s for `launch`/`open`), then for
 it to stop changing, then prints it like `ls`.
 
@@ -656,7 +671,6 @@ continue. The skill tells agents exactly that. See [Safety rules](#safety-rules)
 ## Roadmap
 
 - A warning after any action when the app has died (instead of the agent noticing a home screen)
-- Long press and multi-finger gestures
 - Verified Xcode 27 input
 - An MCP server for agents without a shell
 
