@@ -1,0 +1,2277 @@
+{
+  "setup": {
+    "simdrive": [
+      {
+        "ms": 193.442917,
+        "bytes": 40,
+        "calls": 1,
+        "err": null
+      }
+    ],
+    "appium": [
+      {
+        "ms": 17374.821791000024,
+        "bytes": 578,
+        "calls": 1,
+        "err": null
+      }
+    ],
+    "mcp": [
+      {
+        "ms": 23143.295459000045,
+        "bytes": 6954,
+        "calls": 3,
+        "err": null
+      }
+    ]
+  },
+  "ls (read screen)": {
+    "simdrive": [
+      {
+        "ms": 3571.9473750000006,
+        "bytes": 1618,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 2291.487291999998,
+        "bytes": 2149,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1835.586334000007,
+        "bytes": 2108,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1090.6085420000018,
+        "bytes": 2108,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 2082.4429170000076,
+        "bytes": 2108,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1187.6400840000133,
+        "bytes": 2108,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 945.0757919999887,
+        "bytes": 2108,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1561.8228750000126,
+        "bytes": 2108,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1940.9150419999496,
+        "bytes": 2108,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 998.2522079999908,
+        "bytes": 2108,
+        "calls": 1,
+        "err": null
+      }
+    ],
+    "appium": [
+      {
+        "ms": 906.9622920000111,
+        "bytes": 41734,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 940.5876660000067,
+        "bytes": 41734,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 2306.8378749999683,
+        "bytes": 41734,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 784.7437500000233,
+        "bytes": 41734,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1019.7195419999771,
+        "bytes": 41734,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 922.169916999992,
+        "bytes": 41734,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 788.8092920000199,
+        "bytes": 41734,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1023.4586660000496,
+        "bytes": 41734,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 838.9115000000456,
+        "bytes": 41734,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 726.8598340000026,
+        "bytes": 41734,
+        "calls": 1,
+        "err": null
+      }
+    ],
+    "mcp": [
+      {
+        "ms": 827.2386669999687,
+        "bytes": 103749,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 907.7047089999542,
+        "bytes": 103750,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 2823.256167000043,
+        "bytes": 103750,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1286.9745419999817,
+        "bytes": 103750,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1131.9446659999667,
+        "bytes": 103750,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1334.888666999992,
+        "bytes": 103750,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 864.220708000008,
+        "bytes": 103751,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1405.66254200018,
+        "bytes": 103751,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 2504.336499999976,
+        "bytes": 103751,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 986.110667000059,
+        "bytes": 103751,
+        "calls": 1,
+        "err": null
+      }
+    ]
+  },
+  "tap (by label)": {
+    "simdrive": [
+      {
+        "ms": 2778.608916000001,
+        "bytes": 0,
+        "calls": 0,
+        "err": "Command failed: node bin/simdrive.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 tap General\nsimdrive: not "
+      },
+      {
+        "ms": 2046.237792,
+        "bytes": 17,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1844.1959999999963,
+        "bytes": 17,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1743.819709000003,
+        "bytes": 17,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 2400.5410830000183,
+        "bytes": 17,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1664.5920000000042,
+        "bytes": 17,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1805.377833000006,
+        "bytes": 17,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1964.4362919999985,
+        "bytes": 17,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 2120.9189160000533,
+        "bytes": 17,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1711.943957999989,
+        "bytes": 17,
+        "calls": 1,
+        "err": null
+      }
+    ],
+    "appium": [
+      {
+        "ms": 1517.6372919999994,
+        "bytes": 151,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 1531.5047919999924,
+        "bytes": 151,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 1650.4279999999562,
+        "bytes": 151,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 1506.9274169999408,
+        "bytes": 151,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 1510.7982090000296,
+        "bytes": 151,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 1478.863000000012,
+        "bytes": 151,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 1493.3528340000194,
+        "bytes": 151,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 1526.4592910000356,
+        "bytes": 151,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 1509.4271250000456,
+        "bytes": 151,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 1469.3364170000423,
+        "bytes": 151,
+        "calls": 2,
+        "err": null
+      }
+    ],
+    "mcp": [
+      {
+        "ms": 1470.5826249999227,
+        "bytes": 377,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 1426.7566670000087,
+        "bytes": 379,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 1573.3547920000274,
+        "bytes": 379,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 1656.7360830000835,
+        "bytes": 379,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 1723.7157089998946,
+        "bytes": 379,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 1603.7928329999559,
+        "bytes": 379,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 1481.5376249998808,
+        "bytes": 381,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 1678.4123749998398,
+        "bytes": 381,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 1762.1762500000186,
+        "bytes": 381,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 1662.760624999879,
+        "bytes": 381,
+        "calls": 2,
+        "err": null
+      }
+    ]
+  },
+  "back": {
+    "simdrive": [
+      {
+        "ms": 338.17816700000003,
+        "bytes": 0,
+        "calls": 0,
+        "err": "Command failed: node bin/simdrive.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 back\nsimdrive: no navigati"
+      },
+      {
+        "ms": 1076.820832999998,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1338.4392079999961,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1055.754958000005,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1494.012791999994,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1083.4559169999848,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1190.6916250000068,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1086.5477499999688,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1105.6428329999908,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1063.9573749999981,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      }
+    ],
+    "appium": [
+      {
+        "ms": 1125.4629590000259,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1143.6630420000292,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1172.468125000014,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1174.6298749999842,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1147.7989170000656,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1140.6148749999702,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1121.8630419999827,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1143.564458000008,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1208.8534169999184,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1177.6057910000673,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      }
+    ],
+    "mcp": [
+      {
+        "ms": 1065.314458000008,
+        "bytes": 108,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1099.5043749999022,
+        "bytes": 109,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1167.6080000000075,
+        "bytes": 109,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1196.5335419999901,
+        "bytes": 109,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1278.7897499999963,
+        "bytes": 109,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1183.7062079999596,
+        "bytes": 109,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1202.137459000107,
+        "bytes": 110,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1134.2035419999156,
+        "bytes": 110,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1187.3781250000466,
+        "bytes": 110,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1105.3950000000186,
+        "bytes": 110,
+        "calls": 1,
+        "err": null
+      }
+    ]
+  },
+  "tapxy": {
+    "simdrive": [
+      {
+        "ms": 722.8034580000003,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1367.6920000000027,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1420.8974170000001,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1481.2122909999744,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1378.28125,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1370.0491249999905,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1397.0727079999924,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1728.7479999999632,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1399.2127920000348,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1538.4795419999864,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      }
+    ],
+    "appium": [
+      {
+        "ms": 1028.391833999951,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1023.1257500000065,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1330.8463749999646,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1056.5339590000222,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1038.5801249999786,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1025.2986659999005,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1027.7062089999672,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1056.5732919999864,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1089.8466250000056,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1054.2045830000425,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      }
+    ],
+    "mcp": [
+      {
+        "ms": 1138.6949160000077,
+        "bytes": 119,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1116.0272079999559,
+        "bytes": 120,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1119.6735000000335,
+        "bytes": 120,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1137.0033749999711,
+        "bytes": 120,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1155.5227500000037,
+        "bytes": 120,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1178.2244169998448,
+        "bytes": 120,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1142.7095830000471,
+        "bytes": 121,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1159.029041999951,
+        "bytes": 121,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1155.2103750000242,
+        "bytes": 121,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1135.670374999987,
+        "bytes": 121,
+        "calls": 1,
+        "err": null
+      }
+    ]
+  },
+  "swipe": {
+    "simdrive": [
+      {
+        "ms": 1616.604792000002,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 2057.6082499999975,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 2348.6742079999967,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 2074.0117080000055,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 2045.7441249999974,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 2258.699166000006,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 2084.0332090000156,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 2112.6715419999673,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 2124.0152909999597,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 2121.9749159999774,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      }
+    ],
+    "appium": [
+      {
+        "ms": 1525.3737090000068,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1576.9060000000172,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1556.1053750000428,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1565.9241250000196,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1598.876540999976,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1648.8068330000388,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1549.3815409999806,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1579.942458000034,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1539.3830830000807,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1545.939624999999,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      }
+    ],
+    "mcp": [
+      {
+        "ms": 1958.625291000004,
+        "bytes": 139,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1942.4689580000704,
+        "bytes": 139,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1959.84137499996,
+        "bytes": 139,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1950.9473330000183,
+        "bytes": 139,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1964.3510419999948,
+        "bytes": 139,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1932.0510419998318,
+        "bytes": 139,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 2120.5851660000626,
+        "bytes": 140,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1911.4895829998422,
+        "bytes": 140,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 2069.3460830000695,
+        "bytes": 140,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 2043.8814999999013,
+        "bytes": 140,
+        "calls": 1,
+        "err": null
+      }
+    ]
+  },
+  "fill": {
+    "simdrive": [
+      {
+        "ms": 4495.746041999999,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 3972.810792000004,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 4245.876583000005,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 3455.9604589999944,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 3655.6121660000063,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 3730.128792000003,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 3942.1186670000316,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 3394.500874999969,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 3538.3907089999993,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 3286.886832999997,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      }
+    ],
+    "appium": [
+      {
+        "ms": 2351.165417000011,
+        "bytes": 165,
+        "calls": 3,
+        "err": null
+      },
+      {
+        "ms": 2306.361542000028,
+        "bytes": 165,
+        "calls": 3,
+        "err": null
+      },
+      {
+        "ms": 2523.223584000021,
+        "bytes": 165,
+        "calls": 3,
+        "err": null
+      },
+      {
+        "ms": 2619.0711250000168,
+        "bytes": 165,
+        "calls": 3,
+        "err": null
+      },
+      {
+        "ms": 2826.7308750000084,
+        "bytes": 165,
+        "calls": 3,
+        "err": null
+      },
+      {
+        "ms": 2387.7723329999717,
+        "bytes": 165,
+        "calls": 3,
+        "err": null
+      },
+      {
+        "ms": 2290.2084160000086,
+        "bytes": 165,
+        "calls": 3,
+        "err": null
+      },
+      {
+        "ms": 2193.684125000029,
+        "bytes": 165,
+        "calls": 3,
+        "err": null
+      },
+      {
+        "ms": 2213.7210830000695,
+        "bytes": 165,
+        "calls": 3,
+        "err": null
+      },
+      {
+        "ms": 2263.8235829999903,
+        "bytes": 165,
+        "calls": 3,
+        "err": null
+      }
+    ],
+    "mcp": [
+      {
+        "ms": 2232.943416000111,
+        "bytes": 437,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 2094.526291999966,
+        "bytes": 437,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 2810.3443330000155,
+        "bytes": 437,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 2703.45395799994,
+        "bytes": 437,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 3217.7547920000507,
+        "bytes": 437,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 2461.431707999902,
+        "bytes": 437,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 2266.41420800006,
+        "bytes": 439,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 2971.210749999853,
+        "bytes": 439,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 2561.2017079999205,
+        "bytes": 439,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 2114.5722079998814,
+        "bytes": 439,
+        "calls": 2,
+        "err": null
+      }
+    ]
+  },
+  "type": {
+    "simdrive": [
+      {
+        "ms": 485.13945799999783,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 505.0502919999999,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 544.9316249999974,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 653.0444160000188,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 502.82587500000955,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1643.3660830000008,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 484.3295839999919,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 484.33391600003233,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 485.4101249999949,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 505.4272919999785,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      }
+    ],
+    "appium": [
+      {
+        "ms": 572.0256670000381,
+        "bytes": 151,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 665.9349579999689,
+        "bytes": 151,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 607.6502090001013,
+        "bytes": 151,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 602.8421249999665,
+        "bytes": 151,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 609.0631669999566,
+        "bytes": 151,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 602.3324999999022,
+        "bytes": 151,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 594.3002080000006,
+        "bytes": 151,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 597.246083999984,
+        "bytes": 151,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 595.2876659999602,
+        "bytes": 151,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 603.4911670000292,
+        "bytes": 151,
+        "calls": 2,
+        "err": null
+      }
+    ],
+    "mcp": [
+      {
+        "ms": 554.5344579999801,
+        "bytes": 361,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 553.5082079999847,
+        "bytes": 361,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 559.9902090000687,
+        "bytes": 361,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 610.4273339998908,
+        "bytes": 361,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 555.5998750000726,
+        "bytes": 361,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 582.7669579999056,
+        "bytes": 363,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 571.0330419999082,
+        "bytes": 363,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 583.891082999995,
+        "bytes": 363,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 590.1297079999931,
+        "bytes": 363,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 583.767875000136,
+        "bytes": 363,
+        "calls": 2,
+        "err": null
+      }
+    ]
+  },
+  "hidekb": {
+    "simdrive": [
+      {
+        "ms": 3837.0155000000013,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 3685.5728329999984,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 3982.1290829999925,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 3857.117540999985,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 4247.399750000011,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 3972.590125000017,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 3992.5243330000085,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 3800.9051250000484,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 3863.094334000023,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 3976.5172909999965,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      }
+    ],
+    "appium": [
+      {
+        "ms": 3717.676499999943,
+        "bytes": 0,
+        "calls": 0,
+        "err": "POST /session/21296505-fcad-4f2e-a85f-cc214c47ac08/execute/sync: {\"value\":{\"error\":\"invalid element state\",\"message\":\"Error Domain=com.facebook.WebDriverAgent C"
+      },
+      {
+        "ms": 3717.0724169999594,
+        "bytes": 0,
+        "calls": 0,
+        "err": "POST /session/21296505-fcad-4f2e-a85f-cc214c47ac08/execute/sync: {\"value\":{\"error\":\"invalid element state\",\"message\":\"Error Domain=com.facebook.WebDriverAgent C"
+      },
+      {
+        "ms": 3876.985667000059,
+        "bytes": 0,
+        "calls": 0,
+        "err": "POST /session/21296505-fcad-4f2e-a85f-cc214c47ac08/execute/sync: {\"value\":{\"error\":\"invalid element state\",\"message\":\"Error Domain=com.facebook.WebDriverAgent C"
+      },
+      {
+        "ms": 3653.0261250000913,
+        "bytes": 0,
+        "calls": 0,
+        "err": "POST /session/21296505-fcad-4f2e-a85f-cc214c47ac08/execute/sync: {\"value\":{\"error\":\"invalid element state\",\"message\":\"Error Domain=com.facebook.WebDriverAgent C"
+      },
+      {
+        "ms": 3537.98675000004,
+        "bytes": 0,
+        "calls": 0,
+        "err": "POST /session/21296505-fcad-4f2e-a85f-cc214c47ac08/execute/sync: {\"value\":{\"error\":\"invalid element state\",\"message\":\"Error Domain=com.facebook.WebDriverAgent C"
+      },
+      {
+        "ms": 3656.8462079999736,
+        "bytes": 0,
+        "calls": 0,
+        "err": "POST /session/21296505-fcad-4f2e-a85f-cc214c47ac08/execute/sync: {\"value\":{\"error\":\"invalid element state\",\"message\":\"Error Domain=com.facebook.WebDriverAgent C"
+      },
+      {
+        "ms": 3747.741625000024,
+        "bytes": 0,
+        "calls": 0,
+        "err": "POST /session/21296505-fcad-4f2e-a85f-cc214c47ac08/execute/sync: {\"value\":{\"error\":\"invalid element state\",\"message\":\"Error Domain=com.facebook.WebDriverAgent C"
+      },
+      {
+        "ms": 3455.0111250000773,
+        "bytes": 0,
+        "calls": 0,
+        "err": "POST /session/21296505-fcad-4f2e-a85f-cc214c47ac08/execute/sync: {\"value\":{\"error\":\"invalid element state\",\"message\":\"Error Domain=com.facebook.WebDriverAgent C"
+      },
+      {
+        "ms": 3648.6638329999987,
+        "bytes": 0,
+        "calls": 0,
+        "err": "POST /session/21296505-fcad-4f2e-a85f-cc214c47ac08/execute/sync: {\"value\":{\"error\":\"invalid element state\",\"message\":\"Error Domain=com.facebook.WebDriverAgent C"
+      },
+      {
+        "ms": 3594.055042000022,
+        "bytes": 0,
+        "calls": 0,
+        "err": "POST /session/21296505-fcad-4f2e-a85f-cc214c47ac08/execute/sync: {\"value\":{\"error\":\"invalid element state\",\"message\":\"Error Domain=com.facebook.WebDriverAgent C"
+      }
+    ],
+    "mcp": [
+      {
+        "ms": 3640.7432909999043,
+        "bytes": 0,
+        "calls": 0,
+        "err": "appium_mobile_keyboard: Failed to hide keyboard. Error: Error Domain=com.facebook.WebDriverAgent Code=1 \"Did not know how to dismiss the keyboard. Try to dismis"
+      },
+      {
+        "ms": 6960.563165999949,
+        "bytes": 0,
+        "calls": 0,
+        "err": "appium_mobile_keyboard: Failed to hide keyboard. Error: Error Domain=com.facebook.WebDriverAgent Code=1 \"Did not know how to dismiss the keyboard. Try to dismis"
+      },
+      {
+        "ms": 3927.750999999931,
+        "bytes": 0,
+        "calls": 0,
+        "err": "appium_mobile_keyboard: Failed to hide keyboard. Error: Error Domain=com.facebook.WebDriverAgent Code=1 \"Did not know how to dismiss the keyboard. Try to dismis"
+      },
+      {
+        "ms": 3738.97516599996,
+        "bytes": 0,
+        "calls": 0,
+        "err": "appium_mobile_keyboard: Failed to hide keyboard. Error: Error Domain=com.facebook.WebDriverAgent Code=1 \"Did not know how to dismiss the keyboard. Try to dismis"
+      },
+      {
+        "ms": 3404.8212919998914,
+        "bytes": 0,
+        "calls": 0,
+        "err": "appium_mobile_keyboard: Failed to hide keyboard. Error: Error Domain=com.facebook.WebDriverAgent Code=1 \"Did not know how to dismiss the keyboard. Try to dismis"
+      },
+      {
+        "ms": 3531.639582999982,
+        "bytes": 0,
+        "calls": 0,
+        "err": "appium_mobile_keyboard: Failed to hide keyboard. Error: Error Domain=com.facebook.WebDriverAgent Code=1 \"Did not know how to dismiss the keyboard. Try to dismis"
+      },
+      {
+        "ms": 3815.6593750000466,
+        "bytes": 0,
+        "calls": 0,
+        "err": "appium_mobile_keyboard: Failed to hide keyboard. Error: Error Domain=com.facebook.WebDriverAgent Code=1 \"Did not know how to dismiss the keyboard. Try to dismis"
+      },
+      {
+        "ms": 3442.482917000074,
+        "bytes": 0,
+        "calls": 0,
+        "err": "appium_mobile_keyboard: Failed to hide keyboard. Error: Error Domain=com.facebook.WebDriverAgent Code=1 \"Did not know how to dismiss the keyboard. Try to dismis"
+      },
+      {
+        "ms": 3735.709625000134,
+        "bytes": 0,
+        "calls": 0,
+        "err": "appium_mobile_keyboard: Failed to hide keyboard. Error: Error Domain=com.facebook.WebDriverAgent Code=1 \"Did not know how to dismiss the keyboard. Try to dismis"
+      },
+      {
+        "ms": 3395.533000000054,
+        "bytes": 0,
+        "calls": 0,
+        "err": "appium_mobile_keyboard: Failed to hide keyboard. Error: Error Domain=com.facebook.WebDriverAgent Code=1 \"Did not know how to dismiss the keyboard. Try to dismis"
+      }
+    ]
+  },
+  "shot (screenshot)": {
+    "simdrive": [
+      {
+        "ms": 722.6441669999986,
+        "bytes": 92,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 420.2363340000011,
+        "bytes": 92,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 727.932249999998,
+        "bytes": 92,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 449.22762499999953,
+        "bytes": 92,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 371.8286670000234,
+        "bytes": 92,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 385.5408330000064,
+        "bytes": 92,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 379.219625000027,
+        "bytes": 92,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 399.5698750000447,
+        "bytes": 92,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 736.5699579999782,
+        "bytes": 92,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 401.56187500001397,
+        "bytes": 92,
+        "calls": 1,
+        "err": null
+      }
+    ],
+    "appium": [
+      {
+        "ms": 124.74241599999368,
+        "bytes": 226500,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 143.07125000003725,
+        "bytes": 226572,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 135.34191600000486,
+        "bytes": 225824,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 130.38279200007673,
+        "bytes": 225960,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 107.80212499992922,
+        "bytes": 226788,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 138.3534590000054,
+        "bytes": 226728,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 151.27204199996777,
+        "bytes": 226528,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 121.87316700001247,
+        "bytes": 225380,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 117.84995799988974,
+        "bytes": 224152,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 130.37120799999684,
+        "bytes": 224100,
+        "calls": 1,
+        "err": null
+      }
+    ],
+    "mcp": [
+      {
+        "ms": 117.3106249999255,
+        "bytes": 229513,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 249.73749999993015,
+        "bytes": 230661,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 157.47791700006928,
+        "bytes": 229929,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 155.71145900001284,
+        "bytes": 229929,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 139.45020800002385,
+        "bytes": 230553,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 184.78462500008754,
+        "bytes": 230962,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 183.64512500003912,
+        "bytes": 230874,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 172.59224999998696,
+        "bytes": 230010,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 181.13804200012237,
+        "bytes": 230886,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 139.22862499998882,
+        "bytes": 230806,
+        "calls": 1,
+        "err": null
+      }
+    ]
+  },
+  "bio": {
+    "simdrive": [
+      {
+        "ms": 565.3020840000027,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 557.1264169999922,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 558.8902079999971,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 537.4639579999784,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 571.2276249999995,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 524.8644579999964,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 589.1759999999776,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 525.1698329999927,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 563.909083000035,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 536.5882920000004,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      }
+    ],
+    "appium": [
+      {
+        "ms": 395.44983399997,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 466.5187080000178,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 433.66587500006426,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 425.06312499998603,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 389.8335000000661,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 449.6762909999816,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 508.7540410000365,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 474.203375000041,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 405.20491600001696,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 411.186832999927,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      }
+    ]
+  },
+  "open (deep link)": {
+    "simdrive": [
+      {
+        "ms": 571.9603330000027,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 653.3932919999934,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1348.3228329999984,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 494.59720799999195,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 467.3050419999927,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 459.17399999999907,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 776.0035000000498,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 451.9686249999795,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 611.59137499996,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 459.125,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      }
+    ],
+    "appium": [
+      {
+        "ms": 207.23441699997056,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 213.6695409999811,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 305.09404200001154,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 209.66929099999834,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 210.58520799991675,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 214.35908299998846,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 311.35900000005495,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 208.626333000022,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 209.68791600002442,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 208.23641699994914,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      }
+    ],
+    "mcp": [
+      {
+        "ms": 210.9189170000609,
+        "bytes": 157,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 552.0368330000201,
+        "bytes": 157,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 333.36945800005924,
+        "bytes": 157,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 334.6978329999838,
+        "bytes": 157,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 222.2463749999879,
+        "bytes": 157,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 434.59375,
+        "bytes": 158,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 441.1217910000123,
+        "bytes": 158,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 314.5885419999249,
+        "bytes": 158,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 225.1995000001043,
+        "bytes": 158,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 215.87041700002737,
+        "bytes": 158,
+        "calls": 1,
+        "err": null
+      }
+    ]
+  },
+  "launch (restart app)": {
+    "simdrive": [
+      {
+        "ms": 542.427208000001,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 597.7330000000075,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 3944.097458000004,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 513.1418330000015,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 709.7897079999966,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 417.5834160000086,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1169.8831660000142,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 603.1405830000294,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 405.47683400003007,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 484.67125000001397,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      }
+    ],
+    "appium": [
+      {
+        "ms": 4099.387999999977,
+        "bytes": 28,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 5592.052958999993,
+        "bytes": 28,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 5993.053707999992,
+        "bytes": 28,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 4035.9919579999987,
+        "bytes": 28,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 4000.2044999999925,
+        "bytes": 28,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 4418.971625000006,
+        "bytes": 28,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 7358.462375000003,
+        "bytes": 28,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 4545.277250000043,
+        "bytes": 28,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 3738.1836250000633,
+        "bytes": 28,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 3677.265708999941,
+        "bytes": 28,
+        "calls": 2,
+        "err": null
+      }
+    ],
+    "mcp": [
+      {
+        "ms": 3647.209750000038,
+        "bytes": 221,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 5924.545416000066,
+        "bytes": 221,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 4640.606040999992,
+        "bytes": 221,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 4587.983082999941,
+        "bytes": 221,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 4698.882750000106,
+        "bytes": 221,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 4963.045708999969,
+        "bytes": 223,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 5314.8160830000415,
+        "bytes": 223,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 10145.135624999879,
+        "bytes": 223,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 4916.835333999945,
+        "bytes": 223,
+        "calls": 2,
+        "err": null
+      },
+      {
+        "ms": 4041.8406249999534,
+        "bytes": 223,
+        "calls": 2,
+        "err": null
+      }
+    ]
+  },
+  "burst 5s (frames)": {
+    "simdrive": [
+      {
+        "ms": 5720.521999999997,
+        "bytes": 117,
+        "calls": 1,
+        "err": null,
+        "frames": 9
+      }
+    ],
+    "appium": [
+      {
+        "ms": 5042.87725000002,
+        "bytes": 26737148,
+        "calls": 59,
+        "err": null,
+        "frames": 59
+      }
+    ],
+    "mcp": [
+      {
+        "ms": 5047.458707999904,
+        "bytes": 27140590,
+        "calls": 59,
+        "err": null,
+        "frames": 59
+      }
+    ]
+  },
+  "teardown": {
+    "simdrive": [
+      {
+        "ms": 488.11912500002654,
+        "bytes": 23,
+        "calls": 1,
+        "err": null
+      }
+    ],
+    "appium": [
+      {
+        "ms": 153.66983300005086,
+        "bytes": 14,
+        "calls": 1,
+        "err": null
+      }
+    ],
+    "mcp": [
+      {
+        "ms": 36.67295799986459,
+        "bytes": 111,
+        "calls": 1,
+        "err": null
+      }
+    ]
+  }
+}
