@@ -22,9 +22,7 @@ Read the screen, tap, type, swipe, screenshot, and read logs and crashes. No App
 thing and prints a few lines of plain text:
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/lakpriya1s/simwright/main/assets/simwright-terminal.svg" alt="A simwright session: launch Settings and list the screen, tap Network & internet and list the new screen, take a screenshot, show the app in front" width="600">
-  &nbsp;
-  <img src="https://raw.githubusercontent.com/lakpriya1s/simwright/main/assets/simwright-phone.png" alt="The Android emulator showing the Network & internet screen that simwright opened" width="160">
+  <img src="https://raw.githubusercontent.com/lakpriya1s/simwright/main/assets/simwright-demo.gif" alt="An agent drives a demo app with simwright: it reads the sign-in screen as a list of labelled elements, taps, fills in an email address, and scrolls and zooms a map, while the phone beside the terminal reacts to each command" width="760">
 </p>
 
 That makes it a good fit for an AI coding agent (Claude Code, Cursor, Codex, opencode, …) that needs to **see and
