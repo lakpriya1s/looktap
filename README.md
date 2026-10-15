@@ -1,9 +1,6 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./assets/simwright-logo-dark.svg">
-  <img src="./assets/simwright-logo-light.svg" alt="simwright — hands on the simulator, for AI agents" width="560">
-</picture>
+<img src="./assets/simwright-logo.svg" alt="simwright — hands on the simulator, for AI agents" width="560">
 
 **Let AI agents drive an iOS simulator or Android emulator from the shell**<br>
 Read the screen, tap, type, swipe, screenshot, and read logs and crashes. No Appium, no WebDriverAgent, nothing installed on the device.
