@@ -26,6 +26,7 @@
 #import <IOSurface/IOSurface.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import <dlfcn.h>
+#import <libproc.h>
 #import <objc/message.h>
 #import <mach/mach_time.h>
 #import <sys/socket.h>
@@ -719,7 +720,10 @@ static void handle(int fd, NSDictionary *r) {
     // The frontmost app's pid (0 when none, e.g. the home screen): the CLI maps it to a bundle id.
     id app = [translator frontmostApplicationWithDisplayId:0 bridgeDelegateToken:axToken];
     int pid = [app respondsToSelector:@selector(pid)] ? [[app valueForKey:@"pid"] intValue] : 0;
-    return reply(fd, @{@"ok" : @YES, @"pid" : @(pid)}, nil);
+    // Simulator apps are host processes: their executable path names the .app (and so the bundle id).
+    char path[PROC_PIDPATHINFO_MAXSIZE] = {0};
+    if (pid > 0) proc_pidpath(pid, path, sizeof path);
+    return reply(fd, @{@"ok" : @YES, @"pid" : @(pid), @"path" : @(path)}, nil);
   }
   if ([op isEqualToString:@"keyboard"]) return reply(fd, @{@"ok" : @YES, @"shown" : @(keyboardShown())}, nil);
   if ([op isEqualToString:@"shot"]) {

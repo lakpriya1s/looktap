@@ -9,7 +9,7 @@ import { Ios, bootedSimulators } from '../lib/ios.js';
 import { clock, grepper, startOf, tail, whichApp } from '../lib/logs.js';
 import { ACTIONS as PERMISSION_ACTIONS } from '../lib/permissions.js';
 import { coordinates, pushPayload, textSize } from '../lib/conditions.js';
-import { center, coveringAt, formatRow, isRef, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, visibleRows, waitFor } from '../lib/screen.js';
+import { appGone, center, coveringAt, formatRow, isRef, lastFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, visibleRows, waitFor } from '../lib/screen.js';
 import { UsageError, has, loadConfig, pickMatch, run, shotPath, sleep, splitScript, waitFor as retry } from '../lib/util.js';
 
 const SKILL = new URL('../skills/simwright/SKILL.md', import.meta.url);
@@ -243,7 +243,10 @@ async function list(d, opts, snap) {
   }
   // Reading order. Content found by probing (iOS web pages) arrives in grid order, not document order.
   const rows = visibleRows(snap.elements, { all }).sort((a, b) => a.y - b.y || a.x - b.x);
-  saveRefs(deviceId(d), rows);
+  // An app that died since the last look (after a command returned) is named here, before its absence confuses.
+  const front = await d.frontApp().catch(() => null);
+  if (!opts.checked) warnIfGone(await appGone(d, lastFront(deviceId(d))));
+  saveRefs(deviceId(d), rows, front);
   if (opts.flags.has('json'))
     return console.log(JSON.stringify({ screen: snap.screen, elements: rows.map((e, i) => ({ ref: `@${i + 1}`, ...e })) }));
   if (!rows.length) console.error('simwright: no labelled elements on screen (still loading, or the app sets no accessibility labels)');
@@ -257,13 +260,35 @@ async function byRef(d, ref) {
   return resolveRef(deviceId(d), ref, (await d.snapshot()).elements);
 }
 
+/** Actions after which a vanished app is worth a warning (launch replaces the app on purpose). */
+const WATCHED = new Set([...ACTIONS].filter((c) => c !== 'launch'));
+
+/** Until `app` is the app in front (or `ms` pass). */
+async function waitForApp(d, app, ms) {
+  const until = Date.now() + ms;
+  while (Date.now() < until) {
+    const f = await d.frontApp().catch(() => null);
+    if (f && d.appId(f) === app) return;
+    await sleep(150);
+  }
+}
+
+function warnIfGone(app) {
+  if (app) console.error(`simwright: warning: ${app} is no longer running — it crashed or was killed. See: simwright crashes ${app}`);
+}
+
 async function dispatch(d, cmd, args, opts) {
   const all = opts.flags.has('all');
   const look = opts.flags.has('ls') && ACTIONS.has(cmd);
   // Remember the screen before acting, so --ls waits for the action to show before printing.
   const before = look ? await d.snapshot({ all }) : null;
+  const app = WATCHED.has(cmd) ? await d.frontApp().catch(() => null) : null;
   await act(d, cmd, args, opts);
-  if (look) await list(d, opts, await settle(d, { all, before, changeTimeout: cmd === 'launch' || cmd === 'open' ? 6000 : 1500 }));
+  // A cold start can take seconds, and the old screen may still be animating: wait for the app itself.
+  if (look && cmd === 'launch') await waitForApp(d, args[0] || d.app, 6000);
+  const after = look ? await settle(d, { all, before, changeTimeout: cmd === 'launch' || cmd === 'open' ? 6000 : 1500 }) : null;
+  if (app) warnIfGone(await appGone(d, app));
+  if (look) await list(d, { ...opts, checked: Boolean(app) }, after);
 }
 
 /**

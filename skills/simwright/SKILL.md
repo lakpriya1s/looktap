@@ -77,7 +77,9 @@ simwright app                  # which app is in front, and its pid
 
 - **Each `logs` shows only what's new**, so run it right after the step that misbehaved. You don't have to
   remember timestamps.
-- **The app vanished** (`ls` shows the home screen or another app): run `crashes`.
+- **A warning that the app "is no longer running"** means it crashed or was killed. It comes after an
+  action or at the next `ls`. Run the `crashes` command it names. On iOS, run it again a minute later for the
+  full report.
   - On Android, `LOW_MEMORY` means the system killed the app. That's not a bug in the app; relaunch it.
 - The app defaults to `--app`/config, else the one in front. Pass the id when the app is gone: `simwright crashes com.example`.
 - Log lines can contain tokens or personal data. Quote only the lines that matter.

@@ -69,7 +69,7 @@ It's just as handy by hand, or in a shell script for screenshot sweeps and bug r
 | 🧹 | **App state for repros.** `install` a build, `reset` an app to a fresh install, `uninstall`, and `permission grant\|revoke\|reset camera\|location\|photos\|…`, with the same names on both platforms |
 | 🤖 | **Built for agents.** `--ls` on any action, `run` to batch steps, `--json`, and a [Claude Code skill](#for-ai-agents) you install with one command |
 | 🧩 | **Nothing to install on the device**, no Appium server, no WebDriverAgent, no npm dependencies. The helpers start on first use |
-| ⚠️ | **Honest failures.** A tap that's covered by a toast prints a warning, a stale `@ref` is an error rather than a wrong tap, and a system prompt over the app is reported as one |
+| ⚠️ | **Honest failures.** A tap that's covered by a toast prints a warning, a stale `@ref` is an error rather than a wrong tap, a system prompt over the app is reported as one, and **an app that dies is named the moment simwright notices** |
 
 ## simwright vs Appium
 
@@ -298,6 +298,18 @@ simwright app --app com.example           # is it still running?
 simwright crashes
 # com.example (pid 14001) exited at 14:56:06.724 while in the background: LOW_MEMORY — killed by the system to free memory, not a crash
 ```
+
+**When the app dies, simwright says so.** After an action, and at the next `ls`, simwright checks whether the
+app that was in front still has its process. If not, it prints:
+
+```
+simwright: warning: com.example is no longer running — it crashed or was killed. See: simwright crashes com.example
+```
+
+- It also catches an Android app that crashed and was restarted at once, because the check is by process id.
+- Switching to another app, going home, or uninstalling doesn't trigger it.
+- On iOS the crash report is written up to a minute after the crash. Until then, `crashes` already shows the
+  signal (e.g. `SIGTRAP`) and says the full report is coming.
 
 **Each `logs` call starts where the previous one ended**, so a loop of *act → `logs`* only ever shows what's new.
 `--since 5m` sets a fixed window instead.

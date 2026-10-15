@@ -69,3 +69,16 @@ test('summariseIps names the exception, the reason and the crashed frames', () =
   assert.match(text, /Demo\s+\+4096/);
   assert.match(text, /report: \/tmp\/Demo.ips$/);
 });
+
+test('iOS exits: signals from runningboardd, deliberate stops left out', async () => {
+  const { parseExits: iosExits } = await import('../lib/ios.js');
+  const out = [
+    '2026-10-15 17:20:15.136 Df runningboardd[23250:2b68a24] [com.apple.runningboard:ttl] [app<com.example((null))>:24814] termination reported by launchd (2, 5, 5)',
+    '2026-10-15 17:25:00.000 Df runningboardd[23250:2b68a24] [com.apple.runningboard:ttl] [app<com.example((null))>:24900] termination reported by launchd (2, 9, 9)',
+    '2026-10-15 17:26:00.000 Df runningboardd[23250:2b68a24] [com.apple.runningboard:ttl] [app<com.example((null))>:24901] termination reported by launchd (2, 11, 11)',
+  ].join('\n');
+  const found = iosExits(out, 'com.example', 0);
+  assert.equal(found.length, 2);
+  assert.match(found[0].text, /com.example \(pid 24814\) crashed at 17:20:15.136 — SIGTRAP/);
+  assert.match(found[1].text, /SIGSEGV/);
+});

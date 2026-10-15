@@ -162,6 +162,14 @@ public final class Server {
             case "clear":
                 reply(out, ok().put("cleared", clear(req.optInt("wait", 1000))), null);
                 return;
+            case "front": {
+                // The active window's package: the app the user is looking at.
+                AccessibilityNodeInfo r = activeRoot();
+                CharSequence pkg = r == null ? null : r.getPackageName();
+                String p = pkg == null ? "" : pkg.toString();
+                reply(out, ok().put("package", p).put("pid", p.isEmpty() ? 0 : pidOf(p)), null);
+                return;
+            }
             case "keyboard":
                 reply(out, ok().put("shown", keyboardShown()), null);
                 return;
@@ -276,6 +284,40 @@ public final class Server {
         for (int i = 0; i < n.getChildCount(); i++) {
             AccessibilityNodeInfo c = n.getChild(i);
             if (c != null) walk(c, out, refresh);
+        }
+    }
+
+    static String cachedPackage = "";
+    static int cachedPid = 0;
+
+    /** The main process of `pkg` (its cmdline is the package name), from /proc; the last answer is checked first. */
+    static int pidOf(String pkg) {
+        if (pkg.equals(cachedPackage) && pkg.equals(cmdline(cachedPid))) return cachedPid;
+        java.io.File[] procs = new java.io.File("/proc").listFiles();
+        if (procs != null)
+            for (java.io.File f : procs) {
+                String name = f.getName();
+                if (name.isEmpty() || !Character.isDigit(name.charAt(0))) continue;
+                int pid = Integer.parseInt(name);
+                if (pkg.equals(cmdline(pid))) {
+                    cachedPackage = pkg;
+                    cachedPid = pid;
+                    return pid;
+                }
+            }
+        return 0;
+    }
+
+    static String cmdline(int pid) {
+        if (pid <= 0) return "";
+        try (java.io.FileInputStream in = new java.io.FileInputStream("/proc/" + pid + "/cmdline")) {
+            byte[] b = new byte[256];
+            int n = in.read(b);
+            int end = 0;
+            while (end < n && b[end] != 0) end++;
+            return new String(b, 0, end, "UTF-8");
+        } catch (Exception e) {
+            return "";
         }
     }
 
