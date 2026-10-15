@@ -54,3 +54,14 @@ test('waitFor never retries an ambiguous match or other errors', async () => {
   await assert.rejects(waitFor(async () => { n++; throw new UsageError('ambiguous'); }, 3000), /ambiguous/);
   assert.equal(n, 1);
 });
+
+test('splitScript splits steps on ; and newlines, honouring quotes and comments', async () => {
+  const { splitScript } = await import('../lib/util.js');
+  assert.deepEqual(splitScript(`tap General; fill "Search" 'wi fi;x'\n# note\nwait "A \\"b\\"" --gone`), [
+    ['tap', 'General'],
+    ['fill', 'Search', 'wi fi;x'],
+    ['wait', 'A "b"', '--gone'],
+  ]);
+  assert.deepEqual(splitScript('fill Name ""'), [['fill', 'Name', '']]);
+  assert.throws(() => splitScript('tap "oops'));
+});

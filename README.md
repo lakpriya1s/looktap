@@ -183,14 +183,15 @@ simdrive ls
 ```
 
 ```
-Button           16, 285 358x54  General
-Button           16, 339 358x54  Accessibility
-TextField        33, 773 324x38  Search  = Search
+@1   Button           16, 285 358x54  General
+@2   Button           16, 339 358x54  Accessibility
+@3   TextField        33, 773 324x38  Search  = Search
 ```
 
-Each `ls` row shows the element type, its **x,y** position, its **width×height**,
-and its **label**, plus `= value` for fields that hold text. The positions are
-in the same units that `tapxy` and `swipe` take.
+Each `ls` row shows a **ref** (`@1`), the element type, its **x,y** position,
+its **width×height**, and its **label**, plus `= value` for fields that hold
+text. The positions are in the same units that `tapxy` and `swipe` take.
+Unlabelled buttons are listed too, as `(no label)`, so they can be tapped by ref.
 
 ---
 
@@ -214,8 +215,13 @@ simdrive tap "Messages"               # no exact match → the one label startin
 simdrive tap "Wi"                     # matches two different labels → refuses
 # simdrive: "Wi" is ambiguous — matches 2 labels: "Wi-Fi", "Wi-Fi hotspot"
 simdrive tap --exact "Messages"       # exact only, no fuzzy fallback
-simdrive tapxy 205 874                # when an element has no label
+simdrive tap @7                       # row @7 of the last ls (unlabelled or duplicate labels)
+simdrive tapxy 205 874                # when ls doesn't list it at all
 ```
+
+A ref only works while its element is still where `ls` saw it. If the screen
+changed, `tap @7` fails ("no longer on screen — run: simdrive ls") rather than
+tapping something else.
 
 `tap` always prints what it actually hit. A fuzzy (prefix or contains) match is
 used only when it points at **one** label. If it could mean two things, simdrive
@@ -243,9 +249,18 @@ field at or below a matching label, clears it, and types. On
 Android it also presses Enter, because React Native fields only blur (and show
 validation) on Enter or a focus change. Back just hides the keyboard.
 
+### Wait instead of sleeping
+
+```bash
+simdrive wait "Welcome"               # until it's on screen (default up to 10 s; --wait 30)
+simdrive wait "Loading" --gone        # until it's gone
+```
+
 ### Scroll
 
 ```bash
+simdrive scrollto "Privacy & Security"   # swipe until it's fully on screen; fails at the end of the list
+simdrive scrollto "General" --up         # the other way
 simdrive swipe 200 700 200 250        # scroll down (finger moves up)
 simdrive swipe 200 250 200 700        # scroll up / pull to refresh
 simdrive swipe 200 700 200 250 800    # slower: 800 ms
@@ -346,13 +361,36 @@ simdrive -p android shot --plain account__detail  # black if the screen is secur
 
 ### Using it from an AI agent
 
-Each command is cheap, so an agent can work in a short loop:
+simdrive is built for agent loops: every command is one short shell call with a
+few lines of text back. Install the agent guide as a Claude Code skill:
 
-1. `simdrive ls` to see what's on screen.
-2. `simdrive tap "<label>"` (or `fill` / `swipe`) to act.
-3. `simdrive ls` again to check the result.
-4. `simdrive shot <name>` to keep evidence. The agent opens the PNG only when it
-   needs to *see* the screen.
+```bash
+simdrive skill --install       # → ~/.claude/skills/simdrive/SKILL.md  (simdrive skill prints it)
+```
+
+What makes agent sessions fast (an agent spends seconds per turn, so turns
+matter more than milliseconds):
+
+- **`--ls` on any action** prints the screen once it has settled, so acting and
+  looking take one turn instead of two:
+
+  ```bash
+  simdrive tap @3 --ls
+  simdrive fill "Email" a@b.co --ls
+  ```
+
+- **`wait`** instead of guessing `sleep`s.
+- **`run`** batches known steps into one call, in one process:
+
+  ```bash
+  simdrive run 'tap General; wait About; tap About --ls'
+  ```
+
+  It prints each step as `$ <step>`, stops at the first failure, and names it.
+  `simdrive run - < steps.txt` reads one step per line (`#` lines are comments).
+- **`ls --json`** gives structured output: `{screen, elements: [{ref, label, type, x, y, w, h, value}]}`.
+- **`shot --scale 0.5`** is a quarter of the image tokens when the agent needs to
+  *see* the screen. Usually `ls` is enough and the PNG is never opened.
 
 ---
 
@@ -364,19 +402,27 @@ Each command is cheap, so an agent can work in a short loop:
 | `simdrive doctor` | Checks Node, Xcode tools and the simulator frameworks the iOS helper needs, adb, and booted devices |
 | `simdrive setup` | Starts the helper (commands also start it on first use; no-op if it's running). **Android:** also `adb reverse tcp:8081` for Metro, and reports the density scale |
 | `simdrive teardown` | Stops the helper. **Android:** also removes `adb reverse` rules. Stop the Android helper before using Appium or `uiautomator`: only one UiAutomation connection can exist |
-| `simdrive ls [--all]` | Visible elements that have a label. `--all` also includes off-screen and unlabelled ones. If the screen is still loading (nothing labelled yet), waits up to `--wait` |
-| `simdrive tap <label> [--exact]` | Taps the element with that accessibility label. Exact match first. Otherwise a prefix, then contains, match, but only if it names a single label (ambiguous → exit 2). Prints what it tapped. `--exact` turns fuzzy matching off |
+| `simdrive ls [--all] [--json]` | Visible elements with a label, plus unlabelled buttons, each with an `@ref`. `--all` includes everything. `--json` prints `{screen, elements}`. If the screen is still loading (nothing labelled yet), waits up to `--wait` |
+| `simdrive wait <label\|@ref> [--gone]` | Waits until it's on screen (or with `--gone`, until it isn't). Exact label/identifier, else substring. Default up to 10 s, or `--wait`. Exits 2 on timeout |
+| `simdrive scrollto <label> [--up]` | Swipes until the element is fully on screen. Fails when a swipe no longer moves the screen, or after 15 swipes |
+| `simdrive tap <label\|@ref> [--exact]` | `@ref`: the row from the last `ls`, if it's still there. Otherwise taps the element with that accessibility label. Exact match first. Otherwise a prefix, then contains, match, but only if it names a single label (ambiguous → exit 2). Prints what it tapped. `--exact` turns fuzzy matching off |
 | `simdrive tapxy <x> <y>` | Taps a point (iOS points / Android dp, the units `ls` prints) |
 | `simdrive type <text>` | Types into the currently focused field |
-| `simdrive fill <label> <text> [--exact]` | Focuses the field at `<label>` (same matching as `tap`), clears it, types `<text>`. Empty text just clears |
+| `simdrive fill <label\|@ref> <text> [--exact]` | Focuses the field at `<label>` (same matching as `tap`) or `@ref`, clears it, types `<text>`. Empty text just clears |
 | `simdrive hidekb` | Dismisses the keyboard with its own Done/Return key, then checks. Prints `keyboard hidden` / `no keyboard`. **Exits 2 if the keyboard is still up** (e.g. an iOS search keyboard has no such key), never a false success |
 | `simdrive swipe <x1> <y1> <x2> <y2> [ms]` | Drags from one point to another. Default 150 ms on iOS, 300 ms on Android |
 | `simdrive back` | Android system Back. iOS: the navigation bar's back button |
 | `simdrive open <url>` | Opens a deep link (e.g. `myapp://…`) |
 | `simdrive launch [app-id]` | Restarts the app. Without an id, uses `--app` or the config file |
 | `simdrive bio match\|nomatch` | Simulates Face ID (iOS) or a fingerprint (Android) |
-| `simdrive shot <name> [--plain]` | Saves `<out>/<name>.png` and prints its path |
+| `simdrive shot <name> [--plain] [--scale f]` | Saves `<out>/<name>.png` and prints its path. `--scale 0.5` saves it at half size |
 | `simdrive burst <dir> <seconds>` | Saves a frame each time the screen changes, for `<seconds>`. Only distinct frames are kept |
+| `simdrive run '<cmd>; <cmd> …'` | Runs several commands in one process. `run -` reads them from stdin, one per line. Stops at the first failure and names the step |
+| `simdrive skill [--install]` | Prints the AI-agent guide. `--install` writes it to `~/.claude/skills/simdrive/SKILL.md` |
+
+**`--ls`** works on `tap`, `tapxy`, `fill`, `type`, `hidekb`, `swipe`, `back`,
+`open`, `launch`, `bio` and `scrollto`. After the action, it waits for the
+screen to stop changing (up to ~2.5 s), then prints it like `ls`.
 
 **Exit codes:** `0` means OK, `2` means a usage problem (bad arguments, element
 not found, no device, helper can't start), and `1` means anything else failed. A
@@ -430,6 +476,7 @@ then built-in default.
 |---|---|
 | `~/.simdrive/sim-<udid prefix>.sock`, `.log` | The iOS helper's socket and log |
 | `~/.simdrive/helpers.json` | Which local port reaches each Android device's helper |
+| `~/.simdrive/refs/<device>.json` | What `@1`…`@N` meant in the last `ls` on that device |
 | `/data/local/tmp/simdrive-server.jar` (device) | The Android helper |
 | `<out>/<name>.png` | Your screenshots |
 
@@ -483,10 +530,12 @@ simdrive/
 ├── lib/helper.js             JSON-lines socket protocol both helpers speak
 ├── lib/emulator.js           Android emulator gRPC (frames), no dependencies
 ├── lib/png.js                PNG encoder for raw emulator frames
-├── lib/util.js               process helpers, config lookup, label matching
+├── lib/screen.js             ls rows, @refs, wait, scrollto, settle (platform-neutral)
+├── lib/util.js               process helpers, config lookup, label matching, run-script parsing
 ├── lib/assets/               built helpers (simdrive-sim, simdrive-server.jar)
 ├── native/ios/               simdrive-sim source (Objective-C) + build.sh
 ├── native/android/           simdrive-server source (Java) + build.sh
+├── skills/simdrive/SKILL.md  the AI-agent guide (simdrive skill)
 └── test/                     node:test unit tests (no device needed)
 ```
 
@@ -506,8 +555,10 @@ Notes for contributors:
 - **Helpers are versioned by content hash.** After rebuilding one, the next
   command replaces the copy that's running. Commit the rebuilt file in
   `lib/assets/`.
-- **New commands** need a method on both `Ios` and `Android`, plus a line in the
-  `switch` in `bin/simdrive.js`, plus a row in this README. If one platform
+- **New commands** need a method on both `Ios` and `Android` (or, if they only
+  read the screen, code in `lib/screen.js` on top of `snapshot()`), plus a line
+  in the `switch` in `bin/simdrive.js`, plus a row in this README and, if agents
+  should use it, a line in `skills/simdrive/SKILL.md`. If one platform
   can't support a command, throw a `UsageError` that explains why (see iOS
   `back`).
 - **New Xcode:** check `ls`, `tap`, `type`, `swipe` and `shot` on a simulator.

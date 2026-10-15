@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, readdirSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { dirname, join } from 'node:path';
 
 import { Android, adbDevices } from '../lib/android.js';
 import { Ios, bootedSimulators } from '../lib/ios.js';
-import { UsageError, has, loadConfig, run, shotPath, sleep } from '../lib/util.js';
+import { center, formatRow, isRef, resolveRef, saveRefs, scrollTo, settle, visibleRows, waitFor } from '../lib/screen.js';
+import { UsageError, has, loadConfig, run, shotPath, sleep, splitScript } from '../lib/util.js';
+
+const SKILL = new URL('../skills/simdrive/SKILL.md', import.meta.url);
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
@@ -21,23 +25,30 @@ setup & info
   teardown                        stop the helper · Android: remove adb reverse rules
 
 look
-  ls [--all]                      on-screen elements: x,y  WxH  label
-  shot <name> [--plain]           screenshot → <out>/<name>.png (Android emulators bypass FLAG_SECURE;
-                                  --plain uses screencap)
-  burst <dir> <seconds>           paced frames for transient states; duplicates removed
+  ls [--all] [--json]             on-screen elements: @ref  type  x,y  WxH  label  [= value]
+  wait <label|@ref> [--gone]      until it appears (or disappears); default timeout 10 s, or --wait
+  scrollto <label> [--up]         swipe until it is fully on screen (default scrolls down)
+  shot <name> [--plain] [--scale f]  screenshot → <out>/<name>.png; --scale 0.5 = half size, fewer
+                                  image tokens (Android emulators bypass FLAG_SECURE; --plain doesn't)
+  burst <dir> <seconds>           a frame whenever the screen changes; duplicates removed
 
-act
-  tap <label> [--exact]           accessibility label: exact, else a prefix/contains match that
-                                  names one label (ambiguous → error). Prints what it tapped
+act                               add --ls to any of these to print the settled screen afterwards
+  tap <label|@ref> [--exact]      @ref: a row from the last ls. Label: exact, else a prefix/contains
+                                  match that names one label (ambiguous → error). Prints what it tapped
   tapxy <x> <y>                   iOS points / Android dp
   type <text>                     into the focused field
-  fill <label> <text>             clear the field at <label>, type, leave it
+  fill <label|@ref> <text>        clear the field, type, leave it
   hidekb                          dismiss the keyboard
   swipe <x1> <y1> <x2> <y2> [ms]
-  back                            Android system back
+  back                            Android system back · iOS navigation-bar back button
   open <url>                      deep link (e.g. myapp://home)
   launch [app]                    (re)start the app
   bio match|nomatch               Face ID / fingerprint
+
+batch & agents
+  run '<cmd>; <cmd> …'            several commands in one process (or: run - < script). Stops at the
+                                  first failure, which it names
+  skill [--install]               print the AI-agent guide (--install: ~/.claude/skills/simdrive/SKILL.md)
 
 options
   -p, --platform ios|android      default: whichever has exactly one booted device
@@ -69,7 +80,8 @@ function parse(argv) {
     else if (a === '--wait') opts.wait = val();
     else if (a === '-h' || a === '--help') opts.flags.add('help');
     else if (a === '-v' || a === '--version') opts.flags.add('version');
-    else if (a === '--all' || a === '--plain' || a === '--exact') opts.flags.add(a.slice(2));
+    else if (a === '--scale') opts.scale = Number(val());
+    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install'].includes(a)) opts.flags.add(a.slice(2));
     else if (a === '--') pos.push(...argv.slice(i + 1)), (i = argv.length);
     else pos.push(a);
   }
@@ -164,6 +176,7 @@ async function main() {
   if (!cmd || opts.flags.has('help') || cmd === 'help') return console.log(HELP);
 
   if (cmd === 'doctor') return doctor();
+  if (cmd === 'skill') return skill(opts);
   if (cmd === 'devices') {
     for (const s of bootedSimulators()) console.log(`ios      ${s.id}  ${s.name}`);
     for (const d of adbDevices()) console.log(`android  ${d.id}`);
@@ -179,7 +192,40 @@ async function main() {
   }
 }
 
+const deviceId = (d) => d.udid || d.serial;
+const ACTIONS = new Set(['tap', 'tapxy', 'type', 'fill', 'hidekb', 'swipe', 'back', 'open', 'launch', 'bio', 'scrollto']);
+
+/** Print the listing (text or --json) and remember its @refs. `snap` defaults to a fresh read. */
+async function list(d, opts, snap) {
+  const all = opts.flags.has('all');
+  if (!snap) {
+    // Nothing labelled yet almost always means mid-launch: give it up to --wait.
+    const until = Date.now() + d.wait;
+    snap = await d.snapshot({ all });
+    while (!snap.elements.some((e) => e.label) && Date.now() < until) {
+      await sleep(150);
+      snap = await d.snapshot({ all });
+    }
+  }
+  const rows = visibleRows(snap.elements, { all });
+  saveRefs(deviceId(d), rows);
+  if (opts.flags.has('json'))
+    return console.log(JSON.stringify({ screen: snap.screen, elements: rows.map((e, i) => ({ ref: `@${i + 1}`, ...e })) }));
+  if (!rows.length) console.error('simdrive: no labelled elements on screen (still loading, or the app sets no accessibility labels)');
+  else console.log(rows.map((e, i) => formatRow(e, i + 1)).join('\n'));
+}
+
+/** The element a ref names, if it's still where the last `ls` saw it. */
+async function byRef(d, ref) {
+  return resolveRef(deviceId(d), ref, (await d.snapshot()).elements);
+}
+
 async function dispatch(d, cmd, args, opts) {
+  await act(d, cmd, args, opts);
+  if (opts.flags.has('ls') && ACTIONS.has(cmd)) await list(d, opts, await settle(d, { all: opts.flags.has('all') }));
+}
+
+async function act(d, cmd, args, opts) {
   const need = (n, usage) => {
     if (args.length < n) throw new UsageError(`usage: simdrive ${usage}`);
   };
@@ -187,13 +233,40 @@ async function dispatch(d, cmd, args, opts) {
   switch (cmd) {
     case 'setup': return d.setup();
     case 'teardown': return d.teardown();
-    case 'ls': return d.ls({ all: opts.flags.has('all') });
-    case 'shot': need(1, 'shot <name>'); return d.shot(args[0], { plain: opts.flags.has('plain') });
+    case 'ls': return list(d, opts);
+    case 'wait': {
+      need(1, 'wait <label|@ref> [--gone]');
+      const target = args.join(' ');
+      const gone = opts.flags.has('gone');
+      const hit = await waitFor(d, deviceId(d), target, { gone, timeout: opts.wait != null ? Number(opts.wait) * 1000 : 10000 });
+      return console.log(gone ? `gone: ${target}` : `found ${JSON.stringify(hit.label)} at ${center(hit).join(',')}`);
+    }
+    case 'scrollto': {
+      need(1, 'scrollto <label> [--up]');
+      const hit = await scrollTo(d, args.join(' '), { up: opts.flags.has('up') });
+      return console.log(`found ${JSON.stringify(hit.label)} at ${center(hit).join(',')}`);
+    }
+    case 'shot': {
+      need(1, 'shot <name> [--scale f]');
+      if (opts.scale != null && !(opts.scale > 0 && opts.scale <= 1)) throw new UsageError('--scale takes a factor between 0 and 1, e.g. --scale 0.5');
+      return d.shot(args[0], { plain: opts.flags.has('plain'), scale: opts.scale ?? 1 });
+    }
     case 'burst': return burst(d, args[0], args[1]);
-    case 'tap': need(1, 'tap <label>'); return d.tap(args.join(' '), { exact: opts.flags.has('exact') });
+    case 'tap': {
+      need(1, 'tap <label|@ref>');
+      if (!isRef(args[0])) return d.tap(args.join(' '), { exact: opts.flags.has('exact') });
+      const e = await byRef(d, args[0]);
+      await d.tapxy(...center(e));
+      return console.log(`tapped ${JSON.stringify(e.label || e.type)} at ${center(e).join(',')}`);
+    }
     case 'tapxy': need(2, 'tapxy <x> <y>'); return d.tapxy(Number(args[0]), Number(args[1]));
     case 'type': need(1, 'type <text>'); return d.type(args.join(' '));
-    case 'fill': need(1, 'fill <label> <text>'); return d.fill(args[0], args.slice(1).join(' '), { exact: opts.flags.has('exact') });
+    case 'fill': {
+      need(1, 'fill <label|@ref> <text>');
+      const text = args.slice(1).join(' ');
+      if (!isRef(args[0])) return d.fill(args[0], text, { exact: opts.flags.has('exact') });
+      return d.fillAt(...center(await byRef(d, args[0])), text);
+    }
     case 'hidekb': return d.hidekb();
     case 'swipe': need(4, 'swipe <x1> <y1> <x2> <y2> [ms]'); return d.swipe(...args.slice(0, 4).map(Number), args[4] ? Number(args[4]) : undefined);
     case 'back': return d.back();
@@ -204,8 +277,36 @@ async function dispatch(d, cmd, args, opts) {
       return d.launch(app);
     }
     case 'bio': need(1, 'bio match|nomatch'); return d.bio(args[0]);
+    case 'run': return runScript(d, args, opts);
     default: throw new UsageError(`unknown command: ${cmd} (simdrive --help)`);
   }
+}
+
+/** Several commands in this one process: one helper connection, no per-command startup. */
+async function runScript(d, args, outer) {
+  if (!args.length) throw new UsageError("usage: simdrive run '<cmd>; <cmd> …'   or   simdrive run - < script");
+  const steps = splitScript(args[0] === '-' ? readFileSync(0, 'utf8') : args.join(' '));
+  for (const [i, words] of steps.entries()) {
+    const { opts, cmd, args: stepArgs } = parse(words);
+    if (opts.platform || opts.device) throw new UsageError(`run: step ${i + 1} sets -p/-d — pass those to run itself`);
+    if (cmd === 'run') throw new UsageError('run: steps cannot run scripts');
+    console.log(`$ ${words.join(' ')}`);
+    try {
+      await dispatch(d, cmd, stepArgs, { ...outer, ...opts, wait: opts.wait ?? outer.wait, flags: opts.flags });
+    } catch (e) {
+      e.message = `step ${i + 1} (${words.join(' ')}): ${e.message}`;
+      throw e;
+    }
+  }
+}
+
+function skill(opts) {
+  const text = readFileSync(SKILL, 'utf8');
+  if (!opts.flags.has('install')) return process.stdout.write(text);
+  const dest = join(homedir(), '.claude', 'skills', 'simdrive', 'SKILL.md');
+  mkdirSync(dirname(dest), { recursive: true });
+  writeFileSync(dest, text);
+  console.log(`installed ${dest}`);
 }
 
 main().catch((e) => {

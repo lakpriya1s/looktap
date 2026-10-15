@@ -11,6 +11,7 @@
     "bin",
     "lib",
     "native",
+    "skills",
     "README.md"
   ],
   "engines": {

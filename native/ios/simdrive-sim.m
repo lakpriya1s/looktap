@@ -549,13 +549,23 @@ static IOSurfaceRef mainSurface(void) {
   return (__bridge IOSurfaceRef)surface; // toll-free bridged; kept alive by the descriptor
 }
 
-static NSData *png(IOSurfaceRef s) {
+/** The surface as PNG, shrunk by `scale` when 0 < scale < 1. */
+static NSData *png(IOSurfaceRef s, double scale) {
   IOSurfaceLock(s, kIOSurfaceLockReadOnly, NULL);
   size_t w = IOSurfaceGetWidth(s), h = IOSurfaceGetHeight(s), stride = IOSurfaceGetBytesPerRow(s);
   CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
   CGDataProviderRef dp = CGDataProviderCreateWithData(NULL, IOSurfaceGetBaseAddress(s), stride * h, NULL);
   CGImageRef img = CGImageCreate(w, h, 8, 32, stride, cs, kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst, dp, NULL, NO,
                                  kCGRenderingIntentDefault);
+  if (scale > 0 && scale < 1) {
+    size_t sw = MAX(1, (size_t)round(w * scale)), sh = MAX(1, (size_t)round(h * scale));
+    CGContextRef ctx = CGBitmapContextCreate(NULL, sw, sh, 8, 0, cs, kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst);
+    CGContextSetInterpolationQuality(ctx, kCGInterpolationHigh);
+    CGContextDrawImage(ctx, CGRectMake(0, 0, sw, sh), img);
+    CGImageRelease(img);
+    img = CGBitmapContextCreateImage(ctx);
+    CGContextRelease(ctx);
+  }
   NSMutableData *out = [NSMutableData data];
   CGImageDestinationRef dst = CGImageDestinationCreateWithData((__bridge CFMutableDataRef)out, (__bridge CFStringRef)UTTypePNG.identifier, 1, NULL);
   CGImageDestinationAddImage(dst, img, NULL);
@@ -604,7 +614,7 @@ static void burst(int fd, double seconds) {
     frames++;
     if (s && seed != lastSeed) {
       lastSeed = seed;
-      reply(fd, @{@"frame" : @(++sent), @"ms" : @(round(-end.timeIntervalSinceNow * 1000))}, png(s));
+      reply(fd, @{@"frame" : @(++sent), @"ms" : @(round(-end.timeIntervalSinceNow * 1000))}, png(s, 1));
     }
     usleep(16000);
   }
@@ -641,7 +651,7 @@ static void handle(int fd, NSDictionary *r) {
   if ([op isEqualToString:@"shot"]) {
     IOSurfaceRef s = mainSurface();
     if (!s) return reply(fd, @{@"ok" : @NO, @"error" : @"no framebuffer for the main display"}, nil);
-    return reply(fd, @{@"ok" : @YES}, png(s));
+    return reply(fd, @{@"ok" : @YES}, png(s, num(r, @"scale", 1)));
   }
   if ([op isEqualToString:@"burst"]) return burst(fd, num(r, @"seconds", 5));
   if ([op isEqualToString:@"stop"]) {

@@ -166,9 +166,17 @@ public final class Server {
             case "keyboard":
                 reply(out, ok().put("shown", keyboardShown()), null);
                 return;
-            case "shot":
-                reply(out, ok(), png(screenshot()));
+            case "shot": {
+                Bitmap b = screenshot();
+                double scale = req.optDouble("scale", 1);
+                if (scale > 0 && scale < 1) {
+                    if (b.getConfig() == Bitmap.Config.HARDWARE) b = b.copy(Bitmap.Config.ARGB_8888, false);
+                    b = Bitmap.createScaledBitmap(b, Math.max(1, (int) Math.round(b.getWidth() * scale)),
+                            Math.max(1, (int) Math.round(b.getHeight() * scale)), true);
+                }
+                reply(out, ok(), png(b));
                 return;
+            }
             case "burst":
                 burst(out, req.getDouble("seconds"), req.optInt("interval", 0));
                 return;
