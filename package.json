@@ -1,7 +1,29 @@
 {
   "name": "simwright",
   "version": "0.1.0",
-  "description": "Drive an iOS simulator or Android emulator from the shell — tap, type, read the screen, screenshot — with no Appium or WebDriverAgent.",
+  "description": "Let AI agents drive an iOS simulator or Android emulator from the shell: read the screen, tap, type, swipe, screenshot, read logs and crashes. No Appium, no WebDriverAgent, nothing installed on the device.",
+  "keywords": [
+    "ios-simulator",
+    "android-emulator",
+    "mobile-automation",
+    "ai-agents",
+    "claude-code",
+    "cli",
+    "appium-alternative",
+    "react-native",
+    "simctl",
+    "adb"
+  ],
+  "author": "Lakpriya Senevirathna",
+  "license": "AGPL-3.0-only",
+  "homepage": "https://github.com/lakpriya1s/simwright#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lakpriya1s/simwright.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lakpriya1s/simwright/issues"
+  },
   "private": true,
   "type": "module",
   "bin": {
@@ -12,7 +34,8 @@
     "lib",
     "native",
     "skills",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "engines": {
     "node": ">=18"
@@ -21,6 +44,5 @@
     "test": "node --test test/*.test.js",
     "build:ios": "sh native/ios/build.sh",
     "build:android": "sh native/android/build.sh"
-  },
-  "license": "UNLICENSED"
+  }
 }

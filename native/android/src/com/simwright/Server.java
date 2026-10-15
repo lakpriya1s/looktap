@@ -197,17 +197,33 @@ public final class Server {
             List<AccessibilityWindowInfo> ws = ua.getWindows();
             for (AccessibilityWindowInfo w : ws) {
                 AccessibilityNodeInfo r = w.getRoot();
-                if (r != null) walk(r, outNodes);
+                if (r != null) walk(r, outNodes, false);
             }
         } else {
-            AccessibilityNodeInfo r = null;
-            for (int i = 0; i < 10 && r == null; i++) {
-                r = activeRoot();
-                if (r == null) SystemClock.sleep(50);
-            }
-            if (r != null) walk(r, outNodes);
+            outNodes = readActive();
         }
         return outNodes;
+    }
+
+    /**
+     The active window's nodes. The system can keep a stale frame for a window that slid in (an activity
+     transition), offsetting every cached node. refresh() asks the app itself, so the root is refreshed on
+     each read — one cheap call — and when its bounds turn out stale, every node is refreshed this read.
+     */
+    static JSONArray readActive() throws Exception {
+        JSONArray out = new JSONArray();
+        AccessibilityNodeInfo r = null;
+        for (int i = 0; i < 10 && r == null; i++) {
+            r = activeRoot();
+            if (r == null) SystemClock.sleep(50);
+        }
+        if (r == null) return out;
+        Rect cached = new Rect();
+        r.getBoundsInScreen(cached);
+        r.refresh();
+        r.getBoundsInScreen(tmp);
+        walk(r, out, !cached.equals(tmp));
+        return out;
     }
 
     static int lastWindowId = Integer.MIN_VALUE;
@@ -244,7 +260,8 @@ public final class Server {
 
     static final Rect tmp = new Rect();
 
-    static void walk(AccessibilityNodeInfo n, JSONArray out) throws Exception {
+    static void walk(AccessibilityNodeInfo n, JSONArray out, boolean refresh) throws Exception {
+        if (refresh) n.refresh();
         if (!n.isVisibleToUser()) return;
         CharSequence desc = n.getContentDescription();
         CharSequence txt = n.getText();
@@ -258,7 +275,7 @@ public final class Server {
         out.put(o);
         for (int i = 0; i < n.getChildCount(); i++) {
             AccessibilityNodeInfo c = n.getChild(i);
-            if (c != null) walk(c, out);
+            if (c != null) walk(c, out, refresh);
         }
     }
 

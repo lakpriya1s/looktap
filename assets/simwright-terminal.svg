@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="412" viewBox="0 0 760 412" role="img" aria-label="A simwright session in the terminal">
+<rect width="760" height="412" rx="12" fill="#0b1020"/>
+<rect width="760" height="36" rx="12" fill="#151b2e"/><rect y="24" width="760" height="12" fill="#151b2e"/>
+<circle cx="22" cy="18" r="6" fill="#ff5f57"/><circle cx="42" cy="18" r="6" fill="#febc2e"/><circle cx="62" cy="18" r="6" fill="#28c840"/>
+<text x="380" y="23" text-anchor="middle" font-family="-apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="13" fill="#8b93a7">agent ➜ Android emulator</text>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" xml:space="preserve" style="white-space:pre">
+<text x="22" y="58"><tspan fill="#22d3ee">$</tspan><tspan fill="#e2e8f0"> simwright launch com.android.settings --ls</tspan></text>
+<text x="22" y="80" fill="#a5b4c8">@1   TextView         72,  84 148x27  Search Settings</text>
+<text x="22" y="102" fill="#a5b4c8">@4   TextView         80, 260 166x27  Network &amp; internet</text>
+<text x="22" y="124" fill="#a5b4c8">@6   TextView         80, 339 170x27  Connected devices</text>
+<text x="22" y="146" fill="#5b6478">…</text>
+<text x="22" y="168"><tspan fill="#22d3ee">$</tspan><tspan fill="#e2e8f0"> simwright tap "Network &amp; internet" --ls</tspan></text>
+<text x="22" y="190" fill="#86efac">tapped "Network &amp; internet" at 163,274</text>
+<text x="22" y="212" fill="#a5b4c8">@2   ImageButton       0,  54 56x56  Navigate up</text>
+<text x="22" y="234" fill="#a5b4c8">@3   TextView         72, 249 68x27  Internet</text>
+<text x="22" y="256" fill="#a5b4c8">@7   TextView         72, 406 130x27  Airplane mode</text>
+<text x="22" y="278" fill="#5b6478">…</text>
+<text x="22" y="300"><tspan fill="#22d3ee">$</tspan><tspan fill="#e2e8f0"> simwright shot network --scale 0.5</tspan></text>
+<text x="22" y="322" fill="#a5b4c8">shots/network.png</text>
+<text x="22" y="344"><tspan fill="#22d3ee">$</tspan><tspan fill="#e2e8f0"> simwright app</tspan></text>
+<text x="22" y="366" fill="#a5b4c8">front: com.android.settings  pid 17658</text>
+</g></svg>
