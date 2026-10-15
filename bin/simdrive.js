@@ -120,6 +120,12 @@ function doctor() {
     const dev = run('xcode-select', ['-p'], { allowFail: true }).trim();
     ok(existsSync('/Library/Developer/PrivateFrameworks/CoreSimulator.framework'), 'CoreSimulator.framework (iOS helper)', 'install Xcode');
     ok(dev && existsSync(join(dev, 'Library/PrivateFrameworks/SimulatorKit.framework')), `SimulatorKit in ${dev || 'no developer dir'} (iOS helper)`, 'sudo xcode-select -s /Applications/Xcode.app');
+    // Same rule as the helper: CoreSimulator 1155.4+ (Xcode 27) takes input through dtuhidd.
+    const cs = run('defaults', ['read', '/Library/Developer/PrivateFrameworks/CoreSimulator.framework/Resources/Info', 'CFBundleVersion'], { allowFail: true }).trim();
+    if (cs) {
+      const modern = cs.localeCompare('1155.4', undefined, { numeric: true }) >= 0;
+      console.log(`  iOS input: ${process.env.SIMDRIVE_IOS_HID || (modern ? 'dtuhid' : 'indigo')} (CoreSimulator ${cs})`);
+    }
   }
   const adb = has('adb');
   ok(adb, 'adb (Android)', 'install Android SDK platform-tools and put them on PATH');

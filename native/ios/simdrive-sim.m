@@ -3,13 +3,15 @@
 //
 //   screen tree   AccessibilityPlatformTranslation (AXPTranslator), bridged through
 //                 -[SimDevice sendAccessibilityRequestAsync:…]
-//   touch + keys  SimulatorKit's SimDeviceLegacyHIDClient with Indigo HID messages
+//   touch + keys  Xcode ≤ 26: SimulatorKit's SimDeviceLegacyHIDClient with Indigo HID messages
+//                 Xcode 27+: XPC messages to the guest's dtuhidd digitizer service
 //   frames        the main display's framebuffer IOSurface (CoreSimulator SimDeviceIOClient)
 //
 // These are private APIs: everything is looked up at runtime (dlopen + NSClassFromString), so one
 // binary builds without private headers, and a missing piece is reported rather than crashing.
-// Indigo message layouts follow facebook/idb (MIT): PrivateHeaders/SimulatorApp/Indigo.h and
-// FBSimulatorControl/HID/SimulatorIndigoHID.swift.
+// Indigo message layouts and the dtuhidd wire format follow facebook/idb (MIT):
+// PrivateHeaders/SimulatorApp/Indigo.h, FBSimulatorControl/HID/SimulatorIndigoHID.swift,
+// DTUHIDModels.swift, SimulatorDTUHIDConnection.swift and XPC/SimulatorXPCConnection.swift.
 //
 // Protocol (unix socket): one JSON request per line. Each reply is one JSON line; a reply carrying
 // "bytes": N is followed by N raw bytes (a PNG).
@@ -29,6 +31,7 @@
 #import <sys/socket.h>
 #import <sys/un.h>
 #import <unistd.h>
+#import <xpc/xpc.h>
 
 // Selectors on runtime-only classes. Declared once so the compiler knows their signatures.
 @protocol SimPrivate
@@ -47,6 +50,7 @@
 - (id)framebufferSurface;
 - (id)initWithDevice:(id)device error:(NSError **)error;
 - (void)sendWithMessage:(void *)message freeWhenDone:(BOOL)free completionQueue:(dispatch_queue_t)queue completion:(void (^)(NSError *))completion;
+- (unsigned int)lookup:(NSString *)service error:(NSError **)error;
 - (void)sendAccessibilityRequestAsync:(id)request completionQueue:(dispatch_queue_t)queue completionHandler:(void (^)(id))handler;
 + (id)sharedInstance;
 + (id)emptyResponse;
@@ -254,34 +258,52 @@ static BOOL keyboardShown(void) {
   return NO;
 }
 
-// ── HID ──────────────────────────────────────────────────────────────────
+/** The loaded CoreSimulator's version (e.g. "1048"), which decides the HID transport. */
+static NSString *coreSimulatorVersion(void) {
+  Class c = NSClassFromString(@"SimDevice");
+  return c ? [NSBundle bundleForClass:c].infoDictionary[@"CFBundleVersion"] : nil;
+}
 
-/** Send Indigo messages in order and wait until the simulator has taken them all. */
-static void sendAll(NSArray<NSValue *> *messages, useconds_t gapMicros) {
-  dispatch_group_t g = dispatch_group_create();
-  __block NSError *failure = nil;
-  for (NSValue *m in messages) {
-    dispatch_group_enter(g);
-    [hidClient sendWithMessage:m.pointerValue
-                  freeWhenDone:YES
-               completionQueue:hidQueue
-                    completion:^(NSError *e) {
-                      if (e && !failure) failure = e;
-                      dispatch_group_leave(g);
-                    }];
-    if (gapMicros) usleep(gapMicros);
-  }
-  dispatch_group_wait(g, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
-  if (failure) [NSException raise:@"hid" format:@"HID send failed: %@", failure.localizedDescription];
+// ── HID ──────────────────────────────────────────────────────────────────
+//
+// Two transports, chosen by the loaded CoreSimulator (see chooseTransport):
+//   indigo  SimulatorKit's SimDeviceLegacyHIDClient + Indigo messages. CoreSimulator < 1155.4 (Xcode ≤ 26).
+//   dtuhid  plain-XPC messages to the guest's `dtuhidd` digitizer service. CoreSimulator ≥ 1155.4
+//           (Xcode 27), whose guest silently drops Indigo input.
+// Both expose the same primitives: touch start/move/end, key down/up, and sync (wait until delivered).
+
+typedef enum { TouchStart = 0, TouchMove = 1, TouchEnd = 2 } TouchPhase; // = dtuhidd's eventType
+
+static NSString *transport;     // "indigo" | "dtuhid"
+static NSString *inputError;    // set when input cannot work; reported by every input op
+
+static CGPoint ratioFor(double x, double y) {
+  return CGPointMake(x * screenScale / screenPx.width, y * screenScale / screenPx.height);
+}
+
+// ── Indigo ──
+
+static dispatch_group_t indigoPending;
+static NSError *indigoFailure;
+
+static void indigoSend(void *message) {
+  dispatch_group_enter(indigoPending);
+  [hidClient sendWithMessage:message
+                freeWhenDone:YES
+             completionQueue:hidQueue
+                  completion:^(NSError *e) {
+                    if (e && !indigoFailure) indigoFailure = e;
+                    dispatch_group_leave(indigoPending);
+                  }];
 }
 
 /**
  A single-finger touch at (x, y) points. SimulatorKit only builds multi-touch messages, so take the
  contact from IndigoHIDMessageForMouseNSEvent and re-envelope it as a single-touch (eventType 2)
- message with two payloads, as idb does. Offsets: Indigo.h.
+ message with two payloads, as idb does. Offsets: Indigo.h. A move is another touch-down.
  */
 static void *touchMessage(double x, double y, BOOL down) {
-  CGPoint ratio = CGPointMake(x * screenScale / screenPx.width, y * screenScale / screenPx.height);
+  CGPoint ratio = ratioFor(x, y);
   char *src = indigoMouse(&ratio, NULL, 0x32, down ? 1 : 2, CGSizeMake(1, 1), 0);
   *(double *)(src + 0x3c) = ratio.x; // payload.event.touch.xRatio
   *(double *)(src + 0x44) = ratio.y; // payload.event.touch.yRatio
@@ -298,23 +320,158 @@ static void *touchMessage(double x, double y, BOOL down) {
   return m;
 }
 
-static void tap(double x, double y, int holdMs) {
-  sendAll(@[ [NSValue valueWithPointer:touchMessage(x, y, YES)] ], 0);
-  if (holdMs > 0) usleep(holdMs * 1000);
-  sendAll(@[ [NSValue valueWithPointer:touchMessage(x, y, NO)] ], 0);
+// ── DTUHID (Xcode 27) ── wire format: facebook/idb FBSimulatorControl/HID/DTUHIDModels.swift
+
+static NSString *const DTU_SERVICE = @"com.apple.coredevice.feature.remote.hid.digitizer";
+static xpc_connection_t dtuConnection;
+
+typedef xpc_object_t (*EndpointFromPortFn)(mach_port_t, uint64_t, uint64_t);
+typedef xpc_connection_t (*ConnectionFromEndpointFn)(xpc_object_t);
+typedef void (*EnableSim2HostFn)(xpc_connection_t);
+
+/** The envelope dtuhidd decodes: messageType, isBarrier, featureIdentifier, payload. */
+static xpc_object_t dtuMessage(const char *type, xpc_object_t payload, BOOL barrier) {
+  xpc_object_t m = xpc_dictionary_create(NULL, NULL, 0);
+  xpc_dictionary_set_string(m, "messageType", type);
+  xpc_dictionary_set_bool(m, "isBarrier", barrier);
+  xpc_dictionary_set_string(m, "featureIdentifier", DTU_SERVICE.UTF8String);
+  xpc_dictionary_set_value(m, "payload", payload);
+  return m;
 }
 
-/** idb's swipe: touch-downs every ~10 points, one more at the end (stops inertial scroll), then up. */
+/** IndigoKeyboardButtonEvent: USB HID usage, state 1 = down, 2 = up (0 is rejected). */
+static xpc_object_t dtuKeyMessage(int usage, BOOL down, BOOL barrier) {
+  xpc_object_t p = xpc_dictionary_create(NULL, NULL, 0);
+  xpc_dictionary_set_uint64(p, "usageCode", (uint64_t)usage);
+  xpc_dictionary_set_uint64(p, "state", down ? 1 : 2);
+  return dtuMessage("IndigoKeyboardButtonEvent", p, barrier);
+}
+
+/** IndigoDigitizerEvent: one contact in normalized top-left coordinates, eventType start/position/end. */
+static xpc_object_t dtuTouchMessage(TouchPhase phase, double x, double y) {
+  CGPoint r = ratioFor(x, y);
+  xpc_object_t pt = xpc_dictionary_create(NULL, NULL, 0);
+  xpc_dictionary_set_double(pt, "x", r.x);
+  xpc_dictionary_set_double(pt, "y", r.y);
+  xpc_object_t p = xpc_dictionary_create(NULL, NULL, 0);
+  xpc_dictionary_set_value(p, "pointOne", pt);
+  xpc_dictionary_set_uint64(p, "eventType", (uint64_t)phase);
+  xpc_dictionary_set_uint64(p, "edge", 0);
+  xpc_dictionary_set_uint64(p, "target", 0);
+  return dtuMessage("IndigoDigitizerEvent", p, NO);
+}
+
+/**
+ A barrier: keyboard usage 0 ("no event"), answered once dtuhidd has taken everything sent before it.
+ Also the liveness probe — a lookup and sends all succeed against a daemon that cannot run.
+ */
+static BOOL dtuBarrier(double timeout) {
+  dispatch_semaphore_t done = dispatch_semaphore_create(0);
+  __block BOOL ok = NO;
+  xpc_connection_send_message_with_reply(dtuConnection, dtuKeyMessage(0, NO, YES), hidQueue, ^(xpc_object_t reply) {
+    ok = xpc_get_type(reply) == XPC_TYPE_DICTIONARY;
+    dispatch_semaphore_signal(done);
+  });
+  return dispatch_semaphore_wait(done, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC))) == 0 && ok;
+}
+
+/** Host connection to the guest's dtuhidd: look the service up in the simulator, wrap the port for sim→host. */
+static NSString *dtuConnect(void) {
+  EndpointFromPortFn endpointFromPort = (EndpointFromPortFn)dlsym(RTLD_DEFAULT, "xpc_endpoint_create_mach_port_4sim");
+  ConnectionFromEndpointFn fromEndpoint = (ConnectionFromEndpointFn)dlsym(RTLD_DEFAULT, "xpc_connection_create_from_endpoint");
+  EnableSim2HostFn enableSim2Host = (EnableSim2HostFn)dlsym(RTLD_DEFAULT, "xpc_connection_enable_sim2host_4sim");
+  if (!endpointFromPort || !fromEndpoint || !enableSim2Host) return @"this macOS has no simulator XPC endpoints (xpc_*_4sim)";
+  // dtuhidd is demand-launched and can abort early in a slow boot; launchd throttles its respawn.
+  NSString *why = nil;
+  for (int attempt = 0; attempt < 3; attempt++) {
+    if (attempt) sleep(4);
+    NSError *err = nil;
+    mach_port_t port = [device lookup:DTU_SERVICE error:&err];
+    // No such service is permanent for this runtime (it predates dtuhidd): don't retry it.
+    if (port == MACH_PORT_NULL)
+      return [NSString stringWithFormat:@"the simulator has no %@ (%@)", DTU_SERVICE, err.localizedDescription ?: @"lookup failed"];
+    xpc_object_t endpoint = endpointFromPort(port, 0, 0);
+    xpc_connection_t c = endpoint ? fromEndpoint(endpoint) : NULL;
+    if (!c) return @"could not create an XPC connection to dtuhidd";
+    enableSim2Host(c); // without it the service sees the peer but never a payload
+    xpc_connection_set_target_queue(c, hidQueue);
+    xpc_connection_set_event_handler(c, ^(xpc_object_t event) {
+      // Interruptions reconnect on the next send; nothing to do.
+    });
+    xpc_connection_resume(c);
+    dtuConnection = c;
+    if (dtuBarrier(4)) {
+      usleep(200000); // device-open tail after the daemon activates
+      return nil;
+    }
+    xpc_connection_cancel(c);
+    dtuConnection = NULL;
+    why = @"dtuhidd did not answer (it may still be starting — retry in a few seconds)";
+  }
+  return why;
+}
+
+// ── primitives ──
+
+static NSDate *dtuRetryAfter;
+
+static void requireInput(void) {
+  // A dtuhidd that would not answer gets another chance after a pause, not on every event.
+  if ([transport isEqualToString:@"dtuhid"] && !dtuConnection && (!dtuRetryAfter || dtuRetryAfter.timeIntervalSinceNow <= 0)) {
+    inputError = dtuConnect();
+    dtuRetryAfter = inputError ? [NSDate dateWithTimeIntervalSinceNow:10] : nil;
+  }
+  if (inputError) [NSException raise:@"hid" format:@"input unavailable (%@): %@", transport, inputError];
+}
+
+static void touch(TouchPhase phase, double x, double y) {
+  requireInput();
+  if (dtuConnection) xpc_connection_send_message(dtuConnection, dtuTouchMessage(phase, x, y));
+  else indigoSend(touchMessage(x, y, phase != TouchEnd));
+}
+
+static void keyEvent(int usage, BOOL down) {
+  requireInput();
+  if (dtuConnection) xpc_connection_send_message(dtuConnection, dtuKeyMessage(usage, down, NO));
+  else indigoSend(indigoKeyboard(usage, down ? 1 : 2));
+}
+
+/** Wait until everything sent so far has been taken by the simulator, so the next read sees its effect. */
+static void hidSync(void) {
+  if (dtuConnection) {
+    if (!dtuBarrier(2)) [NSException raise:@"hid" format:@"dtuhidd did not acknowledge input"];
+    return;
+  }
+  dispatch_group_wait(indigoPending, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
+  if (indigoFailure) {
+    NSError *e = indigoFailure;
+    indigoFailure = nil;
+    [NSException raise:@"hid" format:@"HID send failed: %@", e.localizedDescription];
+  }
+}
+
+static void tap(double x, double y, int holdMs) {
+  touch(TouchStart, x, y);
+  hidSync();
+  if (holdMs > 0) usleep(holdMs * 1000);
+  touch(TouchEnd, x, y);
+  hidSync();
+}
+
+/** idb's swipe: a contact every ~10 points, one more at the end (stops inertial scroll), then up. */
 static void swipe(double x1, double y1, double x2, double y2, int ms) {
   double dist = hypot(x2 - x1, y2 - y1);
   int steps = MAX(1, (int)(dist / 10));
   useconds_t gap = (useconds_t)(ms * 1000.0 / (steps + 2));
-  NSMutableArray *msgs = [NSMutableArray array];
-  for (int i = 0; i <= steps; i++)
-    [msgs addObject:[NSValue valueWithPointer:touchMessage(x1 + (x2 - x1) * i / steps, y1 + (y2 - y1) * i / steps, YES)]];
-  [msgs addObject:[NSValue valueWithPointer:touchMessage(x2, y2, YES)]];
-  sendAll(msgs, gap);
-  sendAll(@[ [NSValue valueWithPointer:touchMessage(x2, y2, NO)] ], 0);
+  touch(TouchStart, x1, y1);
+  for (int i = 1; i <= steps; i++) {
+    usleep(gap);
+    touch(TouchMove, x1 + (x2 - x1) * i / steps, y1 + (y2 - y1) * i / steps);
+  }
+  usleep(gap);
+  touch(TouchMove, x2, y2);
+  touch(TouchEnd, x2, y2);
+  hidSync();
 }
 
 // HID keyboard usages (page 7).
@@ -338,18 +495,13 @@ static BOOL usageFor(unichar c, int *usage, BOOL *shift) {
   return NO;
 }
 
-static NSValue *keyMessage(int usage, BOOL down) {
-  return [NSValue valueWithPointer:indigoKeyboard(usage, down ? 1 : 2)];
-}
-
 /** Press `usage` with modifiers held. */
 static void press(int usage, NSArray<NSNumber *> *modifiers) {
-  NSMutableArray *msgs = [NSMutableArray array];
-  for (NSNumber *m in modifiers) [msgs addObject:keyMessage(m.intValue, YES)];
-  [msgs addObject:keyMessage(usage, YES)];
-  [msgs addObject:keyMessage(usage, NO)];
-  for (NSNumber *m in modifiers.reverseObjectEnumerator) [msgs addObject:keyMessage(m.intValue, NO)];
-  sendAll(msgs, 0);
+  for (NSNumber *m in modifiers) keyEvent(m.intValue, YES);
+  keyEvent(usage, YES);
+  keyEvent(usage, NO);
+  for (NSNumber *m in modifiers.reverseObjectEnumerator) keyEvent(m.intValue, NO);
+  hidSync();
 }
 
 static void typeString(NSString *s) {
@@ -461,7 +613,10 @@ static void burst(int fd, double seconds) {
 
 static void handle(int fd, NSDictionary *r) {
   NSString *op = r[@"op"];
-  if ([op isEqualToString:@"hello"]) return reply(fd, @{@"ok" : @YES, @"version" : version, @"pid" : @(getpid())}, nil);
+  if ([op isEqualToString:@"hello"]) return reply(fd, @{
+    @"ok" : @YES, @"version" : version, @"pid" : @(getpid()), @"input" : transport ?: @"",
+    @"coreSimulator" : coreSimulatorVersion() ?: @"", @"inputError" : inputError ?: @""
+  }, nil);
   if ([op isEqualToString:@"tree"]) {
     NSArray *nodes = tree([r[@"all"] boolValue], ![r[@"settle"] isEqual:@NO]);
     return reply(fd, @{@"ok" : @YES, @"nodes" : nodes, @"probes" : @(probes)}, nil);
@@ -523,6 +678,32 @@ static void serve(int fd) {
   close(fd);
 }
 
+/**
+ From CoreSimulator 1155.4 (Xcode 27) the guest drops Indigo input for the whole boot, delivered or
+ not, so it has to be dtuhidd — idb's rule. SIMDRIVE_IOS_HID=indigo|dtuhid overrides it.
+ Input problems are recorded in `inputError`, not fatal: reading the screen still works.
+ */
+static void chooseTransport(void *simKit) {
+  const char *forced = getenv("SIMDRIVE_IOS_HID");
+  NSString *v = coreSimulatorVersion();
+  BOOL modern = v && [v compare:@"1155.4" options:NSNumericSearch] != NSOrderedAscending;
+  transport = forced && *forced ? @(forced) : modern ? @"dtuhid" : @"indigo";
+  if ([transport isEqualToString:@"dtuhid"]) return; // connected on first input (dtuhidd is demand-launched)
+  if (![transport isEqualToString:@"indigo"]) {
+    inputError = [NSString stringWithFormat:@"unknown SIMDRIVE_IOS_HID: %@", transport];
+    return;
+  }
+  indigoMouse = (MouseEventFn)dlsym(simKit, "IndigoHIDMessageForMouseNSEvent");
+  indigoKeyboard = (KeyboardFn)dlsym(simKit, "IndigoHIDMessageForKeyboardArbitrary");
+  Class hidClass = NSClassFromString(@"SimulatorKit.SimDeviceLegacyHIDClient");
+  NSError *err = nil;
+  if (!indigoMouse || !indigoKeyboard) inputError = @"this Xcode's SimulatorKit has no Indigo HID builders";
+  else if (!hidClass) inputError = @"SimDeviceLegacyHIDClient not found in SimulatorKit";
+  else if (!(hidClient = [[hidClass alloc] initWithDevice:device error:&err]))
+    inputError = [NSString stringWithFormat:@"HID client: %@", err.localizedDescription];
+  indigoPending = dispatch_group_create();
+}
+
 static void setup(NSString *udid, NSString *developerDir) {
   if (!dlopen("/Library/Developer/PrivateFrameworks/CoreSimulator.framework/CoreSimulator", RTLD_NOW))
     die(@"CoreSimulator.framework not found — install Xcode");
@@ -531,9 +712,6 @@ static void setup(NSString *udid, NSString *developerDir) {
   if (!sk) die([NSString stringWithFormat:@"SimulatorKit not found in %@", developerDir]);
   if (!dlopen("/System/Library/PrivateFrameworks/AccessibilityPlatformTranslation.framework/AccessibilityPlatformTranslation", RTLD_NOW))
     die(@"AccessibilityPlatformTranslation.framework not found");
-  indigoMouse = (MouseEventFn)dlsym(sk, "IndigoHIDMessageForMouseNSEvent");
-  indigoKeyboard = (KeyboardFn)dlsym(sk, "IndigoHIDMessageForKeyboardArbitrary");
-  if (!indigoMouse || !indigoKeyboard) die(@"this Xcode's SimulatorKit has no Indigo HID builders");
 
   NSError *err = nil;
   id ctx = [NSClassFromString(@"SimServiceContext") sharedServiceContextForDeveloperDir:developerDir error:&err];
@@ -544,11 +722,8 @@ static void setup(NSString *udid, NSString *developerDir) {
   screenPx = [[device deviceType] mainScreenSize];
   screenScale = [[device deviceType] mainScreenScale];
 
-  Class hidClass = NSClassFromString(@"SimulatorKit.SimDeviceLegacyHIDClient");
-  if (!hidClass) die(@"SimDeviceLegacyHIDClient not found in SimulatorKit");
-  hidClient = [[hidClass alloc] initWithDevice:device error:&err];
-  if (!hidClient) die([NSString stringWithFormat:@"HID client: %@", err.localizedDescription]);
   hidQueue = dispatch_queue_create("simdrive.hid", DISPATCH_QUEUE_SERIAL);
+  chooseTransport(sk);
 
   if (![device respondsToSelector:@selector(sendAccessibilityRequestAsync:completionQueue:completionHandler:)])
     die(@"this CoreSimulator has no accessibility bridge");

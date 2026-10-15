@@ -71,8 +71,17 @@ ahead of time, and `simdrive teardown` stops it.
 
 **iOS caveat.** The iOS helper uses Apple's private simulator frameworks, the
 same ones `idb` uses. They can change between Xcode releases. `simdrive doctor`
-checks they're present. The touch and keyboard path works with Xcode 26; Xcode 27
-moves simulator input to a new transport that simdrive doesn't speak yet.
+checks they're present and shows which input path applies:
+
+- **Xcode 26 and earlier** (CoreSimulator below 1155.4): touches and keys go
+  through SimulatorKit's HID client ("indigo"). Tested.
+- **Xcode 27** (CoreSimulator 1155.4 and later): the simulator ignores that
+  path, so touches and keys go as XPC messages to the simulator's `dtuhidd`
+  service ("dtuhid"), the same way idb does it. **Not yet tested against Xcode
+  27.** Reading the screen and screenshots don't depend on it.
+
+`SIMDRIVE_IOS_HID=indigo|dtuhid` overrides the choice. It applies when the
+helper starts, so run `simdrive teardown` first.
 
 **Android fallback.** If the helper can't start, simdrive falls back to plain
 `adb` + `uiautomator dump`, which works everywhere but takes about 2.5 s per
@@ -396,6 +405,7 @@ script can `set -e` and stop at the first missing element.
 | `SIMDRIVE_SCALE` | Override Android's px-per-dp (normally read from `wm density`) |
 | `SIMDRIVE_ANDROID_HELPER=0` | Don't use the Android helper: plain `adb` + `uiautomator dump` (slower) |
 | `SIMDRIVE_EMULATOR_GRPC=0` | Don't take Android emulator frames over gRPC: use the emulator console instead |
+| `SIMDRIVE_IOS_HID=indigo\|dtuhid` | Force the iOS input path (default: chosen from the CoreSimulator version). Takes effect when the helper starts |
 | `SIMDRIVE_HOME` | Where helper sockets, logs and the port registry live (default `~/.simdrive`) |
 
 ### Config file: `simdrive.config.json`
@@ -429,7 +439,9 @@ then built-in default.
 
 | Symptom | Fix |
 |---|---|
-| iOS: `SimulatorKit not found …` / `… has no Indigo HID builders` | `simdrive doctor`. Point `xcode-select` at a full Xcode (`sudo xcode-select -s /Applications/Xcode.app`). Xcode 27+ isn't supported yet |
+| iOS: `SimulatorKit not found …` / `… has no Indigo HID builders` | `simdrive doctor`. Point `xcode-select` at a full Xcode (`sudo xcode-select -s /Applications/Xcode.app`) |
+| iOS: `input unavailable (dtuhid): dtuhidd did not answer` | The simulator is still booting, or its input daemon is restarting. Wait a few seconds and retry |
+| iOS: `input unavailable (dtuhid): the simulator has no …hid.digitizer` | That runtime predates Xcode 27's input service: `simdrive teardown`, then unset `SIMDRIVE_IOS_HID` |
 | iOS: an element you can see is missing from `ls` | Some containers hide their children from the accessibility tree. simdrive probes empty containers to find them, but `tapxy` is the fallback |
 | `both iOS and Android devices are up — pass -p ios\|android` | Add `-p`, or `export SIMDRIVE_PLATFORM=…` |
 | `2 ios devices — pass -d one of: …` | Add `-d <udid>` (listed in the message) |

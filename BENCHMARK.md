@@ -149,8 +149,8 @@ devices and harness.
 
 **Limits:**
 - The iOS helper uses Apple's private simulator frameworks. Touch and keyboard
-  input works on Xcode 26. Xcode 27 moves simulator input to a new transport
-  that simdrive doesn't support yet.
+  input were measured on Xcode 26. For Xcode 27, simdrive sends input to the
+  simulator's `dtuhidd` service, which is implemented but not yet measured.
 - On Android, the helper holds the device's single UiAutomation connection.
   Run `simdrive teardown` before using Appium or `uiautomator` on the same device.
 
