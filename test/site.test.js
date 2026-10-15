@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 import { formatRow as cliRow } from '../lib/screen.js';
-import { cliCommands, readmeCommands, sections } from '../site/build.mjs';
+import { cliCommands, cliFlags, readmeCommands, sections } from '../site/build.mjs';
 import { inline, render, slug } from '../site/md.js';
 import { formatRow as siteRow } from '../site/src/rows.js';
 import { SCENES } from '../site/src/scenes.js';
@@ -49,4 +49,14 @@ test('the inventory covers every command, and every scene names real ones', () =
   const rows = readmeCommands(readme);
   assert.deepEqual(commands.filter((c) => !rows.has(c)), []);
   assert.ok(sections(readme).some((s) => s.title === 'Commands'));
+});
+
+test('the agent skill lists every command and flag', () => {
+  const cli = readFileSync(new URL('../bin/simwright.js', import.meta.url), 'utf8');
+  const skill = readFileSync(new URL('../skills/simwright/SKILL.md', import.meta.url), 'utf8');
+  const table = sections(skill).find((s) => s.title === 'Every command');
+  assert.ok(table);
+  const rows = new Set([...table.md.matchAll(/`([a-z]+)[ `]/g)].map((m) => m[1]));
+  assert.deepEqual(cliCommands(cli).filter((c) => !rows.has(c)), []);
+  assert.deepEqual(cliFlags(cli).filter((f) => !new RegExp(`(^|[\\s\`\\[,])${f}\\b`).test(skill)), []);
 });
