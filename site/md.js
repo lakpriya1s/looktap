@@ -162,7 +162,7 @@ export function render(md, { link = (h) => h, shift = 0 } = {}) {
       const text = h[2];
       const id = uniqueId(text);
       headings.push({ level, text: plain(text), id });
-      out.push(`<h${level} id="${id}"><a class="anchor" href="#${id}" aria-hidden="true">#</a>${inline(text, opt)}</h${level}>`);
+      out.push(`<h${level} id="${id}"><a class="anchor" href="#${id}" aria-hidden="true" tabindex="-1">#</a>${inline(text, opt)}</h${level}>`);
       i++;
       continue;
     }
@@ -179,7 +179,9 @@ export function render(md, { link = (h) => h, shift = 0 } = {}) {
       i += 2;
       const rows = [];
       while (i < lines.length && /^\|/.test(lines[i].trim())) rows.push(cells(lines[i++]));
-      const td = (tag, c, k) => `<${tag}${aligns[k] ? ` style="text-align:${aligns[k]}"` : ''}>${inline(c, opt)}</${tag}>`;
+      // An empty header cell still names its column for screen readers.
+      const td = (tag, c, k) =>
+        `<${tag}${aligns[k] ? ` style="text-align:${aligns[k]}"` : ''}>${tag === 'th' && !c ? '<span class="visually-hidden">Item</span>' : inline(c, opt)}</${tag}>`;
       out.push(
         `<div class="table"><table>\n<thead><tr>${head.map((c, k) => td('th', c, k)).join('')}</tr></thead>\n<tbody>\n${rows
           .map((r) => `<tr>${r.map((c, k) => td('td', c, k)).join('')}</tr>`)

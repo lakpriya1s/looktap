@@ -90,7 +90,16 @@ function pageMarkdown(page, readmeSections) {
   let titleId = '';
   if (parts.length) {
     titleId = render(parts[0].split('\n')[0]).headings[0].id;
-    parts[0] = parts[0].split('\n').slice(1).join('\n');
+    // Its subsections move up a level: the page's h1 stands where the section's h2 was.
+    let fence = false;
+    parts[0] = parts[0]
+      .split('\n')
+      .slice(1)
+      .map((l) => {
+        if (/^\s*(```|~~~)/.test(l)) fence = !fence;
+        return !fence && /^#{3,6} /.test(l) ? l.slice(1) : l;
+      })
+      .join('\n');
   }
   if (page.file) parts.push(fileBody(page.file));
   return { md: parts.join('\n\n'), titleId };
