@@ -2,15 +2,15 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 
-import { Android, adbDevices } from '../lib/android.js';
+import { Android, RECORD_LIMIT_S, adbDevices } from '../lib/android.js';
 import { Ios, bootedSimulators } from '../lib/ios.js';
 import { clock, grepper, startOf, tail, whichApp } from '../lib/logs.js';
 import { ACTIONS as PERMISSION_ACTIONS } from '../lib/permissions.js';
-import { coordinates, pushPayload, textSize } from '../lib/conditions.js';
+import { ORIENTATIONS, coordinates, pushPayload, rotation, textSize } from '../lib/conditions.js';
 import { appGone, center, coveringAt, forgetFront, formatRow, isRef, lastFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, visibleRows, waitFor } from '../lib/screen.js';
-import { ADB, HOME, UsageError, has, loadConfig, pickMatch, run, shotPath, sleep, splitScript, waitFor as retry } from '../lib/util.js';
+import { ADB, HOME, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
 
 const SKILL = new URL('../skills/simwright/SKILL.md', import.meta.url);
 
@@ -34,6 +34,8 @@ look
   shot <name> [--plain] [--scale f]  screenshot → <out>/<name>.png; --scale 0.5 = half size, fewer
                                   image tokens (Android emulators bypass FLAG_SECURE; --plain doesn't)
   burst <dir> <seconds>           a frame whenever the screen changes; duplicates removed
+  record start [name] | stop      screen video → <out>/<name>.mp4, in the background until stopped
+                                  (Android: at most 3 min, and FLAG_SECURE screens record black)
 
 act                               add --ls to any of these to print the settled screen afterwards
   tap <label|@ref> [--exact]      @ref: a row from the last ls. Label: exact, else a prefix/contains
@@ -51,6 +53,9 @@ act                               add --ls to any of these to print the settled 
   open <url>                      deep link (e.g. myapp://home)
   launch [app]                    (re)start the app
   bio match|nomatch               Face ID / fingerprint
+  rotate [portrait|landscape|left|right|upsidedown]
+                                  turn the device (landscape = left: turned counter-clockwise); no
+                                  argument prints the current orientation. ls, taps and shots follow it
 
 debug                             [app] defaults to --app / config, else the app in front
   logs [app] [--errors] [--grep re] [--since 5m] [--lines n] [--all]
@@ -75,6 +80,8 @@ conditions
   textsize [size]                 Dynamic Type / font scale: xs s m l xl xxl xxxl ax1…ax5 (or the iOS
                                   names, e.g. accessibility-large); no argument prints the current one
   statusbar clean|live            9:41, full battery and signal, for screenshots
+  network [offline|online]        Android: airplane mode; no argument prints the current state (the iOS
+                                  simulator shares the Mac's network)
   push <app> <payload>            iOS: a remote notification. Payload: a .json file, '{json}', or plain
                                   text for an alert (Android pushes need Firebase)
 
@@ -97,7 +104,7 @@ env: SIMWRIGHT_PLATFORM, SIMWRIGHT_DEVICE, SIMWRIGHT_OUT, SIMWRIGHT_WAIT, SIMWRI
      SIMWRIGHT_ANDROID_HELPER=0 (plain adb + uiautomator dump),
      SIMWRIGHT_EMULATOR_GRPC=0 (no emulator gRPC frames)
 
-Never burst-record a sign-in screen: frames capture typed credentials.`;
+Never burst or record a sign-in screen: frames capture typed credentials.`;
 
 function parse(argv) {
   const opts = { flags: new Set() };
@@ -232,7 +239,7 @@ async function main() {
 }
 
 const deviceId = (d) => d.udid || d.serial;
-const ACTIONS = new Set(['tap', 'longpress', 'zoom', 'tapxy', 'type', 'key', 'fill', 'hidekb', 'swipe', 'back', 'open', 'launch', 'bio', 'scrollto']);
+const ACTIONS = new Set(['tap', 'longpress', 'zoom', 'tapxy', 'type', 'key', 'fill', 'hidekb', 'swipe', 'back', 'open', 'launch', 'bio', 'scrollto', 'rotate']);
 
 /** Print the listing (text or --json) and remember its @refs. `snap` defaults to a fresh read. */
 async function list(d, opts, snap) {
@@ -341,6 +348,7 @@ async function act(d, cmd, args, opts) {
       return d.shot(args[0], { plain: opts.flags.has('plain'), scale: opts.scale ?? 1 });
     }
     case 'burst': return burst(d, args[0], args[1]);
+    case 'record': return record(d, args);
     case 'tap': {
       need(1, 'tap <label|@ref>');
       const { e, snap } = await target(d, isRef(args[0]) ? args[0] : args.join(' '), opts);
@@ -402,6 +410,14 @@ async function act(d, cmd, args, opts) {
       return d.launch(app);
     }
     case 'bio': need(1, 'bio match|nomatch'); return d.bio(args[0]);
+    case 'rotate': {
+      const want = args[0] ? rotation(args[0]) : null;
+      const r = await d.rotate(want);
+      const now = `${ORIENTATIONS[r.turns]} (${r.w}x${r.h})`;
+      if (want == null) return console.log(now);
+      if (r.turns === want) return console.log(`rotated: ${now}`);
+      return console.log(`turned the device to ${ORIENTATIONS[want]}, but the screen stays ${now}: the app in front doesn't support that orientation`);
+    }
     case 'logs': return showLogs(d, args[0], opts);
     case 'crashes': return showCrashes(d, args[0], opts);
     case 'app': return showApp(d, args[0]);
@@ -437,6 +453,10 @@ async function act(d, cmd, args, opts) {
       await d.statusBar(args[0] === 'clean');
       return console.log(args[0] === 'clean' ? 'status bar: 9:41, full battery and signal' : 'status bar: live');
     }
+    case 'network': {
+      if (args[0] && !['offline', 'online'].includes(args[0])) throw new UsageError('usage: simwright network [offline|online]');
+      return console.log(`network: ${await d.network(args[0])}`);
+    }
     case 'push': {
       need(2, "push <app> <payload.json | '{json}' | text>");
       await d.push(args[0], pushPayload(args.slice(1).join(' ')));
@@ -454,6 +474,41 @@ async function act(d, cmd, args, opts) {
     case 'run': return runScript(d, args, opts);
     default: throw new UsageError(`unknown command: ${cmd} (simwright --help)`);
   }
+}
+
+const RECORDINGS = join(HOME, 'recordings.json');
+
+/**
+ `record start [name]` / `record stop`. The recording runs in the background, so its state (the file, and the
+ process to stop) is kept per device in ~/.simwright/recordings.json for the `stop` that may come later.
+ */
+async function record(d, args) {
+  const usage = 'record start [name] | record stop';
+  const all = readJson(RECORDINGS, {});
+  const id = deviceId(d);
+  const save = () => writeJson(RECORDINGS, all);
+  if (args[0] === 'start') {
+    if (all[id]) throw new UsageError(`already recording to ${all[id].path} — stop it first: simwright record stop`);
+    mkdirSync(d.out, { recursive: true });
+    const t = new Date(), p = (n) => String(n).padStart(2, '0');
+    const name = args[1] || `rec_${t.getFullYear()}${p(t.getMonth() + 1)}${p(t.getDate())}_${p(t.getHours())}${p(t.getMinutes())}${p(t.getSeconds())}`;
+    // Absolute: the stop can come from another directory.
+    const path = resolve(d.out, name.endsWith('.mp4') ? name : `${name}.mp4`);
+    all[id] = { ...(await d.recordStart(path)), path, started: Date.now() };
+    save();
+    return console.log(`recording to ${path} — stop with: simwright record stop`);
+  }
+  if (args[0] === 'stop') {
+    const r = all[id];
+    if (!r) throw new UsageError('nothing is recording on this device (simwright record start)');
+    delete all[id];
+    save();
+    await d.recordStop(r);
+    const secs = Math.round((Date.now() - r.started) / 1000);
+    const capped = d.serial && secs > RECORD_LIMIT_S ? ` (Android stopped it after ${RECORD_LIMIT_S} s)` : '';
+    return console.log(`${r.path}  ${Math.min(secs, d.serial ? RECORD_LIMIT_S : secs)} s${capped}`);
+  }
+  throw new UsageError(`usage: simwright ${usage}`);
 }
 
 /** The app a state-changing command acts on: named, or --app / config. Never guessed from the screen. */

@@ -80,6 +80,9 @@ typedef void *(*KeyboardFn)(int32_t, int32_t);
 static MouseEventFn indigoMouse;
 static KeyboardFn indigoKeyboard;
 
+static void updateOrientation(id root); // see "orientation" below
+static NSRect nativeFrame(id el);
+
 static void die(NSString *msg) {
   fprintf(stderr, "simwright-sim: %s\n", msg.UTF8String);
   exit(2);
@@ -149,7 +152,7 @@ static CGRect frameOf(NSDictionary *n) {
  */
 static void walk(id el, NSMutableArray *out, NSMutableArray *holes, BOOL all, CGRect screen) {
   [[el translation] setBridgeDelegateToken:axToken];
-  NSRect f = [el accessibilityFrame];
+  NSRect f = nativeFrame(el);
   BOOL onScreen = f.size.width > 0 && f.size.height > 0 && CGRectIntersectsRect(f, screen);
   NSMutableDictionary *n = (all || onScreen) ? row(el, f) : nil;
   if (n) [out addObject:n];
@@ -184,7 +187,7 @@ static void fillHole(CGRect hole, NSMutableArray *out) {
       [o setBridgeDelegateToken:axToken];
       id el = [translator macPlatformElementFromTranslation:o];
       [[el translation] setBridgeDelegateToken:axToken];
-      NSRect f = [el accessibilityFrame];
+      NSRect f = nativeFrame(el);
       if (f.size.width <= 0 || f.size.height <= 0 || CGRectEqualToRect(NSRectToCGRect(f), hole) || CGRectContainsRect(f, hole)) {
         [covered addObject:[NSValue valueWithRect:CGRectMake(x - step / 2, y - step / 2, step, step)]];
         continue;
@@ -213,7 +216,7 @@ static NSMutableDictionary *probeAt(CGPoint p) {
   [o setBridgeDelegateToken:axToken];
   id el = [translator macPlatformElementFromTranslation:o];
   [[el translation] setBridgeDelegateToken:axToken];
-  NSRect f = [el accessibilityFrame];
+  NSRect f = nativeFrame(el);
   return f.size.width > 0 && f.size.height > 0 ? row(el, f) : nil;
 }
 
@@ -270,6 +273,7 @@ static NSArray *readTree(BOOL all) {
   NSMutableArray *out = [NSMutableArray array], *holes = [NSMutableArray array];
   CGRect screen = CGRectMake(0, 0, screenPx.width / screenScale, screenPx.height / screenScale);
   probes = 0;
+  updateOrientation(root);
   if (root) walk(root, out, holes, all, screen);
   for (NSValue *h in holes) {
     fillHole(h.rectValue, out);
@@ -345,8 +349,119 @@ typedef enum { TouchStart = 0, TouchMove = 1, TouchEnd = 2 } TouchPhase; // = dt
 static NSString *transport;     // "indigo" | "dtuhid"
 static NSString *inputError;    // set when input cannot work; reported by every input op
 
+// ── orientation ──
+//
+// Rotated, the accessibility frames, hit-testing, the digitizer and the framebuffer all stay in the
+// device's native portrait space; only the Application element's frame turns. Clients get the screen as
+// the user sees it: tree frames are converted out of native space, touches into it, frames are turned.
+// Values are UIDeviceOrientation: 1 portrait, 2 upside down, 3 landscape left (turned counter-clockwise,
+// the interface's top at the native right edge), 4 landscape right.
+
+static int uiOrientation = 1;   // how the interface is turned, as of the last look
+static int lastLandscape = 3;   // which landscape side an app forced into landscape was last seen on
+static BOOL isPad;
+
+static double nativeW(void) { return screenPx.width / screenScale; }
+static double nativeH(void) { return screenPx.height / screenScale; }
+static BOOL sideways(void) { return uiOrientation == 3 || uiOrientation == 4; }
+
+/** The device's orientation as the guest's backboardd last published it (0 when unknown). */
+static int deviceOrientation(void) {
+  uint64_t state = 0;
+  SEL get = NSSelectorFromString(@"darwinNotificationGetState:name:error:");
+  if (![device respondsToSelector:get]) return 0;
+  BOOL ok = ((BOOL(*)(id, SEL, uint64_t *, NSString *, NSError **))objc_msgSend)(device, get, &state, @"com.apple.backboardd.orientation", NULL);
+  return ok ? (int)state : 0;
+}
+
+/**
+ The interface's orientation, from the device's and the front app's shape: a landscape-shaped app sits on
+ the side the device is turned to. An upright device leaves the interface upright, except an iPad held
+ upside down. Face up/down (5, 6) keep the last one.
+ */
+static void updateOrientation(id root) {
+  int device = deviceOrientation();
+  if (device == 5 || device == 6) return;
+  NSRect f = root ? [root accessibilityFrame] : NSZeroRect;
+  BOOL wide = f.size.width > f.size.height;
+  if (!root) wide = isPad && (device == 3 || device == 4); // the iPhone home screen never turns
+  if (wide) uiOrientation = lastLandscape = (device == 3 || device == 4) ? device : lastLandscape;
+  else uiOrientation = isPad && device == 2 ? 2 : 1;
+}
+
+static void lookAtOrientation(void) {
+  id app = [translator frontmostApplicationWithDisplayId:0 bridgeDelegateToken:axToken];
+  [app setBridgeDelegateToken:axToken];
+  updateOrientation(app ? [translator macPlatformElementFromTranslation:app] : nil);
+}
+
+/** A point on the screen as the user sees it → native portrait points. */
+static CGPoint toNative(double x, double y) {
+  switch (uiOrientation) {
+    case 2: return CGPointMake(nativeW() - x, nativeH() - y);
+    case 3: return CGPointMake(nativeW() - y, x);
+    case 4: return CGPointMake(y, nativeH() - x);
+    default: return CGPointMake(x, y);
+  }
+}
+
+/** A native frame → the same frame on the screen as the user sees it. */
+static CGRect fromNative(CGRect r) {
+  double x = r.origin.x, y = r.origin.y, w = r.size.width, h = r.size.height;
+  switch (uiOrientation) {
+    case 2: return CGRectMake(nativeW() - x - w, nativeH() - y - h, w, h);
+    case 3: return CGRectMake(y, nativeW() - x - w, h, w);
+    case 4: return CGRectMake(nativeH() - y - h, x, h, w);
+    default: return r;
+  }
+}
+
+/** A frame on the screen as the user sees it → native. */
+static CGRect toNativeRect(CGRect r) {
+  double x = r.origin.x, y = r.origin.y, w = r.size.width, h = r.size.height;
+  switch (uiOrientation) {
+    case 2: return CGRectMake(nativeW() - x - w, nativeH() - y - h, w, h);
+    case 3: return CGRectMake(nativeW() - y - h, x, h, w);
+    case 4: return CGRectMake(y, nativeH() - x - w, h, w);
+    default: return r;
+  }
+}
+
+/**
+ Whether a process lays itself out in native space while the screen is turned. A frame comes in its owner's
+ own space: an app that turned reports turned frames, but SpringBoard never turns on an iPhone, so the
+ alerts it shows over a turned app come in native space.
+ */
+static BOOL staysNative(int pid) {
+  static NSMutableDictionary<NSNumber *, NSNumber *> *known;
+  if (!known) known = [NSMutableDictionary dictionary];
+  NSNumber *k = @(pid), *v = known[k];
+  if (!v) {
+    char path[PROC_PIDPATHINFO_MAXSIZE] = {0};
+    if (pid > 0) proc_pidpath(pid, path, sizeof path);
+    known[k] = v = @(!isPad && strstr(path, "/SpringBoard.app/") != NULL);
+  }
+  return v.boolValue;
+}
+
+/** An element's frame in native space, the one hit-testing and the digitizer use (see "orientation"). */
+static NSRect nativeFrame(id el) {
+  NSRect f = [el accessibilityFrame];
+  if (uiOrientation == 1 || [str([el accessibilityRole]) isEqualToString:@"AXApplication"]) return f;
+  id t = [el translation];
+  int pid = [t respondsToSelector:@selector(pid)] ? [[t valueForKey:@"pid"] intValue] : 0;
+  return staysNative(pid) ? f : NSRectFromCGRect(toNativeRect(NSRectToCGRect(f)));
+}
+
+/** The screen as the user sees it, in points. */
+static CGSize viewSize(void) {
+  return sideways() ? CGSizeMake(nativeH(), nativeW()) : CGSizeMake(nativeW(), nativeH());
+}
+
+/** A touch in on-screen points → the digitizer's normalized native coordinates. */
 static CGPoint ratioFor(double x, double y) {
-  return CGPointMake(x * screenScale / screenPx.width, y * screenScale / screenPx.height);
+  CGPoint p = toNative(x, y);
+  return CGPointMake(p.x * screenScale / screenPx.width, p.y * screenScale / screenPx.height);
 }
 
 // ── Indigo ──
@@ -648,6 +763,31 @@ static void key(NSString *name) {
   press(u.intValue, @[]);
 }
 
+// ── rotation ─────────────────────────────────────────────────────────────
+//
+// What Simulator.app's Rotate Left/Right does: a GraphicsServices event on the guest's PurpleWorkspacePort.
+// Wire format: facebook/idb PrivateHeaders/SimulatorApp/GSEvent.h.
+
+enum { GSEventDeviceOrientationChanged = 50, GSEventHostFlag = 0x20000, GSEventMachMessageID = 0x7B };
+
+/** Device orientation (UIDeviceOrientation: 1 portrait, 2 upside down, 3 landscape left, 4 landscape right). */
+static void sendOrientation(uint32_t orientation) {
+  NSError *err = nil;
+  mach_port_t port = [device lookup:@"PurpleWorkspacePort" error:&err];
+  if (port == MACH_PORT_NULL) [NSException raise:@"rotate" format:@"no PurpleWorkspacePort: %@", err.localizedDescription ?: @"lookup failed"];
+  uint8_t m[0x6C] = {0}; // align4(record_info_size 4 + 0x6B)
+  mach_msg_header_t *h = (mach_msg_header_t *)m;
+  h->msgh_bits = MACH_MSGH_BITS(MACH_MSG_TYPE_COPY_SEND, 0);
+  h->msgh_size = sizeof m;
+  h->msgh_remote_port = port;
+  h->msgh_id = GSEventMachMessageID;
+  *(uint32_t *)(m + 0x18) = GSEventDeviceOrientationChanged | GSEventHostFlag;
+  *(uint32_t *)(m + 0x48) = 4; // record_info_size
+  *(uint32_t *)(m + 0x4C) = orientation;
+  kern_return_t kr = mach_msg(h, MACH_SEND_MSG | MACH_SEND_TIMEOUT, sizeof m, 0, MACH_PORT_NULL, 2000, MACH_PORT_NULL);
+  if (kr != KERN_SUCCESS) [NSException raise:@"rotate" format:@"orientation event not delivered (mach_msg %d)", kr];
+}
+
 // ── frames ───────────────────────────────────────────────────────────────
 
 /** The main display's IOSurface: the port whose descriptor reports displayClass 0. */
@@ -668,7 +808,7 @@ static IOSurfaceRef mainSurface(void) {
   return (__bridge IOSurfaceRef)surface; // toll-free bridged; kept alive by the descriptor
 }
 
-/** The surface as PNG, shrunk by `scale` when 0 < scale < 1. */
+/** The surface as PNG, upright as the user sees it (see "orientation"), shrunk by `scale` when 0 < scale < 1. */
 static NSData *png(IOSurfaceRef s, double scale) {
   IOSurfaceLock(s, kIOSurfaceLockReadOnly, NULL);
   size_t w = IOSurfaceGetWidth(s), h = IOSurfaceGetHeight(s), stride = IOSurfaceGetBytesPerRow(s);
@@ -676,10 +816,17 @@ static NSData *png(IOSurfaceRef s, double scale) {
   CGDataProviderRef dp = CGDataProviderCreateWithData(NULL, IOSurfaceGetBaseAddress(s), stride * h, NULL);
   CGImageRef img = CGImageCreate(w, h, 8, 32, stride, cs, kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst, dp, NULL, NO,
                                  kCGRenderingIntentDefault);
-  if (scale > 0 && scale < 1) {
+  if (!(scale > 0 && scale < 1)) scale = 1;
+  if (scale < 1 || uiOrientation != 1) {
     size_t sw = MAX(1, (size_t)round(w * scale)), sh = MAX(1, (size_t)round(h * scale));
-    CGContextRef ctx = CGBitmapContextCreate(NULL, sw, sh, 8, 0, cs, kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst);
+    size_t ow = sideways() ? sh : sw, oh = sideways() ? sw : sh;
+    CGContextRef ctx = CGBitmapContextCreate(NULL, ow, oh, 8, 0, cs, kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst);
     CGContextSetInterpolationQuality(ctx, kCGInterpolationHigh);
+    // Turn the native image so the interface's top is up: 3 has it at the right edge (a quarter turn
+    // counter-clockwise), 4 at the left (clockwise), 2 at the bottom.
+    if (uiOrientation == 3) CGContextTranslateCTM(ctx, ow, 0), CGContextRotateCTM(ctx, M_PI_2);
+    else if (uiOrientation == 4) CGContextTranslateCTM(ctx, 0, oh), CGContextRotateCTM(ctx, -M_PI_2);
+    else if (uiOrientation == 2) CGContextTranslateCTM(ctx, ow, oh), CGContextRotateCTM(ctx, M_PI);
     CGContextDrawImage(ctx, CGRectMake(0, 0, sw, sh), img);
     CGImageRelease(img);
     img = CGBitmapContextCreateImage(ctx);
@@ -740,6 +887,12 @@ static void burst(int fd, double seconds) {
   reply(fd, @{@"ok" : @YES, @"done" : @YES, @"frames" : @(frames), @"distinct" : @(sent)}, nil);
 }
 
+/** The screen as the user sees it: points, and which way it is turned (UIDeviceOrientation). */
+static NSDictionary *screenInfo(void) {
+  CGSize v = viewSize();
+  return @{@"w" : @(round(v.width)), @"h" : @(round(v.height)), @"orientation" : @(uiOrientation)};
+}
+
 static void handle(int fd, NSDictionary *r) {
   NSString *op = r[@"op"];
   if ([op isEqualToString:@"hello"]) return reply(fd, @{
@@ -748,9 +901,17 @@ static void handle(int fd, NSDictionary *r) {
   }, nil);
   if ([op isEqualToString:@"tree"]) {
     NSArray *nodes = tree([r[@"all"] boolValue], ![r[@"settle"] isEqual:@NO]);
-    NSDictionary *screen = @{@"w" : @(round(screenPx.width / screenScale)), @"h" : @(round(screenPx.height / screenScale))};
-    return reply(fd, @{@"ok" : @YES, @"nodes" : nodes, @"probes" : @(probes), @"screen" : screen}, nil);
+    // Frames leave native space here; the Application's own frame is already the turned one.
+    if (uiOrientation != 1 && ![r[@"raw"] boolValue])
+      for (NSMutableDictionary *n in nodes) {
+        if ([n[@"t"] isEqualToString:@"Application"]) continue;
+        CGRect f = fromNative(frameOf(n));
+        n[@"x"] = @(round(f.origin.x)), n[@"y"] = @(round(f.origin.y)), n[@"w"] = @(round(f.size.width)), n[@"h"] = @(round(f.size.height));
+      }
+    return reply(fd, @{@"ok" : @YES, @"nodes" : nodes, @"probes" : @(probes), @"screen" : screenInfo()}, nil);
   }
+  // Touches are given in on-screen points: know which way the screen is turned before converting them.
+  if ([@[ @"tap", @"pinch", @"swipe", @"shot", @"burst" ] containsObject:op]) lookAtOrientation();
   if ([op isEqualToString:@"tap"]) {
     tap(num(r, @"x", 0), num(r, @"y", 0), (int)num(r, @"hold", 50));
     return reply(fd, @{@"ok" : @YES}, nil);
@@ -779,6 +940,25 @@ static void handle(int fd, NSDictionary *r) {
     char path[PROC_PIDPATHINFO_MAXSIZE] = {0};
     if (pid > 0) proc_pidpath(pid, path, sizeof path);
     return reply(fd, @{@"ok" : @YES, @"pid" : @(pid), @"path" : @(path)}, nil);
+  }
+  if ([op isEqualToString:@"rotate"]) {
+    int want = (int)num(r, @"orientation", 0);
+    if (want >= 1 && want <= 4) {
+      sendOrientation((uint32_t)want);
+      // backboardd publishes the new orientation at once; the interface turns over ~0.4 s after it.
+      for (int i = 0; i < 20 && deviceOrientation() != want; i++) usleep(50000);
+      usleep(400000);
+      // Then until the interface holds one orientation for three looks in a row: mid-turn, an app can
+      // report a frame it then leaves (one presenting a menu may turn back).
+      int last = 0, same = 0;
+      for (int i = 0; i < 25 && same < 3; i++, usleep(120000)) {
+        lookAtOrientation();
+        same = uiOrientation == last ? same + 1 : 1;
+        last = uiOrientation;
+      }
+    }
+    lookAtOrientation();
+    return reply(fd, @{@"ok" : @YES, @"device" : @(deviceOrientation()), @"screen" : screenInfo()}, nil);
   }
   if ([op isEqualToString:@"keyboard"]) return reply(fd, @{@"ok" : @YES, @"shown" : @(keyboardShown())}, nil);
   if ([op isEqualToString:@"shot"]) {
@@ -864,6 +1044,7 @@ static void setup(NSString *udid, NSString *developerDir) {
   if ([device state] != SimDeviceStateBooted) die([NSString stringWithFormat:@"simulator %@ is not booted", udid]);
   screenPx = [[device deviceType] mainScreenSize];
   screenScale = [[device deviceType] mainScreenScale];
+  isPad = [str([[device deviceType] valueForKey:@"name"]) hasPrefix:@"iPad"];
 
   hidQueue = dispatch_queue_create("simwright.hid", DISPATCH_QUEUE_SERIAL);
   chooseTransport(sk);

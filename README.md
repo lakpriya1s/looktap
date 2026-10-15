@@ -61,11 +61,11 @@ It's just as handy by hand, or in a shell script for screenshot sweeps and bug r
 | 🧭 | **Navigate and gesture.** `swipe`, `scrollto <label>`, `back`, `open <deep link>`, `launch <app>`, `longpress`, and two-finger `zoom in\|out` |
 | ⏱️ | **Wait instead of sleep.** `wait "Welcome"`, `wait "Loading" --gone`. Actions already wait up to 3 s for their target |
 | 📸 | **Screenshots.** `shot` saves a PNG and prints its path, with `--scale 0.5` for fewer image tokens. On Android emulators it also captures `FLAG_SECURE` screens |
-| 🎞️ | **Burst capture.** `burst` saves a frame each time the screen changes, to catch spinners, toasts and transitions |
+| 🎞️ | **Burst capture and video.** `burst` saves a frame each time the screen changes, to catch spinners, toasts and transitions. `record start` … `record stop` saves an MP4 of everything in between |
 | 🪵 | **Logs.** `logs` shows the app's log since your last look. `--errors` and `--grep` narrow it, and on iOS Apple-framework chatter is filtered out |
 | 💥 | **Crashes.** `crashes` reads iOS crash reports (exception, reason, top frames) and Android crashes, ANRs and **low-memory kills**, so "the app vanished" always comes with a reason |
 | 🫆 | **Biometrics.** `bio match\|nomatch` simulates Face ID or a fingerprint |
-| 🌍 | **Simulated conditions.** `location <lat> <lon>`, `appearance dark`, `textsize xxl` (Dynamic Type / font scale), `statusbar clean` (9:41 for screenshots), and iOS `push` notifications |
+| 🌍 | **Simulated conditions.** `location <lat> <lon>`, `appearance dark`, `textsize xxl` (Dynamic Type / font scale), `statusbar clean` (9:41 for screenshots), `rotate landscape` (`ls`, taps and screenshots follow the turned screen), Android `network offline`, and iOS `push` notifications |
 | 🧹 | **App state for repros.** `install` a build, `reset` an app to a fresh install, `uninstall`, and `permission grant\|revoke\|reset camera\|location\|photos\|…`, with the same names on both platforms |
 | 🤖 | **Built for agents.** `--ls` on any action, `run` to batch steps, `--json`, and a [Claude Code skill](#for-ai-agents) you install with one command |
 | 🧩 | **Nothing to install on the device**, no Appium server, no WebDriverAgent, no npm dependencies. The helpers start on first use |
@@ -359,6 +359,19 @@ wait
 # 61 frames, 23 distinct, in ./frames
 ```
 
+For a video of a whole flow, record it. The recording runs in the background between the two commands:
+
+```bash
+simwright record start checkout           # → ./shots/checkout.mp4
+simwright tap "Add to cart" --ls
+simwright tap "Checkout" --ls
+simwright record stop                     # prints the path and the length
+```
+
+- **Android** records with the device's `screenrecord`: at most 3 minutes, and `FLAG_SECURE` screens come out
+  black.
+- **iOS** records with `simctl io recordVideo`. A recording started in landscape is marked to play turned.
+
 ### Start from a clean state: install, reset, permissions
 
 ```bash
@@ -384,13 +397,15 @@ simwright uninstall com.example.myapp
 - **These commands never guess the app from the screen.** `uninstall`, `reset` and `permission` take the app id
   as an argument, or from `--app` / `simwright.config.json`.
 
-### Simulated conditions: location, dark mode, text size, push
+### Simulated conditions: location, dark mode, text size, orientation, network, push
 
 ```bash
 simwright location 51.5072 -0.1276        # GPS (Android: emulators) · `location clear` on iOS
 simwright appearance dark                 # or light; no argument prints the current one
 simwright textsize ax2                    # Dynamic Type / font scale: xs s m l xl xxl xxxl ax1…ax5
 simwright statusbar clean                 # 9:41, full battery and Wi-Fi, for screenshots · `statusbar live`
+simwright rotate landscape --ls           # or left, right, upsidedown, portrait; no argument prints it
+simwright network offline                 # Android: airplane mode · `network online`
 simwright push com.example.myapp "Your order has shipped"          # iOS: an alert
 simwright push com.example.myapp '{"aps":{"alert":"Hi"},"orderId":7}'   # or any payload / a .json file
 ```
@@ -398,6 +413,12 @@ simwright push com.example.myapp '{"aps":{"alert":"Hi"},"orderId":7}'   # or any
 - **`textsize`** uses the iOS Dynamic Type sizes. On Android each size maps to the nearest font scale, from 0.8
   to 2.0, the default being `l` / `large` on both.
 - **`statusbar clean`** uses iOS status-bar overrides, and Android's System UI demo mode.
+- **`rotate`** turns the device the way Simulator's Rotate Left/Right does, or locks Android's rotation.
+  `landscape` is `left`: the device turned counter-clockwise. `ls` coordinates, taps and screenshots follow
+  the turned screen, so read the screen again afterwards. An app that doesn't support the orientation stays
+  as it is, and `rotate` says so. On Android it leaves auto-rotate off.
+- **`network offline`** turns on Android's airplane mode and waits until the device has no route out. The iOS
+  simulator shares the Mac's network, so it can't go offline or slow by itself.
 - **`push`** delivers a remote notification the way APNs would. The app needs notification permission, as on a
   device.
   - A payload without `"aps"` is sent as a silent (background) push carrying that data.

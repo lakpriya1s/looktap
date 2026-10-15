@@ -93,10 +93,13 @@ simwright permission grant location com.example.app   # also revoke / reset; cam
 ```
 
 Conditions: `location <lat> <lon>` · `appearance dark|light` · `textsize xxl|ax2|default` ·
-`statusbar clean|live` (9:41 for screenshots) · `push <app> "text"` (iOS only).
+`statusbar clean|live` (9:41 for screenshots) · `push <app> "text"` (iOS only) ·
+`rotate landscape|right|portrait` · `network offline|online` (Android only).
 
-- **Set back what you change.** Appearance, text size and the status bar stay as you leave them, for the next
-  person and for other apps.
+- **Set back what you change.** Appearance, text size, the status bar, the orientation and the network stay as
+  you leave them, for the next person and for other apps.
+- **After `rotate`, read the screen again.** `ls`, taps and shots follow the turned screen, so old @refs and
+  coordinates are stale. If the app doesn't support the orientation, `rotate` says so and nothing turns.
 - **`reset` signs the user out** of most apps: ask before resetting an app someone else signed in to.
 - These commands need the app id. They never act on whatever happens to be on screen.
 
@@ -104,13 +107,13 @@ Conditions: `location <lat> <lon>` · `appearance dark|light` · `textsize xxl|a
 
 `longpress <label|@ref|x y> [ms]` · `zoom in|out [x y]` (two-finger pinch) · `type <text>` (into the focused field) · `key return|escape|delete|tab|space` · `hidekb` · `swipe x1 y1 x2 y2 [ms]` · `back` · `open <url>` (deep
 link) · `launch [app]` · `bio match|nomatch` · `burst <dir> <seconds>` (frames of a transient state) ·
-`devices` · `doctor`. Pass `-p ios|android` and `-d <id>` when more than one device is booted. Run
+`record start [name]` … `record stop` (a video of what happens in between) · `devices` · `doctor`. Pass `-p ios|android` and `-d <id>` when more than one device is booted. Run
 `simwright --help` for everything.
 
 ## Rules
 
 - **Never type real credentials, OTPs or card numbers.** A person signs in, then you take over.
-- **Never `burst` a sign-in or passcode screen.** The frames capture what's typed.
+- **Never `burst` or `record` a sign-in or passcode screen.** The frames capture what's typed.
 - Against a live backend every tap is real. Use the smallest amounts, and undo what you create.
 - `hidekb` exits 2 if the keyboard is still up (iOS search keyboards have no Done key). Tap the
   screen's close/cancel control instead.

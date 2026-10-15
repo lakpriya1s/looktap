@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { escapeInput, parseDensity, parseNodes } from '../lib/android.js';
+import { escapeInput, parseDensity, parseNodes, parseRotation } from '../lib/android.js';
 
 test('parseDensity prefers the override and converts to px per dp', () => {
   assert.equal(parseDensity('Physical density: 420\n'), 2.625);
@@ -24,4 +24,10 @@ test('parseNodes reads labels and scales bounds to dp', () => {
   assert.equal(b.label, 'Tom & Jerry');
   assert.equal(b.focused, true);
   assert.equal(b.x2, 160);
+});
+
+test('parseRotation reads the display rotation from dumpsys, in quarter turns', () => {
+  assert.equal(parseRotation('      mCurrentRotation=ROTATION_90\n'), 1);
+  assert.equal(parseRotation('    mRotation=3 mDeferredRotationPauseCount=0\n'), 3);
+  assert.equal(parseRotation('nothing here'), 0);
 });

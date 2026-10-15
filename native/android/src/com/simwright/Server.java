@@ -139,7 +139,10 @@ public final class Server {
                 reply(out, ok().put("version", version).put("pid", android.os.Process.myPid()), null);
                 return;
             case "tree":
-                reply(out, ok().put("nodes", tree(req.optBoolean("all"))), null);
+                reply(out, ok().put("nodes", tree(req.optBoolean("all"))).put("display", display()), null);
+                return;
+            case "display":
+                reply(out, ok().put("display", display()), null);
                 return;
             case "tap":
                 tap(req.getInt("x"), req.getInt("y"), req.optInt("hold", 50));
@@ -201,6 +204,22 @@ public final class Server {
     }
 
     // ── screen ───────────────────────────────────────────────────────────
+
+    /**
+     The default display as apps see it: {w, h} in px, turned with the screen, and its rotation (0–3, quarter
+     turns counter-clockwise). From the hidden DisplayManagerGlobal; null where that isn't reachable.
+     */
+    static JSONObject display() {
+        try {
+            Object dm = Class.forName("android.hardware.display.DisplayManagerGlobal").getMethod("getInstance").invoke(null);
+            Object info = dm.getClass().getMethod("getDisplayInfo", int.class).invoke(dm, 0);
+            Class<?> c = info.getClass();
+            return new JSONObject().put("w", c.getField("logicalWidth").getInt(info)).put("h", c.getField("logicalHeight").getInt(info))
+                    .put("rotation", c.getField("rotation").getInt(info));
+        } catch (Throwable e) {
+            return null;
+        }
+    }
 
     /** Visible nodes, pre-order, bounds in px: {l: label, c: class, b: [x1,y1,x2,y2], f: focused}. */
     static JSONArray tree(boolean allWindows) throws Exception {
