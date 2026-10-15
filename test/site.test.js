@@ -54,9 +54,9 @@ test('the inventory covers every command, and every scene names real ones', () =
 test('the agent skill lists every command and flag', () => {
   const cli = readFileSync(new URL('../bin/simwright.js', import.meta.url), 'utf8');
   const skill = readFileSync(new URL('../skills/simwright/SKILL.md', import.meta.url), 'utf8');
-  const table = sections(skill).find((s) => s.title === 'Every command');
-  assert.ok(table);
-  const rows = new Set([...table.md.matchAll(/`([a-z]+)[ `]/g)].map((m) => m[1]));
-  assert.deepEqual(cliCommands(cli).filter((c) => !rows.has(c)), []);
+  const commands = sections(skill).find((s) => s.title === 'Commands');
+  assert.ok(commands);
+  const used = new Set([...commands.md.matchAll(/^simwright ([a-z]+)/gm)].map((m) => m[1]));
+  assert.deepEqual(cliCommands(cli).filter((c) => !used.has(c)), []);
   assert.deepEqual(cliFlags(cli).filter((f) => !new RegExp(`(^|[\\s\`\\[,])${f}\\b`).test(skill)), []);
 });
