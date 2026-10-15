@@ -163,9 +163,12 @@ a.version:hover { color: var(--accent); border-color: var(--accent); }
 .stage { position: relative; }
 .stage-inner { position: sticky; top: 60px; height: calc(100vh - 60px); display: flex; flex-direction: column; justify-content: center; padding: 20px clamp(16px, 3vw, 48px) 20px 0; }
 .scene-label { display: flex; align-items: center; justify-content: space-between; gap: 16px; font: 400 11.5px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 14px; }
-.dots { display: flex; gap: 6px; }
-.dots a { width: 7px; height: 7px; border-radius: 50%; background: var(--line-2); transition: background 0.3s, transform 0.3s; }
-.dots a.on { background: var(--accent); transform: scale(1.35); }
+.dots { display: flex; }
+/* 24 px tap targets around a 7 px dot */
+.dots a { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; }
+.dots a::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--line-2); transition: background 0.3s, transform 0.3s; }
+.dots a.on::before { background: var(--accent); transform: scale(1.35); }
+.dots a:hover::before { background: var(--accent); }
 .rig { position: relative; display: flex; justify-content: flex-end; align-items: center; min-height: 0; flex: 1; max-height: 820px; }
 .rig [data-phone] { margin-right: clamp(0px, 3vw, 56px); }
 
@@ -257,6 +260,7 @@ a.version:hover { color: var(--accent); border-color: var(--accent); }
   .stage { order: -1; position: sticky; top: 60px; z-index: 20; background: color-mix(in srgb, var(--bg) 94%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
   .stage-inner { position: static; height: auto; padding: 10px 16px 12px; }
   .scene-label { margin-bottom: 8px; }
+  .dots { display: none; }
   .rig { flex: none; height: auto; align-items: center; justify-content: flex-start; gap: 12px; }
   .rig [data-phone] { margin: 0; height: min(46vh, 420px); }
   .rig [data-phone].landscape { height: auto; width: 58%; align-self: center; }

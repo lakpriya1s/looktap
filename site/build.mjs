@@ -17,6 +17,8 @@ const ROOT = join(SITE, '..');
 const SRC = join(SITE, 'src');
 const DIST = join(SITE, 'dist');
 const REPO = 'https://github.com/lakpriya1s/simwright';
+const SITE_URL = 'https://lakpriya1s.github.io/simwright/';
+const FONTS = 'https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Martian+Mono:wght@300;400;500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap';
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
 const problems = [];
 
@@ -57,17 +59,17 @@ export function sections(md) {
 }
 
 const PAGES = [
-  { slug: 'quick-start', title: 'Quick start', group: 'Start', readme: ['Quick start', '🤖 Kickstart with your AI agent', 'Requirements'] },
-  { slug: 'features', title: 'Features', group: 'Start', readme: ['What you get'] },
-  { slug: 'how-it-works', title: 'How it works', group: 'Start', readme: ['How it works'] },
-  { slug: 'examples', title: 'Examples', group: 'Use', readme: ['Examples'] },
-  { slug: 'commands', title: 'Commands & options', group: 'Use', readme: ['Commands', 'Options, environment variables, config file'] },
-  { slug: 'troubleshooting', title: 'Troubleshooting & FAQ', group: 'Use', readme: ['Troubleshooting', 'FAQ'] },
-  { slug: 'agents', title: 'For AI agents', group: 'Agents', readme: ['For AI agents'] },
-  { slug: 'agent-guide', title: 'Agent guide (skill)', group: 'Agents', file: 'skills/simwright/SKILL.md' },
-  { slug: 'benchmark', title: 'Benchmark', group: 'Project', readme: ['simwright vs Appium'], file: 'BENCHMARK.md' },
-  { slug: 'safety', title: 'Safety rules', group: 'Project', readme: ['Safety rules'] },
-  { slug: 'contributing', title: 'Contributing & roadmap', group: 'Project', readme: ['Contributing', 'Roadmap', 'License'] },
+  { slug: 'quick-start', description: 'Install simwright, check your toolchain and drive an iOS simulator or Android emulator in four commands, or let your AI agent set it up for you.', title: 'Quick start', group: 'Start', readme: ['Quick start', '🤖 Kickstart with your AI agent', 'Requirements'] },
+  { slug: 'features', description: 'Everything simwright does: read the screen as text, tap by label, type, gestures, screenshots, video, logs, crashes, biometrics and simulated conditions.', title: 'Features', group: 'Start', readme: ['What you get'] },
+  { slug: 'how-it-works', description: 'How simwright reads the screen and sends touches without Appium or WebDriverAgent: a macOS helper for the iOS simulator and an 8 KB Android helper.', title: 'How it works', group: 'Start', readme: ['How it works'] },
+  { slug: 'examples', description: 'Worked simwright examples: tap by label, fill forms, wait instead of sleeping, debug crashes, catch transitions, reset app state, simulate conditions.', title: 'Examples', group: 'Use', readme: ['Examples'] },
+  { slug: 'commands', description: 'Every simwright command and option: look, act, debug, app state and conditions, plus flags, environment variables and the config file.', title: 'Commands & options', group: 'Use', readme: ['Commands', 'Options, environment variables, config file'] },
+  { slug: 'troubleshooting', description: 'Fixes for common simwright problems on the iOS simulator and Android emulator, and answers to frequent questions.', title: 'Troubleshooting & FAQ', group: 'Use', readme: ['Troubleshooting', 'FAQ'] },
+  { slug: 'agents', description: 'Why simwright suits AI coding agents: one call per step, small text output, batching, JSON, and an MCP server for chat apps without a shell.', title: 'For AI agents', group: 'Agents', readme: ['For AI agents'] },
+  { slug: 'agent-guide', description: 'The simwright skill for AI agents: the look-act loop, choosing targets, waiting, screenshots, debugging, and the rules an agent should follow.', title: 'Agent guide (skill)', group: 'Agents', file: 'skills/simwright/SKILL.md' },
+  { slug: 'benchmark', description: 'simwright against Appium and the Appium MCP on the same iPhone simulator and Android emulator: setup time, speed, output size and reliability.', title: 'Benchmark', group: 'Project', readme: ['simwright vs Appium'], file: 'BENCHMARK.md' },
+  { slug: 'safety', description: 'Safety rules for driving apps with simwright: no real credentials, no recordings of sign-in screens, and care with live backends and logs.', title: 'Safety rules', group: 'Project', readme: ['Safety rules'] },
+  { slug: 'contributing', description: 'Build simwright from source, rebuild the native helpers, add a command, and see the roadmap and license.', title: 'Contributing & roadmap', group: 'Project', readme: ['Contributing', 'Roadmap', 'License'] },
 ];
 const SKIPPED = ['Contents']; // the landing page and the sidebar replace it
 
@@ -119,7 +121,16 @@ function makeLinker(page, anchors, pageIds) {
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+/** A page's meta description: its first paragraph of prose, trimmed to a search snippet's length. */
+function describe(page, html) {
+  const first = /<p>([\s\S]*?)<\/p>/.exec(html)?.[1] || '';
+  const text = first.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim();
+  const base = text || `simwright documentation: ${page.title}.`;
+  return base.length > 158 ? `${base.slice(0, 155).replace(/\s\S*$/, '')}…` : base;
+}
+
 function docsPage(page, html, headings, all, version, titleId) {
+  const description = page.description || describe(page, html);
   const groups = [...new Set(all.map((p) => p.group))];
   const nav = groups
     .map(
@@ -143,10 +154,19 @@ function docsPage(page, html, headings, all, version, titleId) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(page.title)} · simwright docs</title>
-<meta name="description" content="simwright documentation: ${esc(page.title)}.">
+<meta name="description" content="${esc(description)}">
+<link rel="canonical" href="${SITE_URL}docs/${page.slug}.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="simwright">
+<meta property="og:url" content="${SITE_URL}docs/${page.slug}.html">
+<meta property="og:title" content="${esc(page.title)} · simwright docs">
+<meta property="og:description" content="${esc(description)}">
+<meta property="og:image" content="${SITE_URL}og.png">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Martian+Mono:wght@300;400;500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="${FONTS}" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="${FONTS}"></noscript>
 <link rel="stylesheet" href="../styles.css">
 <link rel="stylesheet" href="../docs.css">
 <script>try{const t=localStorage.getItem('sw-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
@@ -246,6 +266,17 @@ export async function build() {
     for (const h of headings) if (h.level <= 3) search.push({ t: h.text, p: p.slug, id: h.id, in: p.title });
   }
   writeFileSync(join(DIST, 'docs', 'search.json'), JSON.stringify(search));
+
+  // For search engines: every page, and where the list is.
+  const today = new Date().toISOString().slice(0, 10);
+  const urls = ['', ...PAGES.map((p) => `docs/${p.slug}.html`)];
+  writeFileSync(
+    join(DIST, 'sitemap.xml'),
+    `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls
+      .map((u) => `  <url><loc>${SITE_URL}${u}</loc><lastmod>${today}</lastmod></url>`)
+      .join('\n')}\n</urlset>\n`,
+  );
+  writeFileSync(join(DIST, 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${SITE_URL}sitemap.xml\n`);
 
   // The landing page's inventory: what the code has, so the page can't miss a command or tool.
   const inventory = {

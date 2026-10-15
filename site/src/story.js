@@ -151,7 +151,18 @@ for (const s of SCENES.slice(1)) {
   }`;
   story.appendChild(a);
 }
-for (const el of $$('[data-scene]')) io.observe(el);
+// Start the story once the page has loaded and gone idle, so the first scene's animation doesn't compete with
+// the first paint.
+const startStory = () => {
+  const go = () => {
+    // The first scene plays from the start: on a phone the hero sits below the pinned stage, short of the
+    // middle line that picks the scene. Scrolling takes over from there.
+    if (!active) play(SCENES[0]);
+    for (const el of $$('[data-scene]')) io.observe(el);
+  };
+  'requestIdleCallback' in window ? requestIdleCallback(go, { timeout: 600 }) : setTimeout(go, 200);
+};
+document.readyState === 'complete' ? startStory() : addEventListener('load', startStory, { once: true });
 
 // Progress dots beside the phone.
 $('[data-dots]').innerHTML = SCENES.map((s) => `<a href="#${s.id}" data-dot="${s.id}" aria-label="${esc(s.kicker)}"></a>`).join('');
