@@ -95,7 +95,7 @@ batch & agents
 options
   -p, --platform ios|android      default: whichever has exactly one booted device
   -d, --device <udid|serial>      default: the only booted one
-  -o, --out <dir>                 screenshot dir (default ./shots, or "out" in simwright.config.json)
+  -o, --out <dir>                 screenshots and videos (default ./shots, or "out" in simwright.config.json)
       --app <id>                  app id for launch/open (or "ios.app" / "android.app" in config)
       --wait <seconds>            how long tap/fill/back wait for their target to appear (default 3)
   -h, --help · -v, --version

@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>simwright · hands on the simulator, for AI agents</title>
+<meta name="description" content="Let AI agents drive an iOS simulator or Android emulator from the shell: read the screen as text, tap by label, type, swipe, screenshot, read logs and crashes. No Appium, no WebDriverAgent, nothing installed on the device.">
+<meta property="og:title" content="simwright">
+<meta property="og:description" content="Hands on the simulator, for AI agents. Text in, taps out.">
+<meta name="theme-color" content="#070b16">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Martian+Mono:wght@300;400;500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="phone.css">
+<script>try{const t=localStorage.getItem('sw-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<script type="module" src="story.js"></script>
+</head>
+<body class="landing">
+<a class="skip" href="#story">Skip to the features</a>
+
+<header class="topbar">
+  <a class="brand" href="#top" aria-label="simwright home"><img src="favicon.svg" alt="" width="26" height="26"><span>simwright</span></a>
+  <span class="version" data-version></span>
+  <nav class="topnav" aria-label="Site">
+    <a href="#story">Features</a>
+    <a href="docs/quick-start.html">Docs</a>
+    <a href="#benchmark">Benchmark</a>
+    <a href="https://github.com/lakpriya1s/simwright" rel="noopener">GitHub</a>
+  </nav>
+  <div class="seg" role="group" aria-label="Demo platform">
+    <button type="button" data-platform-set="ios" aria-pressed="true">iOS</button>
+    <button type="button" data-platform-set="android" aria-pressed="false">Android</button>
+  </div>
+  <button class="theme-toggle" type="button" aria-label="Toggle dark mode"><span aria-hidden="true"></span></button>
+</header>
+
+<main id="top">
+  <div class="story" id="story">
+    <div class="story-text" data-scenes>
+      <section class="hero scene" data-scene="look" id="look" aria-labelledby="hero-title">
+        <p class="eyebrow">For AI agents · iOS simulator · Android emulator</p>
+        <h1 id="hero-title">Hands on the <em>simulator.</em></h1>
+        <p class="lede">simwright lets your coding agent see and use the app it's building. It reads the screen as a few lines of text and taps by label. No Appium, no WebDriverAgent, nothing installed on the device.</p>
+        <div class="install">
+          <code id="install-cmd">npm install -g github:lakpriya1s/simwright</code>
+          <button type="button" data-copy="#install-cmd">Copy</button>
+        </div>
+        <p class="cta"><a class="btn" href="docs/quick-start.html">Read the docs</a><a class="btn ghost" href="#start">Kickstart your agent</a></p>
+        <dl class="stats">
+          <div><dt>~1 KB</dt><dd>per screen read</dd></div>
+          <div><dt>0.1 s</dt><dd>per tap</dd></div>
+          <div><dt>0</dt><dd>dependencies</dd></div>
+        </dl>
+        <div class="hero-scene">
+          <p class="kicker">01 · Look</p>
+          <h2>The screen, as text</h2>
+          <p><code>ls</code> lists what's on screen, one row per element: a ref, its type, where it is, and its label. Hover a row in the terminal to see which element it is.</p>
+          <p class="scroll-hint" aria-hidden="true">Scroll, and each feature plays on the phone</p>
+        </div>
+      </section>
+    </div>
+
+    <div class="stage" aria-label="Demo: simwright driving a phone">
+      <div class="stage-inner">
+        <p class="scene-label"><span data-scene-label>01 · Look</span><span class="dots" data-dots></span></p>
+        <div class="rig">
+          <div data-phone></div>
+          <div class="term" data-term role="log" aria-live="off" aria-label="Demo terminal">
+            <div class="term-bar"><i></i><i></i><i></i><span data-term-title>agent ➜ iPhone 16 simulator</span><button type="button" data-replay aria-label="Replay this scene">↻</button></div>
+            <div class="term-body" data-term-body></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="band" id="commands" aria-labelledby="commands-title">
+    <div class="band-inner">
+      <p class="kicker">Every command</p>
+      <h2 id="commands-title"><span data-count="commands">40</span> commands, one line of text each</h2>
+      <p class="band-lede">Read from simwright's own code when this page was built. Each one links to the scene above that shows it. The <a href="docs/commands.html">commands reference</a> has every option.</p>
+      <div class="cmd-grid" data-commands></div>
+    </div>
+  </section>
+
+  <section class="band dark-band" id="benchmark" aria-labelledby="bench-title">
+    <div class="band-inner">
+      <p class="kicker">Benchmark</p>
+      <h2 id="bench-title">Against Appium, on the same devices</h2>
+      <p class="band-lede">iPhone 14 simulator and Pixel 9a emulator, the same scenario run 10 times, medians. Appium is still faster at reading Android screens; what an agent feels is the size of every answer and the setup before the first one.</p>
+      <div class="bench-grid">
+        <figure class="bench">
+          <figcaption>Size of one screen read</figcaption>
+          <div class="bar sw" style="--v:1"><span>simwright</span><b>~1 KB text</b></div>
+          <div class="bar" style="--v:46"><span>Appium</span><b>41–51 KB XML</b></div>
+          <div class="bar" style="--v:100"><span>Appium MCP</span><b>101–124 KB XML</b></div>
+        </figure>
+        <figure class="bench">
+          <figcaption>Setup before the first command</figcaption>
+          <div class="bar sw" style="--v:0.4"><span>simwright</span><b>0.04–0.13 s</b></div>
+          <div class="bar" style="--v:44"><span>Appium</span><b>7–17 s</b></div>
+          <div class="bar" style="--v:100"><span>Appium MCP</span><b>23–39 s</b></div>
+        </figure>
+        <figure class="bench">
+          <figcaption>Failed operations, of 123 per platform (Android · iOS)</figcaption>
+          <div class="bar sw" style="--v:9"><span>simwright</span><b>2 · 0</b></div>
+          <div class="bar" style="--v:91"><span>Appium</span><b>10 · 10</b></div>
+          <div class="bar" style="--v:100"><span>Appium MCP</span><b>12 · 10</b></div>
+        </figure>
+        <figure class="bench">
+          <figcaption>Restart the app (Android · iOS)</figcaption>
+          <div class="bar sw" style="--v:11"><span>simwright</span><b>186 ms · 513 ms</b></div>
+          <div class="bar" style="--v:89"><span>Appium</span><b>753 ms · 4.26 s</b></div>
+          <div class="bar" style="--v:100"><span>Appium MCP</span><b>735 ms · 4.81 s</b></div>
+        </figure>
+      </div>
+      <p class="band-foot"><a href="docs/benchmark.html">The full benchmark</a>, including where Appium is still better and how to reproduce it.</p>
+    </div>
+  </section>
+
+  <section class="band" id="start" aria-labelledby="start-title">
+    <div class="band-inner start">
+      <div>
+        <p class="kicker">Get started</p>
+        <h2 id="start-title">Two minutes to a phone your agent can use</h2>
+        <ol class="steps">
+          <li><span>Install</span><code>npm install -g github:lakpriya1s/simwright</code></li>
+          <li><span>Check the toolchain</span><code>simwright doctor</code></li>
+          <li><span>Teach your agent</span><code>simwright skill --install</code></li>
+          <li><span>Drive</span><code>simwright launch com.apple.Preferences --ls</code></li>
+        </ol>
+        <p class="req">Node 18+. iOS: macOS with Xcode. Android: adb, with an emulator or a device. <a href="docs/quick-start.html#requirements">Requirements</a> · <a href="docs/quick-start.html">Quick start</a> · <a href="docs/agents.html">For AI agents</a></p>
+      </div>
+      <div class="prompt-card">
+        <div class="prompt-head"><span>Paste into Claude Code, Cursor, Codex, opencode…</span><button type="button" data-copy="#kickstart">Copy</button></div>
+        <pre id="kickstart">Install simwright (https://github.com/lakpriya1s/simwright) so you can drive my app in the iOS simulator / Android emulator:
+
+1. Run `npm install -g github:lakpriya1s/simwright`, then `simwright doctor`, and fix anything it reports (boot a simulator or emulator if none is up).
+2. Run `simwright skill --install` and read the skill it installs.
+3. Find my app's bundle id / package name in this repo and write a simwright.config.json with it at the repo root.
+4. Launch the app with `simwright launch --ls` and tell me what screen it's on.
+
+Rules: never type real credentials, OTPs or card numbers. When the app needs a sign-in, stop and let me do it, then continue from there.</pre>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <p class="tagline">Text in · taps out</p>
+    <nav aria-label="Docs">
+      <a href="docs/quick-start.html">Quick start</a><a href="docs/examples.html">Examples</a><a href="docs/commands.html">Commands</a>
+      <a href="docs/agents.html">For AI agents</a><a href="docs/agent-guide.html">Agent guide</a><a href="docs/how-it-works.html">How it works</a>
+      <a href="docs/troubleshooting.html">Troubleshooting</a><a href="docs/safety.html">Safety rules</a><a href="docs/contributing.html">Contributing</a>
+    </nav>
+    <p class="legal">AGPL-3.0-only. Not affiliated with Apple, Google or the Appium project. The phone above is an animation of a fictional demo app; the commands and outputs are simwright's.</p>
+  </div>
+</footer>
+</body>
+</html>

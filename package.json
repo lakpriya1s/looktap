@@ -16,7 +16,7 @@
   ],
   "author": "Lakpriya Senevirathna",
   "license": "AGPL-3.0-only",
-  "homepage": "https://github.com/lakpriya1s/simwright#readme",
+  "homepage": "https://lakpriya1s.github.io/simwright/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lakpriya1s/simwright.git"
@@ -43,6 +43,8 @@
   "scripts": {
     "test": "node --test test/*.test.js",
     "build:ios": "sh native/ios/build.sh",
-    "build:android": "sh native/android/build.sh"
+    "build:android": "sh native/android/build.sh",
+    "site:build": "node site/build.mjs",
+    "site:serve": "node site/serve.mjs"
   }
 }

@@ -11,7 +11,7 @@ Read the screen, tap, type, swipe, screenshot, and read logs and crashes. No App
 [![Android](https://img.shields.io/badge/Android-emulator%20%7C%20device-3DDC84.svg?logo=android&logoColor=white)](#how-it-works)
 [![Dependencies: 0](https://img.shields.io/badge/dependencies-0-16a34a.svg)](./package.json)
 
-[Quick start](#quick-start) · [Commands](#commands) · [For AI agents](#for-ai-agents) · [Benchmark](BENCHMARK.md) · [Troubleshooting](#troubleshooting)
+[Website](https://lakpriya1s.github.io/simwright/) · [Quick start](#quick-start) · [Commands](#commands) · [For AI agents](#for-ai-agents) · [Benchmark](BENCHMARK.md) · [Troubleshooting](#troubleshooting)
 
 </div>
 
@@ -634,6 +634,7 @@ the root of your app's repo:
 ```json
 {
   "out": "shots",
+  "wait": 3,
   "ios": { "app": "com.example.myapp" },
   "android": { "app": "com.example.myapp" }
 }
@@ -650,8 +651,12 @@ Precedence: command-line option, then environment variable, then config file, th
 | `~/.simwright/helpers.json` | Which local port reaches each Android device's helper |
 | `~/.simwright/refs/<device>.json` | What `@1`…`@N` meant in the last `ls` on that device |
 | `~/.simwright/marks/<device>.json` | Where the last `logs` / `crashes` stopped |
+| `~/.simwright/recordings.json` | Recordings in progress, so `record stop` can find them |
+| `~/.simwright/rec-<udid prefix>.log` | The iOS recorder's output |
+| `~/.simwright/shots/` | Where the MCP server saves screenshots unless `-o` / `SIMWRIGHT_OUT` / config says otherwise |
 | `/data/local/tmp/simwright-server.jar` (device) | The Android helper |
-| `<out>/<name>.png` | Your screenshots |
+| `/data/local/tmp/simwright-recording.mp4` (device) | An Android recording in progress, removed when it's copied off |
+| `<out>/<name>.png`, `<out>/<name>.mp4` | Your screenshots and videos |
 </details>
 
 ## Troubleshooting
@@ -758,6 +763,7 @@ npm test                          # unit tests, no device needed
 native/ios/build.sh               # rebuild the iOS helper (needs Xcode)
 native/android/build.sh           # rebuild the Android helper (needs the Android SDK + a JDK)
 node bin/simwright.js --help      # run from source
+npm run site:serve                # build the website and serve it on http://127.0.0.1:4173
 ```
 
 ```
@@ -768,11 +774,14 @@ lib/screen.js           ls rows, @refs, wait, scrollto, settle (platform-neutral
 lib/logs.js             logs/crashes windows and formatting
 lib/helper.js           the JSON-lines socket protocol both helpers speak
 lib/emulator.js         Android emulator gRPC frames, no dependencies
-lib/png.js · lib/util.js
+lib/mcp.js              the MCP server (stdio)
+lib/png.js · lib/mp4.js · lib/util.js · lib/conditions.js · lib/permissions.js
 lib/assets/             built helpers (simwright-sim, simwright-server.jar)
 native/ios/             iOS helper source (Objective-C)
 native/android/         Android helper source (Java)
 skills/simwright/       the AI-agent guide
+site/                   the website: landing page (site/src) and docs generated from this README,
+                        SKILL.md and BENCHMARK.md (site/build.mjs); published by .github/workflows/pages.yml
 ```
 
 Notes for contributors:
@@ -784,7 +793,9 @@ Notes for contributors:
   - a method on both `Ios` and `Android`, or, if it only reads the screen, code in `lib/screen.js`;
   - a `case` in `bin/simwright.js`;
   - a row in this README;
-  - a line in `skills/simwright/SKILL.md` if agents should use it.
+  - a line in `skills/simwright/SKILL.md` if agents should use it;
+  - a scene that shows it in `site/src/scenes.js` (its `covers` list). `npm run site:build` fails until the
+    README row and the scene are there.
 
 Issues and PRs welcome. If simwright saved your agent some tokens, a ⭐ helps others find it.
 
