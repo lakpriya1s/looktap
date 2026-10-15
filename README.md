@@ -65,6 +65,7 @@ It's just as handy by hand, or in a shell script for screenshot sweeps and bug r
 | 🪵 | **Logs.** `logs` shows the app's log since your last look. `--errors` and `--grep` narrow it, and on iOS Apple-framework chatter is filtered out |
 | 💥 | **Crashes.** `crashes` reads iOS crash reports (exception, reason, top frames) and Android crashes, ANRs and **low-memory kills**, so "the app vanished" always comes with a reason |
 | 🫆 | **Biometrics.** `bio match\|nomatch` simulates Face ID or a fingerprint |
+| 🧹 | **App state for repros.** `install` a build, `reset` an app to a fresh install, `uninstall`, and `permission grant\|revoke\|reset camera\|location\|photos\|…`, with the same names on both platforms |
 | 🤖 | **Built for agents.** `--ls` on any action, `run` to batch steps, `--json`, and a [Claude Code skill](#for-ai-agents) you install with one command |
 | 🧩 | **Nothing to install on the device**, no Appium server, no WebDriverAgent, no npm dependencies. The helpers start on first use |
 | ⚠️ | **Honest failures.** A tap that's covered by a toast prints a warning, a stale `@ref` is an error rather than a wrong tap, and a system prompt over the app is reported as one |
@@ -332,6 +333,31 @@ wait
 # 61 frames, 23 distinct, in ./frames
 ```
 
+### Start from a clean state: install, reset, permissions
+
+```bash
+simwright install build/MyApp.app          # iOS: a simulator build · Android: an .apk (keeps the app's data)
+# installed com.example.myapp
+simwright reset com.example.myapp          # as if freshly installed: data and permissions cleared
+simwright permission grant location com.example.myapp    # no prompt
+simwright permission revoke photos com.example.myapp     # test the "denied" path
+simwright permission reset camera com.example.myapp      # it asks again on next use
+simwright uninstall com.example.myapp
+```
+
+- **`reset`:**
+  - **iOS:** simwright copies the app's own bundle aside, uninstalls it and installs the copy, so documents,
+    caches, app groups and permissions all go. The **keychain survives**, just as it does on a real iPhone, so
+    an app that keeps its sign-in token there may still be signed in.
+  - **Android:** `pm clear`.
+- **Permission names** are the same on both platforms: `camera`, `microphone`, `location`, `location-always`,
+  `photos`, `contacts`, `calendar`, `notifications`, `motion`, `all`.
+  - Android also takes any `android.permission.*`, and acts only on permissions the app declares. A `reset` also
+    clears "don't ask again".
+  - The iOS simulator can't set `camera` or `notifications`; simwright says so.
+- **These commands never guess the app from the screen.** `uninstall`, `reset` and `permission` take the app id
+  as an argument, or from `--app` / `simwright.config.json`.
+
 ### Biometrics
 
 ```bash
@@ -443,6 +469,11 @@ already as small as it gets. An MCP server is on the [roadmap](#roadmap) for cli
 | `simwright logs [app] [--errors] [--grep re] [--since 5m] [--lines n] [--all]` | The app's log since the last `logs` (the first call covers the last minute). At most 80 lines, newest kept |
 | `simwright crashes [app] [--since 1h]` | Crashes, ANRs and low-memory kills since the last `crashes` (the first call covers the last hour) |
 | `simwright app [app]` | The app in front and its pid, and whether `[app]` is running |
+| **App state** (`<app>` from the argument or `--app` / config, never the app in front) | |
+| `simwright install <path> [--grant]` | iOS: a simulator `.app`. Android: an `.apk`, replacing an installed copy and keeping its data (`--grant`: all runtime permissions). Prints the app id |
+| `simwright uninstall <app>` | Removes the app |
+| `simwright reset <app>` | As if freshly installed: data and permissions cleared. iOS: the keychain survives |
+| `simwright permission grant\|revoke\|reset <name> [app]` | `camera`, `microphone`, `location`, `location-always`, `photos`, `contacts`, `calendar`, `notifications`, `motion`, `all`, … Android also takes `android.permission.*` |
 | **Batch, setup & info** | |
 | `simwright run '<cmd>; <cmd> …'` | Several commands in one process. `run -` reads them from stdin. Stops at the first failure and names it |
 | `simwright skill [--install]` | Prints the AI-agent guide, or installs it as a Claude Code skill |
@@ -466,7 +497,7 @@ helper can't start. `1` means anything else failed. A script can `set -e` and st
 | `-d, --device <udid\|serial>` | Default: the only booted one |
 | `-o, --out <dir>` | Screenshot folder (default `shots`) |
 | `--wait <seconds>` | How long `tap`, `fill` and `back` look for their target (default `3`). An ambiguous match fails at once |
-| `--app <id>` | App id for `launch`, `open`, `logs`, `crashes` and `app` |
+| `--app <id>` | App id for `launch`, `open`, `logs`, `crashes`, `app`, `uninstall`, `reset` and `permission` |
 | `-h, --help` · `-v, --version` | |
 
 | Environment variable | Meaning |
@@ -585,7 +616,6 @@ continue. The skill tells agents exactly that. See [Safety rules](#safety-rules)
 
 ## Roadmap
 
-- App state for repros: install a build, clear app data, grant or revoke permissions
 - Simulated conditions: location, dark mode, push notifications
 - A warning after any action when the app has died (instead of the agent noticing a home screen)
 - Long press and multi-finger gestures

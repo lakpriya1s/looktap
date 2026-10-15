@@ -7,6 +7,7 @@ import { dirname, join } from 'node:path';
 import { Android, adbDevices } from '../lib/android.js';
 import { Ios, bootedSimulators } from '../lib/ios.js';
 import { clock, grepper, startOf, tail, whichApp } from '../lib/logs.js';
+import { ACTIONS as PERMISSION_ACTIONS } from '../lib/permissions.js';
 import { center, coveringAt, formatRow, isRef, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, visibleRows, waitFor } from '../lib/screen.js';
 import { UsageError, has, loadConfig, pickMatch, run, shotPath, sleep, splitScript, waitFor as retry } from '../lib/util.js';
 
@@ -55,6 +56,16 @@ debug                             [app] defaults to --app / config, else the app
   crashes [app] [--since 1h]      crashes, ANRs, low-memory kills since the last \`crashes\` (first: last hour)
   app [app]                       which app is in front, and whether [app] is running (pid)
 
+app state                         <app> defaults to --app / config (never the app in front)
+  install <path> [--grant]        iOS: a simulator .app · Android: an .apk (keeps data; --grant: all
+                                  runtime permissions). Prints the app id
+  uninstall <app>
+  reset <app>                     as if freshly installed: data and permissions cleared (iOS: the
+                                  keychain survives, as on a real iPhone)
+  permission grant|revoke|reset <name> [app]
+                                  camera, microphone, location, location-always, photos, contacts,
+                                  calendar, notifications, motion, all … (Android: or android.permission.*)
+
 batch & agents
   run '<cmd>; <cmd> …'            several commands in one process (or: run - < script). Stops at the
                                   first failure, which it names
@@ -94,7 +105,7 @@ function parse(argv) {
     else if (a === '--since') opts.since = val();
     else if (a === '--grep') opts.grep = val();
     else if (a === '--lines') opts.lines = Number(val());
-    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors'].includes(a)) opts.flags.add(a.slice(2));
+    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant'].includes(a)) opts.flags.add(a.slice(2));
     else if (a === '--') pos.push(...argv.slice(i + 1)), (i = argv.length);
     else pos.push(a);
   }
@@ -318,9 +329,40 @@ async function act(d, cmd, args, opts) {
     case 'logs': return showLogs(d, args[0], opts);
     case 'crashes': return showCrashes(d, args[0], opts);
     case 'app': return showApp(d, args[0]);
+    case 'install': {
+      need(1, 'install <path.app|path.apk> [--grant]');
+      const id = await d.install(args[0], { grant: opts.flags.has('grant') });
+      return console.log(`installed ${id || args[0]}`);
+    }
+    case 'uninstall': {
+      const app = explicitApp(d, args[0], 'uninstall <app>');
+      await d.uninstall(app);
+      return console.log(`uninstalled ${app}`);
+    }
+    case 'reset': {
+      const app = explicitApp(d, args[0], 'reset <app>');
+      await d.reset(app);
+      return console.log(`reset ${app}: data and permissions cleared — launch it to start fresh`);
+    }
+    case 'permission': {
+      const usage = `permission ${PERMISSION_ACTIONS.join('|')} <name> [app]`;
+      need(2, usage);
+      if (!PERMISSION_ACTIONS.includes(args[0])) throw new UsageError(`usage: simwright ${usage}`);
+      const app = explicitApp(d, args[2], usage);
+      const perms = await d.permission(args[0], args[1], app);
+      const what = perms ? perms.join(', ') : args[1];
+      return console.log(`${{ grant: 'granted', revoke: 'revoked', reset: 'reset (it will ask again)' }[args[0]]}: ${what} for ${app}`);
+    }
     case 'run': return runScript(d, args, opts);
     default: throw new UsageError(`unknown command: ${cmd} (simwright --help)`);
   }
+}
+
+/** The app a state-changing command acts on: named, or --app / config. Never guessed from the screen. */
+function explicitApp(d, arg, usage) {
+  const app = arg || d.app;
+  if (!app) throw new UsageError(`usage: simwright ${usage} — name the app (or set --app / simwright.config.json)`);
+  return app;
 }
 
 async function showLogs(d, arg, opts) {

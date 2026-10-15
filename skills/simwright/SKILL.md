@@ -82,6 +82,17 @@ simwright app                  # which app is in front, and its pid
 - The app defaults to `--app`/config, else the one in front. Pass the id when the app is gone: `simwright crashes com.example`.
 - Log lines can contain tokens or personal data. Quote only the lines that matter.
 
+## Starting from a known state
+
+```bash
+simwright install build/MyApp.app        # or an .apk; prints the app id
+simwright reset com.example.app          # fresh-install state: data and permissions cleared
+simwright permission grant location com.example.app   # also revoke / reset; camera, photos, microphone, …
+```
+
+- **`reset` signs the user out** of most apps: ask before resetting an app someone else signed in to.
+- These commands need the app id. They never act on whatever happens to be on screen.
+
 ## Other commands
 
 `type <text>` (into the focused field) · `key return|escape|delete|tab|space` · `hidekb` · `swipe x1 y1 x2 y2 [ms]` · `back` · `open <url>` (deep
