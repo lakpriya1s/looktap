@@ -90,6 +90,11 @@ simwright reset com.example.app          # fresh-install state: data and permiss
 simwright permission grant location com.example.app   # also revoke / reset; camera, photos, microphone, …
 ```
 
+Conditions: `location <lat> <lon>` · `appearance dark|light` · `textsize xxl|ax2|default` ·
+`statusbar clean|live` (9:41 for screenshots) · `push <app> "text"` (iOS only).
+
+- **Set back what you change.** Appearance, text size and the status bar stay as you leave them, for the next
+  person and for other apps.
 - **`reset` signs the user out** of most apps: ask before resetting an app someone else signed in to.
 - These commands need the app id. They never act on whatever happens to be on screen.
 

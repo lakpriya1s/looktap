@@ -8,6 +8,7 @@ import { Android, adbDevices } from '../lib/android.js';
 import { Ios, bootedSimulators } from '../lib/ios.js';
 import { clock, grepper, startOf, tail, whichApp } from '../lib/logs.js';
 import { ACTIONS as PERMISSION_ACTIONS } from '../lib/permissions.js';
+import { coordinates, pushPayload, textSize } from '../lib/conditions.js';
 import { center, coveringAt, formatRow, isRef, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, visibleRows, waitFor } from '../lib/screen.js';
 import { UsageError, has, loadConfig, pickMatch, run, shotPath, sleep, splitScript, waitFor as retry } from '../lib/util.js';
 
@@ -65,6 +66,15 @@ app state                         <app> defaults to --app / config (never the ap
   permission grant|revoke|reset <name> [app]
                                   camera, microphone, location, location-always, photos, contacts,
                                   calendar, notifications, motion, all … (Android: or android.permission.*)
+
+conditions
+  location <lat> <lon> | clear    simulated GPS (Android: emulators)
+  appearance [dark|light]         dark mode; no argument prints the current one
+  textsize [size]                 Dynamic Type / font scale: xs s m l xl xxl xxxl ax1…ax5 (or the iOS
+                                  names, e.g. accessibility-large); no argument prints the current one
+  statusbar clean|live            9:41, full battery and signal, for screenshots
+  push <app> <payload>            iOS: a remote notification. Payload: a .json file, '{json}', or plain
+                                  text for an alert (Android pushes need Firebase)
 
 batch & agents
   run '<cmd>; <cmd> …'            several commands in one process (or: run - < script). Stops at the
@@ -343,6 +353,28 @@ async function act(d, cmd, args, opts) {
       const app = explicitApp(d, args[0], 'reset <app>');
       await d.reset(app);
       return console.log(`reset ${app}: data and permissions cleared — launch it to start fresh`);
+    }
+    case 'location': {
+      need(1, 'location <lat> <lon> | location clear');
+      if (args[0] === 'clear') return (await d.clearLocation(), console.log('location cleared'));
+      const [lat, lon] = coordinates(args);
+      await d.location(lat, lon);
+      return console.log(`location ${lat}, ${lon}`);
+    }
+    case 'appearance': {
+      if (args[0] && !['dark', 'light'].includes(args[0])) throw new UsageError('usage: simwright appearance [dark|light]');
+      return console.log(await d.appearance(args[0]));
+    }
+    case 'textsize': return console.log(await d.textSize(args[0] && textSize(args[0])));
+    case 'statusbar': {
+      if (!['clean', 'live'].includes(args[0])) throw new UsageError('usage: simwright statusbar clean|live');
+      await d.statusBar(args[0] === 'clean');
+      return console.log(args[0] === 'clean' ? 'status bar: 9:41, full battery and signal' : 'status bar: live');
+    }
+    case 'push': {
+      need(2, "push <app> <payload.json | '{json}' | text>");
+      await d.push(args[0], pushPayload(args.slice(1).join(' ')));
+      return console.log(`pushed to ${args[0]}`);
     }
     case 'permission': {
       const usage = `permission ${PERMISSION_ACTIONS.join('|')} <name> [app]`;

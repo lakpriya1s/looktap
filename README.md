@@ -65,6 +65,7 @@ It's just as handy by hand, or in a shell script for screenshot sweeps and bug r
 | 🪵 | **Logs.** `logs` shows the app's log since your last look. `--errors` and `--grep` narrow it, and on iOS Apple-framework chatter is filtered out |
 | 💥 | **Crashes.** `crashes` reads iOS crash reports (exception, reason, top frames) and Android crashes, ANRs and **low-memory kills**, so "the app vanished" always comes with a reason |
 | 🫆 | **Biometrics.** `bio match\|nomatch` simulates Face ID or a fingerprint |
+| 🌍 | **Simulated conditions.** `location <lat> <lon>`, `appearance dark`, `textsize xxl` (Dynamic Type / font scale), `statusbar clean` (9:41 for screenshots), and iOS `push` notifications |
 | 🧹 | **App state for repros.** `install` a build, `reset` an app to a fresh install, `uninstall`, and `permission grant\|revoke\|reset camera\|location\|photos\|…`, with the same names on both platforms |
 | 🤖 | **Built for agents.** `--ls` on any action, `run` to batch steps, `--json`, and a [Claude Code skill](#for-ai-agents) you install with one command |
 | 🧩 | **Nothing to install on the device**, no Appium server, no WebDriverAgent, no npm dependencies. The helpers start on first use |
@@ -358,6 +359,26 @@ simwright uninstall com.example.myapp
 - **These commands never guess the app from the screen.** `uninstall`, `reset` and `permission` take the app id
   as an argument, or from `--app` / `simwright.config.json`.
 
+### Simulated conditions: location, dark mode, text size, push
+
+```bash
+simwright location 51.5072 -0.1276        # GPS (Android: emulators) · `location clear` on iOS
+simwright appearance dark                 # or light; no argument prints the current one
+simwright textsize ax2                    # Dynamic Type / font scale: xs s m l xl xxl xxxl ax1…ax5
+simwright statusbar clean                 # 9:41, full battery and Wi-Fi, for screenshots · `statusbar live`
+simwright push com.example.myapp "Your order has shipped"          # iOS: an alert
+simwright push com.example.myapp '{"aps":{"alert":"Hi"},"orderId":7}'   # or any payload / a .json file
+```
+
+- **`textsize`** uses the iOS Dynamic Type sizes. On Android each size maps to the nearest font scale, from 0.8
+  to 2.0, the default being `l` / `large` on both.
+- **`statusbar clean`** uses iOS status-bar overrides, and Android's System UI demo mode.
+- **`push`** delivers a remote notification the way APNs would. The app needs notification permission, as on a
+  device.
+  - A payload without `"aps"` is sent as a silent (background) push carrying that data.
+  - **Android pushes can't be simulated locally.** They come through Firebase (FCM), so send them from your
+    backend or the Firebase console.
+
 ### Biometrics
 
 ```bash
@@ -474,6 +495,12 @@ already as small as it gets. An MCP server is on the [roadmap](#roadmap) for cli
 | `simwright uninstall <app>` | Removes the app |
 | `simwright reset <app>` | As if freshly installed: data and permissions cleared. iOS: the keychain survives |
 | `simwright permission grant\|revoke\|reset <name> [app]` | `camera`, `microphone`, `location`, `location-always`, `photos`, `contacts`, `calendar`, `notifications`, `motion`, `all`, … Android also takes `android.permission.*` |
+| **Conditions** | |
+| `simwright location <lat> <lon>` · `location clear` | Simulated GPS. Android: emulators only, and the emulator keeps its last fix (no `clear`) |
+| `simwright appearance [dark\|light]` | Dark mode. Without an argument, prints the current mode |
+| `simwright textsize [size]` | Dynamic Type (iOS) / font scale (Android): `xs s m l xl xxl xxxl ax1…ax5`, or iOS names such as `accessibility-large`. Without an argument, prints the current size |
+| `simwright statusbar clean\|live` | A screenshot-clean status bar (9:41, full battery and Wi-Fi), or back to live values |
+| `simwright push <app> <payload>` | iOS: a remote notification. The payload can be a `.json` file, inline JSON, or plain text for an alert |
 | **Batch, setup & info** | |
 | `simwright run '<cmd>; <cmd> …'` | Several commands in one process. `run -` reads them from stdin. Stops at the first failure and names it |
 | `simwright skill [--install]` | Prints the AI-agent guide, or installs it as a Claude Code skill |
@@ -616,7 +643,6 @@ continue. The skill tells agents exactly that. See [Safety rules](#safety-rules)
 
 ## Roadmap
 
-- Simulated conditions: location, dark mode, push notifications
 - A warning after any action when the app has died (instead of the agent noticing a home screen)
 - Long press and multi-finger gestures
 - Verified Xcode 27 input
