@@ -1,9 +1,9 @@
-// simdrive Android helper: run with app_process as the shell user, nothing installed.
+// simwright Android helper: run with app_process as the shell user, nothing installed.
 // Holds one UiAutomation connection open so screen reads skip `uiautomator dump`'s reconnect and idle wait.
 //
-// Protocol (localabstract socket "simdrive"): one JSON request per line. Each reply is one JSON line;
+// Protocol (localabstract socket "simwright"): one JSON request per line. Each reply is one JSON line;
 // a reply carrying "bytes": N is followed by N raw bytes (a PNG).
-package com.simdrive;
+package com.simwright;
 
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.UiAutomation;
@@ -36,7 +36,7 @@ import java.util.List;
 public final class Server {
     /** Set by the host at launch (a hash of this jar), so a stale helper is replaced after an upgrade. */
     static String version = "dev";
-    static final String SOCKET = "simdrive";
+    static final String SOCKET = "simwright";
 
     static UiAutomation ua;
     static final Object lock = new Object();
@@ -47,14 +47,14 @@ public final class Server {
         try {
             server = new LocalServerSocket(SOCKET);
         } catch (Exception e) {
-            System.err.println("simdrive helper already running");
+            System.err.println("simwright helper already running");
             System.exit(3);
             return;
         }
         // AccessibilityInteractionClient builds Handlers on the main looper; app_process has none by default.
         Looper.prepareMainLooper();
         ua = connect();
-        System.err.println("simdrive helper " + version + " ready");
+        System.err.println("simwright helper " + version + " ready");
         for (;;) {
             final LocalSocket client = server.accept();
             Thread t = new Thread(new Runnable() {
@@ -69,7 +69,7 @@ public final class Server {
 
     /** The same UiAutomation the system `uiautomator` tool builds, via hidden constructors. */
     static UiAutomation connect() throws Exception {
-        HandlerThread thread = new HandlerThread("simdrive-ua");
+        HandlerThread thread = new HandlerThread("simwright-ua");
         thread.start();
         Class<?> connCls = Class.forName("android.app.UiAutomationConnection");
         Class<?> ifaceCls = Class.forName("android.app.IUiAutomationConnection");

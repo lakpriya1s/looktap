@@ -1,16 +1,16 @@
 ---
-name: simdrive
-description: Drive an iOS simulator or Android emulator from the shell with simdrive — read the screen, tap, type, swipe, deep-link, screenshot. Use when asked to open, navigate, test, reproduce a bug in, or take screenshots of a mobile app running in a simulator or emulator.
+name: simwright
+description: Drive an iOS simulator or Android emulator from the shell with simwright — read the screen, tap, type, swipe, deep-link, screenshot. Use when asked to open, navigate, test, reproduce a bug in, or take screenshots of a mobile app running in a simulator or emulator.
 ---
 
-# simdrive
+# simwright
 
-`simdrive` drives a booted iOS simulator or Android emulator. Every command is one short shell call that
+`simwright` drives a booted iOS simulator or Android emulator. Every command is one short shell call that
 prints a few lines of text. Nothing is installed on the device. Its helper starts on first use.
 
 ## The loop
 
-1. **Look:** `simdrive ls` lists what's on screen, one row per element:
+1. **Look:** `simwright ls` lists what's on screen, one row per element:
 
    ```
    @1   Button           16, 285 358x54  General
@@ -22,9 +22,9 @@ prints a few lines of text. Nothing is installed on the device. Its helper start
 2. **Act, and see the result in the same call** with `--ls`:
 
    ```bash
-   simdrive tap @1 --ls            # tap the row from the last ls, then print the settled screen
-   simdrive tap "General" --ls     # or by label
-   simdrive fill @3 "wifi" --ls
+   simwright tap @1 --ls            # tap the row from the last ls, then print the settled screen
+   simwright tap "General" --ls     # or by label
+   simwright fill @3 "wifi" --ls
    ```
 
 3. Repeat. Read the `--ls` output instead of running `ls` again.
@@ -40,21 +40,21 @@ prints a few lines of text. Nothing is installed on the device. Its helper start
 ## Don't sleep, wait
 
 ```bash
-simdrive wait "Welcome"               # until it appears (10 s default; --wait 30 for longer)
-simdrive wait "Loading" --gone        # until it disappears
-simdrive scrollto "Privacy & Security"   # swipe until it's fully on screen (--up to go back)
+simwright wait "Welcome"               # until it appears (10 s default; --wait 30 for longer)
+simwright wait "Loading" --gone        # until it disappears
+simwright scrollto "Privacy & Security"   # swipe until it's fully on screen (--up to go back)
 ```
 
 `tap`, `fill` and `back` already wait up to 3 s for their target.
 
 **After an action that loads data, wait for what you expect.** `--ls` returns once the screen stops
 changing, and a loading skeleton (grey placeholder bars) stops changing too. If `--ls` shows a heading but
-none of the content, run `simdrive wait "<text you expect>"` rather than acting on the placeholder.
+none of the content, run `simwright wait "<text you expect>"` rather than acting on the placeholder.
 
 ## Several known steps in one call
 
 ```bash
-simdrive run 'tap General; tap About; wait "iOS Version"; ls'
+simwright run 'tap General; tap About; wait "iOS Version"; ls'
 ```
 
 `run` stops at the first failing step and names it. Use it for paths you already know. Explore one step at a
@@ -62,24 +62,24 @@ time.
 
 ## Screenshots
 
-`simdrive shot <name>` saves a PNG and prints its path. Don't open the image unless you need to *see* it
+`simwright shot <name>` saves a PNG and prints its path. Don't open the image unless you need to *see* it
 (layout, colours, images). `ls` already tells you what's on screen. When you do look, use
 `--scale 0.5`: it's a quarter of the image tokens and still readable.
 
 ## When something goes wrong
 
 ```bash
-simdrive logs --errors        # the app's errors since your last `logs` (first time: the last minute)
-simdrive logs --grep checkout # everything it logged that matches; --since 5m for a fixed window
-simdrive crashes              # crash reports / ANRs / low-memory kills since your last `crashes`
-simdrive app                  # which app is in front, and its pid
+simwright logs --errors        # the app's errors since your last `logs` (first time: the last minute)
+simwright logs --grep checkout # everything it logged that matches; --since 5m for a fixed window
+simwright crashes              # crash reports / ANRs / low-memory kills since your last `crashes`
+simwright app                  # which app is in front, and its pid
 ```
 
 - **Each `logs` shows only what's new**, so run it right after the step that misbehaved. You don't have to
   remember timestamps.
 - **The app vanished** (`ls` shows the home screen or another app): run `crashes`.
   - On Android, `LOW_MEMORY` means the system killed the app. That's not a bug in the app; relaunch it.
-- The app defaults to `--app`/config, else the one in front. Pass the id when the app is gone: `simdrive crashes com.example`.
+- The app defaults to `--app`/config, else the one in front. Pass the id when the app is gone: `simwright crashes com.example`.
 - Log lines can contain tokens or personal data. Quote only the lines that matter.
 
 ## Other commands
@@ -87,7 +87,7 @@ simdrive app                  # which app is in front, and its pid
 `type <text>` (into the focused field) · `key return|escape|delete|tab|space` · `hidekb` · `swipe x1 y1 x2 y2 [ms]` · `back` · `open <url>` (deep
 link) · `launch [app]` · `bio match|nomatch` · `burst <dir> <seconds>` (frames of a transient state) ·
 `devices` · `doctor`. Pass `-p ios|android` and `-d <id>` when more than one device is booted. Run
-`simdrive --help` for everything.
+`simwright --help` for everything.
 
 ## Rules
 

@@ -1,17 +1,17 @@
-# simdrive vs Appium vs Appium MCP: benchmark
+# simwright vs Appium vs Appium MCP: benchmark
 
 Measured on 2026-10-15. All three tools ran the same actions on the same
 devices, 10 runs per feature.
 
 ## TL;DR
 
-> **Update, Run 4 (simdrive's own helpers, no WebDriverAgent):** Android `ls`
+> **Update, Run 4 (simwright's own helpers, no WebDriverAgent):** Android `ls`
 > dropped from 2.58 s to 131 ms, and iOS `ls` from 1.70 s to 202 ms. Taps now take
-> 110–120 ms on both platforms, and screenshots ~130 ms. simdrive is now the
+> 110–120 ms on both platforms, and screenshots ~130 ms. simwright is now the
 > fastest of the three at almost every action. See
-> [Run 4](#run-4-simdrive-with-its-own-native-helpers). The summary below is from Run 3.
+> [Run 4](#run-4-simwright-with-its-own-native-helpers). The summary below is from Run 3.
 
-| | simdrive | Appium (raw HTTP) | Appium MCP |
+| | simwright | Appium (raw HTTP) | Appium MCP |
 |---|---|---|---|
 | **Output returned for the whole scenario** (10 runs × 13 features, bursts excluded) | **11 KB** (Android) · **22 KB** (iOS) | 1.9 MB · 2.6 MB | 2.7 MB · 3.2 MB |
 | **One screen read** | **1–2 KB** of text | 41–51 KB XML | 101–124 KB XML |
@@ -22,12 +22,12 @@ devices, 10 runs per feature.
 | **Biometrics** | ✓ | ✓ | ✗ no tool |
 
 **In one line:**
-- **Agents:** simdrive costs about **100–250× fewer bytes** of context than the
+- **Agents:** simwright costs about **100–250× fewer bytes** of context than the
   Appium MCP for the same session, and needs no setup.
 - **Raw speed:** Appium's on-device helper reads the Android screen about 20×
   faster.
-- **Bugs:** the benchmark exposed bugs in simdrive. They are listed
-  [below](#bugs-found-in-simdrive), with their fixes.
+- **Bugs:** the benchmark exposed bugs in simwright. They are listed
+  [below](#bugs-found-in-simwright), with their fixes.
 
 ---
 
@@ -35,7 +35,7 @@ devices, 10 runs per feature.
 
 | Tool | How it was driven | What it represents |
 |---|---|---|
-| **simdrive** 0.1.0 | The CLI, spawned once per command: `node bin/simdrive.js …` | A person or agent typing commands |
+| **simwright** 0.1.0 | The CLI, spawned once per command: `node bin/simwright.js …` | A person or agent typing commands |
 | **Appium (raw HTTP)** | Appium 3.6.0 server with `xcuitest` 12.3.4 / `uiautomator2` 8.4.0, called over W3C HTTP from Node with one persistent session | Appium's own speed, with no agent layer on top |
 | **Appium MCP** | `appium-mcp@latest`, configured as an agent would use it, started over stdio and driven with MCP `tools/call` | What an agent's tool calls actually cost |
 
@@ -48,7 +48,7 @@ involved. The deep-link step opens a custom-scheme deep link in a second install
 app, at whatever screen it is on, without typing anything.
 
 **iOS WebDriverAgent:**
-- simdrive and raw Appium used the same prebuilt WDA 15.1.3, so Appium didn't
+- simwright and raw Appium used the same prebuilt WDA 15.1.3, so Appium didn't
   pay for an `xcodebuild`.
 - The MCP server installed its own copy through `prepare_ios_simulator`, as it
   normally does.
@@ -61,7 +61,7 @@ reset was not timed.
 
 | # | Feature | What it does |
 |---|---|---|
-| 1 | `ls`: read screen | simdrive `ls` · Appium `GET /source` · MCP `appium_get_page_source` |
+| 1 | `ls`: read screen | simwright `ls` · Appium `GET /source` · MCP `appium_get_page_source` |
 | 2 | `tap`: by label | Tap "General" (iOS) / "Network & internet" (Android). For Appium and MCP this is find-element + click (2 calls) |
 | 3 | `back` | Return to the previous screen |
 | 4 | `tapxy` | Tap the same row by coordinates (then back, untimed) |
@@ -83,7 +83,7 @@ After the 10 runs, each tool did:
 - **Time:** wall time per feature, as the median of successful runs.
 - **Bytes:** what the tool returned. For an agent, this is roughly what lands
   in its context:
-  - simdrive: stdout
+  - simwright: stdout
   - raw Appium: HTTP response bodies
   - MCP: the full JSON-RPC response
 - **Calls:** commands or tool calls needed for the action. More calls means
@@ -92,22 +92,22 @@ After the 10 runs, each tool did:
 
 ---
 
-## Run 4: simdrive with its own native helpers
+## Run 4: simwright with its own native helpers
 
 Measured on 2026-10-15, with the same devices, harness and scenario (10 runs).
-simdrive no longer uses WebDriverAgent or `uiautomator dump`:
+simwright no longer uses WebDriverAgent or `uiautomator dump`:
 
 - **iOS:** a macOS helper reads the simulator's accessibility tree and sends
   touch and keyboard events through Apple's simulator frameworks.
 - **Android:** a 7 KB helper runs with `app_process` and keeps one UiAutomation
   connection open. Emulator frames come over the emulator's gRPC API.
 
-Only simdrive was re-run. The Appium columns are Run 3's numbers, from the same
+Only simwright was re-run. The Appium columns are Run 3's numbers, from the same
 devices and harness.
 
 ### Android (Pixel 9a emulator)
 
-| Feature | simdrive Run 3 | **simdrive Run 4** | Appium raw (Run 3) | Appium MCP (Run 3) |
+| Feature | simwright Run 3 | **simwright Run 4** | Appium raw (Run 3) | Appium MCP (Run 3) |
 |---|---|---|---|---|
 | ls (read screen) | 2.58 s | **131 ms** · 975 B | 114 ms · 51 KB | 1.87 s · 124 KB |
 | tap (by label) | 2.21 s · ⚠ 2/10 | **112 ms** · ⚠ 1/10 | 77 ms · 2 calls · ⚠ 2/10 | 344 ms · 2 calls |
@@ -122,7 +122,7 @@ devices and harness.
 
 ### iOS (iPhone 14 simulator)
 
-| Feature | simdrive Run 3 (WDA) | **simdrive Run 4** | Appium raw (Run 3) | Appium MCP (Run 3) |
+| Feature | simwright Run 3 (WDA) | **simwright Run 4** | Appium raw (Run 3) | Appium MCP (Run 3) |
 |---|---|---|---|---|
 | setup | 193 ms | **39 ms** | 17.37 s | 23.14 s |
 | ls (read screen) | 1.70 s | **202 ms** · 723 B | 915 ms · 41 KB | 1.21 s · 101 KB |
@@ -137,10 +137,10 @@ devices and harness.
 | launch | 570 ms | **513 ms** | 4.26 s | 4.81 s |
 
 **What changed:**
-- simdrive is now the fastest of the three at almost every action on both
+- simwright is now the fastest of the three at almost every action on both
   platforms, while still returning 50–3000× fewer bytes.
 - Failures: 2 of 123 on Android, and none on iOS apart from `hidekb`, which every
-  tool fails on the iOS 26 search keyboard. simdrive reports that failure
+  tool fails on the iOS 26 search keyboard. simwright reports that failure
   instead of claiming success.
 - `burst` now saves a frame only when the screen changes. On a static screen
   that's very few frames, so its frame counts aren't comparable with Run 3's.
@@ -149,10 +149,10 @@ devices and harness.
 
 **Limits:**
 - The iOS helper uses Apple's private simulator frameworks. Touch and keyboard
-  input were measured on Xcode 26. For Xcode 27, simdrive sends input to the
+  input were measured on Xcode 26. For Xcode 27, simwright sends input to the
   simulator's `dtuhidd` service, which is implemented but not yet measured.
 - On Android, the helper holds the device's single UiAutomation connection.
-  Run `simdrive teardown` before using Appium or `uiautomator` on the same device.
+  Run `simwright teardown` before using Appium or `uiautomator` on the same device.
 
 The Run 3 report follows unchanged, for reference.
 
@@ -160,7 +160,7 @@ The Run 3 report follows unchanged, for reference.
 
 ## Results: Android (Pixel 9a emulator)
 
-| Feature | simdrive | Appium (raw HTTP) | Appium MCP |
+| Feature | simwright | Appium (raw HTTP) | Appium MCP |
 |---|---|---|---|
 | setup | **130 ms** · 78 B | 7.31 s · 927 B | 38.83 s · 6 KB · 2 calls |
 | ls (read screen) | 2.58 s · **1014 B** | **114 ms** · 51 KB | 1.87 s · 124 KB |
@@ -180,7 +180,7 @@ The Run 3 report follows unchanged, for reference.
 
 ## Results: iOS (iPhone 14 simulator)
 
-| Feature | simdrive | Appium (raw HTTP) | Appium MCP |
+| Feature | simwright | Appium (raw HTTP) | Appium MCP |
 |---|---|---|---|
 | setup | **193 ms** · 40 B | 17.37 s · 578 B | 23.14 s · 7 KB · 3 calls |
 | ls (read screen) | 1.70 s · **2 KB** | **915 ms** · 41 KB | 1.21 s · 101 KB |
@@ -210,30 +210,30 @@ for the UI to go idle (animations finished) before it completes a tap or swipe.
 An agent pays for every byte a tool returns, as context and tokens, and for
 every extra call, as a turn.
 
-- **Reading the screen:** simdrive returns a compact list (`x,y WxH label`) of
+- **Reading the screen:** simwright returns a compact list (`x,y WxH label`) of
   1–2 KB. Appium and MCP return the full XML hierarchy: 41–124 KB per read,
   **50–100× larger**. Most of it is attributes an agent never needs.
-- **Screenshots:** simdrive writes the PNG to disk and returns its path
+- **Screenshots:** simwright writes the PNG to disk and returns its path
   (~100 B). The agent opens the image only when it actually needs to see it.
   MCP returns 210–225 KB **inline on every screenshot**. In an earlier
   exploratory run a single MCP screenshot returned **1.8 MB**, and one call took
   **111 s**.
-- **Whole scenario** (10 runs, 13 features): simdrive returned **11–22 KB**.
+- **Whole scenario** (10 runs, 13 features): simwright returned **11–22 KB**.
   MCP returned **2.7–3.2 MB**.
 - **Calls per action:** tap-by-label, fill and type are **1 command** in
-  simdrive. They take **2 MCP calls** (find, then act), so twice the agent
+  simwright. They take **2 MCP calls** (find, then act), so twice the agent
   turns.
-- **Setup:** simdrive is ready in about 0.2 s. The MCP server took 23–39 s
+- **Setup:** simwright is ready in about 0.2 s. The MCP server took 23–39 s
   (process start, WDA prepare, session create) before its first command.
 
 ### For raw speed: Appium's on-device helper wins at reading Android screens
 
-On Android, simdrive's `ls`, `tap` and `fill` take 2–5 s, because each calls
+On Android, simwright's `ls`, `tap` and `fill` take 2–5 s, because each calls
 `uiautomator dump`. That starts a fresh UiAutomation connection and waits for
 the UI to go idle, about 2 s every time. Appium installs a helper app that
 stays connected, so its screen reads take about 0.1 s.
 
-Where no screen read is involved, simdrive matches or beats both:
+Where no screen read is involved, simwright matches or beats both:
 - back
 - type
 - hide keyboard
@@ -242,20 +242,20 @@ Where no screen read is involved, simdrive matches or beats both:
 - setup
 
 On iOS, all three tools go through WebDriverAgent, so action times are close.
-simdrive adds around 0.3–0.5 s per command for starting Node and checking which
+simwright adds around 0.3–0.5 s per command for starting Node and checking which
 device is booted.
 
 ### Burst (screenshots in 5 s)
 
 Appium and MCP take more frames per second (23–59 vs 4–9). But every frame
-comes back over the wire as base64: **25 MB on iOS in 5 seconds**. simdrive
+comes back over the wire as base64: **25 MB on iOS in 5 seconds**. simwright
 writes frames to disk and de-duplicates them, so it reports only how many
 frames are distinct.
 
 ### Reliability
 
 Across both platforms:
-- simdrive: **4 failures**
+- simwright: **4 failures**
 - raw Appium: **20**
 - MCP: **22**
 
@@ -263,16 +263,16 @@ Most Appium and MCP failures were in `fill`/`type` on Android. They happened
 right after the app switched to Settings search, which runs in a different
 Android package (`com.google.android.settings.intelligence`): UiAutomator2
 keeps reporting the previous window for about 2–3 s. A 4 s settle reduced these
-failures but didn't remove them. The few simdrive failures were the first run
+failures but didn't remove them. The few simwright failures were the first run
 after setup on iOS, and the screen not yet ready on Android.
 
 ---
 
-## Bugs found in simdrive
+## Bugs found in simwright
 
 | # | Bug | Impact | Status |
 |---|---|---|---|
-| 1 | **`hidekb` on iOS reported success when the keyboard stayed up.** The iOS 26 search keyboard has no Done/Return key, WDA's dismiss failed, and simdrive swallowed the error | Silent false success. Appium and MCP correctly reported failure | ✅ fixed: checks the keyboard afterwards and exits 2 if it's still up (verified in Run 4) |
+| 1 | **`hidekb` on iOS reported success when the keyboard stayed up.** The iOS 26 search keyboard has no Done/Return key, WDA's dismiss failed, and simwright swallowed the error | Silent false success. Appium and MCP correctly reported failure | ✅ fixed: checks the keyboard afterwards and exits 2 if it's still up (verified in Run 4) |
 | 2 | **`tap` fell back to "first label containing the text"**, so with the wrong screen up it could tap a different element and report success | Wrong element tapped silently | ✅ fixed: exact first, a fuzzy match only when it names one label, `--exact`, and `tap` prints what it hit |
 | 3 | **No waiting:** `tap`/`back` right after a navigation failed when the screen wasn't ready yet | Spurious "not found" | ✅ fixed: `--wait` (default 3 s) |
 | 4 | **Android `fill` dumped the screen twice** | `fill` took ~5 s instead of ~2.5 s | ✅ fixed, and with the helper `fill` takes ~0.8 s |
@@ -292,8 +292,8 @@ so the method can be trusted:
    cleared task.
 2. **Run 2 (discarded):** a 1.5 s settle after opening Settings search was too
    short for UiAutomator2 (see Reliability above). Raised to 4 s for all tools.
-3. **Run 3:** simdrive 0.1.0 with WebDriverAgent and `uiautomator dump`.
-4. **Run 4:** simdrive with its own helpers. Only simdrive was re-run (see above).
+3. **Run 3:** simwright 0.1.0 with WebDriverAgent and `uiautomator dump`.
+4. **Run 4:** simwright with its own helpers. Only simwright was re-run (see above).
 
 ## Reproduce
 
@@ -307,12 +307,12 @@ export BENCH_DEEPLINK=myapp://home BENCH_DEEPLINK_APP=com.example.myapp
 # 4. run (each platform takes ~20 min for all three tools, 10 runs each)
 cd bench
 node full.mjs android 10            # or: node full.mjs ios 10
-node full.mjs ios 3 simdrive        # one tool, fewer runs
+node full.mjs ios 3 simwright        # one tool, fewer runs
 python3 mdtable.py results/ios.json # → the markdown table above
 ```
 
 Raw per-run numbers are in `bench/results/android.json` and
-`bench/results/ios.json` (Run 3), and in `android-run4-simdrive.json` and
-`ios-run4-simdrive.json` (Run 4). Set `BENCH_TAG` to keep a run's results
+`bench/results/ios.json` (Run 3), and in `android-run4-simwright.json` and
+`ios-run4-simwright.json` (Run 4). Set `BENCH_TAG` to keep a run's results
 separate. For Appium on iOS, `BENCH_PREBUILT_WDA` points at a built
 `WebDriverAgentRunner-Runner.app` so Appium skips its `xcodebuild`.

@@ -10,13 +10,13 @@ import { clock, grepper, startOf, tail, whichApp } from '../lib/logs.js';
 import { center, coveringAt, formatRow, isRef, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, visibleRows, waitFor } from '../lib/screen.js';
 import { UsageError, has, loadConfig, pickMatch, run, shotPath, sleep, splitScript, waitFor as retry } from '../lib/util.js';
 
-const SKILL = new URL('../skills/simdrive/SKILL.md', import.meta.url);
+const SKILL = new URL('../skills/simwright/SKILL.md', import.meta.url);
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
-const HELP = `simdrive ${pkg.version} — drive an iOS simulator or Android emulator from the shell, no Appium.
+const HELP = `simwright ${pkg.version} — drive an iOS simulator or Android emulator from the shell, no Appium.
 
-usage: simdrive [options] <command> [args]
+usage: simwright [options] <command> [args]
 
 setup & info
   devices                         booted simulators and adb devices
@@ -58,19 +58,19 @@ debug                             [app] defaults to --app / config, else the app
 batch & agents
   run '<cmd>; <cmd> …'            several commands in one process (or: run - < script). Stops at the
                                   first failure, which it names
-  skill [--install]               print the AI-agent guide (--install: ~/.claude/skills/simdrive/SKILL.md)
+  skill [--install]               print the AI-agent guide (--install: ~/.claude/skills/simwright/SKILL.md)
 
 options
   -p, --platform ios|android      default: whichever has exactly one booted device
   -d, --device <udid|serial>      default: the only booted one
-  -o, --out <dir>                 screenshot dir (default ./shots, or "out" in simdrive.config.json)
+  -o, --out <dir>                 screenshot dir (default ./shots, or "out" in simwright.config.json)
       --app <id>                  app id for launch/open (or "ios.app" / "android.app" in config)
       --wait <seconds>            how long tap/fill/back wait for their target to appear (default 3)
   -h, --help · -v, --version
 
-env: SIMDRIVE_PLATFORM, SIMDRIVE_DEVICE, SIMDRIVE_OUT, SIMDRIVE_WAIT, SIMDRIVE_SCALE (Android px per dp),
-     SIMDRIVE_ANDROID_HELPER=0 (plain adb + uiautomator dump),
-     SIMDRIVE_EMULATOR_GRPC=0 (no emulator gRPC frames)
+env: SIMWRIGHT_PLATFORM, SIMWRIGHT_DEVICE, SIMWRIGHT_OUT, SIMWRIGHT_WAIT, SIMWRIGHT_SCALE (Android px per dp),
+     SIMWRIGHT_ANDROID_HELPER=0 (plain adb + uiautomator dump),
+     SIMWRIGHT_EMULATOR_GRPC=0 (no emulator gRPC frames)
 
 Never burst-record a sign-in screen: frames capture typed credentials.`;
 
@@ -102,8 +102,8 @@ function parse(argv) {
 }
 
 function pickDriver(opts, config) {
-  let platform = opts.platform || process.env.SIMDRIVE_PLATFORM;
-  let device = opts.device || process.env.SIMDRIVE_DEVICE;
+  let platform = opts.platform || process.env.SIMWRIGHT_PLATFORM;
+  let device = opts.device || process.env.SIMWRIGHT_DEVICE;
   // With both -p and -d there is nothing to detect — skip listing devices (saves 0.1–0.3 s per command).
   const known = platform && device;
   const sims = known || platform === 'android' ? [] : bootedSimulators();
@@ -127,9 +127,9 @@ function pickDriver(opts, config) {
       );
     device = pool[0].id;
   }
-  const out = opts.out || process.env.SIMDRIVE_OUT || config.out || 'shots';
+  const out = opts.out || process.env.SIMWRIGHT_OUT || config.out || 'shots';
   const app = opts.app || config[platform]?.app;
-  const wait = 1000 * Number(opts.wait ?? process.env.SIMDRIVE_WAIT ?? config.wait ?? 3);
+  const wait = 1000 * Number(opts.wait ?? process.env.SIMWRIGHT_WAIT ?? config.wait ?? 3);
   if (!(wait >= 0)) throw new UsageError('--wait takes seconds, e.g. --wait 5');
   return platform === 'ios' ? new Ios(device, { out, app, wait }) : new Android(device, { out, app, wait });
 }
@@ -149,7 +149,7 @@ function doctor() {
     const cs = run('defaults', ['read', '/Library/Developer/PrivateFrameworks/CoreSimulator.framework/Resources/Info', 'CFBundleVersion'], { allowFail: true }).trim();
     if (cs) {
       const modern = cs.localeCompare('1155.4', undefined, { numeric: true }) >= 0;
-      console.log(`  iOS input: ${process.env.SIMDRIVE_IOS_HID || (modern ? 'dtuhid' : 'indigo')} (CoreSimulator ${cs})`);
+      console.log(`  iOS input: ${process.env.SIMWRIGHT_IOS_HID || (modern ? 'dtuhid' : 'indigo')} (CoreSimulator ${cs})`);
     }
   }
   const adb = has('adb');
@@ -161,7 +161,7 @@ function doctor() {
 }
 
 async function burst(driver, dir, seconds) {
-  if (!dir || !seconds) throw new UsageError('usage: simdrive burst <dir> <seconds>');
+  if (!dir || !seconds) throw new UsageError('usage: simwright burst <dir> <seconds>');
   // Native stream: a frame whenever the screen changes, duplicates already dropped.
   const r = await driver.burst?.(dir, Number(seconds));
   if (r) return console.log(`${r.frames} frames, ${r.distinct} distinct, in ${dir}`);
@@ -225,10 +225,10 @@ async function list(d, opts, snap) {
   saveRefs(deviceId(d), rows);
   if (opts.flags.has('json'))
     return console.log(JSON.stringify({ screen: snap.screen, elements: rows.map((e, i) => ({ ref: `@${i + 1}`, ...e })) }));
-  if (!rows.length) console.error('simdrive: no labelled elements on screen (still loading, or the app sets no accessibility labels)');
+  if (!rows.length) console.error('simwright: no labelled elements on screen (still loading, or the app sets no accessibility labels)');
   else console.log(rows.map((e, i) => formatRow(e, i + 1)).join('\n'));
   if (onlyStatusBar(snap.elements))
-    console.error('simdrive: only the status bar is readable — a system prompt (passcode, permission, alert) may be covering the app. `simdrive shot` shows it');
+    console.error('simwright: only the status bar is readable — a system prompt (passcode, permission, alert) may be covering the app. `simwright shot` shows it');
 }
 
 /** The element a ref names, if it's still where the last `ls` saw it. */
@@ -260,7 +260,7 @@ async function target(d, what, opts) {
 
 async function act(d, cmd, args, opts) {
   const need = (n, usage) => {
-    if (args.length < n) throw new UsageError(`usage: simdrive ${usage}`);
+    if (args.length < n) throw new UsageError(`usage: simwright ${usage}`);
   };
 
   switch (cmd) {
@@ -293,7 +293,7 @@ async function act(d, cmd, args, opts) {
       console.log(`tapped ${JSON.stringify(e.label || e.type)} at ${at.join(',')}`);
       // The tap lands on whatever is on top: say so when something else covers the point.
       for (const c of coveringAt(snap.elements, e, at))
-        console.error(`simdrive: warning: ${JSON.stringify(c.label || c.type)} at ${c.x},${c.y} ${c.w}x${c.h} covers that point and may have taken the tap`);
+        console.error(`simwright: warning: ${JSON.stringify(c.label || c.type)} at ${c.x},${c.y} ${c.w}x${c.h} covers that point and may have taken the tap`);
       return;
     }
     case 'tapxy': need(2, 'tapxy <x> <y>'); return d.tapxy(Number(args[0]), Number(args[1]));
@@ -311,7 +311,7 @@ async function act(d, cmd, args, opts) {
     case 'open': need(1, 'open <url>'); return d.open(args[0]);
     case 'launch': {
       const app = args[0] || d.app;
-      if (!app) throw new UsageError('usage: simdrive launch <app-id> (or set --app / simdrive.config.json)');
+      if (!app) throw new UsageError('usage: simwright launch <app-id> (or set --app / simwright.config.json)');
       return d.launch(app);
     }
     case 'bio': need(1, 'bio match|nomatch'); return d.bio(args[0]);
@@ -319,7 +319,7 @@ async function act(d, cmd, args, opts) {
     case 'crashes': return showCrashes(d, args[0], opts);
     case 'app': return showApp(d, args[0]);
     case 'run': return runScript(d, args, opts);
-    default: throw new UsageError(`unknown command: ${cmd} (simdrive --help)`);
+    default: throw new UsageError(`unknown command: ${cmd} (simwright --help)`);
   }
 }
 
@@ -348,13 +348,13 @@ async function showApp(d, arg) {
   const app = arg || d.app;
   if (app && app !== front?.id) {
     const pid = await d.pidOf(app);
-    console.log(pid ? `${app}: running in the background, pid ${pid}` : `${app}: not running — if it was, check: simdrive crashes`);
+    console.log(pid ? `${app}: running in the background, pid ${pid}` : `${app}: not running — if it was, check: simwright crashes`);
   }
 }
 
 /** Several commands in this one process: one helper connection, no per-command startup. */
 async function runScript(d, args, outer) {
-  if (!args.length) throw new UsageError("usage: simdrive run '<cmd>; <cmd> …'   or   simdrive run - < script");
+  if (!args.length) throw new UsageError("usage: simwright run '<cmd>; <cmd> …'   or   simwright run - < script");
   const steps = splitScript(args[0] === '-' ? readFileSync(0, 'utf8') : args.join(' '));
   for (const [i, words] of steps.entries()) {
     const { opts, cmd, args: stepArgs } = parse(words);
@@ -373,13 +373,13 @@ async function runScript(d, args, outer) {
 function skill(opts) {
   const text = readFileSync(SKILL, 'utf8');
   if (!opts.flags.has('install')) return process.stdout.write(text);
-  const dest = join(homedir(), '.claude', 'skills', 'simdrive', 'SKILL.md');
+  const dest = join(homedir(), '.claude', 'skills', 'simwright', 'SKILL.md');
   mkdirSync(dirname(dest), { recursive: true });
   writeFileSync(dest, text);
   console.log(`installed ${dest}`);
 }
 
 main().catch((e) => {
-  console.error(`simdrive: ${e.message}`);
+  console.error(`simwright: ${e.message}`);
   process.exit(e instanceof UsageError ? 2 : 1);
 });

@@ -1,5 +1,5 @@
-// Full feature benchmark: simdrive CLI vs Appium server (raw HTTP) vs appium-mcp (MCP over stdio).
-// usage: node full.mjs ios|android [runs] [tools=simdrive,appium,mcp]
+// Full feature benchmark: simwright CLI vs Appium server (raw HTTP) vs appium-mcp (MCP over stdio).
+// usage: node full.mjs ios|android [runs] [tools=simwright,appium,mcp]
 // env: BENCH_IOS_UDID, BENCH_ANDROID_SERIAL (default emulator-5554), APPIUM_URL (default http://127.0.0.1:4723),
 //      BENCH_DEEPLINK + BENCH_DEEPLINK_APP (a deep link and the installed app that handles it; the deep-link step is skipped without them)
 // needs: an Appium 3 server with xcuitest + uiautomator2 drivers running (npx appium), and `npx appium-mcp` reachable.
@@ -12,13 +12,13 @@ import { Mcp } from './mcp.mjs';
 
 const platform = process.argv[2];
 const N = Number(process.argv[3] || 10);
-const TOOLS = (process.argv[4] || 'simdrive,appium,mcp').split(',');
+const TOOLS = (process.argv[4] || 'simwright,appium,mcp').split(',');
 const DIR = import.meta.dirname;
 const OUT = join(DIR, 'out', platform);
 const RESULTS = join(DIR, 'results');
 mkdirSync(RESULTS, { recursive: true });
 mkdirSync(OUT, { recursive: true });
-const SIMDRIVE = join(DIR, '..', 'bin', 'simdrive.js');
+const SIMWRIGHT = join(DIR, '..', 'bin', 'simwright.js');
 const APPIUM = process.env.APPIUM_URL || 'http://127.0.0.1:4723';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const now = () => performance.now();
@@ -68,13 +68,13 @@ async function timed(tool, op, fn) {
   rec(tool, op, now() - t, bytes, calls, err);
 }
 
-// ── adapter: simdrive (spawn the CLI per command, as a person/agent does) ──
+// ── adapter: simwright (spawn the CLI per command, as a person/agent does) ──
 function sdRun(...args) {
-  const out = execFileSync('node', [SIMDRIVE, '-p', platform, '-d', C.dev, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  const out = execFileSync('node', [SIMWRIGHT, '-p', platform, '-d', C.dev, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
   return { bytes: Buffer.byteLength(out), calls: 1 };
 }
-const simdrive = {
-  name: 'simdrive',
+const simwright = {
+  name: 'simwright',
   setup: async () => sdRun('setup'),
   teardown: async () => sdRun('teardown'),
   ls: async () => sdRun('ls'),
@@ -86,7 +86,7 @@ const simdrive = {
   fill: async () => sdRun('fill', C.field, C.fieldText),
   type: async () => sdRun('type', ' x'),
   hidekb: async () => sdRun('hidekb'),
-  shot: async (i) => sdRun('shot', '-o', OUT, `simdrive_${i}`),
+  shot: async (i) => sdRun('shot', '-o', OUT, `simwright_${i}`),
   launch: async () => sdRun('launch', C.app),
   open: async () => sdRun('--app', LINK_APP, 'open', LINK),
   bio: async () => sdRun('bio', 'match'),
@@ -262,9 +262,9 @@ async function scenario(t) {
   }
   // burst / screenshot throughput: how many frames in 5 seconds
   log(`${t.name}: burst`);
-  if (t.name === 'simdrive') {
+  if (t.name === 'simwright') {
     const t0 = now();
-    const out = execFileSync('node', [SIMDRIVE, '-p', platform, '-d', C.dev, 'burst', join(OUT, 'burst_simdrive'), '5'], { encoding: 'utf8' });
+    const out = execFileSync('node', [SIMWRIGHT, '-p', platform, '-d', C.dev, 'burst', join(OUT, 'burst_simwright'), '5'], { encoding: 'utf8' });
     const frames = Number(/^(\d+) frames/.exec(out)?.[1] ?? 0);
     rec(t.name, 'burst 5s (frames)', now() - t0, Buffer.byteLength(out), 1, null);
     R['burst 5s (frames)'][t.name].at(-1).frames = frames;
@@ -278,10 +278,10 @@ async function scenario(t) {
   await timed(t.name, 'teardown', () => t.teardown());
 }
 
-const adapters = { simdrive, appium, mcp };
+const adapters = { simwright, appium, mcp };
 for (const name of TOOLS) {
   try { await scenario(adapters[name]); } catch (e) { log(name, 'ABORTED', e.message); }
-  if (!IOS && name !== 'simdrive') {
+  if (!IOS && name !== 'simwright') {
     // UiAutomator2 keeps UiAutomation busy — release it so the next tool starts clean
     execFileSync('adb', ['-s', C.dev, 'shell', 'am', 'force-stop', 'io.appium.uiautomator2.server'], { stdio: 'ignore' });
     execFileSync('adb', ['-s', C.dev, 'shell', 'am', 'force-stop', 'io.appium.uiautomator2.server.test'], { stdio: 'ignore' });

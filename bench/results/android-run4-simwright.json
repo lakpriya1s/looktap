@@ -1,200 +1,200 @@
 {
   "setup": {
-    "simdrive": [
+    "simwright": [
       {
-        "ms": 39.45304199999998,
-        "bytes": 66,
+        "ms": 141.747791,
+        "bytes": 115,
         "calls": 1,
         "err": null
       }
     ]
   },
   "ls (read screen)": {
-    "simdrive": [
+    "simwright": [
       {
-        "ms": 512.6926250000006,
-        "bytes": 723,
+        "ms": 3738.643459,
+        "bytes": 975,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 203.3841250000005,
-        "bytes": 723,
+        "ms": 1485.513291999996,
+        "bytes": 975,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 188.4577919999938,
-        "bytes": 723,
+        "ms": 327.10112500000105,
+        "bytes": 975,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 285.60504200000287,
-        "bytes": 723,
+        "ms": 130.0602910000016,
+        "bytes": 975,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 1046.6124999999884,
-        "bytes": 723,
+        "ms": 91.38108400000783,
+        "bytes": 602,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 154.29058300000906,
-        "bytes": 723,
+        "ms": 120.013208999997,
+        "bytes": 975,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 153.67462499999965,
-        "bytes": 723,
+        "ms": 132.8755409999867,
+        "bytes": 975,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 273.675499999983,
-        "bytes": 723,
+        "ms": 113.77358300000196,
+        "bytes": 975,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 176.79762499997742,
-        "bytes": 723,
+        "ms": 139.01041600000462,
+        "bytes": 975,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 200.20900000000256,
-        "bytes": 723,
+        "ms": 111.22966599999927,
+        "bytes": 975,
         "calls": 1,
         "err": null
       }
     ]
   },
   "tap (by label)": {
-    "simdrive": [
+    "simwright": [
       {
-        "ms": 132.16449999999986,
-        "bytes": 28,
+        "ms": 563.7882079999999,
+        "bytes": 39,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 119.65129199999865,
-        "bytes": 28,
+        "ms": 274.5352920000005,
+        "bytes": 39,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 121.76350000000093,
-        "bytes": 28,
+        "ms": 225.7034580000036,
+        "bytes": 39,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 131.64716699999553,
-        "bytes": 28,
+        "ms": 246.12820799999463,
+        "bytes": 39,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 252.74270899999829,
-        "bytes": 28,
+        "ms": 3056.396041,
+        "bytes": 0,
+        "calls": 0,
+        "err": "Command failed: node /Volumes/External/simwright/simwright/bin/simwright.js -p android -d emulator-5554 tap Network & internet\nsimwright: not found: Network & inter"
+      },
+      {
+        "ms": 93.03362500001094,
+        "bytes": 39,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 115.94145899999421,
-        "bytes": 28,
+        "ms": 104.50695800001267,
+        "bytes": 39,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 120.72699999999895,
-        "bytes": 28,
+        "ms": 104.84620800000266,
+        "bytes": 39,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 198.96229199998197,
-        "bytes": 28,
+        "ms": 101.90187500001048,
+        "bytes": 39,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 119.39079199999105,
-        "bytes": 28,
-        "calls": 1,
-        "err": null
-      },
-      {
-        "ms": 117.08337500001653,
-        "bytes": 28,
+        "ms": 112.41554100002395,
+        "bytes": 39,
         "calls": 1,
         "err": null
       }
     ]
   },
   "back": {
-    "simdrive": [
+    "simwright": [
       {
-        "ms": 163.18091699999968,
+        "ms": 84.27129199999945,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 157.66770799999722,
+        "ms": 130.19262500000332,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 210.07695799999783,
+        "ms": 84.41120899999805,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 230.9645410000012,
+        "ms": 86.55275000000256,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 340.5445000000036,
+        "ms": 67.6710000000021,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 144.37399999999616,
+        "ms": 68.0547910000023,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 276.924583,
+        "ms": 83.34050000002026,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 214.69462500000373,
+        "ms": 81.5820830000157,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 158.51008400000865,
+        "ms": 99.4038330000185,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 151.34316699998453,
+        "ms": 74.42008300000452,
         "bytes": 0,
         "calls": 1,
         "err": null
@@ -202,63 +202,63 @@
     ]
   },
   "tapxy": {
-    "simdrive": [
+    "simwright": [
       {
-        "ms": 124.62033399999927,
+        "ms": 181.88120899999922,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 98.18104200000016,
+        "ms": 127.32341699999961,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 106.74737499999901,
+        "ms": 149.8212499999936,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 149.223625000006,
+        "ms": 99.83358300001419,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 182.7022919999872,
+        "ms": 117.02416600000288,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 105.77949999998964,
+        "ms": 117.93033400000422,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 124.60908300000301,
+        "ms": 148.1368749999965,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 96.39745799999218,
+        "ms": 98.67899999997462,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 118.18187500000931,
+        "ms": 162.11512500001118,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 97.72795800000313,
+        "ms": 89.9265000000014,
         "bytes": 0,
         "calls": 1,
         "err": null
@@ -266,63 +266,63 @@
     ]
   },
   "swipe": {
-    "simdrive": [
+    "simwright": [
       {
-        "ms": 232.02283299999908,
+        "ms": 412.1412909999999,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 231.426958,
+        "ms": 398.55941700000403,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 232.60874999999942,
+        "ms": 409.5852089999971,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 282.6171669999894,
+        "ms": 399.1138329999958,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 326.5517499999987,
+        "ms": 392.87908400000015,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 223.87633299999288,
+        "ms": 389.79791699998896,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 259.2607089999947,
+        "ms": 382.025667000009,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 235.43724999998813,
+        "ms": 397.9386250000098,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 267.8666669999948,
+        "ms": 448.665708000015,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 234.79887500000768,
+        "ms": 381.2380420000118,
         "bytes": 0,
         "calls": 1,
         "err": null
@@ -330,63 +330,63 @@
     ]
   },
   "fill": {
-    "simdrive": [
+    "simwright": [
       {
-        "ms": 811.6741249999995,
+        "ms": 832.4493330000005,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 716.1304580000033,
+        "ms": 3095.684583000002,
+        "bytes": 0,
+        "calls": 0,
+        "err": "Command failed: node /Volumes/External/simwright/simwright/bin/simwright.js -p android -d emulator-5554 fill Search settings wifi\nsimwright: not found: Search setti"
+      },
+      {
+        "ms": 708.4956249999959,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 625.3272090000028,
+        "ms": 777.9021250000078,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 2409.394749999992,
+        "ms": 792.1010000000242,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 1160.284124999991,
+        "ms": 787.355499999976,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 701.325542000006,
+        "ms": 806.063541999989,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 641.4999170000083,
+        "ms": 641.0285830000066,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 751.586209000001,
+        "ms": 802.286832999991,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 869.3492909999914,
-        "bytes": 0,
-        "calls": 1,
-        "err": null
-      },
-      {
-        "ms": 925.4603749999951,
+        "ms": 811.1472089999879,
         "bytes": 0,
         "calls": 1,
         "err": null
@@ -394,63 +394,63 @@
     ]
   },
   "type": {
-    "simdrive": [
+    "simwright": [
       {
-        "ms": 53.28241700000035,
+        "ms": 306.5275839999995,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 49.89562499999738,
+        "ms": 196.95608399999765,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 68.81008299999667,
+        "ms": 135.6797499999957,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 94.31804199999897,
+        "ms": 130.81612499999756,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 147.642875000005,
+        "ms": 133.3982079999987,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 43.851582999996026,
+        "ms": 123.7022500000021,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 60.83237499999814,
+        "ms": 168.09612499998184,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 71.08937499998137,
+        "ms": 116.34945800001151,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 50.93408399997861,
+        "ms": 111.40241700000479,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 58.31420799999614,
+        "ms": 111.57274999999208,
         "bytes": 0,
         "calls": 1,
         "err": null
@@ -458,191 +458,191 @@
     ]
   },
   "hidekb": {
-    "simdrive": [
+    "simwright": [
       {
-        "ms": 221.9535419999993,
-        "bytes": 0,
-        "calls": 0,
-        "err": "Command failed: node /Volumes/External/simdrive/simdrive/bin/simdrive.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nsimdrive: keyboard is still up — "
+        "ms": 90.51370800000223,
+        "bytes": 12,
+        "calls": 1,
+        "err": null
       },
       {
-        "ms": 210.99291700000322,
-        "bytes": 0,
-        "calls": 0,
-        "err": "Command failed: node /Volumes/External/simdrive/simdrive/bin/simdrive.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nsimdrive: keyboard is still up — "
+        "ms": 44.79495800000586,
+        "bytes": 12,
+        "calls": 1,
+        "err": null
       },
       {
-        "ms": 209.84525000000576,
-        "bytes": 0,
-        "calls": 0,
-        "err": "Command failed: node /Volumes/External/simdrive/simdrive/bin/simdrive.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nsimdrive: keyboard is still up — "
+        "ms": 46.00487499999872,
+        "bytes": 12,
+        "calls": 1,
+        "err": null
       },
       {
-        "ms": 468.2394159999967,
-        "bytes": 0,
-        "calls": 0,
-        "err": "Command failed: node /Volumes/External/simdrive/simdrive/bin/simdrive.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nsimdrive: keyboard is still up — "
+        "ms": 60.04329200000211,
+        "bytes": 12,
+        "calls": 1,
+        "err": null
       },
       {
-        "ms": 596.419458999997,
-        "bytes": 0,
-        "calls": 0,
-        "err": "Command failed: node /Volumes/External/simdrive/simdrive/bin/simdrive.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nsimdrive: keyboard is still up — "
+        "ms": 50.3566249999858,
+        "bytes": 12,
+        "calls": 1,
+        "err": null
       },
       {
-        "ms": 232.77187499999127,
-        "bytes": 0,
-        "calls": 0,
-        "err": "Command failed: node /Volumes/External/simdrive/simdrive/bin/simdrive.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nsimdrive: keyboard is still up — "
+        "ms": 42.025250000006054,
+        "bytes": 12,
+        "calls": 1,
+        "err": null
       },
       {
-        "ms": 214.5861670000013,
-        "bytes": 0,
-        "calls": 0,
-        "err": "Command failed: node /Volumes/External/simdrive/simdrive/bin/simdrive.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nsimdrive: keyboard is still up — "
+        "ms": 40.74129199999152,
+        "bytes": 12,
+        "calls": 1,
+        "err": null
       },
       {
-        "ms": 217.27645899998606,
-        "bytes": 0,
-        "calls": 0,
-        "err": "Command failed: node /Volumes/External/simdrive/simdrive/bin/simdrive.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nsimdrive: keyboard is still up — "
+        "ms": 54.61108400000376,
+        "bytes": 12,
+        "calls": 1,
+        "err": null
       },
       {
-        "ms": 246.89220800000476,
-        "bytes": 0,
-        "calls": 0,
-        "err": "Command failed: node /Volumes/External/simdrive/simdrive/bin/simdrive.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nsimdrive: keyboard is still up — "
+        "ms": 49.001124999980675,
+        "bytes": 12,
+        "calls": 1,
+        "err": null
       },
       {
-        "ms": 230.39199999999255,
-        "bytes": 0,
-        "calls": 0,
-        "err": "Command failed: node /Volumes/External/simdrive/simdrive/bin/simdrive.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nsimdrive: keyboard is still up — "
+        "ms": 42.55220899998676,
+        "bytes": 12,
+        "calls": 1,
+        "err": null
       }
     ]
   },
   "shot (screenshot)": {
-    "simdrive": [
+    "simwright": [
       {
-        "ms": 146.00862499999857,
-        "bytes": 65,
+        "ms": 503.0253339999981,
+        "bytes": 69,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 107.04533300000185,
-        "bytes": 65,
+        "ms": 140.55683300000237,
+        "bytes": 69,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 126.47841700000572,
-        "bytes": 65,
+        "ms": 287.0145000000048,
+        "bytes": 69,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 382.4207080000051,
-        "bytes": 65,
+        "ms": 130.64958399999887,
+        "bytes": 69,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 239.71250000000873,
-        "bytes": 65,
+        "ms": 137.41354100001627,
+        "bytes": 69,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 115.72691699999268,
-        "bytes": 65,
+        "ms": 110.58041699999012,
+        "bytes": 69,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 111.84212500002468,
-        "bytes": 65,
+        "ms": 101.68237500000396,
+        "bytes": 69,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 136.84366600000067,
-        "bytes": 65,
+        "ms": 139.43975000001956,
+        "bytes": 69,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 116.45558300000266,
-        "bytes": 65,
+        "ms": 117.6672499999986,
+        "bytes": 69,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 121.6054169999843,
-        "bytes": 65,
+        "ms": 215.99079199999687,
+        "bytes": 69,
         "calls": 1,
         "err": null
       }
     ]
   },
   "bio": {
-    "simdrive": [
+    "simwright": [
       {
-        "ms": 550.3115420000031,
+        "ms": 66.52779200000077,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 574.5012910000005,
+        "ms": 53.18579099999624,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 1435.492542,
+        "ms": 67.21191700000782,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 843.8338749999966,
+        "ms": 56.089208999997936,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 1001.6697499999864,
+        "ms": 52.838292000000365,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 629.4448330000014,
+        "ms": 59.64054199997918,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 635.5875419999938,
+        "ms": 46.60362500001793,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 514.0714159999916,
+        "ms": 50.50633299999754,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 497.2799159999995,
+        "ms": 60.10312499999418,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 555.2077500000014,
+        "ms": 89.88462500000605,
         "bytes": 0,
         "calls": 1,
         "err": null
@@ -650,63 +650,63 @@
     ]
   },
   "launch (restart app)": {
-    "simdrive": [
+    "simwright": [
       {
-        "ms": 591.8745000000017,
+        "ms": 285.02549999999974,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 447.7077910000007,
+        "ms": 254.3835409999956,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 518.995041999995,
+        "ms": 160.85366700000304,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 1136.7631669999973,
+        "ms": 136.52049999999872,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 739.3111659999995,
+        "ms": 153.3067919999885,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 416.3577079999959,
+        "ms": 219.16075000001,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 447.6606669999892,
+        "ms": 136.24633299998823,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 502.9437920000055,
+        "ms": 181.7625410000037,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 541.8205829999933,
+        "ms": 191.10291700001108,
         "bytes": 0,
         "calls": 1,
         "err": null
       },
       {
-        "ms": 507.5844170000055,
+        "ms": 321.42358299999614,
         "bytes": 0,
         "calls": 1,
         "err": null
@@ -714,21 +714,21 @@
     ]
   },
   "burst 5s (frames)": {
-    "simdrive": [
+    "simwright": [
       {
-        "ms": 5073.288541000016,
-        "bytes": 92,
+        "ms": 5045.668540999992,
+        "bytes": 94,
         "calls": 1,
         "err": null,
-        "frames": 226
+        "frames": 2
       }
     ]
   },
   "teardown": {
-    "simdrive": [
+    "simwright": [
       {
-        "ms": 42.49620799999684,
-        "bytes": 19,
+        "ms": 137.30462499998976,
+        "bytes": 44,
         "calls": 1,
         "err": null
       }
