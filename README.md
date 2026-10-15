@@ -145,8 +145,8 @@ cd simwright && npm install -g .
 As a tarball you can hand to someone (it includes both prebuilt helpers):
 
 ```bash
-npm pack                                  # → simwright-0.1.0.tgz
-npm install -g simwright-0.1.0.tgz        # on their machine
+npm pack                                  # → simwright-<version>.tgz
+npm install -g simwright-<version>.tgz    # on their machine
 ```
 
 Without installing: `node bin/simwright.js --help`.

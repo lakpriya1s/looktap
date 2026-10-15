@@ -1,6 +1,6 @@
 {
   "name": "simwright",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Let AI agents drive an iOS simulator or Android emulator from the shell: read the screen, tap, type, swipe, screenshot, read logs and crashes. No Appium, no WebDriverAgent, nothing installed on the device.",
   "keywords": [
     "ios-simulator",
