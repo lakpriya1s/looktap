@@ -115,7 +115,8 @@ const appium = {
   setup: async () => {
     const caps = IOS
       ? { platformName: 'iOS', 'appium:automationName': 'XCUITest', 'appium:udid': C.dev, 'appium:bundleId': C.app, 'appium:noReset': true,
-          'appium:usePreinstalledWDA': true, 'appium:prebuiltWDAPath': join(homedir(), '.simdrive/wda/15.1.3/arm64/WebDriverAgentRunner-Runner.app') }
+          // Appium's own WebDriverAgent; BENCH_PREBUILT_WDA (a built WebDriverAgentRunner-Runner.app) skips its xcodebuild.
+          ...(process.env.BENCH_PREBUILT_WDA ? { 'appium:usePreinstalledWDA': true, 'appium:prebuiltWDAPath': process.env.BENCH_PREBUILT_WDA } : {}) }
       : { platformName: 'Android', 'appium:automationName': 'UiAutomator2', 'appium:udid': C.dev, 'appium:appPackage': C.app, 'appium:appActivity': '.Settings', 'appium:noReset': true };
     const r = await http('POST', '/session', { capabilities: { alwaysMatch: caps } });
     S = r.json.value.sessionId;

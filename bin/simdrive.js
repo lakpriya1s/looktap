@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
-import { readFileSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { Android, adbDevices } from '../lib/android.js';
-import { Ios, WDA_VERSION, bootedSimulators } from '../lib/ios.js';
-import { HOME, UsageError, has, loadConfig, readJson, shotPath, sleep } from '../lib/util.js';
+import { Ios, bootedSimulators } from '../lib/ios.js';
+import { UsageError, has, loadConfig, run, shotPath, sleep } from '../lib/util.js';
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
@@ -16,8 +16,9 @@ usage: simdrive [options] <command> [args]
 setup & info
   devices                         booted simulators and adb devices
   doctor                          check the toolchain
-  setup                           iOS: install + start WebDriverAgent · Android: adb reverse Metro
-  teardown                        stop WebDriverAgent / remove adb reverse rules
+  setup                           start the helper (optional: commands start it on first use)
+                                  · Android: also adb reverse Metro
+  teardown                        stop the helper · Android: remove adb reverse rules
 
 look
   ls [--all]                      on-screen elements: x,y  WxH  label
@@ -47,7 +48,8 @@ options
   -h, --help · -v, --version
 
 env: SIMDRIVE_PLATFORM, SIMDRIVE_DEVICE, SIMDRIVE_OUT, SIMDRIVE_WAIT, SIMDRIVE_SCALE (Android px per dp),
-     SIMDRIVE_WDA_URL (use an already-running WDA), SIMDRIVE_WDA_VERSION (default ${WDA_VERSION})
+     SIMDRIVE_ANDROID_HELPER=0 (plain adb + uiautomator dump),
+     SIMDRIVE_EMULATOR_GRPC=0 (no emulator gRPC frames)
 
 Never burst-record a sign-in screen: frames capture typed credentials.`;
 
@@ -114,8 +116,10 @@ function doctor() {
   ok(xc, 'xcrun (iOS)', 'install Xcode + command line tools');
   if (xc) {
     const sims = bootedSimulators();
-    const ports = readJson(join(HOME, 'wda-ports.json'), {});
-    ok(sims.length > 0, `booted simulators: ${sims.map((s) => `${s.name}${ports[s.id] ? ` (WDA :${ports[s.id]})` : ''}`).join(', ') || 'none'}`, 'xcrun simctl boot <udid>');
+    ok(sims.length > 0, `booted simulators: ${sims.map((s) => s.name).join(', ') || 'none'}`, 'xcrun simctl boot <udid>');
+    const dev = run('xcode-select', ['-p'], { allowFail: true }).trim();
+    ok(existsSync('/Library/Developer/PrivateFrameworks/CoreSimulator.framework'), 'CoreSimulator.framework (iOS helper)', 'install Xcode');
+    ok(dev && existsSync(join(dev, 'Library/PrivateFrameworks/SimulatorKit.framework')), `SimulatorKit in ${dev || 'no developer dir'} (iOS helper)`, 'sudo xcode-select -s /Applications/Xcode.app');
   }
   const adb = has('adb');
   ok(adb, 'adb (Android)', 'install Android SDK platform-tools and put them on PATH');
@@ -123,11 +127,13 @@ function doctor() {
     const d = adbDevices();
     ok(d.length > 0, `adb devices: ${d.map((x) => x.id).join(', ') || 'none'}`, 'start an emulator');
   }
-  ok(has('curl') && has('unzip'), 'curl + unzip (WebDriverAgent download)');
 }
 
 async function burst(driver, dir, seconds) {
   if (!dir || !seconds) throw new UsageError('usage: simdrive burst <dir> <seconds>');
+  // Native stream: a frame whenever the screen changes, duplicates already dropped.
+  const r = await driver.burst?.(dir, Number(seconds));
+  if (r) return console.log(`${r.frames} frames, ${r.distinct} distinct, in ${dir}`);
   const end = Date.now() + Number(seconds) * 1000;
   let i = 0;
   while (Date.now() < end) {
@@ -160,6 +166,14 @@ async function main() {
 
   const config = loadConfig();
   const d = pickDriver(opts, config);
+  try {
+    return await dispatch(d, cmd, args, opts);
+  } finally {
+    d.close?.();
+  }
+}
+
+async function dispatch(d, cmd, args, opts) {
   const need = (n, usage) => {
     if (args.length < n) throw new UsageError(`usage: simdrive ${usage}`);
   };

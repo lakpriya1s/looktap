@@ -2,10 +2,11 @@
 
 Drive an **iOS simulator** or an **Android emulator** from your terminal. You
 can read what's on screen, tap, type, swipe, open deep links, trigger Face
-ID/fingerprint, and take screenshots, with **no Appium** involved.
+ID/fingerprint, and take screenshots, with **no Appium, no WebDriverAgent, and
+nothing installed on the device**.
 
 ```bash
-simdrive setup                    # once per simulator boot
+simdrive setup                    # optional: starts simdrive's helper ahead of time
 simdrive open myapp://home        # jump to a screen
 simdrive ls                       # what's on screen
 simdrive tap "Open menu"          # tap by accessibility label
@@ -53,18 +54,29 @@ own test suite.
 
 ## How it works
 
+simdrive ships its own small helper for each platform. **Nothing is installed on
+the simulator or device**, and there's no Appium, WebDriverAgent, or npm package
+anywhere in the loop.
+
 | | iOS simulator | Android emulator / device |
 |---|---|---|
-| Read screen, tap, type, swipe | [WebDriverAgent](https://github.com/appium/WebDriverAgent) (WDA), a small helper app on the simulator that accepts HTTP commands | `adb` + `uiautomator` (built into Android) |
-| Screenshots, deep links, launch, biometrics | `xcrun simctl` (built into Xcode) | `adb` and the emulator console |
-| One-time setup | `simdrive setup` downloads a prebuilt WDA, installs it with `simctl`, launches it on a free port, and remembers the port | `simdrive setup` forwards Metro (`adb reverse tcp:8081`) |
+| Read screen | `simdrive-sim`, a macOS helper that reads the simulator's accessibility tree through Apple's simulator frameworks (CoreSimulator + AccessibilityPlatformTranslation) | `simdrive-server.jar`, a 7 KB helper pushed to `/data/local/tmp` and run with `app_process`. It keeps one UiAutomation connection open |
+| Tap, type, swipe, keys | The same helper, as touch and keyboard events sent through SimulatorKit | The same helper, as input events through UiAutomation |
+| Screenshots, `burst` | The simulator display's framebuffer, read in-process | Emulators: the emulator's gRPC API (frames from the host, which also gets past `FLAG_SECURE`). Devices: the helper |
+| Deep links, launch, biometrics | `xcrun simctl` | `adb` and the emulator console |
 
-WDA's source sits under the Appium GitHub organisation, but it's a standalone
-app. simdrive uses the prebuilt release directly, with **no Appium server,
-drivers, or npm packages**.
+Each helper starts on first use, keeps running in the background, and is
+replaced automatically when simdrive is upgraded. `simdrive setup` starts it
+ahead of time, and `simdrive teardown` stops it.
 
-The WDA version is **pinned** (15.1.3 by default, known to work with current
-simulators). It is downloaded once per Mac into `~/.simdrive/wda/`.
+**iOS caveat.** The iOS helper uses Apple's private simulator frameworks, the
+same ones `idb` uses. They can change between Xcode releases. `simdrive doctor`
+checks they're present. The touch and keyboard path works with Xcode 26; Xcode 27
+moves simulator input to a new transport that simdrive doesn't speak yet.
+
+**Android fallback.** If the helper can't start, simdrive falls back to plain
+`adb` + `uiautomator dump`, which works everywhere but takes about 2.5 s per
+screen read. `SIMDRIVE_ANDROID_HELPER=0` forces that path.
 
 ---
 
@@ -77,7 +89,6 @@ simulators). It is downloaded once per Mac into `~/.simdrive/wda/`.
 | Everything | **Node 18+** (`node -v`) |
 | iOS | **Xcode** with command-line tools, and at least one simulator runtime. Apple Silicon or Intel Mac |
 | Android | **Android SDK platform-tools** with `adb` on your `PATH`, plus an emulator (AVD) or a USB-debugging device |
-| iOS first-time setup | `curl` and `unzip` (both ship with macOS) |
 
 simdrive has **zero npm dependencies**.
 
@@ -93,7 +104,7 @@ simdrive --version
 
 ```bash
 cd /path/to/simdrive
-npm pack                                  # → simdrive-0.1.0.tgz (≈12 kB)
+npm pack                                  # → simdrive-0.1.0.tgz (includes both helpers)
 # send the .tgz, then on their machine:
 npm install -g simdrive-0.1.0.tgz
 ```
@@ -108,7 +119,7 @@ node bin/simdrive.js --help
 
 ```bash
 npm uninstall -g simdrive
-rm -rf ~/.simdrive                        # cached WDA + port registry
+rm -rf ~/.simdrive                        # helper sockets, logs, port registry
 ```
 
 ---
@@ -125,24 +136,22 @@ simdrive doctor
 ✓ node 22.23.2 (needs ≥ 18)
 ✓ xcrun (iOS)
 ✓ booted simulators: iPhone 14
+✓ CoreSimulator.framework (iOS helper)
+✓ SimulatorKit in /Applications/Xcode.app/Contents/Developer (iOS helper)
 ✓ adb (Android)
 ✗ adb devices: none  → start an emulator
-✓ curl + unzip (WebDriverAgent download)
 ```
 
-### 2a. iOS: boot a simulator and start WDA
+### 2a. iOS: boot a simulator
 
 ```bash
 xcrun simctl list devices available            # find a udid
 xcrun simctl boot <udid> && open -a Simulator
-simdrive setup
-# downloading WebDriverAgent 15.1.3 (arm64)…      ← first time only
-# WebDriverAgent 15.1.3 ready on http://127.0.0.1:8100
+simdrive setup                                 # optional: the first command starts the helper anyway
+# simdrive iOS helper ready on 42E41FA7-…
 ```
 
-Run `simdrive setup` again **after every simulator boot**, because WDA doesn't
-survive a shutdown. Running it while WDA is already up does nothing, so it's
-safe to call at the top of any script.
+The helper exits by itself when its simulator shuts down.
 
 ### 2b. Android: boot an emulator
 
@@ -150,7 +159,7 @@ safe to call at the top of any script.
 $ANDROID_HOME/emulator/emulator -list-avds
 $ANDROID_HOME/emulator/emulator -avd Pixel_9a &
 simdrive setup
-# adb emulator-5554 ready · scale 2.625 (dp = px ÷ 2.625) · reverse tcp:8081
+# adb emulator-5554 ready · scale 2.625 (dp = px ÷ 2.625) · reverse tcp:8081 · helper on · emulator gRPC frames
 ```
 
 > Want keyboard-open screenshots? Set `hw.keyboard = no` in
@@ -165,14 +174,14 @@ simdrive ls
 ```
 
 ```
-Button           16, 284 358x55  General
-Button           16, 339 358x55  Accessibility
-StaticText       34, 391 88x29   About
+Button           16, 285 358x54  General
+Button           16, 339 358x54  Accessibility
+TextField        33, 773 324x38  Search  = Search
 ```
 
 Each `ls` row shows the element type, its **x,y** position, its **width×height**,
-and its **label**. The positions are in the same units that `tapxy` and `swipe`
-take.
+and its **label**, plus `= value` for fields that hold text. The positions are
+in the same units that `tapxy` and `swipe` take.
 
 ---
 
@@ -189,8 +198,8 @@ simdrive shot messages__default
 ### Tap by label, not by coordinates
 
 ```bash
-simdrive tap "Open menu"              # exact accessibility label
-# tapped "Open menu"
+simdrive tap "Open menu"              # exact accessibility label (or identifier on iOS)
+# tapped "Open menu" at 30,62
 simdrive tap "Messages"               # no exact match → the one label starting with it
 # tapped "Messages, 2 unread" at 342,62
 simdrive tap "Wi"                     # matches two different labels → refuses
@@ -220,7 +229,8 @@ simdrive shot profile__validation
 right after a navigation doesn't fail just because the screen is still loading.
 Change this with `--wait <seconds>`, or `--wait 0` to fail at once.
 
-`fill` finds the field by its label or placeholder, clears it, and types. On
+`fill` finds the field by its label (on iOS also its identifier), or the first
+field at or below a matching label, clears it, and types. On
 Android it also presses Enter, because React Native fields only blur (and show
 validation) on Enter or a focus change. Back just hides the keyboard.
 
@@ -238,8 +248,8 @@ simdrive swipe 200 700 200 250 800    # slower: 800 ms
 simdrive back       # Android: system Back. iOS: taps the navigation bar's back button
 ```
 
-On iOS, if a screen has no navigation bar (a modal, a bottom sheet), `back`
-says so. Tap its close control instead.
+On iOS, `back` taps the button UIKit tags `BackButton`. If a screen has none (a
+modal, a bottom sheet), `back` says so. Tap its close control instead.
 
 ### Biometrics
 
@@ -257,10 +267,10 @@ These states last under a second, so start the burst **in the background**, then
 trigger the action:
 
 ```bash
-simdrive burst ./frames 5 &           # 5 s of frames, 0.4 s apart
+simdrive burst ./frames 5 &           # 5 s: a frame each time the screen changes
 simdrive swipe 200 250 200 700        # pull to refresh
 wait
-# 12 frames, 3 distinct, in ./frames   ← duplicates already deleted
+# 61 frames, 23 distinct, in ./frames   ← only distinct frames are saved
 ```
 
 ### Same screen on several devices
@@ -274,7 +284,7 @@ simdrive devices
 # android  emulator-5554
 
 for d in 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 F9213EDC-180D-412B-B24C-2FD69A37D3AC; do
-  simdrive -d $d setup                # each simulator gets its own WDA port
+  simdrive -d $d setup                # each simulator gets its own helper
   simdrive -d $d open myapp://home
 done
 sleep 2
@@ -315,9 +325,10 @@ The person running it must already be signed in. See [Rules](#rules).
 ### Android screenshots on secure screens
 
 Apps that set `FLAG_SECURE` (common in banking and payment apps) make normal
-Android screenshots come out black. On emulators `simdrive shot` takes the frame from the emulator itself,
-which gets past that. Use `--plain` to force a normal `screencap`, for example
-on a physical device or to check that a screen *is* secure:
+Android screenshots come out black. On emulators `simdrive shot` takes the frame
+from the emulator itself, which gets past that. Use `--plain` to take a normal
+on-device screenshot, for example on a physical device or to check that a
+screen *is* secure:
 
 ```bash
 simdrive -p android shot account__detail          # real content
@@ -341,10 +352,10 @@ Each command is cheap, so an agent can work in a short loop:
 | Command | What it does |
 |---|---|
 | `simdrive devices` | Lists booted iOS simulators and adb devices |
-| `simdrive doctor` | Checks Node, Xcode tools, adb, booted devices, and WDA state |
-| `simdrive setup` | **iOS:** installs and starts WDA, records its port (no-op if it's already running). **Android:** `adb reverse tcp:8081` for Metro and reports the density scale |
-| `simdrive teardown` | **iOS:** stops WDA. **Android:** removes `adb reverse` rules |
-| `simdrive ls [--all]` | Visible elements that have a label. `--all` also includes hidden and unlabelled ones |
+| `simdrive doctor` | Checks Node, Xcode tools and the simulator frameworks the iOS helper needs, adb, and booted devices |
+| `simdrive setup` | Starts the helper (commands also start it on first use; no-op if it's running). **Android:** also `adb reverse tcp:8081` for Metro, and reports the density scale |
+| `simdrive teardown` | Stops the helper. **Android:** also removes `adb reverse` rules. Stop the Android helper before using Appium or `uiautomator`: only one UiAutomation connection can exist |
+| `simdrive ls [--all]` | Visible elements that have a label. `--all` also includes off-screen and unlabelled ones. If the screen is still loading (nothing labelled yet), waits up to `--wait` |
 | `simdrive tap <label> [--exact]` | Taps the element with that accessibility label. Exact match first. Otherwise a prefix, then contains, match, but only if it names a single label (ambiguous → exit 2). Prints what it tapped. `--exact` turns fuzzy matching off |
 | `simdrive tapxy <x> <y>` | Taps a point (iOS points / Android dp, the units `ls` prints) |
 | `simdrive type <text>` | Types into the currently focused field |
@@ -356,10 +367,10 @@ Each command is cheap, so an agent can work in a short loop:
 | `simdrive launch [app-id]` | Restarts the app. Without an id, uses `--app` or the config file |
 | `simdrive bio match\|nomatch` | Simulates Face ID (iOS) or a fingerprint (Android) |
 | `simdrive shot <name> [--plain]` | Saves `<out>/<name>.png` and prints its path |
-| `simdrive burst <dir> <seconds>` | Takes frames every 0.4 s, then deletes consecutive duplicates |
+| `simdrive burst <dir> <seconds>` | Saves a frame each time the screen changes, for `<seconds>`. Only distinct frames are kept |
 
 **Exit codes:** `0` means OK, `2` means a usage problem (bad arguments, element
-not found, no device, WDA not started), and `1` means anything else failed. A
+not found, no device, helper can't start), and `1` means anything else failed. A
 script can `set -e` and stop at the first missing element.
 
 ---
@@ -383,9 +394,9 @@ script can `set -e` and stop at the first missing element.
 |---|---|
 | `SIMDRIVE_PLATFORM`, `SIMDRIVE_DEVICE`, `SIMDRIVE_OUT`, `SIMDRIVE_WAIT` | Defaults for `-p`, `-d`, `-o`, `--wait` |
 | `SIMDRIVE_SCALE` | Override Android's px-per-dp (normally read from `wm density`) |
-| `SIMDRIVE_WDA_URL` | Use a WDA you started yourself, e.g. `http://127.0.0.1:8100` |
-| `SIMDRIVE_WDA_VERSION` | WDA release to download (default `15.1.3`) |
-| `SIMDRIVE_HOME` | Where WDA and the port registry live (default `~/.simdrive`) |
+| `SIMDRIVE_ANDROID_HELPER=0` | Don't use the Android helper: plain `adb` + `uiautomator dump` (slower) |
+| `SIMDRIVE_EMULATOR_GRPC=0` | Don't take Android emulator frames over gRPC: use the emulator console instead |
+| `SIMDRIVE_HOME` | Where helper sockets, logs and the port registry live (default `~/.simdrive`) |
 
 ### Config file: `simdrive.config.json`
 
@@ -407,8 +418,9 @@ then built-in default.
 
 | Path | What |
 |---|---|
-| `~/.simdrive/wda/<version>/<arch>/WebDriverAgentRunner-Runner.app` | Cached WDA download |
-| `~/.simdrive/wda-ports.json` | Which simulator's WDA is on which port |
+| `~/.simdrive/sim-<udid prefix>.sock`, `.log` | The iOS helper's socket and log |
+| `~/.simdrive/helpers.json` | Which local port reaches each Android device's helper |
+| `/data/local/tmp/simdrive-server.jar` (device) | The Android helper |
 | `<out>/<name>.png` | Your screenshots |
 
 ---
@@ -417,20 +429,23 @@ then built-in default.
 
 | Symptom | Fix |
 |---|---|
-| `WebDriverAgent is not running on <udid> — run: simdrive setup` | The simulator was rebooted, or setup never ran. Run `simdrive setup` |
+| iOS: `SimulatorKit not found …` / `… has no Indigo HID builders` | `simdrive doctor`. Point `xcode-select` at a full Xcode (`sudo xcode-select -s /Applications/Xcode.app`). Xcode 27+ isn't supported yet |
+| iOS: an element you can see is missing from `ls` | Some containers hide their children from the accessibility tree. simdrive probes empty containers to find them, but `tapxy` is the fallback |
 | `both iOS and Android devices are up — pass -p ios\|android` | Add `-p`, or `export SIMDRIVE_PLATFORM=…` |
 | `2 ios devices — pass -d one of: …` | Add `-d <udid>` (listed in the message) |
 | `not found: <label>` | Run `simdrive ls` and copy the label exactly. If the screen is slow to load, raise `--wait` |
 | `keyboard is still up — it has no Done/Return key` (iOS) | Search keyboards only have a Search key. Tap outside the field, or the screen's Cancel/close control |
 | Android `ls` is empty or fails right after boot | The emulator isn't fully up. Wait until `adb shell getprop sys.boot_completed` prints `1`, then a few more seconds |
 | Android `ls` fails after an Appium session was used | Appium's helper still holds UiAutomation: `adb shell am force-stop io.appium.uiautomator2.server` |
+| Appium / `uiautomator` fail after simdrive was used | simdrive's helper holds UiAutomation: `simdrive -p android teardown` |
+| `Android helper did not start — falling back to uiautomator dump` | Something else holds UiAutomation (see above). simdrive keeps working, just slower |
 | Android `type` fails with `Can't find service: input` | Still booting. Wait and retry |
 | Android keyboard never appears | `hw.keyboard = no` in the AVD's `config.ini`, then cold-boot the emulator |
 | Android screenshot is black | That screen is `FLAG_SECURE`. Use `shot` without `--plain` on an emulator. System PIN and biometric sheets stay black in every mode |
 | `launch` says `no launchable activity` | The app isn't installed on that device, or the id is wrong. Check with `adb shell pm list packages \| grep <your-app>` or `xcrun simctl listapps booted` |
 | App sits on the splash screen (Android) | Metro isn't reachable. Run `simdrive setup` (adds `adb reverse tcp:8081`), make sure Metro is running, then `simdrive launch` |
 | `"<label>" is ambiguous — matches N labels` | Use more of the label (copy it from `ls`), or `--exact` |
-| `type` loses special characters on Android | `adb input text` handles ASCII only. Type non-ASCII text on the device |
+| `type` fails on non-ASCII text (Android) | The virtual keyboard map has no such characters. Type them on the device. On iOS, simdrive pastes text it can't type |
 
 ---
 
@@ -450,29 +465,40 @@ then built-in default.
 
 ```
 simdrive/
-├── bin/simdrive.js      CLI: argument parsing, device selection, doctor, burst
-├── lib/ios.js           WebDriverAgent client + simctl; WDA download/launch
-├── lib/android.js       adb + uiautomator; density scaling; emulator screenshots
-├── lib/util.js          process helpers, config lookup, free-port search
-└── test/                node:test unit tests (no device needed)
+├── bin/simdrive.js           CLI: argument parsing, device selection, doctor, burst
+├── lib/ios.js                iOS helper client + simctl
+├── lib/android.js            Android helper client, adb fallback, density scaling
+├── lib/helper.js             JSON-lines socket protocol both helpers speak
+├── lib/emulator.js           Android emulator gRPC (frames), no dependencies
+├── lib/png.js                PNG encoder for raw emulator frames
+├── lib/util.js               process helpers, config lookup, label matching
+├── lib/assets/               built helpers (simdrive-sim, simdrive-server.jar)
+├── native/ios/               simdrive-sim source (Objective-C) + build.sh
+├── native/android/           simdrive-server source (Java) + build.sh
+└── test/                     node:test unit tests (no device needed)
 ```
 
 ```bash
 npm test                          # unit tests
+native/ios/build.sh               # rebuild the iOS helper (needs Xcode)
+native/android/build.sh           # rebuild the Android helper (needs the Android SDK + a JDK)
 node bin/simdrive.js --help       # run from source
 npm pack                          # build a distributable tarball
 ```
 
 Notes for contributors:
 
-- **Zero dependencies, on purpose.** Use only Node built-ins (`fetch`,
-  `child_process`, `node:test`).
+- **Zero dependencies, on purpose.** Use only Node built-ins (`net`, `http2`,
+  `zlib`, `child_process`, `node:test`). The helpers use only what ships with
+  macOS/Xcode and Android.
+- **Helpers are versioned by content hash.** After rebuilding one, the next
+  command replaces the copy that's running. Commit the rebuilt file in
+  `lib/assets/`.
 - **New commands** need a method on both `Ios` and `Android`, plus a line in the
   `switch` in `bin/simdrive.js`, plus a row in this README. If one platform
   can't support a command, throw a `UsageError` that explains why (see iOS
   `back`).
-- **Upgrading WDA:** bump `WDA_VERSION` in `lib/ios.js` only after checking
-  `simdrive setup` + `ls` + `tap` on a simulator. Prefer releases that are a few
-  weeks old.
+- **New Xcode:** check `ls`, `tap`, `type`, `swipe` and `shot` on a simulator.
+  The iOS helper depends on private framework APIs that Apple can change.
 - The package is `"private": true` so nobody publishes it to npm by accident.
   Remove that once a registry has been chosen.

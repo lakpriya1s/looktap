@@ -1,0 +1,737 @@
+{
+  "setup": {
+    "simdrive": [
+      {
+        "ms": 141.747791,
+        "bytes": 115,
+        "calls": 1,
+        "err": null
+      }
+    ]
+  },
+  "ls (read screen)": {
+    "simdrive": [
+      {
+        "ms": 3738.643459,
+        "bytes": 975,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 1485.513291999996,
+        "bytes": 975,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 327.10112500000105,
+        "bytes": 975,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 130.0602910000016,
+        "bytes": 975,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 91.38108400000783,
+        "bytes": 602,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 120.013208999997,
+        "bytes": 975,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 132.8755409999867,
+        "bytes": 975,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 113.77358300000196,
+        "bytes": 975,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 139.01041600000462,
+        "bytes": 975,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 111.22966599999927,
+        "bytes": 975,
+        "calls": 1,
+        "err": null
+      }
+    ]
+  },
+  "tap (by label)": {
+    "simdrive": [
+      {
+        "ms": 563.7882079999999,
+        "bytes": 39,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 274.5352920000005,
+        "bytes": 39,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 225.7034580000036,
+        "bytes": 39,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 246.12820799999463,
+        "bytes": 39,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 3056.396041,
+        "bytes": 0,
+        "calls": 0,
+        "err": "Command failed: node /Volumes/External/simdrive/simdrive/bin/simdrive.js -p android -d emulator-5554 tap Network & internet\nsimdrive: not found: Network & inter"
+      },
+      {
+        "ms": 93.03362500001094,
+        "bytes": 39,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 104.50695800001267,
+        "bytes": 39,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 104.84620800000266,
+        "bytes": 39,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 101.90187500001048,
+        "bytes": 39,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 112.41554100002395,
+        "bytes": 39,
+        "calls": 1,
+        "err": null
+      }
+    ]
+  },
+  "back": {
+    "simdrive": [
+      {
+        "ms": 84.27129199999945,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 130.19262500000332,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 84.41120899999805,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 86.55275000000256,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 67.6710000000021,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 68.0547910000023,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 83.34050000002026,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 81.5820830000157,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 99.4038330000185,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 74.42008300000452,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      }
+    ]
+  },
+  "tapxy": {
+    "simdrive": [
+      {
+        "ms": 181.88120899999922,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 127.32341699999961,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 149.8212499999936,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 99.83358300001419,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 117.02416600000288,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 117.93033400000422,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 148.1368749999965,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 98.67899999997462,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 162.11512500001118,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 89.9265000000014,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      }
+    ]
+  },
+  "swipe": {
+    "simdrive": [
+      {
+        "ms": 412.1412909999999,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 398.55941700000403,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 409.5852089999971,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 399.1138329999958,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 392.87908400000015,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 389.79791699998896,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 382.025667000009,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 397.9386250000098,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 448.665708000015,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 381.2380420000118,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      }
+    ]
+  },
+  "fill": {
+    "simdrive": [
+      {
+        "ms": 832.4493330000005,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 3095.684583000002,
+        "bytes": 0,
+        "calls": 0,
+        "err": "Command failed: node /Volumes/External/simdrive/simdrive/bin/simdrive.js -p android -d emulator-5554 fill Search settings wifi\nsimdrive: not found: Search setti"
+      },
+      {
+        "ms": 708.4956249999959,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 777.9021250000078,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 792.1010000000242,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 787.355499999976,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 806.063541999989,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 641.0285830000066,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 802.286832999991,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 811.1472089999879,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      }
+    ]
+  },
+  "type": {
+    "simdrive": [
+      {
+        "ms": 306.5275839999995,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 196.95608399999765,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 135.6797499999957,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 130.81612499999756,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 133.3982079999987,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 123.7022500000021,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 168.09612499998184,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 116.34945800001151,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 111.40241700000479,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 111.57274999999208,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      }
+    ]
+  },
+  "hidekb": {
+    "simdrive": [
+      {
+        "ms": 90.51370800000223,
+        "bytes": 12,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 44.79495800000586,
+        "bytes": 12,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 46.00487499999872,
+        "bytes": 12,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 60.04329200000211,
+        "bytes": 12,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 50.3566249999858,
+        "bytes": 12,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 42.025250000006054,
+        "bytes": 12,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 40.74129199999152,
+        "bytes": 12,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 54.61108400000376,
+        "bytes": 12,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 49.001124999980675,
+        "bytes": 12,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 42.55220899998676,
+        "bytes": 12,
+        "calls": 1,
+        "err": null
+      }
+    ]
+  },
+  "shot (screenshot)": {
+    "simdrive": [
+      {
+        "ms": 503.0253339999981,
+        "bytes": 69,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 140.55683300000237,
+        "bytes": 69,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 287.0145000000048,
+        "bytes": 69,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 130.64958399999887,
+        "bytes": 69,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 137.41354100001627,
+        "bytes": 69,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 110.58041699999012,
+        "bytes": 69,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 101.68237500000396,
+        "bytes": 69,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 139.43975000001956,
+        "bytes": 69,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 117.6672499999986,
+        "bytes": 69,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 215.99079199999687,
+        "bytes": 69,
+        "calls": 1,
+        "err": null
+      }
+    ]
+  },
+  "bio": {
+    "simdrive": [
+      {
+        "ms": 66.52779200000077,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 53.18579099999624,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 67.21191700000782,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 56.089208999997936,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 52.838292000000365,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 59.64054199997918,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 46.60362500001793,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 50.50633299999754,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 60.10312499999418,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 89.88462500000605,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      }
+    ]
+  },
+  "launch (restart app)": {
+    "simdrive": [
+      {
+        "ms": 285.02549999999974,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 254.3835409999956,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 160.85366700000304,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 136.52049999999872,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 153.3067919999885,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 219.16075000001,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 136.24633299998823,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 181.7625410000037,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 191.10291700001108,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      },
+      {
+        "ms": 321.42358299999614,
+        "bytes": 0,
+        "calls": 1,
+        "err": null
+      }
+    ]
+  },
+  "burst 5s (frames)": {
+    "simdrive": [
+      {
+        "ms": 5045.668540999992,
+        "bytes": 94,
+        "calls": 1,
+        "err": null,
+        "frames": 2
+      }
+    ]
+  },
+  "teardown": {
+    "simdrive": [
+      {
+        "ms": 137.30462499998976,
+        "bytes": 44,
+        "calls": 1,
+        "err": null
+      }
+    ]
+  }
+}

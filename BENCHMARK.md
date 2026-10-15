@@ -5,6 +5,12 @@ devices, 10 runs per feature.
 
 ## TL;DR
 
+> **Update, Run 4 (simdrive's own helpers, no WebDriverAgent):** Android `ls`
+> dropped from 2.58 s to 131 ms, and iOS `ls` from 1.70 s to 202 ms. Taps now take
+> 110–120 ms on both platforms, and screenshots ~130 ms. simdrive is now the
+> fastest of the three at almost every action. See
+> [Run 4](#run-4-simdrive-with-its-own-native-helpers). The summary below is from Run 3.
+
 | | simdrive | Appium (raw HTTP) | Appium MCP |
 |---|---|---|---|
 | **Output returned for the whole scenario** (10 runs × 13 features, bursts excluded) | **11 KB** (Android) · **22 KB** (iOS) | 1.9 MB · 2.6 MB | 2.7 MB · 3.2 MB |
@@ -83,6 +89,72 @@ After the 10 runs, each tool did:
 - **Calls:** commands or tool calls needed for the action. More calls means
   more agent turns.
 - **Failures:** counted, not dropped. Medians use successful runs only.
+
+---
+
+## Run 4: simdrive with its own native helpers
+
+Measured on 2026-10-15, with the same devices, harness and scenario (10 runs).
+simdrive no longer uses WebDriverAgent or `uiautomator dump`:
+
+- **iOS:** a macOS helper reads the simulator's accessibility tree and sends
+  touch and keyboard events through Apple's simulator frameworks.
+- **Android:** a 7 KB helper runs with `app_process` and keeps one UiAutomation
+  connection open. Emulator frames come over the emulator's gRPC API.
+
+Only simdrive was re-run. The Appium columns are Run 3's numbers, from the same
+devices and harness.
+
+### Android (Pixel 9a emulator)
+
+| Feature | simdrive Run 3 | **simdrive Run 4** | Appium raw (Run 3) | Appium MCP (Run 3) |
+|---|---|---|---|---|
+| ls (read screen) | 2.58 s | **131 ms** · 975 B | 114 ms · 51 KB | 1.87 s · 124 KB |
+| tap (by label) | 2.21 s · ⚠ 2/10 | **112 ms** · ⚠ 1/10 | 77 ms · 2 calls · ⚠ 2/10 | 344 ms · 2 calls |
+| back | 84 ms | **84 ms** | 610 ms | 88 ms |
+| tapxy | 111 ms | 123 ms | 43 ms | 101 ms |
+| swipe (300 ms gesture) | 418 ms | **398 ms** | 433 ms | 543 ms |
+| fill | 5.01 s | **792 ms** · ⚠ 1/10 | 1.32 s · 3 calls · ⚠ 4/10 | 513 ms · 2 calls · ⚠ 6/10 |
+| type | 252 ms | **132 ms** | 905 ms · ⚠ 4/10 | 917 ms · ⚠ 6/10 |
+| hidekb | 131 ms | **48 ms** | 812 ms | 214 ms |
+| shot | 539 ms | **138 ms** · 69 B | 1.72 s · 78 KB | 339 ms · 210 KB |
+| launch | 199 ms | **186 ms** | 753 ms | 735 ms |
+
+### iOS (iPhone 14 simulator)
+
+| Feature | simdrive Run 3 (WDA) | **simdrive Run 4** | Appium raw (Run 3) | Appium MCP (Run 3) |
+|---|---|---|---|---|
+| setup | 193 ms | **39 ms** | 17.37 s | 23.14 s |
+| ls (read screen) | 1.70 s | **202 ms** · 723 B | 915 ms · 41 KB | 1.21 s · 101 KB |
+| tap (by label) | 1.84 s · ⚠ 1/10 | **121 ms** | 1.51 s · 2 calls | 1.63 s · 2 calls |
+| back | 1.09 s · ⚠ 1/10 | **187 ms** | 1.15 s | 1.18 s |
+| tapxy | 1.40 s | **112 ms** | 1.05 s | 1.14 s |
+| swipe | 2.10 s | **235 ms** | 1.56 s | 1.96 s |
+| fill | 3.69 s | **782 ms** | 2.33 s · 3 calls | 2.51 s · 2 calls |
+| type | 504 ms | **60 ms** | 603 ms · 2 calls | 577 ms · 2 calls |
+| hidekb (search keyboard) | ✗ false success | ✗ 10/10, reported correctly | ✗ 10/10 | ✗ 10/10 |
+| shot | 411 ms | **124 ms** · 65 B | 130 ms · 221 KB | 165 ms · 225 KB |
+| launch | 570 ms | **513 ms** | 4.26 s | 4.81 s |
+
+**What changed:**
+- simdrive is now the fastest of the three at almost every action on both
+  platforms, while still returning 50–3000× fewer bytes.
+- Failures: 2 of 123 on Android, and none on iOS apart from `hidekb`, which every
+  tool fails on the iOS 26 search keyboard. simdrive reports that failure
+  instead of claiming success.
+- `burst` now saves a frame only when the screen changes. On a static screen
+  that's very few frames, so its frame counts aren't comparable with Run 3's.
+- iOS reads during a navigation wait for the transition to finish (up to 1.5 s).
+  Steady-state reads take about 30–70 ms inside the helper.
+
+**Limits:**
+- The iOS helper uses Apple's private simulator frameworks. Touch and keyboard
+  input works on Xcode 26. Xcode 27 moves simulator input to a new transport
+  that simdrive doesn't support yet.
+- On Android, the helper holds the device's single UiAutomation connection.
+  Run `simdrive teardown` before using Appium or `uiautomator` on the same device.
+
+The Run 3 report follows unchanged, for reference.
 
 ---
 
@@ -200,12 +272,12 @@ after setup on iOS, and the screen not yet ready on Android.
 
 | # | Bug | Impact | Status |
 |---|---|---|---|
-| 1 | **`hidekb` on iOS reported success when the keyboard stayed up.** The iOS 26 search keyboard has no Done/Return key, WDA's dismiss failed, and simdrive swallowed the error | Silent false success. Appium and MCP correctly reported failure | fixed |
+| 1 | **`hidekb` on iOS reported success when the keyboard stayed up.** The iOS 26 search keyboard has no Done/Return key, WDA's dismiss failed, and simdrive swallowed the error | Silent false success. Appium and MCP correctly reported failure | ✅ fixed: checks the keyboard afterwards and exits 2 if it's still up (verified in Run 4) |
 | 2 | **`tap` fell back to "first label containing the text"**, so with the wrong screen up it could tap a different element and report success | Wrong element tapped silently | ✅ fixed: exact first, a fuzzy match only when it names one label, `--exact`, and `tap` prints what it hit |
-| 3 | **No waiting:** `tap`/`back` right after a navigation failed when the screen wasn't ready yet | Spurious "not found" | fixed |
-| 4 | **Android `fill` dumped the screen twice** | `fill` took ~5 s instead of ~2.5 s | fixed |
-| 5 | **Fixed per-command overhead:** every command re-lists all devices, even with `-p` and `-d` given | +0.1–0.3 s on every command | fixed |
-| — | Android screen reads take about 2 s (`uiautomator dump`) | Slow `ls`/`tap`/`fill` on Android | **known limitation.** A persistent on-device helper (like Appium's) would fix it, at the cost of an install step |
+| 3 | **No waiting:** `tap`/`back` right after a navigation failed when the screen wasn't ready yet | Spurious "not found" | ✅ fixed: `--wait` (default 3 s) |
+| 4 | **Android `fill` dumped the screen twice** | `fill` took ~5 s instead of ~2.5 s | ✅ fixed, and with the helper `fill` takes ~0.8 s |
+| 5 | **Fixed per-command overhead:** every command re-lists all devices, even with `-p` and `-d` given | +0.1–0.3 s on every command | ✅ fixed |
+| 6 | Android screen reads took about 2.5 s (`uiautomator dump`) | Slow `ls`/`tap`/`fill` on Android | ✅ fixed in Run 4: a persistent helper run with `app_process` (nothing installed). Reads take ~130 ms |
 
 ---
 
@@ -220,7 +292,8 @@ so the method can be trusted:
    cleared task.
 2. **Run 2 (discarded):** a 1.5 s settle after opening Settings search was too
    short for UiAutomator2 (see Reliability above). Raised to 4 s for all tools.
-3. **Run 3 (this report).**
+3. **Run 3:** simdrive 0.1.0 with WebDriverAgent and `uiautomator dump`.
+4. **Run 4:** simdrive with its own helpers. Only simdrive was re-run (see above).
 
 ## Reproduce
 
@@ -239,4 +312,7 @@ python3 mdtable.py results/ios.json # → the markdown table above
 ```
 
 Raw per-run numbers are in `bench/results/android.json` and
-`bench/results/ios.json`.
+`bench/results/ios.json` (Run 3), and in `android-run4-simdrive.json` and
+`ios-run4-simdrive.json` (Run 4). Set `BENCH_TAG` to keep a run's results
+separate. For Appium on iOS, `BENCH_PREBUILT_WDA` points at a built
+`WebDriverAgentRunner-Runner.app` so Appium skips its `xcodebuild`.

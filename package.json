@@ -1,7 +1,7 @@
 {
   "name": "simdrive",
   "version": "0.1.0",
-  "description": "Drive an iOS simulator or Android emulator from the shell — tap, type, read the screen, screenshot — without Appium.",
+  "description": "Drive an iOS simulator or Android emulator from the shell — tap, type, read the screen, screenshot — with no Appium or WebDriverAgent.",
   "private": true,
   "type": "module",
   "bin": {
@@ -10,13 +10,16 @@
   "files": [
     "bin",
     "lib",
+    "native",
     "README.md"
   ],
   "engines": {
     "node": ">=18"
   },
   "scripts": {
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "build:ios": "sh native/ios/build.sh",
+    "build:android": "sh native/android/build.sh"
   },
   "license": "UNLICENSED"
 }
