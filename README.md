@@ -290,6 +290,30 @@ simdrive bio nomatch     # iOS: Face ID failure · Android: unknown finger
 On Android, enrol a fingerprint once first: Settings → Security → Fingerprint,
 using a screen-lock PIN, and touch with `simdrive bio match` when it asks.
 
+### Debug: logs, crashes, "where did my app go?"
+
+```bash
+simdrive tap "Pay"                   # something goes wrong…
+simdrive logs --errors               # the app's errors since the last `logs`
+# 15:41:06.700 E [com.example:api] POST /payments failed: 422 amount_too_small
+simdrive logs --grep payment         # or everything the app logged that matches
+simdrive app --app com.example       # is it still running?
+# front: com.android.launcher3  pid 1205
+# com.example: not running — if it was, check: simdrive crashes
+simdrive crashes
+# com.example (pid 14001) exited at 14:56:06.724 while in the background: LOW_MEMORY — killed by the system to free memory, not a crash
+```
+
+Each `logs` call starts where the previous one ended, so a loop of *act → `logs`*
+only ever shows what's new. iOS `logs` takes about 1–2 s (`log show`); Android
+takes about 0.1 s.
+
+React Native: on Android, JS `console.*` output is in `logs` (tag `ReactNativeJS`). On
+iOS, recent React Native versions send it only to the debugger, not to the
+system log. Native modules' logs show on both platforms. Swift `print()` writes to
+stdout, so it isn't in the log: use `os.Logger` or `NSLog` for messages you want
+`logs` to see.
+
 ### Catch a spinner, toast, or transition (`burst`)
 
 These states last under a second, so start the burst **in the background**, then
@@ -423,6 +447,9 @@ matter more than milliseconds):
 | `simdrive bio match\|nomatch` | Simulates Face ID (iOS) or a fingerprint (Android) |
 | `simdrive shot <name> [--plain] [--scale f]` | Saves `<out>/<name>.png` and prints its path. `--scale 0.5` saves it at half size |
 | `simdrive burst <dir> <seconds>` | Saves a frame each time the screen changes, for `<seconds>`. Only distinct frames are kept |
+| `simdrive logs [app] [--errors] [--grep re] [--since 5m] [--lines n] [--all]` | The app's log since the previous `logs` call (the first call covers the last minute). At most 80 lines, newest kept, unless you pass `--lines`. iOS: lines logged by the app's own code, plus errors from anything in its process. `--all` adds Apple frameworks' messages. Android: everything logcat has for the app's uid, so it survives restarts |
+| `simdrive crashes [app] [--since 1h]` | Crash reports since the previous `crashes` call (the first call covers the last hour). iOS: the simulator's `.ips` reports, as exception, reason and top frames, plus the report's path. Android: Java and native crashes, ANRs, and exits that leave no report, such as low-memory kills |
+| `simdrive app [app]` | Which app is in front (with its pid), and whether `[app]` is running |
 | `simdrive run '<cmd>; <cmd> …'` | Runs several commands in one process. `run -` reads them from stdin, one per line. Stops at the first failure and names the step |
 | `simdrive skill [--install]` | Prints the AI-agent guide. `--install` writes it to `~/.claude/skills/simdrive/SKILL.md` |
 
@@ -448,7 +475,7 @@ script can `set -e` and stop at the first missing element.
 | `-d, --device <udid\|serial>` | Which device. Default: the only booted one |
 | `-o, --out <dir>` | Screenshot folder. Default: `shots` |
 | `--wait <seconds>` | How long `tap`, `fill` and `back` keep looking for their target before "not found" (default `3`). An ambiguous match fails immediately; it's never retried |
-| `--app <id>` | App id for `launch` and `open` |
+| `--app <id>` | App id for `launch`, `open`, `logs`, `crashes` and `app`. Without it, `logs` and `crashes` use the app in front |
 | `-h, --help`, `-v, --version` | |
 
 ### Environment variables

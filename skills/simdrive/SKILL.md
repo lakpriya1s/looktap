@@ -66,6 +66,22 @@ time.
 (layout, colours, images). `ls` already tells you what's on screen. When you do look, use
 `--scale 0.5`: it's a quarter of the image tokens and still readable.
 
+## When something goes wrong
+
+```bash
+simdrive logs --errors        # the app's errors since your last `logs` (first time: the last minute)
+simdrive logs --grep checkout # everything it logged that matches; --since 5m for a fixed window
+simdrive crashes              # crash reports / ANRs / low-memory kills since your last `crashes`
+simdrive app                  # which app is in front, and its pid
+```
+
+- **Each `logs` shows only what's new**, so run it right after the step that misbehaved. You don't have to
+  remember timestamps.
+- **The app vanished** (`ls` shows the home screen or another app): run `crashes`.
+  - On Android, `LOW_MEMORY` means the system killed the app. That's not a bug in the app; relaunch it.
+- The app defaults to `--app`/config, else the one in front. Pass the id when the app is gone: `simdrive crashes com.example`.
+- Log lines can contain tokens or personal data. Quote only the lines that matter.
+
 ## Other commands
 
 `type <text>` (into the focused field) · `key return|escape|delete|tab|space` · `hidekb` · `swipe x1 y1 x2 y2 [ms]` · `back` · `open <url>` (deep

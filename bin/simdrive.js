@@ -6,6 +6,7 @@ import { dirname, join } from 'node:path';
 
 import { Android, adbDevices } from '../lib/android.js';
 import { Ios, bootedSimulators } from '../lib/ios.js';
+import { clock, grepper, startOf, tail, whichApp } from '../lib/logs.js';
 import { center, coveringAt, formatRow, isRef, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, visibleRows, waitFor } from '../lib/screen.js';
 import { UsageError, has, loadConfig, pickMatch, run, shotPath, sleep, splitScript, waitFor as retry } from '../lib/util.js';
 
@@ -47,6 +48,13 @@ act                               add --ls to any of these to print the settled 
   launch [app]                    (re)start the app
   bio match|nomatch               Face ID / fingerprint
 
+debug                             [app] defaults to --app / config, else the app in front
+  logs [app] [--errors] [--grep re] [--since 5m] [--lines n] [--all]
+                                  the app's log since the last \`logs\` (first time: the last minute).
+                                  iOS hides Apple-framework chatter unless it's an error (--all keeps it)
+  crashes [app] [--since 1h]      crashes, ANRs, low-memory kills since the last \`crashes\` (first: last hour)
+  app [app]                       which app is in front, and whether [app] is running (pid)
+
 batch & agents
   run '<cmd>; <cmd> …'            several commands in one process (or: run - < script). Stops at the
                                   first failure, which it names
@@ -83,7 +91,10 @@ function parse(argv) {
     else if (a === '-h' || a === '--help') opts.flags.add('help');
     else if (a === '-v' || a === '--version') opts.flags.add('version');
     else if (a === '--scale') opts.scale = Number(val());
-    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install'].includes(a)) opts.flags.add(a.slice(2));
+    else if (a === '--since') opts.since = val();
+    else if (a === '--grep') opts.grep = val();
+    else if (a === '--lines') opts.lines = Number(val());
+    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors'].includes(a)) opts.flags.add(a.slice(2));
     else if (a === '--') pos.push(...argv.slice(i + 1)), (i = argv.length);
     else pos.push(a);
   }
@@ -304,8 +315,40 @@ async function act(d, cmd, args, opts) {
       return d.launch(app);
     }
     case 'bio': need(1, 'bio match|nomatch'); return d.bio(args[0]);
+    case 'logs': return showLogs(d, args[0], opts);
+    case 'crashes': return showCrashes(d, args[0], opts);
+    case 'app': return showApp(d, args[0]);
     case 'run': return runScript(d, args, opts);
     default: throw new UsageError(`unknown command: ${cmd} (simdrive --help)`);
+  }
+}
+
+async function showLogs(d, arg, opts) {
+  const app = await whichApp(d, arg);
+  const since = startOf(deviceId(d), `logs:${app}`, opts.since, 60e3);
+  const keep = grepper(opts.grep);
+  const lines = (await d.readLogs(app, since, { errors: opts.flags.has('errors'), all: opts.flags.has('all') })).filter(keep);
+  if (!lines.length) return console.log(`no ${opts.flags.has('errors') ? 'errors' : 'log lines'} from ${app} since ${clock(since)}`);
+  const { shown, dropped } = tail(lines, opts.lines > 0 ? opts.lines : 80);
+  if (dropped) console.log(`… ${dropped} earlier lines (--lines ${lines.length} to see them, or --grep / --errors to narrow)`);
+  console.log(shown.map((l) => (l.text.length > 500 ? l.text.slice(0, 500) + ' …' : l.text)).join('\n'));
+}
+
+async function showCrashes(d, arg, opts) {
+  const app = await whichApp(d, arg);
+  const since = startOf(deviceId(d), `crashes:${app}`, opts.since, 3600e3);
+  const found = await d.readCrashes(app, since);
+  if (!found.length) return console.log(`no crashes from ${app} since ${clock(since)}`);
+  console.log(found.map((c) => c.text).join('\n\n'));
+}
+
+async function showApp(d, arg) {
+  const front = await d.foreground();
+  console.log(front ? `front: ${front.id || '(unknown app)'}  pid ${front.pid}` : 'front: no app (home screen or a system sheet)');
+  const app = arg || d.app;
+  if (app && app !== front?.id) {
+    const pid = await d.pidOf(app);
+    console.log(pid ? `${app}: running in the background, pid ${pid}` : `${app}: not running — if it was, check: simdrive crashes`);
   }
 }
 

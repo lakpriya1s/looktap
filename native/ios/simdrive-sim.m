@@ -715,6 +715,12 @@ static void handle(int fd, NSDictionary *r) {
     for (NSString *k in r[@"keys"]) key(k);
     return reply(fd, @{@"ok" : @YES}, nil);
   }
+  if ([op isEqualToString:@"front"]) {
+    // The frontmost app's pid (0 when none, e.g. the home screen): the CLI maps it to a bundle id.
+    id app = [translator frontmostApplicationWithDisplayId:0 bridgeDelegateToken:axToken];
+    int pid = [app respondsToSelector:@selector(pid)] ? [[app valueForKey:@"pid"] intValue] : 0;
+    return reply(fd, @{@"ok" : @YES, @"pid" : @(pid)}, nil);
+  }
   if ([op isEqualToString:@"keyboard"]) return reply(fd, @{@"ok" : @YES, @"shown" : @(keyboardShown())}, nil);
   if ([op isEqualToString:@"shot"]) {
     IOSurfaceRef s = mainSurface();
