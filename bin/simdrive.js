@@ -6,8 +6,8 @@ import { dirname, join } from 'node:path';
 
 import { Android, adbDevices } from '../lib/android.js';
 import { Ios, bootedSimulators } from '../lib/ios.js';
-import { center, formatRow, isRef, resolveRef, saveRefs, scrollTo, settle, visibleRows, waitFor } from '../lib/screen.js';
-import { UsageError, has, loadConfig, run, shotPath, sleep, splitScript } from '../lib/util.js';
+import { center, coveringAt, formatRow, isRef, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, visibleRows, waitFor } from '../lib/screen.js';
+import { UsageError, has, loadConfig, pickMatch, run, shotPath, sleep, splitScript, waitFor as retry } from '../lib/util.js';
 
 const SKILL = new URL('../skills/simdrive/SKILL.md', import.meta.url);
 
@@ -37,6 +37,8 @@ act                               add --ls to any of these to print the settled 
                                   match that names one label (ambiguous → error). Prints what it tapped
   tapxy <x> <y>                   iOS points / Android dp
   type <text>                     into the focused field
+  key <name> …                    return, escape, delete, tab, space (Android: also back, home,
+                                  or any KEYCODE_*; iOS: also selectall, paste)
   fill <label|@ref> <text>        clear the field, type, leave it
   hidekb                          dismiss the keyboard
   swipe <x1> <y1> <x2> <y2> [ms]
@@ -193,7 +195,7 @@ async function main() {
 }
 
 const deviceId = (d) => d.udid || d.serial;
-const ACTIONS = new Set(['tap', 'tapxy', 'type', 'fill', 'hidekb', 'swipe', 'back', 'open', 'launch', 'bio', 'scrollto']);
+const ACTIONS = new Set(['tap', 'tapxy', 'type', 'key', 'fill', 'hidekb', 'swipe', 'back', 'open', 'launch', 'bio', 'scrollto']);
 
 /** Print the listing (text or --json) and remember its @refs. `snap` defaults to a fresh read. */
 async function list(d, opts, snap) {
@@ -213,6 +215,8 @@ async function list(d, opts, snap) {
     return console.log(JSON.stringify({ screen: snap.screen, elements: rows.map((e, i) => ({ ref: `@${i + 1}`, ...e })) }));
   if (!rows.length) console.error('simdrive: no labelled elements on screen (still loading, or the app sets no accessibility labels)');
   else console.log(rows.map((e, i) => formatRow(e, i + 1)).join('\n'));
+  if (onlyStatusBar(snap.elements))
+    console.error('simdrive: only the status bar is readable — a system prompt (passcode, permission, alert) may be covering the app. `simdrive shot` shows it');
 }
 
 /** The element a ref names, if it's still where the last `ls` saw it. */
@@ -221,8 +225,25 @@ async function byRef(d, ref) {
 }
 
 async function dispatch(d, cmd, args, opts) {
+  const all = opts.flags.has('all');
+  const look = opts.flags.has('ls') && ACTIONS.has(cmd);
+  // Remember the screen before acting, so --ls waits for the action to show before printing.
+  const before = look ? await d.snapshot({ all }) : null;
   await act(d, cmd, args, opts);
-  if (opts.flags.has('ls') && ACTIONS.has(cmd)) await list(d, opts, await settle(d, { all: opts.flags.has('all') }));
+  if (look) await list(d, opts, await settle(d, { all, before, changeTimeout: cmd === 'launch' || cmd === 'open' ? 6000 : 1500 }));
+}
+
+/**
+ What `tap` aims at: @ref from the last ls, else an accessibility identifier (iOS) or label —
+ exact, unique prefix, unique substring. Waits up to --wait for it. Returns the element and the screen.
+ */
+async function target(d, what, opts) {
+  return retry(async () => {
+    const snap = await d.snapshot();
+    if (isRef(what)) return { e: resolveRef(deviceId(d), what, snap.elements), snap };
+    const live = snap.elements.filter((e) => e.w > 0 && e.h > 0);
+    return { e: live.find((e) => e.id === what) || pickMatch(live, what, { exact: opts.flags.has('exact') }), snap };
+  }, isRef(what) ? 0 : d.wait);
 }
 
 async function act(d, cmd, args, opts) {
@@ -254,13 +275,18 @@ async function act(d, cmd, args, opts) {
     case 'burst': return burst(d, args[0], args[1]);
     case 'tap': {
       need(1, 'tap <label|@ref>');
-      if (!isRef(args[0])) return d.tap(args.join(' '), { exact: opts.flags.has('exact') });
-      const e = await byRef(d, args[0]);
-      await d.tapxy(...center(e));
-      return console.log(`tapped ${JSON.stringify(e.label || e.type)} at ${center(e).join(',')}`);
+      const { e, snap } = await target(d, isRef(args[0]) ? args[0] : args.join(' '), opts);
+      const at = center(e);
+      await d.tapxy(...at);
+      console.log(`tapped ${JSON.stringify(e.label || e.type)} at ${at.join(',')}`);
+      // The tap lands on whatever is on top: say so when something else covers the point.
+      for (const c of coveringAt(snap.elements, e, at))
+        console.error(`simdrive: warning: ${JSON.stringify(c.label || c.type)} at ${c.x},${c.y} ${c.w}x${c.h} covers that point and may have taken the tap`);
+      return;
     }
     case 'tapxy': need(2, 'tapxy <x> <y>'); return d.tapxy(Number(args[0]), Number(args[1]));
     case 'type': need(1, 'type <text>'); return d.type(args.join(' '));
+    case 'key': need(1, 'key <name> … (return, escape, delete, tab, space)'); return d.keys(args);
     case 'fill': {
       need(1, 'fill <label|@ref> <text>');
       const text = args.slice(1).join(' ');

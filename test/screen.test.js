@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 
 process.env.SIMDRIVE_HOME = mkdtempSync(join(tmpdir(), 'simdrive-test-'));
-const { formatRow, matches, resolveRef, saveRefs, visibleRows } = await import('../lib/screen.js');
+const { coveringAt, formatRow, matches, onlyStatusBar, resolveRef, saveRefs, visibleRows } = await import('../lib/screen.js');
 const { scaleRgb } = await import('../lib/png.js');
 
 const el = (label, type, x, y, w, h, extra = {}) => ({ label, type, x, y, w, h, ...extra });
@@ -50,4 +50,21 @@ test('scaleRgb box-filters to the scaled size', () => {
   assert.equal(s.width, 1);
   assert.deepEqual([...s.pixels], [128, 128, 128]);
   assert.equal(scaleRgb(2, 2, Buffer.alloc(12), 3, 1).width, 2);
+});
+
+test('coveringAt flags a later overlay on the tap point, not the target\'s own parts', () => {
+  const tab = el('Transactions, tab', 'Button', 312, 761, 78, 49);
+  const icon = el('Transactions', 'StaticText', 330, 770, 40, 20); // inside the tab
+  const toast = el('!, Open debugger to view warnings.', 'GenericElement', 10, 770, 370, 22);
+  const elements = [el('Screen', 'Group', 0, 0, 390, 844), tab, icon, toast];
+  assert.deepEqual(coveringAt(elements, tab, [351, 786]).map((e) => e.label), ['!, Open debugger to view warnings.']);
+  assert.deepEqual(coveringAt([tab, icon], tab, [351, 786]), []);
+  assert.deepEqual(coveringAt([toast, tab], tab, [351, 786]), []); // drawn earlier: underneath
+});
+
+test('onlyStatusBar spots a screen where only the status bar is readable', () => {
+  const bar = [el('14:39', 'StaticText', 31, 8, 42, 19), el('Return to Settings', 'Button', 12, 31, 57, 13)];
+  assert.equal(onlyStatusBar(bar), true);
+  assert.equal(onlyStatusBar([...bar, el('General', 'Button', 16, 285, 358, 54)]), false);
+  assert.equal(onlyStatusBar([]), false);
 });

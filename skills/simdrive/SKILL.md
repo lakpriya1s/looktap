@@ -47,6 +47,10 @@ simdrive scrollto "Privacy & Security"   # swipe until it's fully on screen (--u
 
 `tap`, `fill` and `back` already wait up to 3 s for their target.
 
+**After an action that loads data, wait for what you expect.** `--ls` returns once the screen stops
+changing, and a loading skeleton (grey placeholder bars) stops changing too. If `--ls` shows a heading but
+none of the content, run `simdrive wait "<text you expect>"` rather than acting on the placeholder.
+
 ## Several known steps in one call
 
 ```bash
@@ -64,7 +68,7 @@ time.
 
 ## Other commands
 
-`type <text>` (into the focused field) · `hidekb` · `swipe x1 y1 x2 y2 [ms]` · `back` · `open <url>` (deep
+`type <text>` (into the focused field) · `key return|escape|delete|tab|space` · `hidekb` · `swipe x1 y1 x2 y2 [ms]` · `back` · `open <url>` (deep
 link) · `launch [app]` · `bio match|nomatch` · `burst <dir> <seconds>` (frames of a transient state) ·
 `devices` · `doctor`. Pass `-p ios|android` and `-d <id>` when more than one device is booted. Run
 `simdrive --help` for everything.
@@ -76,4 +80,8 @@ link) · `launch [app]` · `bio match|nomatch` · `burst <dir> <seconds>` (frame
 - Against a live backend every tap is real. Use the smallest amounts, and undo what you create.
 - `hidekb` exits 2 if the keyboard is still up (iOS search keyboards have no Done key). Tap the
   screen's close/cancel control instead.
+- `tap` prints a **warning** when another element covers the tap point (a toast, a dev-warning banner,
+  a floating bar). The tap probably hit that instead: dismiss it, then tap again.
+- If `ls` says **only the status bar is readable**, a system prompt (passcode, permission, alert) is on
+  top. `shot` to see it. Never enter a passcode unless the user gave it to you for this device.
 - Exit code 2 means "not found / usage". Read the message, run `ls`, adjust. Don't retry the same command blindly.

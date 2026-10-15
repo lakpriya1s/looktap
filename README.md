@@ -223,7 +223,9 @@ A ref only works while its element is still where `ls` saw it. If the screen
 changed, `tap @7` fails ("no longer on screen — run: simdrive ls") rather than
 tapping something else.
 
-`tap` always prints what it actually hit. A fuzzy (prefix or contains) match is
+`tap` always prints what it aimed at. If another element covers that point (a
+toast, a dev-warning banner, a floating bar), it also prints a warning, because
+the tap probably landed on the cover instead. A fuzzy (prefix or contains) match is
 used only when it points at **one** label. If it could mean two things, simdrive
 stops instead of guessing. Use `--exact` in scripts where a near-miss must fail.
 
@@ -272,8 +274,10 @@ simdrive swipe 200 700 200 250 800    # slower: 800 ms
 simdrive back       # Android: system Back. iOS: taps the navigation bar's back button
 ```
 
-On iOS, `back` taps the button UIKit tags `BackButton`. If a screen has none (a
-modal, a bottom sheet), `back` says so. Tap its close control instead.
+On iOS, `back` taps the button UIKit tags `BackButton`, or else a button
+labelled "Back" in the top-left corner (custom headers, such as React Native's).
+If a screen has neither (a modal, a bottom sheet), `back` says so. Tap its close
+control instead.
 
 ### Biometrics
 
@@ -408,6 +412,7 @@ matter more than milliseconds):
 | `simdrive tap <label\|@ref> [--exact]` | `@ref`: the row from the last `ls`, if it's still there. Otherwise taps the element with that accessibility label. Exact match first. Otherwise a prefix, then contains, match, but only if it names a single label (ambiguous → exit 2). Prints what it tapped. `--exact` turns fuzzy matching off |
 | `simdrive tapxy <x> <y>` | Taps a point (iOS points / Android dp, the units `ls` prints) |
 | `simdrive type <text>` | Types into the currently focused field |
+| `simdrive key <name> …` | Presses keys: `return`, `escape`, `delete`, `tab`, `space`. Android also takes `back`, `home` and any `KEYCODE_*`. iOS also takes `selectall` and `paste` |
 | `simdrive fill <label\|@ref> <text> [--exact]` | Focuses the field at `<label>` (same matching as `tap`) or `@ref`, clears it, types `<text>`. Empty text just clears |
 | `simdrive hidekb` | Dismisses the keyboard with its own Done/Return key, then checks. Prints `keyboard hidden` / `no keyboard`. **Exits 2 if the keyboard is still up** (e.g. an iOS search keyboard has no such key), never a false success |
 | `simdrive swipe <x1> <y1> <x2> <y2> [ms]` | Drags from one point to another. Default 150 ms on iOS, 300 ms on Android |
@@ -420,9 +425,11 @@ matter more than milliseconds):
 | `simdrive run '<cmd>; <cmd> …'` | Runs several commands in one process. `run -` reads them from stdin, one per line. Stops at the first failure and names the step |
 | `simdrive skill [--install]` | Prints the AI-agent guide. `--install` writes it to `~/.claude/skills/simdrive/SKILL.md` |
 
-**`--ls`** works on `tap`, `tapxy`, `fill`, `type`, `hidekb`, `swipe`, `back`,
-`open`, `launch`, `bio` and `scrollto`. After the action, it waits for the
-screen to stop changing (up to ~2.5 s), then prints it like `ls`.
+**`--ls`** works on `tap`, `tapxy`, `fill`, `type`, `key`, `hidekb`, `swipe`,
+`back`, `open`, `launch`, `bio` and `scrollto`. After the action, it waits for
+the screen to change (up to 1.5 s, or 6 s for `launch`/`open`), then for it to
+stop changing (up to ~2.5 s), then prints it like `ls`. A loading skeleton also
+stops changing, so follow up with `wait "<expected text>"` when content loads.
 
 **Exit codes:** `0` means OK, `2` means a usage problem (bad arguments, element
 not found, no device, helper can't start), and `1` means anything else failed. A
@@ -490,6 +497,8 @@ then built-in default.
 | iOS: `input unavailable (dtuhid): dtuhidd did not answer` | The simulator is still booting, or its input daemon is restarting. Wait a few seconds and retry |
 | iOS: `input unavailable (dtuhid): the simulator has no …hid.digitizer` | That runtime predates Xcode 27's input service: `simdrive teardown`, then unset `SIMDRIVE_IOS_HID` |
 | iOS: an element you can see is missing from `ls` | Some containers hide their children from the accessibility tree. simdrive probes empty containers to find them, but `tapxy` is the fallback |
+| iOS: `ls` lists Safari's toolbar but not the web page | Web content (Safari, in-app browsers, web views) isn't read yet. Use `shot` and `tapxy` |
+| `only the status bar is readable — a system prompt … may be covering the app` | A passcode, permission or alert prompt drawn by iOS. `simdrive shot` to see it |
 | `both iOS and Android devices are up — pass -p ios\|android` | Add `-p`, or `export SIMDRIVE_PLATFORM=…` |
 | `2 ios devices — pass -d one of: …` | Add `-d <udid>` (listed in the message) |
 | `not found: <label>` | Run `simdrive ls` and copy the label exactly. If the screen is slow to load, raise `--wait` |
