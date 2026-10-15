@@ -1,15 +1,16 @@
 <div align="center">
 
-<img src="./assets/simwright-logo.svg" alt="simwright — hands on the simulator, for AI agents" width="560">
+<img src="https://raw.githubusercontent.com/lakpriya1s/simwright/main/assets/simwright-logo.svg" alt="simwright — hands on the simulator, for AI agents" width="560">
 
 **Let AI agents drive an iOS simulator or Android emulator from the shell**<br>
 Read the screen, tap, type, swipe, screenshot, and read logs and crashes. No Appium, no WebDriverAgent, nothing installed on the device.
 
-[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](./LICENSE)
+[![npm](https://img.shields.io/npm/v/simwright.svg?color=cb3837&logo=npm)](https://www.npmjs.com/package/simwright)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://github.com/lakpriya1s/simwright/blob/main/LICENSE)
 [![Node ≥ 18](https://img.shields.io/badge/node-%E2%89%A518-339933.svg?logo=node.js&logoColor=white)](#requirements)
 [![iOS simulator](https://img.shields.io/badge/iOS-simulator-000000.svg?logo=apple&logoColor=white)](#how-it-works)
 [![Android](https://img.shields.io/badge/Android-emulator%20%7C%20device-3DDC84.svg?logo=android&logoColor=white)](#how-it-works)
-[![Dependencies: 0](https://img.shields.io/badge/dependencies-0-16a34a.svg)](./package.json)
+[![Dependencies: 0](https://img.shields.io/badge/dependencies-0-16a34a.svg)](https://github.com/lakpriya1s/simwright/blob/main/package.json)
 
 [Website](https://lakpriya1s.github.io/simwright/) · [Quick start](#quick-start) · [Commands](#commands) · [For AI agents](#for-ai-agents) · [Benchmark](BENCHMARK.md) · [Troubleshooting](#troubleshooting)
 
@@ -21,9 +22,9 @@ Read the screen, tap, type, swipe, screenshot, and read logs and crashes. No App
 thing and prints a few lines of plain text:
 
 <p align="center">
-  <img src="./assets/simwright-terminal.svg" alt="A simwright session: launch Settings and list the screen, tap Network & internet and list the new screen, take a screenshot, show the app in front" width="600">
+  <img src="https://raw.githubusercontent.com/lakpriya1s/simwright/main/assets/simwright-terminal.svg" alt="A simwright session: launch Settings and list the screen, tap Network & internet and list the new screen, take a screenshot, show the app in front" width="600">
   &nbsp;
-  <img src="./assets/simwright-phone.png" alt="The Android emulator showing the Network & internet screen that simwright opened" width="160">
+  <img src="https://raw.githubusercontent.com/lakpriya1s/simwright/main/assets/simwright-phone.png" alt="The Android emulator showing the Network & internet screen that simwright opened" width="160">
 </p>
 
 That makes it a good fit for an AI coding agent (Claude Code, Cursor, Codex, opencode, …) that needs to **see and
@@ -103,7 +104,7 @@ Android emulators and devices, and it isn't a test framework.
 
 ```bash
 # 1. install (Node 18+; zero dependencies)
-npm install -g github:lakpriya1s/simwright
+npm install -g simwright
 
 # 2. check the toolchain
 simwright doctor
@@ -127,6 +128,12 @@ simwright skill --install      # → ~/.claude/skills/simwright/SKILL.md
 
 <details>
 <summary><strong>Other ways to install</strong></summary>
+
+The latest from GitHub, ahead of the npm release:
+
+```bash
+npm install -g github:lakpriya1s/simwright
+```
 
 From a checkout:
 
@@ -156,7 +163,7 @@ start using the app with you:
 Install simwright (https://github.com/lakpriya1s/simwright) so you can drive
 my app in the iOS simulator / Android emulator:
 
-1. Run `npm install -g github:lakpriya1s/simwright`, then `simwright doctor`,
+1. Run `npm install -g simwright`, then `simwright doctor`,
    and fix anything it reports (boot a simulator or emulator if none is up).
 2. Run `simwright skill --install` and read the skill it installs.
 3. Find my app's bundle id / package name in this repo and write a

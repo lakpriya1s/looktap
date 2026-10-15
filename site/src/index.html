@@ -27,6 +27,7 @@
     <a href="docs/quick-start.html">Docs</a>
     <a href="#benchmark">Benchmark</a>
     <a href="https://github.com/lakpriya1s/simwright" rel="noopener">GitHub</a>
+    <a href="https://www.npmjs.com/package/simwright" rel="noopener">npm</a>
   </nav>
   <div class="seg" role="group" aria-label="Demo platform">
     <button type="button" data-platform-set="ios" aria-pressed="true">iOS</button>
@@ -43,7 +44,7 @@
         <h1 id="hero-title">Hands on the <em>simulator.</em></h1>
         <p class="lede">simwright lets your coding agent see and use the app it's building. It reads the screen as a few lines of text and taps by label. No Appium, no WebDriverAgent, nothing installed on the device.</p>
         <div class="install">
-          <code id="install-cmd">npm install -g github:lakpriya1s/simwright</code>
+          <code id="install-cmd">npm install -g simwright</code>
           <button type="button" data-copy="#install-cmd">Copy</button>
         </div>
         <p class="cta"><a class="btn" href="docs/quick-start.html">Read the docs</a><a class="btn ghost" href="#start">Kickstart your agent</a></p>
@@ -125,7 +126,7 @@
         <p class="kicker">Get started</p>
         <h2 id="start-title">Two minutes to a phone your agent can use</h2>
         <ol class="steps">
-          <li><span>Install</span><code>npm install -g github:lakpriya1s/simwright</code></li>
+          <li><span>Install</span><code>npm install -g simwright</code></li>
           <li><span>Check the toolchain</span><code>simwright doctor</code></li>
           <li><span>Teach your agent</span><code>simwright skill --install</code></li>
           <li><span>Drive</span><code>simwright launch com.apple.Preferences --ls</code></li>
@@ -136,7 +137,7 @@
         <div class="prompt-head"><span>Paste into Claude Code, Cursor, Codex, opencode…</span><button type="button" data-copy="#kickstart">Copy</button></div>
         <pre id="kickstart">Install simwright (https://github.com/lakpriya1s/simwright) so you can drive my app in the iOS simulator / Android emulator:
 
-1. Run `npm install -g github:lakpriya1s/simwright`, then `simwright doctor`, and fix anything it reports (boot a simulator or emulator if none is up).
+1. Run `npm install -g simwright`, then `simwright doctor`, and fix anything it reports (boot a simulator or emulator if none is up).
 2. Run `simwright skill --install` and read the skill it installs.
 3. Find my app's bundle id / package name in this repo and write a simwright.config.json with it at the repo root.
 4. Launch the app with `simwright launch --ls` and tell me what screen it's on.
