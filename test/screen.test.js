@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 
 process.env.SIMDRIVE_HOME = mkdtempSync(join(tmpdir(), 'simdrive-test-'));
-const { coveringAt, formatRow, matches, onlyStatusBar, resolveRef, saveRefs, visibleRows } = await import('../lib/screen.js');
+const { coveringAt, formatRow, keyboardArea, matches, onlyStatusBar, resolveRef, saveRefs, visibleRows } = await import('../lib/screen.js');
 const { scaleRgb } = await import('../lib/png.js');
 
 const el = (label, type, x, y, w, h, extra = {}) => ({ label, type, x, y, w, h, ...extra });
@@ -67,4 +67,24 @@ test('onlyStatusBar spots a screen where only the status bar is readable', () =>
   assert.equal(onlyStatusBar(bar), true);
   assert.equal(onlyStatusBar([...bar, el('General', 'Button', 16, 285, 358, 54)]), false);
   assert.equal(onlyStatusBar([]), false);
+});
+
+test('the keyboard collapses to one row; bars above it and status-bar buttons stay', () => {
+  const els = [
+    el('Email', 'TextField', 49, 166, 292, 40),
+    el('Previous', 'Button', 21, 456, 40, 38), // input accessory bar, above the keys
+    el('q', 'Button', 7, 560, 38, 54),
+    el('a', 'Button', 25, 614, 38, 54),
+    el('shift', 'Button', 7, 668, 49, 54, { id: 'shift' }),
+    el('delete', 'Button', 336, 668, 49, 54, { id: 'delete' }),
+    el(' ', 'Button', 101, 722, 95, 54, { id: 'space' }),
+    el('go', 'Button', 291, 722, 95, 54, { id: 'Go' }),
+    el('15:01', 'StaticText', 32, 8, 39, 19),
+    el('Return to Mail', 'Button', 12, 31, 52, 13),
+  ];
+  const rows = visibleRows(els);
+  assert.deepEqual(rows.map((r) => r.label), ['Email', 'Previous', 'Return to Mail', 'Keyboard (type with: simdrive type)']);
+  assert.deepEqual(keyboardArea(els), { x: 0, y: 560, w: 386, h: 216 });
+  assert.equal(keyboardArea(els.filter((e) => !e.id)), null);
+  assert.equal(visibleRows(els, { all: true }).length, els.length);
 });

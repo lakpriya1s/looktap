@@ -198,11 +198,74 @@ static void fillHole(CGRect hole, NSMutableArray *out) {
   }
 }
 
+static BOOL listed(NSArray *out, NSDictionary *n) {
+  for (NSDictionary *m in out)
+    if (CGRectEqualToRect(frameOf(m), frameOf(n)) && [m[@"l"] isEqualToString:n[@"l"]]) return YES;
+  return NO;
+}
+
+/** The element at `p` (system-wide hit test, so it reaches into other processes), or nil. */
+static NSMutableDictionary *probeAt(CGPoint p) {
+  probes++;
+  id o = [translator objectAtPoint:p displayId:0 bridgeDelegateToken:axToken];
+  if (!o) return nil;
+  [o setBridgeDelegateToken:axToken];
+  id el = [translator macPlatformElementFromTranslation:o];
+  [[el translation] setBridgeDelegateToken:axToken];
+  NSRect f = [el accessibilityFrame];
+  return f.size.width > 0 && f.size.height > 0 ? row(el, f) : nil;
+}
+
+/**
+ Content drawn by another process — a web page in Safari or an in-app browser, a sign-in sheet — is
+ not in the app's tree at all, not even as an empty container. Hit-testing does reach it. A few probes
+ at uncovered points decide whether anything is hidden; only then is the uncovered screen scanned on a
+ grid, skipping what each hit covers. Screens the walk fully explains cost no probes.
+ */
+static void scanForHiddenContent(NSMutableArray *out, CGRect screen) {
+  double area = screen.size.width * screen.size.height;
+  NSMutableArray<NSValue *> *covered = [NSMutableArray array];
+  for (NSDictionary *m in out) {
+    CGRect f = frameOf(m);
+    if (f.size.width * f.size.height < area * 0.5) [covered addObject:[NSValue valueWithRect:f]];
+  }
+  BOOL (^isCovered)(CGPoint) = ^BOOL(CGPoint p) {
+    for (NSValue *c in covered)
+      if (CGRectContainsPoint(c.rectValue, p)) return YES;
+    return NO;
+  };
+  BOOL hidden = NO;
+  for (double fy = 0.3; fy < 0.8 && !hidden; fy += 0.2) {
+    CGPoint p = CGPointMake(CGRectGetMidX(screen), screen.size.height * fy);
+    if (isCovered(p)) continue;
+    NSMutableDictionary *n = probeAt(p);
+    if (n && !listed(out, n) && CGRectGetWidth(frameOf(n)) * CGRectGetHeight(frameOf(n)) < area * 0.5) hidden = YES;
+  }
+  if (!hidden) return;
+  const double step = 40;
+  for (double y = step / 2; y < screen.size.height; y += step) {
+    for (double x = step / 2; x < screen.size.width; x += step) {
+      CGPoint p = CGPointMake(x, y);
+      if (isCovered(p)) continue;
+      NSMutableDictionary *n = probeAt(p);
+      CGRect f = n ? frameOf(n) : CGRectZero;
+      // The probed cell is explained whatever comes back: hit-testing snaps a blank point to the
+      // nearest element, which needn't contain it. A real element (not a page-sized container)
+      // also explains its own frame.
+      [covered addObject:[NSValue valueWithRect:CGRectMake(x - step / 2, y - step / 2, step, step)]];
+      BOOL container = !n || f.size.width * f.size.height >= area * 0.5;
+      if (container) continue;
+      [covered addObject:[NSValue valueWithRect:f]];
+      if (!listed(out, n)) [out addObject:n];
+    }
+  }
+}
+
 static NSArray *readTree(BOOL all) {
   id app = [translator frontmostApplicationWithDisplayId:0 bridgeDelegateToken:axToken];
-  if (!app) return @[];
+  // No frontmost app can mean a system-hosted sheet (a sign-in session) is on top: still scan for it.
   [app setBridgeDelegateToken:axToken];
-  id root = [translator macPlatformElementFromTranslation:app];
+  id root = app ? [translator macPlatformElementFromTranslation:app] : nil;
   NSMutableArray *out = [NSMutableArray array], *holes = [NSMutableArray array];
   CGRect screen = CGRectMake(0, 0, screenPx.width / screenScale, screenPx.height / screenScale);
   probes = 0;
@@ -210,6 +273,7 @@ static NSArray *readTree(BOOL all) {
   for (NSValue *h in holes) {
     fillHole(h.rectValue, out);
   }
+  scanForHiddenContent(out, screen);
   return out;
 }
 
@@ -629,7 +693,8 @@ static void handle(int fd, NSDictionary *r) {
   }, nil);
   if ([op isEqualToString:@"tree"]) {
     NSArray *nodes = tree([r[@"all"] boolValue], ![r[@"settle"] isEqual:@NO]);
-    return reply(fd, @{@"ok" : @YES, @"nodes" : nodes, @"probes" : @(probes)}, nil);
+    NSDictionary *screen = @{@"w" : @(round(screenPx.width / screenScale)), @"h" : @(round(screenPx.height / screenScale))};
+    return reply(fd, @{@"ok" : @YES, @"nodes" : nodes, @"probes" : @(probes), @"screen" : screen}, nil);
   }
   if ([op isEqualToString:@"tap"]) {
     tap(num(r, @"x", 0), num(r, @"y", 0), (int)num(r, @"hold", 50));

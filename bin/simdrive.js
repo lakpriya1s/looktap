@@ -209,7 +209,8 @@ async function list(d, opts, snap) {
       snap = await d.snapshot({ all });
     }
   }
-  const rows = visibleRows(snap.elements, { all });
+  // Reading order. Content found by probing (iOS web pages) arrives in grid order, not document order.
+  const rows = visibleRows(snap.elements, { all }).sort((a, b) => a.y - b.y || a.x - b.x);
   saveRefs(deviceId(d), rows);
   if (opts.flags.has('json'))
     return console.log(JSON.stringify({ screen: snap.screen, elements: rows.map((e, i) => ({ ref: `@${i + 1}`, ...e })) }));
