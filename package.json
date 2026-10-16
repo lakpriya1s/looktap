@@ -1,6 +1,6 @@
 {
   "name": "@looktap/cli",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Let AI agents drive iPhone and Android devices from the shell: read the screen, tap, type, swipe, screenshot, read logs and crashes. No server to start and zero dependencies.",
   "keywords": [
     "ios-simulator",
