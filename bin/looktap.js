@@ -639,7 +639,7 @@ Paste into your MCP client's config, e.g.
   Claude Desktop: ~/Library/Application Support/Claude/claude_desktop_config.json
   Cursor:         ~/.cursor/mcp.json
   Claude Code:    claude mcp add looktap -- ${process.execPath} ${script} mcp
-                  (or, from npm without installing: claude mcp add looktap -- npx -y @looktap/cli mcp)`);
+                  (or, from npm without installing: claude mcp add looktap -- npx -y @looktap/mcp)`);
 }
 
 /** Several commands in this one process: one helper connection, no per-command startup. */

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.lakpriya1s/looktap",
+  "description": "Let AI agents drive iPhone and Android devices: read the screen as text, tap, type and screenshot.",
+  "repository": {
+    "url": "https://github.com/lakpriya1s/looktap",
+    "source": "github",
+    "subfolder": "mcp"
+  },
+  "version": "0.2.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@looktap/mcp",
+      "version": "0.2.0",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ],
+  "title": "looktap",
+  "websiteUrl": "https://lakpriya1s.github.io/looktap/"
+}

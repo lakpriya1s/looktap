@@ -562,7 +562,16 @@ An agent spends seconds per turn, so **turns** matter more than milliseconds. lo
 ### MCP server, for clients without a shell
 
 Agents with a shell (Claude Code, Codex, Cursor's agent, …) are best served by the CLI and the skill above.
-For **chat apps and other clients without a shell**, such as Claude Desktop, looktap is also an MCP server:
+For **chat apps and other clients without a shell**, such as Claude Desktop, looktap is also an MCP server,
+published as [`@looktap/mcp`](https://www.npmjs.com/package/@looktap/mcp) and listed in the
+[MCP Registry](https://registry.modelcontextprotocol.io) as `io.github.lakpriya1s/looktap`. Nothing to install first:
+
+```json
+{ "mcpServers": { "looktap": { "command": "npx", "args": ["-y", "@looktap/mcp"] } } }
+```
+
+If your client can't find `npx` (desktop apps start servers with a minimal `PATH`), install the CLI and let it
+write the config with absolute paths:
 
 ```bash
 looktap mcp --config      # prints a ready-to-paste client config with absolute paths
@@ -583,7 +592,7 @@ looktap mcp --config      # prints a ready-to-paste client config with absolute 
 - **Where to paste it:**
   - Claude Desktop: `~/Library/Application Support/Claude/claude_desktop_config.json`
   - Cursor: `~/.cursor/mcp.json`
-  - Claude Code: `claude mcp add looktap -- npx -y @looktap/cli mcp` (no install needed: it runs the latest
+  - Claude Code: `claude mcp add looktap -- npx -y @looktap/mcp` (no install needed: it runs the latest
     version from npm). Or the absolute paths: `claude mcp add looktap -- <node> <looktap.js> mcp`
 - **Why absolute paths:** desktop apps start servers with a minimal `PATH`. `looktap` also finds `adb` in the
   Android SDK by itself.

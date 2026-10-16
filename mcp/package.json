@@ -1,0 +1,48 @@
+{
+  "name": "@looktap/mcp",
+  "version": "0.2.0",
+  "description": "MCP server that lets AI agents drive iPhone and Android devices: read the screen as text, tap by label, type, swipe, screenshot, read logs and crashes.",
+  "mcpName": "io.github.lakpriya1s/looktap",
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "ios",
+    "iphone",
+    "android",
+    "ios-simulator",
+    "android-emulator",
+    "mobile-automation",
+    "ai-agents",
+    "claude"
+  ],
+  "author": "Lakpriya Senevirathna",
+  "license": "AGPL-3.0-only",
+  "homepage": "https://lakpriya1s.github.io/looktap/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lakpriya1s/looktap.git",
+    "directory": "mcp"
+  },
+  "bugs": {
+    "url": "https://github.com/lakpriya1s/looktap/issues"
+  },
+  "type": "module",
+  "bin": {
+    "looktap-mcp": "bin/looktap-mcp.js"
+  },
+  "files": [
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "@looktap/cli": ">=0.2.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
