@@ -250,6 +250,12 @@ a.version:hover { color: var(--accent); border-color: var(--accent); }
 .steps span { font-weight: 600; }
 .steps code { font-size: 12.5px; color: var(--ink-2); overflow-wrap: anywhere; }
 .req { color: var(--muted); font-size: 15px; }
+.callout { margin: 0 0 22px; padding: 16px 18px; border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 10px; background: var(--panel); }
+.callout p { margin: 0 0 10px; font-size: 15px; color: var(--ink-2); }
+.callout .callout-title { margin-bottom: 4px; font-weight: 600; color: var(--ink); }
+.callout pre { margin: 0 0 10px; padding: 10px 12px; border-radius: 8px; background: var(--term-bg); }
+.callout pre code { font: 400 12.5px/1.7 var(--mono); color: var(--term-text); background: none; padding: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.callout a { font-size: 14px; color: var(--accent); }
 .prompt-card { background: var(--term-bg); color: var(--term-text); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); }
 .prompt-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 0 0 16px; height: 42px; background: var(--term-bar); font: 400 11.5px var(--mono); color: #8b93a7; }
 .prompt-head button { color: var(--term-text); border-color: rgba(255, 255, 255, 0.1); }
