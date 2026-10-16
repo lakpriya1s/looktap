@@ -101,35 +101,40 @@
   <section class="band dark-band" id="benchmark" aria-labelledby="bench-title">
     <div class="band-inner">
       <p class="kicker">Benchmark</p>
-      <h2 id="bench-title">Against Appium, on the same devices</h2>
-      <p class="band-lede">iPhone 14 simulator and Pixel 9a emulator, the same scenario run 10 times, medians. Appium is still faster at reading Android screens; what an agent feels is the size of every answer and the setup before the first one.</p>
+      <h2 id="bench-title">Against every other agent mobile tool</h2>
+      <p class="band-lede">Nine tools, the same 12 steps in the Settings app on an iPhone simulator and an Android emulator, 10 runs each, checked by a neutral oracle. What an agent feels is the number of calls, the size of every answer and the setup before the first one.</p>
       <div class="bench-grid">
         <figure class="bench">
-          <figcaption>Size of one screen read</figcaption>
-          <div class="bar sw" style="--v:1"><span>looktap</span><b>~1 KB text</b></div>
-          <div class="bar" style="--v:46"><span>Appium</span><b>41–51 KB XML</b></div>
-          <div class="bar" style="--v:100"><span>Appium MCP</span><b>101–124 KB XML</b></div>
+          <figcaption>Agent time on iPhone: 8 steps, plus 2 s per tool call</figcaption>
+          <div class="bar sw" style="--v:47.7"><span>looktap</span><b>21 s</b></div>
+          <div class="bar" style="--v:68.2"><span>Maestro MCP</span><b>30 s</b></div>
+          <div class="bar" style="--v:81.8"><span>Appium MCP</span><b>36 s</b></div>
+          <div class="bar" style="--v:88.6"><span>mobile-mcp</span><b>39 s</b></div>
+          <div class="bar" style="--v:100"><span>ios-simulator-mcp</span><b>44 s</b></div>
         </figure>
         <figure class="bench">
-          <figcaption>Setup before the first command</figcaption>
-          <div class="bar sw" style="--v:0.4"><span>looktap</span><b>0.04–0.13 s</b></div>
-          <div class="bar" style="--v:44"><span>Appium</span><b>7–17 s</b></div>
-          <div class="bar" style="--v:100"><span>Appium MCP</span><b>23–39 s</b></div>
+          <figcaption>Text sent to the agent for those 8 steps (iPhone)</figcaption>
+          <div class="bar sw" style="--v:0.7"><span>looktap</span><b>747 B</b></div>
+          <div class="bar" style="--v:16.7"><span>Maestro MCP</span><b>17 KB</b></div>
+          <div class="bar" style="--v:23.5"><span>mobile-mcp</span><b>24 KB</b></div>
+          <div class="bar" style="--v:100"><span>Appium MCP</span><b>102 KB</b></div>
         </figure>
         <figure class="bench">
-          <figcaption>Failed operations, of 123 per platform (Android · iOS)</figcaption>
-          <div class="bar sw" style="--v:9"><span>looktap</span><b>2 · 0</b></div>
-          <div class="bar" style="--v:91"><span>Appium</span><b>10 · 10</b></div>
-          <div class="bar" style="--v:100"><span>Appium MCP</span><b>12 · 10</b></div>
+          <figcaption>Setup before the first command (iPhone)</figcaption>
+          <div class="bar sw" style="--v:1.7"><span>looktap</span><b>0.5 s</b></div>
+          <div class="bar" style="--v:26.2"><span>mobile-mcp</span><b>7.6 s</b></div>
+          <div class="bar" style="--v:62.1"><span>Maestro MCP</span><b>18 s</b></div>
+          <div class="bar" style="--v:100"><span>Appium MCP</span><b>29 s</b></div>
         </figure>
         <figure class="bench">
-          <figcaption>Restart the app (Android · iOS)</figcaption>
-          <div class="bar sw" style="--v:11"><span>looktap</span><b>186 ms · 513 ms</b></div>
-          <div class="bar" style="--v:89"><span>Appium</span><b>753 ms · 4.26 s</b></div>
-          <div class="bar" style="--v:100"><span>Appium MCP</span><b>735 ms · 4.81 s</b></div>
+          <figcaption>Agent time on Android: 11 steps, plus 2 s per tool call</figcaption>
+          <div class="bar sw" style="--v:45.2"><span>looktap</span><b>28 s</b></div>
+          <div class="bar" style="--v:79"><span>Appium MCP</span><b>49 s</b></div>
+          <div class="bar" style="--v:96.8"><span>Maestro MCP</span><b>60 s</b></div>
+          <div class="bar" style="--v:100"><span>mobile-mcp</span><b>62 s</b></div>
         </figure>
       </div>
-      <p class="band-foot"><a href="docs/benchmark.html">The full benchmark</a>, including where Appium is still better and how to reproduce it.</p>
+      <p class="band-foot"><a href="docs/benchmark.html">The full benchmark</a>, including where other tools are faster, what looktap can't do, and how to reproduce it.</p>
     </div>
   </section>
 

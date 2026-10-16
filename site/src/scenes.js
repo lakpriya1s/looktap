@@ -32,7 +32,7 @@ export const SCENES = [
     kicker: '01 · Look',
     title: 'The screen, as text',
     body: `<p><code>ls</code> lists what's on screen, one row per element: a ref, its type, where it is, and its label. It reads native screens, React Native, and web content in Safari or a web view.</p>
-<p>A screen read is about <strong>1 KB of text</strong>, where Appium returns 41–124 KB of XML. That's what an agent pays for in context, every turn.</p>`,
+<p>A screen read is about <strong>1 KB of text</strong>, where other agent tools return 4–125 KB. That's what an agent pays for in context, every turn.</p>`,
     covers: ['ls'],
     start: (p) => p.show('signin'),
     beats: [
@@ -506,7 +506,7 @@ export const SCENES = [
     kicker: '13 · Setup',
     title: 'Nothing to install on simulators',
     body: `<p>No server to run and no npm dependencies. looktap's own small helpers start on first use: a macOS helper that speaks to the simulator through Apple's frameworks, and an 8 KB Android helper run with <code>app_process</code>. A real iPhone gets a small XCUITest runner, built and signed with your own Apple ID on first use.</p>
-<p>First command in about a tenth of a second, against 7–39 s for an Appium session.</p>`,
+<p>Ready for the first command in under a second, against 8–29 s for mobile-mcp, Maestro and Appium.</p>`,
     covers: ['doctor', 'devices', 'setup', 'teardown'],
     start: (p) => p.show('springboard'),
     beats: [

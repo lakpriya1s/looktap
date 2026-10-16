@@ -27,10 +27,12 @@ Each command does one thing and prints a few lines of plain text:
 
 That makes it a good fit for an AI coding agent (Claude Code, Cursor, Codex, opencode, …) that needs to **see and
 use the app it's building**:
-- **Small output.** A screen read is 1–2 KB of text, not 50–120 KB of XML. A screenshot is a file path, not
-  200 KB of base64.
+- **Small output.** A screen read is about 1 KB of text, where other agent tools return 4–125 KB. A screenshot is a
+  file path, where most MCP servers put 40–270 KB of image into the context.
 - **One call per step.** Add `--ls` to an action and its result comes back in the same call.
-- **Fast.** Taps take about 0.1 s and screen reads 0.1–0.2 s on both platforms, with no session to set up first.
+- **Fast.** Screen reads take about 0.1 s and taps 0.1–0.2 s on both platforms, and the first command comes back in
+  under a second, with no session to set up. Against eight other agent tools on the same devices, it had the lowest
+  agent time on both iPhone and Android ([How it compares](#how-it-compares)).
 
 It's just as handy by hand, or in a shell script for screenshot sweeps and bug repros.
 
@@ -39,7 +41,7 @@ It's just as handy by hand, or in a shell script for screenshot sweeps and bug r
 ## Contents
 
 - [What you get](#what-you-get): everything looktap does today
-- [looktap vs Appium](#looktap-vs-appium): the measured comparison
+- [How it compares](#how-it-compares): the measured comparison with every other agent mobile tool
 - [Quick start](#quick-start): install, boot a device, first commands
 - [🤖 Kickstart with your AI agent](#-kickstart-with-your-ai-agent): one prompt and your agent takes it from there
 - [Requirements](#requirements)
@@ -70,33 +72,32 @@ It's just as handy by hand, or in a shell script for screenshot sweeps and bug r
 | 🧩 | **Nothing to install on simulators, emulators or Android phones**, no server to run, no npm dependencies. The helpers start on first use. A real iPhone gets a small test runner, built for you |
 | ⚠️ | **Honest failures.** A tap that's covered by a toast prints a warning, a stale `@ref` is an error rather than a wrong tap, a system prompt over the app is reported as one, and **an app that dies is named the moment looktap notices** |
 
-## looktap vs Appium
+## How it compares
 
-Measured on the same devices (iPhone 14 simulator, Pixel 9a emulator), 10 runs per action, median time. Full method,
-raw data and the earlier runs are in **[BENCHMARK.md](BENCHMARK.md)**.
+Every agent mobile tool we could run on one Mac was given the same 12 steps in the Settings app, 10 runs each:
+looktap (CLI and MCP), mobile-mcp, Maestro MCP, Appium MCP, raw Appium, ios-simulator-mcp, MobileBuildMCP, raw
+idb and raw adb. A neutral checker decided whether each step worked. These are the totals over the steps every tool
+can do:
 
-| | **looktap** | Appium (raw HTTP) | Appium MCP |
-|---|---|---|---|
-| Setup before the first command | **0.04–0.13 s** | 7–17 s | 23–39 s |
-| Read the screen (Android · iOS) | 131 ms · **202 ms** | **114 ms** · 915 ms | 1.87 s · 1.21 s |
-| …and its size | **~1 KB of text** | 41–51 KB XML | 101–124 KB XML |
-| Tap by label (Android · iOS) | 112 ms · **121 ms**, 1 call | **77 ms** · 1.51 s, 2 calls | 344 ms · 1.63 s, 2 calls |
-| Fill a field (Android · iOS) | 792 ms · **782 ms** | 1.32 s · 2.33 s | **513 ms** · 2.51 s |
-| Screenshot | **~130 ms, a ~70 B file path** | 130 ms–1.7 s, 78–221 KB base64 | 165–339 ms, 210–225 KB inline |
-| Restart the app (Android · iOS) | **186 ms · 513 ms** | 753 ms · 4.26 s | 735 ms · 4.81 s |
-| Failed operations (of 123 per platform) | **2 · 0**¹ | 10 · 10 | 12 · 10 |
-| Biometrics | ✓ | ✓ | ✗ no tool |
-| Logs and crash reports | ✓ | via separate APIs | ✗ |
+| | **looktap CLI** | **looktap MCP** | Next best for an agent | Others |
+|---|---|---|---|---|
+| Agent time (iOS · Android)¹ | **21 s · 28 s** | 25 s · 37 s | 30 s Maestro MCP · 49 s Appium MCP | 36–63 s |
+| Tool calls (iOS · Android) | **8** · 12 | **8** · 12 | 9 · **11** Maestro MCP | 10–27 |
+| Text returned (iOS · Android) | **747 B · 1.2 KB** | 3.2 KB · 7.9 KB | 17 KB · 14 KB Maestro MCP | 17–154 KB |
+| Steps passed | **100%** of what it can do | **100%** | | 87–100% |
+| Setup before the first command | **under 1 s** | **under 1 s** | | 0.2–29 s |
 
-¹ Not counting `hidekb` on the iOS 26 search keyboard, which has no key to dismiss it: every tool fails there,
-and looktap is the only one that reports the failure instead of claiming success.
+¹ The device's reaction time plus 2 s per tool call for the model's round trip.
 
-Raw Appium is slightly faster at reading and tapping on Android, because its helper app answers in-process. But it
-returns about 50× more bytes per read and needs two calls per tap.
+Where looktap loses:
+- On raw device time, ios-simulator-mcp is faster in total on iOS (4.5 s against 5.2 s), with 20 calls to looktap's 8.
+- The looktap MCP waits for the screen to settle after every action, which makes it slower per action than the CLI.
+- looktap can't stop an app, and on iOS it has no home button.
 
-**Where Appium is still the better choice:** it runs on real iOS devices, plugs into existing WebDriver test
-suites and CI grids, and supports many more platforms. looktap drives **iOS simulators** (not iPhones) and
-Android emulators and devices, and it isn't a test framework.
+Method, both platforms' tables and what else they show are in **[BENCHMARK.md](BENCHMARK.md)**.
+
+**Where Appium is still the better choice:** it plugs into existing WebDriver test suites and CI grids, and supports
+many more platforms. looktap isn't a test framework.
 
 ## Quick start
 
@@ -542,7 +543,9 @@ Pick the route that fits your agent:
 | **Other agents with a shell** (Codex, Cursor's agent, opencode, …) | The CLI plus the skill file | `looktap skill --install` (or `looktap skill` prints it) |
 | **Chat apps without a shell** (Claude Desktop, …) | The MCP server | `npx -y @looktap/mcp` ([details](#mcp-server-for-clients-without-a-shell)) |
 
-An agent spends seconds per turn, so **turns** matter more than milliseconds. looktap is built to save them:
+An agent spends seconds per turn, so **turns** matter more than milliseconds. looktap is built to save them: in the
+[benchmark](BENCHMARK.md) the CLI needed 8 calls for a scenario that took other tools 9–27 on iOS, and 12 where they
+took 11–19 on Android.
 
 - **`--ls` on any action** prints the screen once it has settled, so acting and looking take one turn instead of two:
 
@@ -638,13 +641,16 @@ looktap mcp --config      # prints a ready-to-paste client config with absolute 
   - `screenshot`, which returns the image itself;
   - `logs` and `crashes`;
   - `looktap`, for any other command line, or several separated by `;`.
-- **Actions return the settled screen** unless `ls: false`.
+- **Actions return the settled screen** unless `ls: false`. That saves the agent a separate `ls`, but each action
+  then waits for the screen to stop moving, 0.7–1.9 s in the [benchmark](BENCHMARK.md). Pass `ls: false` when you
+  don't need to see the result.
 - **The device is remembered:** name a `platform` (or `device`) once when both an iPhone and an Android are
   booted.
-- **Speed:** the server keeps each device's helper connection open, so a warm `ls` takes a few milliseconds.
+- **Speed:** the server keeps each device's helper connection open, so a warm `ls` comes back in 40–70 ms.
 
 Why a CLI first? Any agent with a shell can use it with no configuration, and its output is already as small as
-it gets.
+it gets. In the benchmark the CLI beat the MCP server on both platforms, mostly because it doesn't wait for the screen
+to settle unless asked (`--ls`).
 
 ## Commands
 
