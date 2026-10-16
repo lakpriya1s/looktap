@@ -250,7 +250,7 @@ a.version:hover { color: var(--accent); border-color: var(--accent); }
 .steps span { font-weight: 600; }
 .steps code { font-size: 12.5px; color: var(--ink-2); overflow-wrap: anywhere; }
 .req { color: var(--muted); font-size: 15px; }
-.callout { margin: 0 0 22px; padding: 16px 18px; border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 10px; background: var(--panel); }
+.callout { margin: 24px 0 0; padding: 16px 18px; border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 10px; background: var(--panel); }
 .callout p { margin: 0 0 10px; font-size: 15px; color: var(--ink-2); }
 .callout .callout-title { margin-bottom: 4px; font-weight: 600; color: var(--ink); }
 .callout pre { margin: 0 0 10px; padding: 10px 12px; border-radius: 8px; background: var(--term-bg); }
