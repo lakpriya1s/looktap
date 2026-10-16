@@ -1,7 +1,7 @@
 ---
 name: looktap
 description: Drive iPhone and Android devices (simulators, emulators or real phones) from the shell with looktap — read the screen, tap, type, swipe, deep-link, screenshot, record, read logs and crashes, and set permissions, location, dark mode and text size. Use when asked to open, navigate, test, reproduce a bug in, or take screenshots of a mobile app running in a simulator, emulator or on a real device.
-allowed-tools: Bash(looktap:*) Bash(npx looktap:*) Bash(npx -y looktap:*)
+allowed-tools: Bash(looktap:*) Bash(npx @looktap/cli:*) Bash(npx -y @looktap/cli:*)
 ---
 
 # Mobile app automation with looktap
@@ -329,11 +329,11 @@ Then look at the few frames that matter, not all of them.
 
 ## Installation
 
-If `looktap` isn't on the PATH, use `npx looktap` in every command (or `npx -y looktap` to skip the
+If `looktap` isn't on the PATH, use `npx @looktap/cli` in every command (or `npx -y @looktap/cli` to skip the
 prompt). Installing a global package may need the user's approval:
 
 ```bash
-npm install -g looktap
+npm install -g @looktap/cli
 looktap doctor
 ```
 

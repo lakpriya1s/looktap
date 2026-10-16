@@ -5,7 +5,7 @@
 **Let AI agents drive iPhone and Android devices from the shell**<br>
 Read the screen, tap, type, swipe, screenshot, and read logs and crashes. No server to start and no dependencies.
 
-[![npm](https://img.shields.io/npm/v/looktap.svg?color=cb3837&logo=npm)](https://www.npmjs.com/package/looktap)
+[![npm](https://img.shields.io/npm/v/@looktap/cli.svg?color=cb3837&logo=npm)](https://www.npmjs.com/package/@looktap/cli)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://github.com/lakpriya1s/looktap/blob/main/LICENSE)
 [![Node ≥ 18](https://img.shields.io/badge/node-%E2%89%A518-339933.svg?logo=node.js&logoColor=white)](#requirements)
 [![iOS simulator](https://img.shields.io/badge/iOS-simulator%20%7C%20device-000000.svg?logo=apple&logoColor=white)](#how-it-works)
@@ -102,7 +102,7 @@ Android emulators and devices, and it isn't a test framework.
 
 ```bash
 # 1. install (Node 18+; zero dependencies)
-npm install -g looktap
+npm install -g @looktap/cli
 
 # 2. check the toolchain
 looktap doctor
@@ -118,7 +118,7 @@ looktap tap "General" --ls
 looktap shot general
 ```
 
-Or try it without installing anything: `npx looktap doctor` (any command works the same way).
+Or try it without installing anything: `npx @looktap/cli doctor` (any command works the same way).
 
 To add the agent skill, which teaches Claude Code how to use looktap:
 
@@ -145,13 +145,13 @@ cd looktap && npm install -g .
 As a tarball you can hand to someone (it includes both prebuilt helpers):
 
 ```bash
-npm pack                                  # → looktap-<version>.tgz
-npm install -g looktap-<version>.tgz    # on their machine
+npm pack                                  # → looktap-cli-<version>.tgz
+npm install -g looktap-cli-<version>.tgz  # on their machine
 ```
 
 Without installing: `node bin/looktap.js --help`.
 
-Uninstall: `npm uninstall -g looktap && rm -rf ~/.looktap`.
+Uninstall: `npm uninstall -g @looktap/cli && rm -rf ~/.looktap`.
 </details>
 
 ## 🤖 Kickstart with your AI agent
@@ -163,7 +163,7 @@ start using the app with you:
 Install looktap (https://github.com/lakpriya1s/looktap) so you can drive
 my app in the iOS simulator / Android emulator:
 
-1. Run `npm install -g looktap`, then `looktap doctor`,
+1. Run `npm install -g @looktap/cli`, then `looktap doctor`,
    and fix anything it reports (boot a simulator or emulator, or connect a device, if none is up).
 2. Run `looktap skill --install` and read the skill it installs.
 3. Find my app's bundle id / package name in this repo and write a
@@ -583,7 +583,7 @@ looktap mcp --config      # prints a ready-to-paste client config with absolute 
 - **Where to paste it:**
   - Claude Desktop: `~/Library/Application Support/Claude/claude_desktop_config.json`
   - Cursor: `~/.cursor/mcp.json`
-  - Claude Code: `claude mcp add looktap -- npx -y looktap mcp` (no install needed: it runs the latest
+  - Claude Code: `claude mcp add looktap -- npx -y @looktap/cli mcp` (no install needed: it runs the latest
     version from npm). Or the absolute paths: `claude mcp add looktap -- <node> <looktap.js> mcp`
 - **Why absolute paths:** desktop apps start servers with a minimal `PATH`. `looktap` also finds `adb` in the
   Android SDK by itself.

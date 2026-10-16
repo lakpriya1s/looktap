@@ -1,5 +1,5 @@
 {
-  "name": "looktap",
+  "name": "@looktap/cli",
   "version": "0.2.0",
   "description": "Let AI agents drive iPhone and Android devices from the shell: read the screen, tap, type, swipe, screenshot, read logs and crashes. No server to start and zero dependencies.",
   "keywords": [
@@ -39,6 +39,9 @@
     "README.md",
     "LICENSE"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=18"
   },
