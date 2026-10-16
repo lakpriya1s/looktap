@@ -126,7 +126,7 @@ To teach Claude Code how to use looktap, install the plugin. In Claude Code:
 /plugin install looktap --marketplace lakpriya1s/looktap
 ```
 
-It adds the looktap skill and keeps it up to date. Then run `/looktap:setup`: it installs the CLI, checks your
+It adds the looktap skill. Then run `/looktap:setup`: it installs the CLI, checks your
 toolchain and gets a device ready. Or copy the skill in by hand:
 
 ```bash
@@ -586,7 +586,9 @@ In Claude Code, run:
   tells you exactly what's missing.
 - **What it costs:** about 150 tokens per session for the skill's description, and about 4.5k tokens each time
   Claude loads the skill.
-- **Staying current:** the plugin comes straight from this repo, so it updates with `main`.
+- **Staying current:** every push to this repo is a new plugin version. Claude Code doesn't auto-update
+  third-party plugins unless you turn it on (`/plugin` → Marketplaces → looktap → Enable auto-update); otherwise
+  run `/plugin marketplace update looktap` now and then.
 - **The CLI:** the skill runs `looktap` commands. Install them with `npm install -g @looktap/cli`, or the skill
   falls back to `npx @looktap/cli`.
 - **No MCP server inside, on purpose:** with a shell, the CLI and the skill do the same job with fewer tokens, and

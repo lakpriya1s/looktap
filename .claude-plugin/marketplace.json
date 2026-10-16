@@ -5,15 +5,13 @@
     "url": "https://github.com/lakpriya1s"
   },
   "metadata": {
-    "description": "looktap: hands on the phone for Claude Code",
-    "version": "0.2.0"
+    "description": "looktap: hands on the phone for Claude Code"
   },
   "plugins": [
     {
       "name": "looktap",
       "source": "./",
       "description": "Lets Claude see and use the iPhone or Android app it is building: reads the screen as text, taps by label, types, swipes, takes screenshots, and reads logs and crashes. Works with simulators, emulators and real phones.",
-      "version": "0.2.0",
       "author": {
         "name": "Lakpriya Senevirathna"
       },

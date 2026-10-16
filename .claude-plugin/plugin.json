@@ -1,6 +1,5 @@
 {
   "name": "looktap",
-  "version": "0.2.0",
   "description": "Lets Claude see and use the iPhone or Android app it is building: reads the screen as text, taps by label, types, swipes, takes screenshots, and reads logs and crashes. Works with simulators, emulators and real phones.",
   "author": {
     "name": "Lakpriya Senevirathna",
