@@ -1,318 +1,142 @@
-# looktap vs Appium vs Appium MCP: benchmark
+# Benchmark: looktap and every other agent mobile tool
 
-Measured on 2026-10-15. All three tools ran the same actions on the same
-devices, 10 runs per feature.
+Measured on 2026-10-16 on one Mac (Apple M3 Pro, macOS 26.5.2). Every tool did the same steps in the same system
+app, 10 runs each. A neutral checker, not the tool, decided whether each step worked.
 
-## TL;DR
+The full results for each platform, step by step, with p90s, calls, bytes and notes, are in separate reports:
 
-> **Update, Run 4 (looktap's own helpers, no WebDriverAgent):** Android `ls`
-> dropped from 2.58 s to 131 ms, and iOS `ls` from 1.70 s to 202 ms. Taps now take
-> 110–120 ms on both platforms, and screenshots ~130 ms. looktap is now the
-> fastest of the three at almost every action. See
-> [Run 4](#run-4-looktap-with-its-own-native-helpers). The summary below is from Run 3.
+- **iOS:** [bench/results/ios.md](bench/results/ios.md) (raw data: [ios.json](bench/results/ios.json))
+- **Android:** [bench/results/android.md](bench/results/android.md) (raw data: [android.json](bench/results/android.json))
 
-| | looktap | Appium (raw HTTP) | Appium MCP |
+## The tools
+
+| Tool | Version | Platforms | How it was driven |
 |---|---|---|---|
-| **Output returned for the whole scenario** (10 runs × 13 features, bursts excluded) | **11 KB** (Android) · **22 KB** (iOS) | 1.9 MB · 2.6 MB | 2.7 MB · 3.2 MB |
-| **One screen read** | **1–2 KB** of text | 41–51 KB XML | 101–124 KB XML |
-| **One screenshot** | **~100 B** (a file path) | 78–221 KB base64 | 210–225 KB base64, inline |
-| **Setup before the first command** | **0.1–0.2 s** | 7–17 s | 23–39 s |
-| **Per-action speed** | Fastest for back, type, deep link, restart, hide keyboard. **Slowest at reading the screen on Android (~2.5 s)** | Fastest at reading the screen and tapping on Android (it keeps a helper app running on the device) | Close to raw Appium, plus MCP overhead |
-| **Failed operations** (out of 123 per platform) | 2 · 2 | 10 · 10 | 12 · 10 |
-| **Biometrics** | ✓ | ✓ | ✗ no tool |
+| **looktap**, CLI | 0.2.1 | iOS, Android | one shell command per step, as an agent runs it |
+| **looktap**, MCP | 0.2.1 | iOS, Android | MCP over stdio (`looktap mcp`) |
+| [mobile-mcp](https://github.com/mobile-next/mobile-mcp) | 1.0.11 | iOS, Android | MCP over stdio |
+| [Maestro](https://maestro.dev) MCP | Maestro 2.11.0 | iOS, Android | MCP over stdio (`maestro mcp`), steps as inline flows |
+| [Appium MCP](https://github.com/appium/appium-mcp) | 1.97.1 | iOS, Android | MCP over stdio |
+| Appium | 3.5.2 (xcuitest 12.1.0, UiAutomator2 8.1.0) | iOS, Android | W3C HTTP, the same install Appium MCP uses |
+| [ios-simulator-mcp](https://github.com/joshuayoes/ios-simulator-mcp) | 2.1.0 | iOS | MCP over stdio |
+| [MobileBuildMCP](https://www.npmjs.com/package/mobilebuildmcp) | 2.7.1 | iOS | MCP over stdio, simulator and ui-automation workflows on |
+| idb | fb-idb 1.7.3, idb-companion 1.7.3 | iOS | the CLI, the raw baseline under ios-simulator-mcp |
+| adb | platform-tools 36.0.0 | Android | `uiautomator dump` + `input`, the raw baseline |
 
-**In one line:**
-- **Agents:** looktap costs about **100–250× fewer bytes** of context than the
-  Appium MCP for the same session, and needs no setup.
-- **Raw speed:** Appium's on-device helper reads the Android screen about 20×
-  faster.
-- **Bugs:** the benchmark exposed bugs in looktap. They are listed
-  [below](#bugs-found-in-looktap), with their fixes.
+## Results
 
----
+**Devices:** iPhone 14 simulator (iOS 26.0) and Pixel 9a emulator (Android 16).
 
-## What was compared
+**App:** the system Settings app (no sign-in, nothing real is changed).
 
-| Tool | How it was driven | What it represents |
-|---|---|---|
-| **looktap** 0.1.0 | The CLI, spawned once per command: `node bin/looktap.js …` | A person or agent typing commands |
-| **Appium (raw HTTP)** | Appium 3.6.0 server with `xcuitest` 12.3.4 / `uiautomator2` 8.4.0, called over W3C HTTP from Node with one persistent session | Appium's own speed, with no agent layer on top |
-| **Appium MCP** | `appium-mcp@latest`, configured as an agent would use it, started over stdio and driven with MCP `tools/call` | What an agent's tool calls actually cost |
+**Steps:** launch app, read the screen, tap by label, back, tap x,y, swipe, scroll to a label, fill a field,
+screenshot, home, open a URL, terminate the app.
 
-**Devices:**
-- iPhone 14 simulator, iOS 26, Apple Silicon Mac
-- Pixel 9a emulator, Android, 412×917 dp at 2.625×
+The tables below total the steps every tool on that platform can do, so the totals compare like with like: 8 on iOS,
+11 on Android.
 
-**App:** the system **Settings** app. It has no sign-in and no real money is
-involved. The deep-link step opens a custom-scheme deep link in a second installed
-app, at whatever screen it is on, without typing anything.
+- **Reaction time:** until the result was on screen (medians, summed over those steps).
+- **Agent time:** the reaction time plus 2 s for each tool call. Each call is one more model round trip, and needing
+  fewer calls matters more to an agent than a few milliseconds per call.
 
-**iOS WebDriverAgent:**
-- looktap and raw Appium used the same prebuilt WDA 15.1.3, so Appium didn't
-  pay for an `xcodebuild`.
-- The MCP server installed its own copy through `prepare_ios_simulator`, as it
-  normally does.
+### iOS (8 steps: launch, read, tap by label, back, swipe, scroll to label, fill, screenshot)
 
-### Scenario: one run
+| Tool | Reaction time | Agent time | Calls | Text returned | Screenshot | Passed | Setup | Tool definitions | RAM peak / mean |
+|---|---:|---:|---:|---:|---|---:|---:|---:|---:|
+| **looktap CLI** | 5.2 s | **21 s** | **8** | **747 B** | path to a file | 100/100 | 0.5 s | none | 117 / 40 MB |
+| **looktap MCP** | 8.5 s | 25 s | **8** | 3.2 KB | 74 KB inline | 100/100 | 0.5 s | 9.7 KB | 148 / 76 MB |
+| Maestro MCP | 12 s | 30 s | 9 | 17 KB | 236 KB inline | 120/120 | 18 s | 9.7 KB | 650 / 287 MB |
+| Appium MCP | 16 s | 36 s | 10 | 102 KB | 268 KB inline | 120/120 | 29 s | 42 KB | 657 / 275 MB |
+| Appium | 17 s | 37 s | 10 | 41 KB | 218 KB inline | 120/120 | 19 s | none | 641 / 239 MB |
+| mobile-mcp | 11 s | 39 s | 14 | 24 KB | 41 KB inline | 120/120 | 7.6 s | 29 KB | 226 / 86 MB |
+| ios-simulator-mcp | **4.5 s** | 44 s | 20 | 17 KB | path to a file | 106/110 | 1.5 s | 11 KB | 234 / 65 MB |
+| MobileBuildMCP | 24 s | 50 s | 13 | 36 KB | 43 KB inline | 100/100 | 3.4 s | 224 KB | 327 / 131 MB |
+| idb | 5.4 s | 59 s | 27 | 73 KB | path to a file | 104/120 | **0.2 s** | none | **55 / 17 MB** |
 
-Every run started from a **tool-neutral reset**: a plain `simctl`/`adb`
-command to force-stop the apps and relaunch Settings at its root screen. The
-reset was not timed.
+### Android (11 steps: all but terminate)
 
-| # | Feature | What it does |
-|---|---|---|
-| 1 | `ls`: read screen | looktap `ls` · Appium `GET /source` · MCP `appium_get_page_source` |
-| 2 | `tap`: by label | Tap "General" (iOS) / "Network & internet" (Android). For Appium and MCP this is find-element + click (2 calls) |
-| 3 | `back` | Return to the previous screen |
-| 4 | `tapxy` | Tap the same row by coordinates (then back, untimed) |
-| 5 | `swipe` | Scroll the list (then scroll back, untimed) |
-| 6 | `fill` | Put "wifi" in Settings search. On Android, search is opened first by a neutral `adb` tap |
-| 7 | `type` | Type " x" into the focused field |
-| 8 | `hidekb` | Dismiss the keyboard |
-| 9 | `shot` | Screenshot |
-| 10 | `bio` | Face ID match / fingerprint 1, while Settings is in front |
-| 11 | `open` | Deep link into a second installed app |
-| 12 | `launch` | Restart Settings (terminate + launch) |
+| Tool | Reaction time | Agent time | Calls | Text returned | Screenshot | Passed | Setup | Tool definitions | RAM peak / mean | On the device |
+|---|---:|---:|---:|---:|---|---:|---:|---:|---:|---:|
+| **looktap CLI** | **4.4 s** | **28 s** | 12 | **1.2 KB** | path to a file | 110/110 | 0.9 s | none | 93 / 21 MB | 35 MB |
+| **looktap MCP** | 13 s | 37 s | 12 | 7.9 KB | 104 KB inline | 110/110 | 0.7 s | 9.7 KB | 102 / 47 MB | 35 MB |
+| Appium MCP | 19 s | 49 s | 15 | 126 KB | 230 KB inline | 109/120 | 21 s | 42 KB | 228 / 95 MB | 70 MB |
+| Appium | 21 s | 51 s | 15 | 52 KB | 225 KB inline | 112/120 | 17 s | none | 168 / 69 MB | 71 MB |
+| Maestro MCP | 38 s | 60 s | **11** | 14 KB | 186 KB inline | 117/120 | 22 s | 9.7 KB | 1569 / 225 MB | 72 MB |
+| mobile-mcp | 24 s | 62 s | 19 | 51 KB | 39 KB inline | 120/120 | 11 s | 29 KB | 1361 / 96 MB | not detected |
+| adb | 29 s | 63 s | 17 | 154 KB | path to a file | 119/120 | 6.3 s | none | **33 / 12 MB** | 37 MB |
 
-After the 10 runs, each tool did:
-- **burst:** as many screenshots as it could in 5 s;
-- **teardown.**
+"Passed" counts every step the tool can do, terminate included. "On the device" is the peak RAM of the helpers a tool
+keeps inside the emulator.
 
-### What was measured
+## What it shows
 
-- **Time:** wall time per feature, as the median of successful runs.
-- **Bytes:** what the tool returned. For an agent, this is roughly what lands
-  in its context:
-  - looktap: stdout
-  - raw Appium: HTTP response bodies
-  - MCP: the full JSON-RPC response
-- **Calls:** commands or tool calls needed for the action. More calls means
-  more agent turns.
-- **Failures:** counted, not dropped. Medians use successful runs only.
+- **For an agent, the looktap CLI does best on both platforms.** It has the lowest agent time and the least text: 747 B
+  for the whole iOS scenario, against 17–102 KB for the MCP servers. It needs the fewest calls on iOS (8); on Android
+  Maestro MCP needs one fewer (11 to 12), because its fill is one call. It passed every step it can do, and it is ready
+  in under a second.
+- **The raw device time is closer.**
+  - On iOS, ios-simulator-mcp is faster in total (4.5 s against 5.2 s): its fill takes 0.5 s against looktap's 1.8 s.
+    But it needs 20 calls where looktap needs 8, and its swipes sometimes do nothing (7/10).
+  - On Android, the looktap CLI is fastest in total. Reading the screen takes 108 ms, against 1.6–5.6 s for the
+    others.
+- **The looktap MCP is slower per action than the CLI.** Each action waits for the screen to settle and returns it
+  (`ls: false` turns that off). That saves a call, but it costs 0.7–1.9 s an action, and on Android it makes the MCP's
+  total 13 s against the CLI's 4.4 s. That is the clearest thing for looktap to improve.
+- **Screenshots:**
+  - The looktap MCP sends a half-size PNG (74–104 KB, about 0.9k image tokens on Android).
+  - mobile-mcp sends a smaller JPEG (39–41 KB).
+  - Appium and Maestro send full-size images (186–268 KB).
+  - The CLIs save a file and return its path.
+- **looktap can't do two of the steps.** It has no way to stop an app (`launch` restarts it), and on iOS no home
+  button.
+- **Some tools reported success when the step didn't happen.**
+  - On Android, Appium's `terminateApp` answered success, but Settings was still running 8 s later: 0/10 through Appium
+    MCP, 2/10 raw. Maestro's `stopApp` did the same in 2 of 10 runs.
+  - On iOS, idb's swipes often did nothing (2/10 raw, 7/10 through ios-simulator-mcp).
+- **Setup and footprint:**
+  - Appium and Maestro need 17–29 s before the first command, and up to 660 MB of RAM on iOS.
+  - On Android, mobile-mcp and Maestro peaked at 1.4–1.6 GB.
+  - MobileBuildMCP's tool definitions are 224 KB, sent to the model in every session.
 
----
+## How it was measured, and how fair it is
 
-## Run 4: looktap with its own native helpers
-
-Measured on 2026-10-15, with the same devices, harness and scenario (10 runs).
-looktap no longer uses WebDriverAgent or `uiautomator dump`:
-
-- **iOS:** a macOS helper reads the simulator's accessibility tree and sends
-  touch and keyboard events through Apple's simulator frameworks.
-- **Android:** a 7 KB helper runs with `app_process` and keeps one UiAutomation
-  connection open. Emulator frames come over the emulator's gRPC API.
-
-Only looktap was re-run. The Appium columns are Run 3's numbers, from the same
-devices and harness.
-
-### Android (Pixel 9a emulator)
-
-| Feature | looktap Run 3 | **looktap Run 4** | Appium raw (Run 3) | Appium MCP (Run 3) |
-|---|---|---|---|---|
-| ls (read screen) | 2.58 s | **131 ms** · 975 B | 114 ms · 51 KB | 1.87 s · 124 KB |
-| tap (by label) | 2.21 s · ⚠ 2/10 | **112 ms** · ⚠ 1/10 | 77 ms · 2 calls · ⚠ 2/10 | 344 ms · 2 calls |
-| back | 84 ms | **84 ms** | 610 ms | 88 ms |
-| tapxy | 111 ms | 123 ms | 43 ms | 101 ms |
-| swipe (300 ms gesture) | 418 ms | **398 ms** | 433 ms | 543 ms |
-| fill | 5.01 s | **792 ms** · ⚠ 1/10 | 1.32 s · 3 calls · ⚠ 4/10 | 513 ms · 2 calls · ⚠ 6/10 |
-| type | 252 ms | **132 ms** | 905 ms · ⚠ 4/10 | 917 ms · ⚠ 6/10 |
-| hidekb | 131 ms | **48 ms** | 812 ms | 214 ms |
-| shot | 539 ms | **138 ms** · 69 B | 1.72 s · 78 KB | 339 ms · 210 KB |
-| launch | 199 ms | **186 ms** | 753 ms | 735 ms |
-
-### iOS (iPhone 14 simulator)
-
-| Feature | looktap Run 3 (WDA) | **looktap Run 4** | Appium raw (Run 3) | Appium MCP (Run 3) |
-|---|---|---|---|---|
-| setup | 193 ms | **39 ms** | 17.37 s | 23.14 s |
-| ls (read screen) | 1.70 s | **202 ms** · 723 B | 915 ms · 41 KB | 1.21 s · 101 KB |
-| tap (by label) | 1.84 s · ⚠ 1/10 | **121 ms** | 1.51 s · 2 calls | 1.63 s · 2 calls |
-| back | 1.09 s · ⚠ 1/10 | **187 ms** | 1.15 s | 1.18 s |
-| tapxy | 1.40 s | **112 ms** | 1.05 s | 1.14 s |
-| swipe | 2.10 s | **235 ms** | 1.56 s | 1.96 s |
-| fill | 3.69 s | **782 ms** | 2.33 s · 3 calls | 2.51 s · 2 calls |
-| type | 504 ms | **60 ms** | 603 ms · 2 calls | 577 ms · 2 calls |
-| hidekb (search keyboard) | ✗ false success | ✗ 10/10, reported correctly | ✗ 10/10 | ✗ 10/10 |
-| shot | 411 ms | **124 ms** · 65 B | 130 ms · 221 KB | 165 ms · 225 KB |
-| launch | 570 ms | **513 ms** | 4.26 s | 4.81 s |
-
-**What changed:**
-- looktap is now the fastest of the three at almost every action on both
-  platforms, while still returning 50–3000× fewer bytes.
-- Failures: 2 of 123 on Android, and none on iOS apart from `hidekb`, which every
-  tool fails on the iOS 26 search keyboard. looktap reports that failure
-  instead of claiming success.
-- `burst` now saves a frame only when the screen changes. On a static screen
-  that's very few frames, so its frame counts aren't comparable with Run 3's.
-- iOS reads during a navigation wait for the transition to finish (up to 1.5 s).
-  Steady-state reads take about 30–70 ms inside the helper.
-
-**Limits:**
-- The iOS helper uses Apple's private simulator frameworks. Touch and keyboard
-  input were measured on Xcode 26. For Xcode 27, looktap sends input to the
-  simulator's `dtuhidd` service, which is implemented but not yet measured.
-- On Android, the helper holds the device's single UiAutomation connection.
-  Run `looktap teardown` before using Appium or `uiautomator` on the same device.
-
-The Run 3 report follows unchanged, for reference.
-
----
-
-## Results: Android (Pixel 9a emulator)
-
-| Feature | looktap | Appium (raw HTTP) | Appium MCP |
-|---|---|---|---|
-| setup | **130 ms** · 78 B | 7.31 s · 927 B | 38.83 s · 6 KB · 2 calls |
-| ls (read screen) | 2.58 s · **1014 B** | **114 ms** · 51 KB | 1.87 s · 124 KB |
-| tap (by label) | 2.21 s · 39 B · ⚠ 2/10 failed | **77 ms** · 151 B · 2 calls · ⚠ 2/10 failed | 344 ms · 421 B · 2 calls |
-| back | **84 ms** · 0 B | 610 ms · 14 B | 88 ms · 109 B |
-| tapxy | 111 ms · 0 B | **43 ms** · 14 B | 101 ms · 120 B |
-| swipe | **418 ms** · 0 B | 433 ms · 14 B | 543 ms · 139 B |
-| fill | 5.01 s · 0 B | 1.32 s · 165 B · 3 calls · ⚠ 4/10 failed | **513 ms** · 404 B · 2 calls · ⚠ 6/10 failed |
-| type | **252 ms** · 0 B | 905 ms · 151 B · 2 calls · ⚠ 4/10 failed | 917 ms · 363 B · 2 calls · ⚠ 6/10 failed |
-| hidekb | **131 ms** · 0 B | 812 ms · 14 B | 214 ms · 106 B |
-| shot (screenshot) | 539 ms · **96 B** | 1.72 s · 78 KB | **339 ms** · 210 KB |
-| bio | 67 ms · 0 B | **32 ms** · 14 B | — no tool |
-| open (deep link) | **89 ms** · 0 B | 5.03 s · 14 B | 2.16 s · 153 B |
-| launch (restart app) | **199 ms** · 0 B | 753 ms · 28 B · 2 calls | 735 ms · 220 B · 2 calls |
-| burst 5 s | 4 frames · **121 B** | **23 frames** · 1.7 MB | 11 frames · 923 KB |
-| teardown | **76 ms** · 26 B | 466 ms · 14 B | 751 ms · 111 B |
-
-## Results: iOS (iPhone 14 simulator)
-
-| Feature | looktap | Appium (raw HTTP) | Appium MCP |
-|---|---|---|---|
-| setup | **193 ms** · 40 B | 17.37 s · 578 B | 23.14 s · 7 KB · 3 calls |
-| ls (read screen) | 1.70 s · **2 KB** | **915 ms** · 41 KB | 1.21 s · 101 KB |
-| tap (by label) | 1.84 s · 17 B · ⚠ 1/10 failed | **1.51 s** · 151 B · 2 calls | 1.63 s · 379 B · 2 calls |
-| back | **1.09 s** · 0 B · ⚠ 1/10 failed | 1.15 s · 14 B | 1.18 s · 109 B |
-| tapxy | 1.40 s · 0 B | **1.05 s** · 14 B | 1.14 s · 120 B |
-| swipe | 2.10 s · 0 B | **1.56 s** · 14 B | 1.96 s · 139 B |
-| fill | 3.69 s · 0 B | **2.33 s** · 165 B · 3 calls | 2.51 s · 437 B · 2 calls |
-| type | **504 ms** · 0 B | 603 ms · 151 B · 2 calls | 577 ms · 362 B · 2 calls |
-| hidekb | ✗ 3.92 s, **reported success but the keyboard stayed up** (bug, see below) | ✗ failed 10/10 | ✗ failed 10/10 |
-| shot (screenshot) | 411 ms · **92 B** | **130 ms** · 221 KB | 165 ms · 225 KB |
-| bio | 558 ms · 0 B | **429 ms** · 14 B | — no tool |
-| open (deep link) | 533 ms · 0 B | **210 ms** · 14 B | 324 ms · 158 B |
-| launch (restart app) | **570 ms** · 0 B | 4.26 s · 28 B · 2 calls | 4.81 s · 222 B · 2 calls |
-| burst 5 s | 9 frames · **117 B** | **59 frames** · 25.5 MB | 59 frames · 25.9 MB |
-| teardown | 488 ms · 23 B | 154 ms · 14 B | **37 ms** · 111 B |
-
-iOS times are higher across the board for all three tools. WebDriverAgent waits
-for the UI to go idle (animations finished) before it completes a tap or swipe.
-
----
-
-## What the numbers mean
-
-### For AI agents: output size dominates
-
-An agent pays for every byte a tool returns, as context and tokens, and for
-every extra call, as a turn.
-
-- **Reading the screen:** looktap returns a compact list (`x,y WxH label`) of
-  1–2 KB. Appium and MCP return the full XML hierarchy: 41–124 KB per read,
-  **50–100× larger**. Most of it is attributes an agent never needs.
-- **Screenshots:** looktap writes the PNG to disk and returns its path
-  (~100 B). The agent opens the image only when it actually needs to see it.
-  MCP returns 210–225 KB **inline on every screenshot**. In an earlier
-  exploratory run a single MCP screenshot returned **1.8 MB**, and one call took
-  **111 s**.
-- **Whole scenario** (10 runs, 13 features): looktap returned **11–22 KB**.
-  MCP returned **2.7–3.2 MB**.
-- **Calls per action:** tap-by-label, fill and type are **1 command** in
-  looktap. They take **2 MCP calls** (find, then act), so twice the agent
-  turns.
-- **Setup:** looktap is ready in about 0.2 s. The MCP server took 23–39 s
-  (process start, WDA prepare, session create) before its first command.
-
-### For raw speed: Appium's on-device helper wins at reading Android screens
-
-On Android, looktap's `ls`, `tap` and `fill` take 2–5 s, because each calls
-`uiautomator dump`. That starts a fresh UiAutomation connection and waits for
-the UI to go idle, about 2 s every time. Appium installs a helper app that
-stays connected, so its screen reads take about 0.1 s.
-
-Where no screen read is involved, looktap matches or beats both:
-- back
-- type
-- hide keyboard
-- deep link
-- restart app
-- setup
-
-On iOS, all three tools go through WebDriverAgent, so action times are close.
-looktap adds around 0.3–0.5 s per command for starting Node and checking which
-device is booted.
-
-### Burst (screenshots in 5 s)
-
-Appium and MCP take more frames per second (23–59 vs 4–9). But every frame
-comes back over the wire as base64: **25 MB on iOS in 5 seconds**. looktap
-writes frames to disk and de-duplicates them, so it reports only how many
-frames are distinct.
-
-### Reliability
-
-Across both platforms:
-- looktap: **4 failures**
-- raw Appium: **20**
-- MCP: **22**
-
-Most Appium and MCP failures were in `fill`/`type` on Android. They happened
-right after the app switched to Settings search, which runs in a different
-Android package (`com.google.android.settings.intelligence`): UiAutomator2
-keeps reporting the previous window for about 2–3 s. A 4 s settle reduced these
-failures but didn't remove them. The few looktap failures were the first run
-after setup on iOS, and the screen not yet ready on Android.
-
----
-
-## Bugs found in looktap
-
-| # | Bug | Impact | Status |
-|---|---|---|---|
-| 1 | **`hidekb` on iOS reported success when the keyboard stayed up.** The iOS 26 search keyboard has no Done/Return key, WDA's dismiss failed, and looktap swallowed the error | Silent false success. Appium and MCP correctly reported failure | ✅ fixed: checks the keyboard afterwards and exits 2 if it's still up (verified in Run 4) |
-| 2 | **`tap` fell back to "first label containing the text"**, so with the wrong screen up it could tap a different element and report success | Wrong element tapped silently | ✅ fixed: exact first, a fuzzy match only when it names one label, `--exact`, and `tap` prints what it hit |
-| 3 | **No waiting:** `tap`/`back` right after a navigation failed when the screen wasn't ready yet | Spurious "not found" | ✅ fixed: `--wait` (default 3 s) |
-| 4 | **Android `fill` dumped the screen twice** | `fill` took ~5 s instead of ~2.5 s | ✅ fixed, and with the helper `fill` takes ~0.8 s |
-| 5 | **Fixed per-command overhead:** every command re-lists all devices, even with `-p` and `-d` given | +0.1–0.3 s on every command | ✅ fixed |
-| 6 | Android screen reads took about 2.5 s (`uiautomator dump`) | Slow `ls`/`tap`/`fill` on Android | ✅ fixed in Run 4: a persistent helper run with `app_process` (nothing installed). Reads take ~130 ms |
-
----
-
-## Benchmark history
-
-These problems were found in the harness, not in the tools, and are kept here
-so the method can be trusted:
-
-1. **Run 1 (discarded):** the "reset" between runs force-stopped Settings but
-   not its search screen, which lives in a separate package. Most runs started
-   on the wrong screen. Fixed by stopping both packages and relaunching with a
-   cleared task.
-2. **Run 2 (discarded):** a 1.5 s settle after opening Settings search was too
-   short for UiAutomator2 (see Reliability above). Raised to 4 s for all tools.
-3. **Run 3:** looktap 0.1.0 with WebDriverAgent and `uiautomator dump`.
-4. **Run 4:** looktap with its own helpers. Only looktap was re-run (see above).
+- **One scenario, one checker.** Every tool did the same steps. Whether a step worked was decided by a neutral oracle,
+  not by the tool: `idb ui describe-all` on iOS; on Android, `dumpsys` (the resumed activity, the fragments, the view
+  tree, and the search screen's result list).
+- **Driven like an agent.** MCP servers ran over stdio with `tools/call`, and CLIs ran once per step. When a tool can't
+  act on a label, the step reads the screen first and acts on what it found, and that read counts as a call.
+- **Two times per step.** *Answered in* is until the tool call returned; *reaction time* is until the oracle saw the
+  result on screen.
+- **Same start for every tool.**
+  - Before each tool, the simulator or emulator was rebooted (with its window open), whatever the previous tool left
+    running was killed, and the Mac was back at its idle load.
+  - On Android, before every run, the device was also back below a load of 1.0.
+  - Resets between steps used plain `simctl`/`adb` and were not timed.
+- **CPU and RAM:**
+  - `ps` every 250 ms on the Mac, over each tool's whole process tree and the helpers it leaves running.
+  - On Android, also the device's own `ps` once a second, for helpers inside the emulator.
+  - The runner's own commands are left out.
+- **Re-runs only for benchmark mistakes.** Four times a step failed because of the benchmark, not the tool. Those
+  steps were fixed and run again, and each report lists them with the reason. A step was never re-run because a tool
+  failed it.
+- **Limits:**
+  - looktap's author wrote this benchmark and every adapter (in [`bench/`](bench)), and looktap was developed on this
+    app. Corrections from the other tools' authors are welcome.
+  - It covers one system app on a simulator and an emulator, not a real app on a real device.
+  - The Mac had other apps open; every tool waited for the same idle level before it started.
 
 ## Reproduce
 
-```bash
-# 1. devices: boot exactly one simulator and one emulator
-# 2. an Appium 3 server with both drivers:
-npx appium driver install xcuitest && npx appium driver install uiautomator2
-npx appium --port 4723 &
-# 3. optional: an installed app with a deep link, for the deep-link step
-export BENCH_DEEPLINK=myapp://home BENCH_DEEPLINK_APP=com.example.myapp
-# 4. run (each platform takes ~20 min for all three tools, 10 runs each)
-cd bench
-node full.mjs android 10            # or: node full.mjs ios 10
-node full.mjs ios 3 looktap        # one tool, fewer runs
-python3 mdtable.py results/ios.json # → the markdown table above
+```sh
+# iOS: one booted simulator; Appium needs a WebDriverAgent built once (xcodebuild build-for-testing ... -derivedDataPath bench/out/wda)
+BENCH_IOS_UDID=<udid> BENCH_APPIUM_HOME=<dir with appium + drivers> BENCH_WDA_DERIVED_DATA=$PWD/bench/out/wda \
+  node bench/run.mjs ios 10
+# Android: one emulator (BENCH_ANDROID_SERIAL, default emulator-5554)
+BENCH_APPIUM_HOME=<dir with appium + drivers> node bench/run.mjs android 10
+# Tables
+node bench/report.mjs ios && node bench/report.mjs android
 ```
 
-Raw per-run numbers are in `bench/results/android.json` and
-`bench/results/ios.json` (Run 3), and in `android-run4-looktap.json` and
-`ios-run4-looktap.json` (Run 4). Set `BENCH_TAG` to keep a run's results
-separate. For Appium on iOS, `BENCH_PREBUILT_WDA` points at a built
-`WebDriverAgentRunner-Runner.app` so Appium skips its `xcodebuild`.
+The runner takes a third argument, a comma-separated list of tools (for example `looktap,mobile-mcp`). It also needs
+idb with idb-companion, Maestro, and Appium with the xcuitest and UiAutomator2 drivers; the MCP servers come through
+`npx`. A full run takes about 1.5 hours per platform.

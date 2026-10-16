@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### Benchmark
+- **A new benchmark against every agent mobile tool** that runs on one Mac: looktap (CLI and MCP), mobile-mcp, Maestro
+  MCP, Appium MCP, raw Appium, ios-simulator-mcp, MobileBuildMCP, raw idb and raw adb. The same 12 steps in the
+  Settings app on an iPhone simulator and an Android emulator, 10 runs each.
+  - A neutral oracle (`idb`, `dumpsys`) decides whether each step worked, not the tool.
+  - Each step records the response time, the reaction time on screen, the tool calls and the bytes returned, along with
+    each tool's CPU and RAM on the Mac and on the device.
+  - Every tool starts on a rebooted device with the Mac idle.
+- `BENCHMARK.md` gives the summary; `bench/results/ios.md` and `bench/results/android.md` hold the full per-step data,
+  next to the raw JSON. The old Appium-only benchmark and its scripts are removed.
+- The README section and the website's benchmark charts show the new results, including where looktap is slower and
+  what it can't do.
+
 ### Website
 - A "Using Claude Code?" box under the kickstart prompt shows the plugin install and `/looktap:setup`.
 - Stylesheet and script links carry a content hash (`styles.css?v=…`), so right after a deploy a browser never
