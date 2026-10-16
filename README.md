@@ -126,7 +126,8 @@ To teach Claude Code how to use looktap, install the plugin. In Claude Code:
 /plugin install looktap --marketplace lakpriya1s/looktap
 ```
 
-It adds the looktap skill and keeps it up to date. Or copy the skill in by hand:
+It adds the looktap skill and keeps it up to date. Then run `/looktap:setup`: it installs the CLI, checks your
+toolchain and gets a device ready. Or copy the skill in by hand:
 
 ```bash
 looktap skill --install      # → ~/.claude/skills/looktap/SKILL.md
@@ -537,7 +538,7 @@ Pick the route that fits your agent:
 
 | Your agent | Use | Set up |
 |---|---|---|
-| **Claude Code** | The plugin: the CLI plus a skill that teaches the loop | `/plugin install looktap --marketplace lakpriya1s/looktap` ([details](#claude-code-plugin)) |
+| **Claude Code** | The plugin: the CLI plus a skill that teaches the loop | `/plugin install looktap --marketplace lakpriya1s/looktap`, then `/looktap:setup` ([details](#claude-code-plugin)) |
 | **Other agents with a shell** (Codex, Cursor's agent, opencode, …) | The CLI plus the skill file | `looktap skill --install` (or `looktap skill` prints it) |
 | **Chat apps without a shell** (Claude Desktop, …) | The MCP server | `npx -y @looktap/mcp` ([details](#mcp-server-for-clients-without-a-shell)) |
 
@@ -575,8 +576,14 @@ In Claude Code, run:
 /plugin install looktap --marketplace lakpriya1s/looktap
 ```
 
-- **What it adds:** the looktap skill, which teaches Claude the look-act loop, how to pick targets, when to wait,
-  when a screenshot is worth it, how to debug a crash, and the safety rules.
+- **What it adds:**
+  - the looktap skill, which teaches Claude the look-act loop, how to pick targets, when to wait, when a
+    screenshot is worth it, how to debug a crash, and the safety rules;
+  - **`/looktap:setup`**, which gets the machine ready: it installs the CLI (asking first), runs `looktap doctor`
+    and explains each fix, offers to boot a simulator or emulator, walks you through a real iPhone's one-time
+    steps, and finishes with a working `ls`. Add `ios`, `android` or `iphone` to set up just that.
+- **What it doesn't install:** Xcode, the Android SDK and the Apple ID sign-in are yours to do; `/looktap:setup`
+  tells you exactly what's missing.
 - **What it costs:** about 150 tokens per session for the skill's description, and about 4.5k tokens each time
   Claude loads the skill.
 - **Staying current:** the plugin comes straight from this repo, so it updates with `main`.
