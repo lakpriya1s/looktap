@@ -464,8 +464,8 @@ export const SCENES = [
     id: 'agents',
     kicker: '12 · For agents',
     title: 'Built for the agent loop',
-    body: `<p>Turns cost more than milliseconds. <code>--ls</code> on any action returns the settled screen, so look-then-act is one call. <code>run</code> batches known steps in one process, <code>ls --json</code> gives structure, and the bundled skill teaches Claude Code the loop.</p>
-<p>For chat apps without a shell, <code>looktap mcp</code> serves the same commands over MCP.</p>
+    body: `<p>Turns cost more than milliseconds. <code>--ls</code> on any action returns the settled screen, so look-then-act is one call. <code>run</code> batches known steps in one process, <code>ls --json</code> gives structure, and the Claude Code plugin teaches Claude the loop in about 150 tokens per session.</p>
+<p>For chat apps without a shell, <code>npx -y @looktap/mcp</code> serves the same commands over MCP. It's in the official MCP Registry.</p>
 <div class="tools" data-tools aria-label="MCP tools"></div>`,
     covers: ['run', 'mcp', 'skill'],
     start: (p) => p.show('signin'),
@@ -494,10 +494,10 @@ export const SCENES = [
           return [`{"screen":{"w":${w},"h":${h}},"elements":[${els.join(',')},…]}`];
         },
       },
-      { cmd: 'looktap skill --install', run: async () => ['installed /Users/you/.claude/skills/looktap/SKILL.md'] },
+      { cmd: 'claude plugin install looktap --marketplace lakpriya1s/looktap', run: async () => ['✔ Successfully installed plugin: looktap@looktap'] },
       {
-        cmd: 'looktap mcp --config',
-        run: async () => ['{', '  "mcpServers": {', '    "looktap": {', '      "command": "/usr/local/bin/node",', '      "args": ["…/looktap/bin/looktap.js", "mcp"]', '    }', '  }', '}'],
+        cmd: 'claude mcp add looktap -- npx -y @looktap/mcp',
+        run: async () => ['Added stdio MCP server looktap with command: npx -y @looktap/mcp to local config'],
       },
     ],
   },

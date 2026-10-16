@@ -533,18 +533,13 @@ on-device screenshot, for example to check that a screen *is* secure.
 
 ## For AI agents
 
-Install the skill so your agent knows the loop, the shortcuts and the rules. In Claude Code, as a plugin that
-stays up to date:
+Pick the route that fits your agent:
 
-```
-/plugin install looktap --marketplace lakpriya1s/looktap
-```
-
-Or for any agent that reads skills from disk:
-
-```bash
-looktap skill --install       # → ~/.claude/skills/looktap/SKILL.md   (looktap skill prints it)
-```
+| Your agent | Use | Set up |
+|---|---|---|
+| **Claude Code** | The plugin: the CLI plus a skill that teaches the loop | `/plugin install looktap --marketplace lakpriya1s/looktap` ([details](#claude-code-plugin)) |
+| **Other agents with a shell** (Codex, Cursor's agent, opencode, …) | The CLI plus the skill file | `looktap skill --install` (or `looktap skill` prints it) |
+| **Chat apps without a shell** (Claude Desktop, …) | The MCP server | `npx -y @looktap/mcp` ([details](#mcp-server-for-clients-without-a-shell)) |
 
 An agent spends seconds per turn, so **turns** matter more than milliseconds. looktap is built to save them:
 
@@ -571,6 +566,25 @@ An agent spends seconds per turn, so **turns** matter more than milliseconds. lo
   colours, images). Usually `ls` is enough and the PNG is never opened.
 - **Hints when the screen isn't what it seems.** When a passcode or permission prompt covers the app, `ls`
   prints a hint rather than an empty list.
+
+### Claude Code plugin
+
+In Claude Code, run:
+
+```
+/plugin install looktap --marketplace lakpriya1s/looktap
+```
+
+- **What it adds:** the looktap skill, which teaches Claude the look-act loop, how to pick targets, when to wait,
+  when a screenshot is worth it, how to debug a crash, and the safety rules.
+- **What it costs:** about 150 tokens per session for the skill's description, and about 4.5k tokens each time
+  Claude loads the skill.
+- **Staying current:** the plugin comes straight from this repo, so it updates with `main`.
+- **The CLI:** the skill runs `looktap` commands. Install them with `npm install -g @looktap/cli`, or the skill
+  falls back to `npx @looktap/cli`.
+- **No MCP server inside, on purpose:** with a shell, the CLI and the skill do the same job with fewer tokens, and
+  an MCP server would add its 16 tool definitions to every session. Add `@looktap/mcp` separately if you want it
+  anyway.
 
 ### MCP server, for clients without a shell
 
