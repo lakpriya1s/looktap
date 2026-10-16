@@ -8,7 +8,7 @@ import { inline, render, slug } from '../site/md.js';
 import { formatRow as siteRow } from '../site/src/rows.js';
 import { SCENES } from '../site/src/scenes.js';
 
-test('the demo terminal prints ls rows exactly as simwright does', () => {
+test('the demo terminal prints ls rows exactly as looktap does', () => {
   for (const e of [
     { label: 'Sign in', type: 'Button', x: 24, y: 432, w: 342, h: 52 },
     { label: 'Email', value: 'Your email address', type: 'TextField', x: 24, y: 236, w: 342, h: 48 },
@@ -39,7 +39,7 @@ test('render: nested lists and links through the rewriter', () => {
 });
 
 test('the inventory covers every command, and every scene names real ones', () => {
-  const cli = readFileSync(new URL('../bin/simwright.js', import.meta.url), 'utf8');
+  const cli = readFileSync(new URL('../bin/looktap.js', import.meta.url), 'utf8');
   const commands = cliCommands(cli);
   assert.ok(commands.includes('tap') && commands.includes('mcp') && commands.includes('rotate'));
   assert.ok(!commands.includes('help'));
@@ -52,11 +52,11 @@ test('the inventory covers every command, and every scene names real ones', () =
 });
 
 test('the agent skill lists every command and flag', () => {
-  const cli = readFileSync(new URL('../bin/simwright.js', import.meta.url), 'utf8');
-  const skill = readFileSync(new URL('../skills/simwright/SKILL.md', import.meta.url), 'utf8');
+  const cli = readFileSync(new URL('../bin/looktap.js', import.meta.url), 'utf8');
+  const skill = readFileSync(new URL('../skills/looktap/SKILL.md', import.meta.url), 'utf8');
   const commands = sections(skill).find((s) => s.title === 'Commands');
   assert.ok(commands);
-  const used = new Set([...commands.md.matchAll(/^simwright ([a-z]+)/gm)].map((m) => m[1]));
+  const used = new Set([...commands.md.matchAll(/^looktap ([a-z]+)/gm)].map((m) => m[1]));
   assert.deepEqual(cliCommands(cli).filter((c) => !used.has(c)), []);
   assert.deepEqual(cliFlags(cli).filter((f) => !new RegExp(`(^|[\\s\`\\[,])${f}\\b`).test(skill)), []);
 });

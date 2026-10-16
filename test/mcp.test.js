@@ -4,7 +4,7 @@ import { test } from 'node:test';
 
 import { TOOLS, toWords } from '../lib/mcp.js';
 
-test('tool calls become simwright command lines', () => {
+test('tool calls become looktap command lines', () => {
   assert.deepEqual(toWords('tap', { target: 'Sign in' }), ['tap', 'Sign in', '--ls']);
   assert.deepEqual(toWords('tap', { target: '@3', ls: false }), ['tap', '@3']);
   assert.deepEqual(toWords('fill', { target: 'Email', text: 'a b' }), ['fill', 'Email', 'a b', '--ls']);
@@ -22,7 +22,7 @@ test('every tool has a schema that names its required fields', () => {
 });
 
 test('the server speaks MCP over stdio and keeps stdout clean', async () => {
-  const p = spawn(process.execPath, [new URL('../bin/simwright.js', import.meta.url).pathname, 'mcp'], { cwd: '/' });
+  const p = spawn(process.execPath, [new URL('../bin/looktap.js', import.meta.url).pathname, 'mcp'], { cwd: '/' });
   let out = '';
   p.stdout.on('data', (d) => (out += d));
   const send = (m) => p.stdin.write(JSON.stringify({ jsonrpc: '2.0', ...m }) + '\n');
@@ -34,7 +34,7 @@ test('the server speaks MCP over stdio and keeps stdout clean', async () => {
   await new Promise((r) => p.on('close', r));
   const msgs = out.trim().split('\n').map((l) => JSON.parse(l)); // every line is a protocol message
   assert.equal(msgs.length, 3);
-  assert.equal(msgs[0].result.serverInfo.name, 'simwright');
+  assert.equal(msgs[0].result.serverInfo.name, 'looktap');
   assert.equal(msgs[1].result.tools.length, TOOLS.length);
   assert.equal(msgs[2].error.code, -32601);
 });

@@ -23,4 +23,4 @@ createServer((req, res) => {
   if (!file.startsWith(DIST) || !existsSync(file)) return res.writeHead(404).end('not found');
   res.writeHead(200, { 'content-type': TYPES[extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' });
   createReadStream(file).pipe(res);
-}).listen(port, '127.0.0.1', () => console.log(`simwright site on http://127.0.0.1:${port}`));
+}).listen(port, '127.0.0.1', () => console.log(`looktap site on http://127.0.0.1:${port}`));

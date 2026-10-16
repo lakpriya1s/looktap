@@ -1,6 +1,6 @@
 {
   "setup": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 193.442917,
         "bytes": 40,
@@ -26,7 +26,7 @@
     ]
   },
   "ls (read screen)": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 3571.9473750000006,
         "bytes": 1618,
@@ -214,12 +214,12 @@
     ]
   },
   "tap (by label)": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 2778.608916000001,
         "bytes": 0,
         "calls": 0,
-        "err": "Command failed: node bin/simwright.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 tap General\nsimwright: not "
+        "err": "Command failed: node bin/looktap.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 tap General\nlooktap: not "
       },
       {
         "ms": 2046.237792,
@@ -402,12 +402,12 @@
     ]
   },
   "back": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 338.17816700000003,
         "bytes": 0,
         "calls": 0,
-        "err": "Command failed: node bin/simwright.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 back\nsimwright: no navigati"
+        "err": "Command failed: node bin/looktap.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 back\nlooktap: no navigati"
       },
       {
         "ms": 1076.820832999998,
@@ -590,7 +590,7 @@
     ]
   },
   "tapxy": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 722.8034580000003,
         "bytes": 0,
@@ -778,7 +778,7 @@
     ]
   },
   "swipe": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 1616.604792000002,
         "bytes": 0,
@@ -966,7 +966,7 @@
     ]
   },
   "fill": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 4495.746041999999,
         "bytes": 0,
@@ -1154,7 +1154,7 @@
     ]
   },
   "type": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 485.13945799999783,
         "bytes": 0,
@@ -1342,7 +1342,7 @@
     ]
   },
   "hidekb": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 3837.0155000000013,
         "bytes": 0,
@@ -1530,7 +1530,7 @@
     ]
   },
   "shot (screenshot)": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 722.6441669999986,
         "bytes": 92,
@@ -1718,7 +1718,7 @@
     ]
   },
   "bio": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 565.3020840000027,
         "bytes": 0,
@@ -1844,7 +1844,7 @@
     ]
   },
   "open (deep link)": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 571.9603330000027,
         "bytes": 0,
@@ -2032,7 +2032,7 @@
     ]
   },
   "launch (restart app)": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 542.427208000001,
         "bytes": 0,
@@ -2220,7 +2220,7 @@
     ]
   },
   "burst 5s (frames)": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 5720.521999999997,
         "bytes": 117,
@@ -2249,7 +2249,7 @@
     ]
   },
   "teardown": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 488.11912500002654,
         "bytes": 23,

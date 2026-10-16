@@ -1,5 +1,5 @@
 // The `ls` row format, the same as lib/screen.js formatRow (test/site.test.js keeps the two identical), so the
-// demo terminal prints exactly what simwright prints for the elements drawn on the demo phone.
+// demo terminal prints exactly what looktap prints for the elements drawn on the demo phone.
 export function formatRow(e, ref) {
   const label = e.label ? e.label.slice(0, 90) : '(no label)';
   const value = e.value && e.value !== e.label ? `  = ${e.value.slice(0, 40)}` : '';

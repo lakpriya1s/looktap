@@ -3,18 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>simwright · hands on the simulator, for AI agents</title>
-<meta name="description" content="Let AI agents drive an iOS simulator or Android emulator from the shell: read the screen as text, tap by label, type, swipe, screenshot, read logs and crashes. Nothing to install on the device and no server to start.">
-<link rel="canonical" href="https://lakpriya1s.github.io/simwright/">
+<title>looktap · hands on the phone, for AI agents</title>
+<meta name="description" content="Let AI agents drive iPhone and Android devices from the shell: read the screen as text, tap by label, type, swipe, screenshot, read logs and crashes. No server to start and zero dependencies.">
+<link rel="canonical" href="https://lakpriya1s.github.io/looktap/">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="simwright">
-<meta property="og:url" content="https://lakpriya1s.github.io/simwright/">
-<meta property="og:title" content="simwright · hands on the simulator, for AI agents">
-<meta property="og:description" content="Your coding agent reads the iOS simulator or Android emulator screen as text and taps by label. Nothing to install on the device and no server to start.">
-<meta property="og:image" content="https://lakpriya1s.github.io/simwright/og.png">
+<meta property="og:site_name" content="looktap">
+<meta property="og:url" content="https://lakpriya1s.github.io/looktap/">
+<meta property="og:title" content="looktap · hands on the phone, for AI agents">
+<meta property="og:description" content="Your coding agent reads the screen of an iPhone or Android device as text and taps by label. No server to start.">
+<meta property="og:image" content="https://lakpriya1s.github.io/looktap/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="simwright: hands on the simulator, for AI agents">
+<meta property="og:image:alt" content="looktap: hands on the phone, for AI agents">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#070b16">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -22,7 +22,7 @@
 <!-- Fonts don't block the first paint: the system fallbacks show until they arrive. -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Martian+Mono:wght@300;400;500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Martian+Mono:wght@300;400;500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap"></noscript>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"simwright","applicationCategory":"DeveloperApplication","operatingSystem":"macOS, Linux","description":"Let AI agents drive an iOS simulator or Android emulator from the shell: read the screen as text, tap by label, type, swipe, screenshot, read logs and crashes. Nothing to install on the device.","url":"https://lakpriya1s.github.io/simwright/","downloadUrl":"https://www.npmjs.com/package/simwright","codeRepository":"https://github.com/lakpriya1s/simwright","license":"https://www.gnu.org/licenses/agpl-3.0.html","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"looktap","applicationCategory":"DeveloperApplication","operatingSystem":"macOS, Linux","description":"Let AI agents drive iPhone and Android devices from the shell: read the screen as text, tap by label, type, swipe, screenshot, read logs and crashes. No server to start and zero dependencies."","url":"https://lakpriya1s.github.io/looktap/","downloadUrl":"https://www.npmjs.com/package/looktap","codeRepository":"https://github.com/lakpriya1s/looktap","license":"https://www.gnu.org/licenses/agpl-3.0.html","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="phone.css">
 <script>try{const t=localStorage.getItem('sw-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
@@ -32,14 +32,14 @@
 <a class="skip" href="#story">Skip to the features</a>
 
 <header class="topbar">
-  <a class="brand" href="#top" aria-label="simwright home"><img src="favicon.svg" alt="" width="26" height="26"><span>simwright</span></a>
-  <a class="version" data-version href="https://www.npmjs.com/package/simwright" rel="noopener" title="simwright on npm"></a>
+  <a class="brand" href="#top" aria-label="looktap home"><img src="favicon.svg" alt="" width="26" height="26"><span>looktap</span></a>
+  <a class="version" data-version href="https://www.npmjs.com/package/looktap" rel="noopener" title="looktap on npm"></a>
   <nav class="topnav" aria-label="Site">
     <a href="#story">Features</a>
     <a href="docs/quick-start.html">Docs</a>
     <a href="#benchmark">Benchmark</a>
-    <a class="ico-link" href="https://github.com/lakpriya1s/simwright" rel="noopener" aria-label="GitHub"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg><span>GitHub</span></a>
-    <a class="ico-link" href="https://www.npmjs.com/package/simwright" rel="noopener" aria-label="npm"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l13.837.019-.009 13.836h-3.464l.01-10.382h-3.456L12.04 19.17H5.113z"/></svg><span>npm</span></a>
+    <a class="ico-link" href="https://github.com/lakpriya1s/looktap" rel="noopener" aria-label="GitHub"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg><span>GitHub</span></a>
+    <a class="ico-link" href="https://www.npmjs.com/package/looktap" rel="noopener" aria-label="npm"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l13.837.019-.009 13.836h-3.464l.01-10.382h-3.456L12.04 19.17H5.113z"/></svg><span>npm</span></a>
   </nav>
   <div class="seg" role="group" aria-label="Demo platform">
     <button type="button" data-platform-set="ios" aria-pressed="true" aria-label="iOS"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg><span>iOS</span></button>
@@ -52,14 +52,14 @@
   <div class="story" id="story">
     <div class="story-text" data-scenes>
       <section class="hero scene" data-scene="look" id="look" aria-labelledby="hero-title">
-        <p class="eyebrow">For AI agents · <span class="plat"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>iOS simulator</span> · <span class="plat"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M18.4395 5.5586c-.675 1.1664-1.352 2.3318-2.0274 3.498-.0366-.0155-.0742-.0286-.1113-.043-1.8249-.6957-3.484-.8-4.42-.787-1.8551.0185-3.3544.4643-4.2597.8203-.084-.1494-1.7526-3.021-2.0215-3.4864a1.1451 1.1451 0 0 0-.1406-.1914c-.3312-.364-.9054-.4859-1.379-.203-.475.282-.7136.9361-.3886 1.5019 1.9466 3.3696-.0966-.2158 1.9473 3.3593.0172.031-.4946.2642-1.3926 1.0177C2.8987 12.176.452 14.772 0 18.9902h24c-.119-1.1108-.3686-2.099-.7461-3.0683-.7438-1.9118-1.8435-3.2928-2.7402-4.1836a12.1048 12.1048 0 0 0-2.1309-1.6875c.6594-1.122 1.312-2.2559 1.9649-3.3848.2077-.3615.1886-.7956-.0079-1.1191a1.1001 1.1001 0 0 0-.8515-.5332c-.5225-.0536-.9392.3128-1.0488.5449zm-.0391 8.461c.3944.5926.324 1.3306-.1563 1.6503-.4799.3197-1.188.0985-1.582-.4941-.3944-.5927-.324-1.3307.1563-1.6504.4727-.315 1.1812-.1086 1.582.4941zM7.207 13.5273c.4803.3197.5506 1.0577.1563 1.6504-.394.5926-1.1038.8138-1.584.4941-.48-.3197-.5503-1.0577-.1563-1.6504.4008-.6021 1.1087-.8106 1.584-.4941z"/></svg>Android emulator</span></p>
-        <h1 id="hero-title">Hands on the <em>simulator.</em></h1>
-        <p class="lede">simwright lets your coding agent see and use the app it's building. It reads the screen as a few lines of text and taps by label. Nothing to install on the device and no server to start.</p>
+        <p class="eyebrow">For AI agents · <span class="plat"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>iPhone</span> · <span class="plat"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M18.4395 5.5586c-.675 1.1664-1.352 2.3318-2.0274 3.498-.0366-.0155-.0742-.0286-.1113-.043-1.8249-.6957-3.484-.8-4.42-.787-1.8551.0185-3.3544.4643-4.2597.8203-.084-.1494-1.7526-3.021-2.0215-3.4864a1.1451 1.1451 0 0 0-.1406-.1914c-.3312-.364-.9054-.4859-1.379-.203-.475.282-.7136.9361-.3886 1.5019 1.9466 3.3696-.0966-.2158 1.9473 3.3593.0172.031-.4946.2642-1.3926 1.0177C2.8987 12.176.452 14.772 0 18.9902h24c-.119-1.1108-.3686-2.099-.7461-3.0683-.7438-1.9118-1.8435-3.2928-2.7402-4.1836a12.1048 12.1048 0 0 0-2.1309-1.6875c.6594-1.122 1.312-2.2559 1.9649-3.3848.2077-.3615.1886-.7956-.0079-1.1191a1.1001 1.1001 0 0 0-.8515-.5332c-.5225-.0536-.9392.3128-1.0488.5449zm-.0391 8.461c.3944.5926.324 1.3306-.1563 1.6503-.4799.3197-1.188.0985-1.582-.4941-.3944-.5927-.324-1.3307.1563-1.6504.4727-.315 1.1812-.1086 1.582.4941zM7.207 13.5273c.4803.3197.5506 1.0577.1563 1.6504-.394.5926-1.1038.8138-1.584.4941-.48-.3197-.5503-1.0577-.1563-1.6504.4008-.6021 1.1087-.8106 1.584-.4941z"/></svg>Android</span></p>
+        <h1 id="hero-title">Hands on the <em>phone.</em></h1>
+        <p class="lede">looktap lets your coding agent see and use the app it's building. It reads the screen as a few lines of text and taps by label, on iPhone and Android devices. No server to start.</p>
         <div class="install">
-          <code id="install-cmd">npm install -g simwright</code>
+          <code id="install-cmd">npm install -g looktap</code>
           <button type="button" data-copy="#install-cmd">Copy</button>
         </div>
-        <p class="try">Or without installing: <code>npx simwright doctor</code></p>
+        <p class="try">Or without installing: <code>npx looktap doctor</code></p>
         <p class="cta"><a class="btn" href="docs/quick-start.html">Read the docs</a><a class="btn ghost" href="#start">Kickstart your agent</a></p>
         <dl class="stats">
           <div><dt>~1 KB</dt><dd>per screen read</dd></div>
@@ -75,7 +75,7 @@
       </section>
     </div>
 
-    <div class="stage" aria-label="Demo: simwright driving a phone">
+    <div class="stage" aria-label="Demo: looktap driving a phone">
       <div class="stage-inner">
         <p class="scene-label"><span data-scene-label>01 · Look</span><span class="dots" data-dots></span></p>
         <div class="rig">
@@ -93,7 +93,7 @@
     <div class="band-inner">
       <p class="kicker">Every command</p>
       <h2 id="commands-title"><span data-count="commands">40</span> commands, one line of text each</h2>
-      <p class="band-lede">Read from simwright's own code when this page was built. Each one links to the scene above that shows it. The <a href="docs/commands.html">commands reference</a> has every option.</p>
+      <p class="band-lede">Read from looktap's own code when this page was built. Each one links to the scene above that shows it. The <a href="docs/commands.html">commands reference</a> has every option.</p>
       <div class="cmd-grid" data-commands></div>
     </div>
   </section>
@@ -106,25 +106,25 @@
       <div class="bench-grid">
         <figure class="bench">
           <figcaption>Size of one screen read</figcaption>
-          <div class="bar sw" style="--v:1"><span>simwright</span><b>~1 KB text</b></div>
+          <div class="bar sw" style="--v:1"><span>looktap</span><b>~1 KB text</b></div>
           <div class="bar" style="--v:46"><span>Appium</span><b>41–51 KB XML</b></div>
           <div class="bar" style="--v:100"><span>Appium MCP</span><b>101–124 KB XML</b></div>
         </figure>
         <figure class="bench">
           <figcaption>Setup before the first command</figcaption>
-          <div class="bar sw" style="--v:0.4"><span>simwright</span><b>0.04–0.13 s</b></div>
+          <div class="bar sw" style="--v:0.4"><span>looktap</span><b>0.04–0.13 s</b></div>
           <div class="bar" style="--v:44"><span>Appium</span><b>7–17 s</b></div>
           <div class="bar" style="--v:100"><span>Appium MCP</span><b>23–39 s</b></div>
         </figure>
         <figure class="bench">
           <figcaption>Failed operations, of 123 per platform (Android · iOS)</figcaption>
-          <div class="bar sw" style="--v:9"><span>simwright</span><b>2 · 0</b></div>
+          <div class="bar sw" style="--v:9"><span>looktap</span><b>2 · 0</b></div>
           <div class="bar" style="--v:91"><span>Appium</span><b>10 · 10</b></div>
           <div class="bar" style="--v:100"><span>Appium MCP</span><b>12 · 10</b></div>
         </figure>
         <figure class="bench">
           <figcaption>Restart the app (Android · iOS)</figcaption>
-          <div class="bar sw" style="--v:11"><span>simwright</span><b>186 ms · 513 ms</b></div>
+          <div class="bar sw" style="--v:11"><span>looktap</span><b>186 ms · 513 ms</b></div>
           <div class="bar" style="--v:89"><span>Appium</span><b>753 ms · 4.26 s</b></div>
           <div class="bar" style="--v:100"><span>Appium MCP</span><b>735 ms · 4.81 s</b></div>
         </figure>
@@ -139,22 +139,22 @@
         <p class="kicker">Get started</p>
         <h2 id="start-title">Two minutes to a phone your agent can use</h2>
         <ol class="steps">
-          <li><span>Install</span><code>npm install -g simwright</code></li>
-          <li><span>Check the toolchain</span><code>simwright doctor</code></li>
-          <li><span>Teach your agent</span><code>simwright skill --install</code></li>
-          <li><span>Drive</span><code>simwright launch com.apple.Preferences --ls</code></li>
+          <li><span>Install</span><code>npm install -g looktap</code></li>
+          <li><span>Check the toolchain</span><code>looktap doctor</code></li>
+          <li><span>Teach your agent</span><code>looktap skill --install</code></li>
+          <li><span>Drive</span><code>looktap launch com.apple.Preferences --ls</code></li>
         </ol>
-        <p class="req">Prefer MCP? Claude Code: <code>claude mcp add simwright -- npx -y simwright mcp</code>. Chat apps without a shell (Claude Desktop, Cursor): <code>simwright mcp --config</code> prints a ready-to-paste config.</p>
+        <p class="req">Prefer MCP? Claude Code: <code>claude mcp add looktap -- npx -y looktap mcp</code>. Chat apps without a shell (Claude Desktop, Cursor): <code>looktap mcp --config</code> prints a ready-to-paste config.</p>
         <p class="req">Node 18+. iOS: macOS with Xcode. Android: adb, with an emulator or a device. <a href="docs/quick-start.html#requirements">Requirements</a> · <a href="docs/quick-start.html">Quick start</a> · <a href="docs/agents.html">For AI agents</a></p>
       </div>
       <div class="prompt-card">
         <div class="prompt-head"><span>Paste into Claude Code, Cursor, Codex, opencode…</span><button type="button" data-copy="#kickstart">Copy</button></div>
-        <pre id="kickstart">Install simwright (https://github.com/lakpriya1s/simwright) so you can drive my app in the iOS simulator / Android emulator:
+        <pre id="kickstart">Install looktap (https://github.com/lakpriya1s/looktap) so you can drive my app on an iPhone or Android device:
 
-1. Run `npm install -g simwright`, then `simwright doctor`, and fix anything it reports (boot a simulator or emulator if none is up).
-2. Run `simwright skill --install` and read the skill it installs.
-3. Find my app's bundle id / package name in this repo and write a simwright.config.json with it at the repo root.
-4. Launch the app with `simwright launch --ls` and tell me what screen it's on.
+1. Run `npm install -g looktap`, then `looktap doctor`, and fix anything it reports (boot a simulator or emulator, or connect a device, if none is up).
+2. Run `looktap skill --install` and read the skill it installs.
+3. Find my app's bundle id / package name in this repo and write a looktap.config.json with it at the repo root.
+4. Launch the app with `looktap launch --ls` and tell me what screen it's on.
 
 Rules: never type real credentials, OTPs or card numbers. When the app needs a sign-in, stop and let me do it, then continue from there.</pre>
       </div>
@@ -169,9 +169,9 @@ Rules: never type real credentials, OTPs or card numbers. When the app needs a s
       <a href="docs/quick-start.html">Quick start</a><a href="docs/examples.html">Examples</a><a href="docs/commands.html">Commands</a>
       <a href="docs/agents.html">For AI agents</a><a href="docs/agent-guide.html">Agent guide</a><a href="docs/how-it-works.html">How it works</a>
       <a href="docs/troubleshooting.html">Troubleshooting</a><a href="docs/safety.html">Safety rules</a><a href="docs/contributing.html">Contributing</a>
-      <a href="https://www.npmjs.com/package/simwright" rel="noopener">npm</a><a href="https://github.com/lakpriya1s/simwright" rel="noopener">GitHub</a>
+      <a href="https://www.npmjs.com/package/looktap" rel="noopener">npm</a><a href="https://github.com/lakpriya1s/looktap" rel="noopener">GitHub</a>
     </nav>
-    <p class="legal">AGPL-3.0-only. Not affiliated with Apple, Google or the Appium project. Apple, iOS, Android, GitHub and npm logos are trademarks of their owners; the Android robot is reproduced from work created and shared by Google and used according to the Creative Commons 3.0 Attribution License. The phone above is an animation of a fictional demo app; the commands and outputs are simwright's.</p>
+    <p class="legal">AGPL-3.0-only. Not affiliated with Apple, Google or the Appium project. Apple, iOS, Android, GitHub and npm logos are trademarks of their owners; the Android robot is reproduced from work created and shared by Google and used according to the Creative Commons 3.0 Attribution License. The phone above is an animation of a fictional demo app; the commands and outputs are looktap's.</p>
   </div>
 </footer>
 </body>

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Builds the website into site/dist: the landing page (site/src, copied), the docs pages (rendered from
-// README.md, skills/simwright/SKILL.md and BENCHMARK.md), and inventory.js (commands, MCP tools and flags,
+// README.md, skills/looktap/SKILL.md and BENCHMARK.md), and inventory.js (commands, MCP tools and flags,
 // read from the code). Fails when the docs or the landing page fall behind the code:
-//   - a command in bin/simwright.js with no row in the README Commands table, or no landing scene
+//   - a command in bin/looktap.js with no row in the README Commands table, or no landing scene
 //   - a README section that no docs page includes
 //   - an internal link or #anchor that doesn't resolve
 // Zero dependencies: node site/build.mjs
@@ -16,15 +16,15 @@ const SITE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(SITE, '..');
 const SRC = join(SITE, 'src');
 const DIST = join(SITE, 'dist');
-const REPO = 'https://github.com/lakpriya1s/simwright';
-const SITE_URL = 'https://lakpriya1s.github.io/simwright/';
+const REPO = 'https://github.com/lakpriya1s/looktap';
+const SITE_URL = 'https://lakpriya1s.github.io/looktap/';
 const FONTS = 'https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Martian+Mono:wght@300;400;500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap';
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
 const problems = [];
 
 // ── inventory, from the code ────────────────────────────────────────────
 
-/** Commands: every `case` of act() in bin/simwright.js, plus the ones main() handles itself. */
+/** Commands: every `case` of act() in bin/looktap.js, plus the ones main() handles itself. */
 export function cliCommands(source) {
   const act = source.slice(source.indexOf('async function act('), source.indexOf('\n}\n', source.indexOf('async function act(')));
   const cases = [...act.matchAll(/^ {4}case '([a-z]+)'/gm)].map((m) => m[1]);
@@ -38,9 +38,9 @@ export function cliFlags(source) {
   return [...new Set([...parse.matchAll(/'(--?[a-z]+)'/g)].map((m) => m[1]))].sort();
 }
 
-/** Command names in the README's Commands table (rows starting `simwright <name>`). */
+/** Command names in the README's Commands table (rows starting `looktap <name>`). */
 export function readmeCommands(readme) {
-  return new Set([...readme.matchAll(/^\| `simwright ([a-z]+)/gm)].map((m) => m[1]));
+  return new Set([...readme.matchAll(/^\| `looktap ([a-z]+)/gm)].map((m) => m[1]));
 }
 
 // ── docs pages ──────────────────────────────────────────────────────────
@@ -59,17 +59,17 @@ export function sections(md) {
 }
 
 const PAGES = [
-  { slug: 'quick-start', description: 'Install simwright, check your toolchain and drive an iOS simulator or Android emulator in four commands, or let your AI agent set it up for you.', title: 'Quick start', group: 'Start', readme: ['Quick start', '🤖 Kickstart with your AI agent', 'Requirements'] },
-  { slug: 'features', description: 'Everything simwright does: read the screen as text, tap by label, type, gestures, screenshots, video, logs, crashes, biometrics and simulated conditions.', title: 'Features', group: 'Start', readme: ['What you get'] },
-  { slug: 'how-it-works', description: 'How simwright reads the screen and sends touches without Appium or WebDriverAgent: a macOS helper for the iOS simulator and an 8 KB Android helper.', title: 'How it works', group: 'Start', readme: ['How it works'] },
-  { slug: 'examples', description: 'Worked simwright examples: tap by label, fill forms, wait instead of sleeping, debug crashes, catch transitions, reset app state, simulate conditions.', title: 'Examples', group: 'Use', readme: ['Examples'] },
-  { slug: 'commands', description: 'Every simwright command and option: look, act, debug, app state and conditions, plus flags, environment variables and the config file.', title: 'Commands & options', group: 'Use', readme: ['Commands', 'Options, environment variables, config file'] },
-  { slug: 'troubleshooting', description: 'Fixes for common simwright problems on the iOS simulator and Android emulator, and answers to frequent questions.', title: 'Troubleshooting & FAQ', group: 'Use', readme: ['Troubleshooting', 'FAQ'] },
-  { slug: 'agents', description: 'Why simwright suits AI coding agents: one call per step, small text output, batching, JSON, and an MCP server for chat apps without a shell.', title: 'For AI agents', group: 'Agents', readme: ['For AI agents'] },
-  { slug: 'agent-guide', description: 'The simwright skill for AI agents: the look-act loop, choosing targets, waiting, screenshots, debugging, and the rules an agent should follow.', title: 'Agent guide (skill)', group: 'Agents', file: 'skills/simwright/SKILL.md' },
-  { slug: 'benchmark', description: 'simwright against Appium and the Appium MCP on the same iPhone simulator and Android emulator: setup time, speed, output size and reliability.', title: 'Benchmark', group: 'Project', readme: ['simwright vs Appium'], file: 'BENCHMARK.md' },
-  { slug: 'safety', description: 'Safety rules for driving apps with simwright: no real credentials, no recordings of sign-in screens, and care with live backends and logs.', title: 'Safety rules', group: 'Project', readme: ['Safety rules'] },
-  { slug: 'contributing', description: 'Build simwright from source, rebuild the native helpers, add a command, and see the roadmap and license.', title: 'Contributing & roadmap', group: 'Project', readme: ['Contributing', 'Roadmap', 'License'] },
+  { slug: 'quick-start', description: 'Install looktap, check your toolchain and drive an iPhone or Android device in four commands, or let your AI agent set it up for you.', title: 'Quick start', group: 'Start', readme: ['Quick start', '🤖 Kickstart with your AI agent', 'Requirements'] },
+  { slug: 'features', description: 'Everything looktap does: read the screen as text, tap by label, type, gestures, screenshots, video, logs, crashes, biometrics and simulated conditions.', title: 'Features', group: 'Start', readme: ['What you get'] },
+  { slug: 'how-it-works', description: 'How looktap reads the screen and sends touches without Appium or WebDriverAgent: a macOS helper for the iOS simulator and an 8 KB Android helper.', title: 'How it works', group: 'Start', readme: ['How it works'] },
+  { slug: 'examples', description: 'Worked looktap examples: tap by label, fill forms, wait instead of sleeping, debug crashes, catch transitions, reset app state, simulate conditions.', title: 'Examples', group: 'Use', readme: ['Examples'] },
+  { slug: 'commands', description: 'Every looktap command and option: look, act, debug, app state and conditions, plus flags, environment variables and the config file.', title: 'Commands & options', group: 'Use', readme: ['Commands', 'Options, environment variables, config file'] },
+  { slug: 'troubleshooting', description: 'Fixes for common looktap problems on the iOS simulator and Android emulator, and answers to frequent questions.', title: 'Troubleshooting & FAQ', group: 'Use', readme: ['Troubleshooting', 'FAQ'] },
+  { slug: 'agents', description: 'Why looktap suits AI coding agents: one call per step, small text output, batching, JSON, and an MCP server for chat apps without a shell.', title: 'For AI agents', group: 'Agents', readme: ['For AI agents'] },
+  { slug: 'agent-guide', description: 'The looktap skill for AI agents: the look-act loop, choosing targets, waiting, screenshots, debugging, and the rules an agent should follow.', title: 'Agent guide (skill)', group: 'Agents', file: 'skills/looktap/SKILL.md' },
+  { slug: 'benchmark', description: 'looktap against Appium and the Appium MCP on the same iPhone simulator and Android emulator: setup time, speed, output size and reliability.', title: 'Benchmark', group: 'Project', readme: ['looktap vs Appium'], file: 'BENCHMARK.md' },
+  { slug: 'safety', description: 'Safety rules for driving apps with looktap: no real credentials, no recordings of sign-in screens, and care with live backends and logs.', title: 'Safety rules', group: 'Project', readme: ['Safety rules'] },
+  { slug: 'contributing', description: 'Build looktap from source, rebuild the native helpers, add a command, and see the roadmap and license.', title: 'Contributing & roadmap', group: 'Project', readme: ['Contributing', 'Roadmap', 'License'] },
 ];
 const SKIPPED = ['Contents']; // the landing page and the sidebar replace it
 
@@ -117,7 +117,7 @@ function makeLinker(page, anchors, pageIds) {
       return href;
     }
     const [path, hash = ''] = href.replace(/^\.\//, '').split('#');
-    const files = { 'BENCHMARK.md': 'benchmark', 'README.md': 'quick-start', 'skills/simwright/SKILL.md': 'agent-guide' };
+    const files = { 'BENCHMARK.md': 'benchmark', 'README.md': 'quick-start', 'skills/looktap/SKILL.md': 'agent-guide' };
     if (files[path]) {
       const target = files[path];
       if (hash && !pageIds.get(target).has(hash)) problems.push(`${page.slug}: link to unknown anchor ${href}`);
@@ -134,7 +134,7 @@ const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, 
 function describe(page, html) {
   const first = /<p>([\s\S]*?)<\/p>/.exec(html)?.[1] || '';
   const text = first.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim();
-  const base = text || `simwright documentation: ${page.title}.`;
+  const base = text || `looktap documentation: ${page.title}.`;
   return base.length > 158 ? `${base.slice(0, 155).replace(/\s\S*$/, '')}…` : base;
 }
 
@@ -162,13 +162,13 @@ function docsPage(page, html, headings, all, version, titleId) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${esc(page.title)} · simwright docs</title>
+<title>${esc(page.title)} · looktap docs</title>
 <meta name="description" content="${esc(description)}">
 <link rel="canonical" href="${SITE_URL}docs/${page.slug}.html">
 <meta property="og:type" content="article">
-<meta property="og:site_name" content="simwright">
+<meta property="og:site_name" content="looktap">
 <meta property="og:url" content="${SITE_URL}docs/${page.slug}.html">
-<meta property="og:title" content="${esc(page.title)} · simwright docs">
+<meta property="og:title" content="${esc(page.title)} · looktap docs">
 <meta property="og:description" content="${esc(description)}">
 <meta property="og:image" content="${SITE_URL}og.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -183,14 +183,14 @@ function docsPage(page, html, headings, all, version, titleId) {
 <body class="docs">
 <a class="skip" href="#content">Skip to content</a>
 <header class="topbar">
-  <a class="brand" href="../index.html" aria-label="simwright home"><img src="../favicon.svg" alt="" width="26" height="26"><span>simwright</span></a>
-  <a class="version" href="https://www.npmjs.com/package/simwright" rel="noopener" title="simwright on npm">v${version}</a>
+  <a class="brand" href="../index.html" aria-label="looktap home"><img src="../favicon.svg" alt="" width="26" height="26"><span>looktap</span></a>
+  <a class="version" href="https://www.npmjs.com/package/looktap" rel="noopener" title="looktap on npm">v${version}</a>
   <nav class="topnav" aria-label="Site">
     <a href="../index.html#story">Features</a>
     <a href="quick-start.html">Docs</a>
     <a href="benchmark.html">Benchmark</a>
     <a class="ico-link" href="${REPO}" rel="noopener" aria-label="GitHub"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg><span>GitHub</span></a>
-    <a class="ico-link" href="https://www.npmjs.com/package/simwright" rel="noopener" aria-label="npm"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l13.837.019-.009 13.836h-3.464l.01-10.382h-3.456L12.04 19.17H5.113z"/></svg><span>npm</span></a>
+    <a class="ico-link" href="https://www.npmjs.com/package/looktap" rel="noopener" aria-label="npm"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l13.837.019-.009 13.836h-3.464l.01-10.382h-3.456L12.04 19.17H5.113z"/></svg><span>npm</span></a>
   </nav>
   <button class="theme-toggle" type="button" aria-label="Toggle dark mode"><span aria-hidden="true"></span></button>
   <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar">Menu</button>
@@ -223,7 +223,7 @@ ${html}
 
 export async function build() {
   const pkg = JSON.parse(read('package.json'));
-  const cli = read('bin/simwright.js');
+  const cli = read('bin/looktap.js');
   const readme = read('README.md');
   const { TOOLS } = await import(pathToFileURL(join(ROOT, 'lib/mcp.js')).href);
   const { SCENES } = await import(pathToFileURL(join(SRC, 'scenes.js')).href);
@@ -236,7 +236,7 @@ export async function build() {
     if (!inReadme.has(c)) problems.push(`command "${c}" has no row in the README Commands table`);
     if (!inScenes.has(c)) problems.push(`command "${c}" has no landing scene (site/src/scenes.js "covers")`);
   }
-  for (const c of inScenes) if (!commands.includes(c)) problems.push(`site/src/scenes.js covers "${c}", which isn't a simwright command`);
+  for (const c of inScenes) if (!commands.includes(c)) problems.push(`site/src/scenes.js covers "${c}", which isn't a looktap command`);
 
   // Docs: every README section lands on a page.
   const readmeSections = sections(readme);

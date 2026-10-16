@@ -5,7 +5,7 @@
    <TestAction buildConfiguration = "Release" selectedDebuggerIdentifier = "" selectedLauncherIdentifier = "Xcode.IDEFoundation.Launcher.PosixSpawn" shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
          <TestableReference skipped = "NO">
-            <BuildableReference BuildableIdentifier = "primary" BlueprintIdentifier = "A10000000000000000000008" BuildableName = "SimwrightRunner.xctest" BlueprintName = "SimwrightRunner" ReferencedContainer = "container:SimwrightRunner.xcodeproj">
+            <BuildableReference BuildableIdentifier = "primary" BlueprintIdentifier = "A10000000000000000000008" BuildableName = "LooktapRunner.xctest" BlueprintName = "LooktapRunner" ReferencedContainer = "container:LooktapRunner.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>

@@ -1,10 +1,13 @@
 {
-  "name": "simwright",
+  "name": "looktap",
   "version": "0.1.2",
-  "description": "Let AI agents drive an iOS simulator or Android emulator from the shell: read the screen, tap, type, swipe, screenshot, read logs and crashes. Nothing to install on the device and no server to start.",
+  "description": "Let AI agents drive iPhone and Android devices from the shell: read the screen, tap, type, swipe, screenshot, read logs and crashes. No server to start and zero dependencies.",
   "keywords": [
     "ios-simulator",
+    "ios-device",
+    "real-device",
     "android-emulator",
+    "android-device",
     "mobile-automation",
     "ai-agents",
     "claude-code",
@@ -16,17 +19,17 @@
   ],
   "author": "Lakpriya Senevirathna",
   "license": "AGPL-3.0-only",
-  "homepage": "https://lakpriya1s.github.io/simwright/",
+  "homepage": "https://lakpriya1s.github.io/looktap/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lakpriya1s/simwright.git"
+    "url": "git+https://github.com/lakpriya1s/looktap.git"
   },
   "bugs": {
-    "url": "https://github.com/lakpriya1s/simwright/issues"
+    "url": "https://github.com/lakpriya1s/looktap/issues"
   },
   "type": "module",
   "bin": {
-    "simwright": "bin/simwright.js"
+    "looktap": "bin/looktap.js"
   },
   "files": [
     "bin",

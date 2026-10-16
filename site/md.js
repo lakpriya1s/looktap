@@ -1,4 +1,4 @@
-// A small Markdown → HTML renderer for simwright's own docs (README, SKILL.md, BENCHMARK.md). It covers what
+// A small Markdown → HTML renderer for looktap's own docs (README, SKILL.md, BENCHMARK.md). It covers what
 // those files use: ATX headings (GitHub-style ids), fenced code, GFM tables, nested lists, blockquotes, rules,
 // paragraphs, HTML blocks passed through (<details>, <p align>, <img>), and inline code, links, images,
 // bold and italics. Not a general CommonMark implementation. Zero dependencies.

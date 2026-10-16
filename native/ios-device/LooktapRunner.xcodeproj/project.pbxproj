@@ -12,7 +12,7 @@
 
 /* Begin PBXFileReference section */
 		A10000000000000000000002 /* Runner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Runner.swift; sourceTree = "<group>"; };
-		A10000000000000000000003 /* SimwrightRunner.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SimwrightRunner.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000003 /* LooktapRunner.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LooktapRunner.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -29,23 +29,23 @@
 		A10000000000000000000005 = {
 			isa = PBXGroup;
 			children = (
-				A10000000000000000000006 /* SimwrightRunner */,
+				A10000000000000000000006 /* LooktapRunner */,
 				A10000000000000000000007 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		A10000000000000000000006 /* SimwrightRunner */ = {
+		A10000000000000000000006 /* LooktapRunner */ = {
 			isa = PBXGroup;
 			children = (
 				A10000000000000000000002 /* Runner.swift */,
 			);
-			path = SimwrightRunner;
+			path = LooktapRunner;
 			sourceTree = "<group>";
 		};
 		A10000000000000000000007 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A10000000000000000000003 /* SimwrightRunner.xctest */,
+				A10000000000000000000003 /* LooktapRunner.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -53,9 +53,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		A10000000000000000000008 /* SimwrightRunner */ = {
+		A10000000000000000000008 /* LooktapRunner */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A1000000000000000000000B /* Build configuration list for PBXNativeTarget "SimwrightRunner" */;
+			buildConfigurationList = A1000000000000000000000B /* Build configuration list for PBXNativeTarget "LooktapRunner" */;
 			buildPhases = (
 				A10000000000000000000009 /* Sources */,
 				A10000000000000000000004 /* Frameworks */,
@@ -64,9 +64,9 @@
 			);
 			dependencies = (
 			);
-			name = SimwrightRunner;
-			productName = SimwrightRunner;
-			productReference = A10000000000000000000003 /* SimwrightRunner.xctest */;
+			name = LooktapRunner;
+			productName = LooktapRunner;
+			productReference = A10000000000000000000003 /* LooktapRunner.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -79,7 +79,7 @@
 				LastSwiftUpdateCheck = 1600;
 				LastUpgradeCheck = 1600;
 			};
-			buildConfigurationList = A1000000000000000000000E /* Build configuration list for PBXProject "SimwrightRunner" */;
+			buildConfigurationList = A1000000000000000000000E /* Build configuration list for PBXProject "LooktapRunner" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -92,7 +92,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				A10000000000000000000008 /* SimwrightRunner */,
+				A10000000000000000000008 /* LooktapRunner */,
 			);
 		};
 /* End PBXProject section */
@@ -117,7 +117,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "dev.simwright.runner";
+				PRODUCT_BUNDLE_IDENTIFIER = "dev.looktap.runner";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -143,7 +143,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A1000000000000000000000B /* Build configuration list for PBXNativeTarget "SimwrightRunner" */ = {
+		A1000000000000000000000B /* Build configuration list for PBXNativeTarget "LooktapRunner" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A1000000000000000000000C /* Release */,
@@ -151,7 +151,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A1000000000000000000000E /* Build configuration list for PBXProject "SimwrightRunner" */ = {
+		A1000000000000000000000E /* Build configuration list for PBXProject "LooktapRunner" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A1000000000000000000000D /* Release */,

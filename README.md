@@ -1,28 +1,28 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/lakpriya1s/simwright/main/assets/simwright-logo.svg" alt="simwright — hands on the simulator, for AI agents" width="560">
+<img src="https://raw.githubusercontent.com/lakpriya1s/looktap/main/assets/looktap-logo.svg" alt="looktap — hands on the phone, for AI agents" width="560">
 
-**Let AI agents drive an iOS simulator or Android emulator from the shell**<br>
-Read the screen, tap, type, swipe, screenshot, and read logs and crashes. Nothing to install on the device and no server to start.
+**Let AI agents drive iPhone and Android devices from the shell**<br>
+Read the screen, tap, type, swipe, screenshot, and read logs and crashes. No server to start and no dependencies.
 
-[![npm](https://img.shields.io/npm/v/simwright.svg?color=cb3837&logo=npm)](https://www.npmjs.com/package/simwright)
-[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://github.com/lakpriya1s/simwright/blob/main/LICENSE)
+[![npm](https://img.shields.io/npm/v/looktap.svg?color=cb3837&logo=npm)](https://www.npmjs.com/package/looktap)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://github.com/lakpriya1s/looktap/blob/main/LICENSE)
 [![Node ≥ 18](https://img.shields.io/badge/node-%E2%89%A518-339933.svg?logo=node.js&logoColor=white)](#requirements)
-[![iOS simulator](https://img.shields.io/badge/iOS-simulator-000000.svg?logo=apple&logoColor=white)](#how-it-works)
+[![iOS simulator](https://img.shields.io/badge/iOS-simulator%20%7C%20device-000000.svg?logo=apple&logoColor=white)](#how-it-works)
 [![Android](https://img.shields.io/badge/Android-emulator%20%7C%20device-3DDC84.svg?logo=android&logoColor=white)](#how-it-works)
-[![Dependencies: 0](https://img.shields.io/badge/dependencies-0-16a34a.svg)](https://github.com/lakpriya1s/simwright/blob/main/package.json)
+[![Dependencies: 0](https://img.shields.io/badge/dependencies-0-16a34a.svg)](https://github.com/lakpriya1s/looktap/blob/main/package.json)
 
-[Website](https://lakpriya1s.github.io/simwright/) · [Quick start](#quick-start) · [Commands](#commands) · [For AI agents](#for-ai-agents) · [Benchmark](BENCHMARK.md) · [Troubleshooting](#troubleshooting)
+[Website](https://lakpriya1s.github.io/looktap/) · [Quick start](#quick-start) · [Commands](#commands) · [For AI agents](#for-ai-agents) · [Benchmark](BENCHMARK.md) · [Troubleshooting](#troubleshooting)
 
 </div>
 
 ---
 
-`simwright` is a small command-line tool for driving a mobile app in a simulator or emulator. Each command does one
-thing and prints a few lines of plain text:
+`looktap` is a small command-line tool for driving a mobile app on an iPhone or Android device, real or simulated.
+Each command does one thing and prints a few lines of plain text:
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/lakpriya1s/simwright/main/assets/simwright-demo.gif" alt="An agent drives a demo app with simwright: it reads the sign-in screen as a list of labelled elements, taps, fills in an email address, and scrolls and zooms a map, while the phone beside the terminal reacts to each command" width="760">
+  <img src="https://raw.githubusercontent.com/lakpriya1s/looktap/main/assets/looktap-demo.gif" alt="An agent drives a demo app with looktap: it reads the sign-in screen as a list of labelled elements, taps, fills in an email address, and scrolls and zooms a map, while the phone beside the terminal reacts to each command" width="760">
 </p>
 
 That makes it a good fit for an AI coding agent (Claude Code, Cursor, Codex, opencode, …) that needs to **see and
@@ -38,8 +38,8 @@ It's just as handy by hand, or in a shell script for screenshot sweeps and bug r
 
 ## Contents
 
-- [What you get](#what-you-get): everything simwright does today
-- [simwright vs Appium](#simwright-vs-appium): the measured comparison
+- [What you get](#what-you-get): everything looktap does today
+- [looktap vs Appium](#looktap-vs-appium): the measured comparison
 - [Quick start](#quick-start): install, boot a device, first commands
 - [🤖 Kickstart with your AI agent](#-kickstart-with-your-ai-agent): one prompt and your agent takes it from there
 - [Requirements](#requirements)
@@ -67,15 +67,15 @@ It's just as handy by hand, or in a shell script for screenshot sweeps and bug r
 | 🌍 | **Simulated conditions.** `location <lat> <lon>`, `appearance dark`, `textsize xxl` (Dynamic Type / font scale), `statusbar clean` (9:41 for screenshots), `rotate landscape` (`ls`, taps and screenshots follow the turned screen), Android `network offline`, and iOS `push` notifications |
 | 🧹 | **App state for repros.** `install` a build, `reset` an app to a fresh install, `uninstall`, and `permission grant\|revoke\|reset camera\|location\|photos\|…`, with the same names on both platforms |
 | 🤖 | **Built for agents.** `--ls` on any action, `run` to batch steps, `--json`, and a [Claude Code skill](#for-ai-agents) you install with one command |
-| 🧩 | **Nothing to install on the device**, no server to run, no npm dependencies. The helpers start on first use |
-| ⚠️ | **Honest failures.** A tap that's covered by a toast prints a warning, a stale `@ref` is an error rather than a wrong tap, a system prompt over the app is reported as one, and **an app that dies is named the moment simwright notices** |
+| 🧩 | **Nothing to install on simulators, emulators or Android phones**, no server to run, no npm dependencies. The helpers start on first use. A real iPhone gets a small test runner, built for you |
+| ⚠️ | **Honest failures.** A tap that's covered by a toast prints a warning, a stale `@ref` is an error rather than a wrong tap, a system prompt over the app is reported as one, and **an app that dies is named the moment looktap notices** |
 
-## simwright vs Appium
+## looktap vs Appium
 
 Measured on the same devices (iPhone 14 simulator, Pixel 9a emulator), 10 runs per action, median time. Full method,
 raw data and the earlier runs are in **[BENCHMARK.md](BENCHMARK.md)**.
 
-| | **simwright** | Appium (raw HTTP) | Appium MCP |
+| | **looktap** | Appium (raw HTTP) | Appium MCP |
 |---|---|---|---|
 | Setup before the first command | **0.04–0.13 s** | 7–17 s | 23–39 s |
 | Read the screen (Android · iOS) | 131 ms · **202 ms** | **114 ms** · 915 ms | 1.87 s · 1.21 s |
@@ -89,23 +89,23 @@ raw data and the earlier runs are in **[BENCHMARK.md](BENCHMARK.md)**.
 | Logs and crash reports | ✓ | via separate APIs | ✗ |
 
 ¹ Not counting `hidekb` on the iOS 26 search keyboard, which has no key to dismiss it: every tool fails there,
-and simwright is the only one that reports the failure instead of claiming success.
+and looktap is the only one that reports the failure instead of claiming success.
 
 Raw Appium is slightly faster at reading and tapping on Android, because its helper app answers in-process. But it
 returns about 50× more bytes per read and needs two calls per tap.
 
 **Where Appium is still the better choice:** it runs on real iOS devices, plugs into existing WebDriver test
-suites and CI grids, and supports many more platforms. simwright drives **iOS simulators** (not iPhones) and
+suites and CI grids, and supports many more platforms. looktap drives **iOS simulators** (not iPhones) and
 Android emulators and devices, and it isn't a test framework.
 
 ## Quick start
 
 ```bash
 # 1. install (Node 18+; zero dependencies)
-npm install -g simwright
+npm install -g looktap
 
 # 2. check the toolchain
-simwright doctor
+looktap doctor
 
 # 3. boot a device: an iOS simulator…
 xcrun simctl boot "iPhone 16" && open -a Simulator
@@ -113,17 +113,17 @@ xcrun simctl boot "iPhone 16" && open -a Simulator
 $ANDROID_HOME/emulator/emulator -avd Pixel_9a &
 
 # 4. drive it
-simwright launch com.apple.Preferences --ls     # (Android: com.android.settings)
-simwright tap "General" --ls
-simwright shot general
+looktap launch com.apple.Preferences --ls     # (Android: com.android.settings)
+looktap tap "General" --ls
+looktap shot general
 ```
 
-Or try it without installing anything: `npx simwright doctor` (any command works the same way).
+Or try it without installing anything: `npx looktap doctor` (any command works the same way).
 
-To add the agent skill, which teaches Claude Code how to use simwright:
+To add the agent skill, which teaches Claude Code how to use looktap:
 
 ```bash
-simwright skill --install      # → ~/.claude/skills/simwright/SKILL.md
+looktap skill --install      # → ~/.claude/skills/looktap/SKILL.md
 ```
 
 <details>
@@ -132,26 +132,26 @@ simwright skill --install      # → ~/.claude/skills/simwright/SKILL.md
 The latest from GitHub, ahead of the npm release:
 
 ```bash
-npm install -g github:lakpriya1s/simwright
+npm install -g github:lakpriya1s/looktap
 ```
 
 From a checkout:
 
 ```bash
-git clone https://github.com/lakpriya1s/simwright.git
-cd simwright && npm install -g .
+git clone https://github.com/lakpriya1s/looktap.git
+cd looktap && npm install -g .
 ```
 
 As a tarball you can hand to someone (it includes both prebuilt helpers):
 
 ```bash
-npm pack                                  # → simwright-<version>.tgz
-npm install -g simwright-<version>.tgz    # on their machine
+npm pack                                  # → looktap-<version>.tgz
+npm install -g looktap-<version>.tgz    # on their machine
 ```
 
-Without installing: `node bin/simwright.js --help`.
+Without installing: `node bin/looktap.js --help`.
 
-Uninstall: `npm uninstall -g simwright && rm -rf ~/.simwright`.
+Uninstall: `npm uninstall -g looktap && rm -rf ~/.looktap`.
 </details>
 
 ## 🤖 Kickstart with your AI agent
@@ -160,15 +160,15 @@ Paste this into your AI coding agent (Claude Code, Cursor, Codex, opencode, …)
 start using the app with you:
 
 ```text
-Install simwright (https://github.com/lakpriya1s/simwright) so you can drive
+Install looktap (https://github.com/lakpriya1s/looktap) so you can drive
 my app in the iOS simulator / Android emulator:
 
-1. Run `npm install -g simwright`, then `simwright doctor`,
-   and fix anything it reports (boot a simulator or emulator if none is up).
-2. Run `simwright skill --install` and read the skill it installs.
+1. Run `npm install -g looktap`, then `looktap doctor`,
+   and fix anything it reports (boot a simulator or emulator, or connect a device, if none is up).
+2. Run `looktap skill --install` and read the skill it installs.
 3. Find my app's bundle id / package name in this repo and write a
-   simwright.config.json with it at the repo root.
-4. Launch the app with `simwright launch --ls` and tell me what screen it's on.
+   looktap.config.json with it at the repo root.
+4. Launch the app with `looktap launch --ls` and tell me what screen it's on.
 
 Rules: never type real credentials, OTPs or card numbers. When the app needs a
 sign-in, stop and let me do it, then continue from there.
@@ -187,28 +187,28 @@ Tested with Xcode 26 / iOS 26 (iPhone 14 simulator) and Android 16 / API 36 (Pix
 
 ## How it works
 
-simwright ships its own small helper for each platform. **Nothing is installed on simulators, emulators or Android
+looktap ships its own small helper for each platform. **Nothing is installed on simulators, emulators or Android
 devices.** A real iPhone or iPad is the exception: it gets a small test runner ([Using a real iPhone](#using-a-real-iphone)).
 
 | | iOS simulator | Android emulator / device |
 |---|---|---|
-| Read the screen | `simwright-sim`, a macOS helper that reads the simulator's accessibility tree through Apple's simulator frameworks (CoreSimulator, AccessibilityPlatformTranslation). Web content is found by probing the screen | `simwright-server.jar`, an 8 KB helper pushed to `/data/local/tmp` and run with `app_process`. It keeps one UiAutomation connection open |
+| Read the screen | `looktap-sim`, a macOS helper that reads the simulator's accessibility tree through Apple's simulator frameworks (CoreSimulator, AccessibilityPlatformTranslation). Web content is found by probing the screen | `looktap-server.jar`, an 8 KB helper pushed to `/data/local/tmp` and run with `app_process`. It keeps one UiAutomation connection open |
 | Tap, type, swipe, keys | The same helper, as touch and keyboard events through SimulatorKit | The same helper, as input events through UiAutomation |
 | Screenshots, `burst` | The simulator display's framebuffer, read in-process | Emulators: the emulator's gRPC API, which also gets past `FLAG_SECURE`. Devices: the helper |
 | Video (`record`) | `simctl io recordVideo` | `screenrecord` on the device |
-| Orientation (`rotate`) | The orientation event Simulator.app sends to the guest. Coordinates and frames are converted, so everything simwright prints and takes is as the user sees the screen | `settings` (user rotation, auto-rotate off). The helper reports the turned display size |
+| Orientation (`rotate`) | The orientation event Simulator.app sends to the guest. Coordinates and frames are converted, so everything looktap prints and takes is as the user sees the screen | `settings` (user rotation, auto-rotate off). The helper reports the turned display size |
 | Logs, crashes | `log show` inside the simulator, and its `.ips` crash reports | `logcat` (by app uid), the crash buffer, and `dumpsys activity exit-info` |
 | Deep links, launch, biometrics | `xcrun simctl` | `adb` and the emulator console |
 
-Each helper starts on first use, keeps running in the background, and is replaced automatically when simwright is
-upgraded. `simwright setup` starts it ahead of time, and `simwright teardown` stops it. The CLI talks to it over a
+Each helper starts on first use, keeps running in the background, and is replaced automatically when looktap is
+upgraded. `looktap setup` starts it ahead of time, and `looktap teardown` stops it. The CLI talks to it over a
 local socket, using JSON lines.
 
 <details>
 <summary><strong>iOS: private frameworks and Xcode versions</strong></summary>
 
 The iOS helper uses Apple's private simulator frameworks, the same ones `idb` uses. They can change between Xcode
-releases. `simwright doctor` checks they're present and shows which input path applies:
+releases. `looktap doctor` checks they're present and shows which input path applies:
 
 - **Xcode 26 and earlier** (CoreSimulator below 1155.4): touches and keys go through SimulatorKit's HID client
   ("indigo"). Tested.
@@ -216,16 +216,16 @@ releases. `simwright doctor` checks they're present and shows which input path a
   `dtuhidd` service ("dtuhid"), the same way idb does it. **Implemented, not yet tested against Xcode 27.**
   Reading the screen and screenshots don't depend on it.
 
-`SIMWRIGHT_IOS_HID=indigo|dtuhid` overrides the choice. It applies when the helper starts, so run
-`simwright teardown` first.
+`LOOKTAP_IOS_HID=indigo|dtuhid` overrides the choice. It applies when the helper starts, so run
+`looktap teardown` first.
 </details>
 
 ### Using a real iPhone
 
 A simulator can be driven from the Mac with nothing installed in it; a real iPhone or iPad can't. So the first
 command aimed at one builds a small XCUITest runner (`native/ios-device`), signs it with your Apple ID, and installs
-it. It reads the screen and taps, types and swipes through XCUITest, and simwright reaches it through usbmuxd, over
-USB or Wi-Fi. Every simwright user signs the runner with their own Apple ID. A free one is enough; the paid
+it. It reads the screen and taps, types and swipes through XCUITest, and looktap reaches it through usbmuxd, over
+USB or Wi-Fi. Every looktap user signs the runner with their own Apple ID. A free one is enough; the paid
 Developer Program isn't needed.
 
 **Once per Mac and device:**
@@ -233,23 +233,24 @@ Developer Program isn't needed.
 1. In Xcode → Settings → Accounts, sign in with your Apple ID. That gives you a "Personal Team".
 2. Pair the device with the Mac (connect it with a cable once and tap Trust; Wi-Fi works after that), and turn on
    **Developer Mode** on it: Settings → Privacy & Security → Developer Mode.
-3. Unlock the device and run any command against it, for example `simwright -d <hardware UDID> ls`
-   (`simwright devices` lists the UDID). The first run builds the runner, which takes about a minute.
+3. Unlock the device and run any command against it, for example `looktap -d <hardware UDID> ls`
+   (`looktap devices` lists the UDID). The first run builds the runner, which takes about a minute.
 4. With a free Apple ID, the device asks you to trust the developer the first time: Settings → General →
    VPN & Device Management → your Apple ID → Trust. Then run the command again.
 
 If Xcode is signed in to more than one team, choose the one to sign with:
-`SIMWRIGHT_TEAM=<team id>`, or `{"ios": {"team": "<team id>"}}` in `simwright.config.json`. The error message
+`LOOKTAP_TEAM=<team id>`, or `{"ios": {"team": "<team id>"}}` in `looktap.config.json`. The error message
 lists your teams and their ids.
 
 **Picking the device:** `-d <hardware UDID>` always picks it. Without `-d`, a paired device is used only when no
 simulator or emulator is running, so nothing changes for simulator workflows.
 
 **Signing expiry:** a runner signed with a free Apple ID stops launching after **7 days**, and one signed with a
-paid team after a year. simwright reads the expiry date and builds and signs the runner again before it lapses. If
-iOS refuses to launch it anyway (for example, after a certificate was revoked), simwright rebuilds it once and
-retries. Free Apple IDs have Apple's own limits too, about 3 devices and 10 app ids per 7 days; one runner per device
-stays well within them.
+paid team after a year. looktap reads the expiry date and builds and signs the runner again before it lapses. If
+iOS refuses to launch it anyway (for example, after a certificate was revoked), looktap rebuilds it once and
+retries. Free Apple IDs have Apple's own limits too: about 3 devices and 10 app ids per 7 days, and **at most 3 apps
+signed by the free account installed on one device at a time**. The runner counts as one, so if the device is full,
+looktap names the apps it found and you delete one.
 
 **What works on a device:** `ls`, `tap`, `longpress`, `type`, `fill`, `key`, `hidekb`, `swipe`, `scrollto`,
 `zoom` (around the screen's centre), `back`, `wait`, `shot`, `burst` (screenshots in a loop), `launch`, `open`,
@@ -257,14 +258,14 @@ stays well within them.
 `statusbar`, `textsize`, `bio`, `record`, `permission`, `reset`, `logs` and `crashes` aren't available, and say so.
 A command takes about 1–1.5 s, slower than on a simulator, because XCUITest takes longer to read the screen.
 
-The device must be unlocked while the runner starts. It keeps running until `simwright teardown`, or until the
+The device must be unlocked while the runner starts. It keeps running until `looktap teardown`, or until the
 device is restarted.
 
 <details>
 <summary><strong>Android: the fallback path</strong></summary>
 
-If the helper can't start (for example, another tool holds UiAutomation), simwright falls back to plain `adb` +
-`uiautomator dump`. That works everywhere but takes about 2.5 s per screen read. `SIMWRIGHT_ANDROID_HELPER=0`
+If the helper can't start (for example, another tool holds UiAutomation), looktap falls back to plain `adb` +
+`uiautomator dump`. That works everywhere but takes about 2.5 s per screen read. `LOOKTAP_ANDROID_HELPER=0`
 forces that path.
 </details>
 
@@ -273,7 +274,7 @@ forces that path.
 ### Look, then act
 
 ```bash
-simwright ls
+looktap ls
 ```
 
 ```
@@ -289,42 +290,42 @@ buttons are listed too, as `(no label)`, so you can tap them by ref. The on-scre
 ### Tap by label, not by coordinates
 
 ```bash
-simwright tap "Open menu"              # exact label (or identifier on iOS)
+looktap tap "Open menu"              # exact label (or identifier on iOS)
 # tapped "Open menu" at 30,62
-simwright tap "Messages"               # no exact match → the one label starting with it
+looktap tap "Messages"               # no exact match → the one label starting with it
 # tapped "Messages, 2 unread" at 342,62
-simwright tap "Wi"                     # matches two different labels → refuses
-# simwright: "Wi" is ambiguous — matches 2 labels: "Wi-Fi", "Wi-Fi hotspot"
-simwright tap --exact "Messages"       # exact only
-simwright tap @7                       # row @7 of the last ls
-simwright tapxy 205 874                # when ls doesn't list it at all
+looktap tap "Wi"                     # matches two different labels → refuses
+# looktap: "Wi" is ambiguous — matches 2 labels: "Wi-Fi", "Wi-Fi hotspot"
+looktap tap --exact "Messages"       # exact only
+looktap tap @7                       # row @7 of the last ls
+looktap tapxy 205 874                # when ls doesn't list it at all
 ```
 
 - **A ref works only while its element is still where `ls` saw it.** If the screen changed, `tap @7` fails
-  ("no longer on screen — run: simwright ls") rather than tapping something else.
+  ("no longer on screen — run: looktap ls") rather than tapping something else.
 - **If another element covers the tap point** (a toast, a dev-warning banner, a floating bar), `tap` prints a
   warning, because the tap probably landed on the cover instead.
 
 ### Long press and pinch-zoom
 
 ```bash
-simwright longpress "Photo"               # context menus, drag handles, "edit" modes (default 800 ms)
-simwright longpress @4 1500               # by ref, held 1.5 s
-simwright longpress 120 470               # a point, e.g. to drop a pin on a map
-simwright zoom in                         # two fingers spreading at the screen centre (maps, photos, PDFs)
-simwright zoom out 200 400 --scale 4      # pinch around a point; --scale is how far the fingers travel
+looktap longpress "Photo"               # context menus, drag handles, "edit" modes (default 800 ms)
+looktap longpress @4 1500               # by ref, held 1.5 s
+looktap longpress 120 470               # a point, e.g. to drop a pin on a map
+looktap zoom in                         # two fingers spreading at the screen centre (maps, photos, PDFs)
+looktap zoom out 200 400 --scale 4      # pinch around a point; --scale is how far the fingers travel
 ```
 
-`zoom` is a real two-finger gesture on both platforms. On Android it needs simwright's helper, because
+`zoom` is a real two-finger gesture on both platforms. On Android it needs looktap's helper, because
 `adb input` has no multi-touch.
 
 ### Fill a form and capture its validation errors
 
 ```bash
-simwright fill "Email" not-an-email
-simwright fill "Name" ""               # empty: just clears the field
-simwright hidekb
-simwright shot profile__validation
+looktap fill "Email" not-an-email
+looktap fill "Name" ""               # empty: just clears the field
+looktap hidekb
+looktap shot profile__validation
 ```
 
 `fill` finds the field by its label (on iOS also its identifier), or else the first field at or below a matching
@@ -341,33 +342,33 @@ It checks after each. If the keyboard is still up, it **exits 2** rather than re
 ### Wait instead of sleeping, and scroll
 
 ```bash
-simwright wait "Welcome"                  # until it's on screen (default up to 10 s; --wait 30)
-simwright wait "Loading" --gone           # until it's gone
-simwright scrollto "Privacy & Security"   # swipe until fully on screen; fails at the end of the list
-simwright scrollto "General" --up
-simwright swipe 200 700 200 250           # scroll down (finger moves up); optional 5th arg: ms
-simwright back                            # Android: system Back · iOS: the navigation bar's back button
+looktap wait "Welcome"                  # until it's on screen (default up to 10 s; --wait 30)
+looktap wait "Loading" --gone           # until it's gone
+looktap scrollto "Privacy & Security"   # swipe until fully on screen; fails at the end of the list
+looktap scrollto "General" --up
+looktap swipe 200 700 200 250           # scroll down (finger moves up); optional 5th arg: ms
+looktap back                            # Android: system Back · iOS: the navigation bar's back button
 ```
 
 ### Debug: logs, crashes, "where did my app go?"
 
 ```bash
-simwright tap "Pay"                       # something goes wrong…
-simwright logs --errors                   # the app's errors since the last `logs`
+looktap tap "Pay"                       # something goes wrong…
+looktap logs --errors                   # the app's errors since the last `logs`
 # 15:41:06.700 E [com.example:api] POST /payments failed: 422 amount_too_small
-simwright logs --grep payment             # everything it logged that matches
-simwright app --app com.example           # is it still running?
+looktap logs --grep payment             # everything it logged that matches
+looktap app --app com.example           # is it still running?
 # front: com.android.launcher3  pid 1205
-# com.example: not running — if it was, check: simwright crashes
-simwright crashes
+# com.example: not running — if it was, check: looktap crashes
+looktap crashes
 # com.example (pid 14001) exited at 14:56:06.724 while in the background: LOW_MEMORY — killed by the system to free memory, not a crash
 ```
 
-**When the app dies, simwright says so.** After an action, and at the next `ls`, simwright checks whether the
+**When the app dies, looktap says so.** After an action, and at the next `ls`, looktap checks whether the
 app that was in front still has its process. If not, it prints:
 
 ```
-simwright: warning: com.example is no longer running — it crashed or was killed. See: simwright crashes com.example
+looktap: warning: com.example is no longer running — it crashed or was killed. See: looktap crashes com.example
 ```
 
 - It also catches an Android app that crashed and was restarted at once, because the check is by process id.
@@ -404,8 +405,8 @@ A red box is also on screen, so `ls` reads its message and call stack.
 Start the burst **in the background**, then trigger the action:
 
 ```bash
-simwright burst ./frames 5 &              # 5 s: a frame each time the screen changes
-simwright swipe 200 250 200 700           # pull to refresh
+looktap burst ./frames 5 &              # 5 s: a frame each time the screen changes
+looktap swipe 200 250 200 700           # pull to refresh
 wait
 # 61 frames, 23 distinct, in ./frames
 ```
@@ -413,10 +414,10 @@ wait
 For a video of a whole flow, record it. The recording runs in the background between the two commands:
 
 ```bash
-simwright record start checkout           # → ./shots/checkout.mp4
-simwright tap "Add to cart" --ls
-simwright tap "Checkout" --ls
-simwright record stop                     # prints the path and the length
+looktap record start checkout           # → ./shots/checkout.mp4
+looktap tap "Add to cart" --ls
+looktap tap "Checkout" --ls
+looktap record stop                     # prints the path and the length
 ```
 
 - **Android** records with the device's `screenrecord`: at most 3 minutes, and `FLAG_SECURE` screens come out
@@ -426,17 +427,17 @@ simwright record stop                     # prints the path and the length
 ### Start from a clean state: install, reset, permissions
 
 ```bash
-simwright install build/MyApp.app          # iOS: a simulator build · Android: an .apk (keeps the app's data)
+looktap install build/MyApp.app          # iOS: a simulator build · Android: an .apk (keeps the app's data)
 # installed com.example.myapp
-simwright reset com.example.myapp          # as if freshly installed: data and permissions cleared
-simwright permission grant location com.example.myapp    # no prompt
-simwright permission revoke photos com.example.myapp     # test the "denied" path
-simwright permission reset camera com.example.myapp      # it asks again on next use
-simwright uninstall com.example.myapp
+looktap reset com.example.myapp          # as if freshly installed: data and permissions cleared
+looktap permission grant location com.example.myapp    # no prompt
+looktap permission revoke photos com.example.myapp     # test the "denied" path
+looktap permission reset camera com.example.myapp      # it asks again on next use
+looktap uninstall com.example.myapp
 ```
 
 - **`reset`:**
-  - **iOS:** simwright copies the app's own bundle aside, uninstalls it and installs the copy, so documents,
+  - **iOS:** looktap copies the app's own bundle aside, uninstalls it and installs the copy, so documents,
     caches, app groups and permissions all go. The **keychain survives**, just as it does on a real iPhone, so
     an app that keeps its sign-in token there may still be signed in.
   - **Android:** `pm clear`.
@@ -444,21 +445,21 @@ simwright uninstall com.example.myapp
   `photos`, `contacts`, `calendar`, `notifications`, `motion`, `all`.
   - Android also takes any `android.permission.*`, and acts only on permissions the app declares. A `reset` also
     clears "don't ask again".
-  - The iOS simulator can't set `camera` or `notifications`; simwright says so.
+  - The iOS simulator can't set `camera` or `notifications`; looktap says so.
 - **These commands never guess the app from the screen.** `uninstall`, `reset` and `permission` take the app id
-  as an argument, or from `--app` / `simwright.config.json`.
+  as an argument, or from `--app` / `looktap.config.json`.
 
 ### Simulated conditions: location, dark mode, text size, orientation, network, push
 
 ```bash
-simwright location 51.5072 -0.1276        # GPS (Android: emulators) · `location clear` on iOS
-simwright appearance dark                 # or light; no argument prints the current one
-simwright textsize ax2                    # Dynamic Type / font scale: xs s m l xl xxl xxxl ax1…ax5
-simwright statusbar clean                 # 9:41, full battery and Wi-Fi, for screenshots · `statusbar live`
-simwright rotate landscape --ls           # or left, right, upsidedown, portrait; no argument prints it
-simwright network offline                 # Android: airplane mode · `network online`
-simwright push com.example.myapp "Your order has shipped"          # iOS: an alert
-simwright push com.example.myapp '{"aps":{"alert":"Hi"},"orderId":7}'   # or any payload / a .json file
+looktap location 51.5072 -0.1276        # GPS (Android: emulators) · `location clear` on iOS
+looktap appearance dark                 # or light; no argument prints the current one
+looktap textsize ax2                    # Dynamic Type / font scale: xs s m l xl xxl xxxl ax1…ax5
+looktap statusbar clean                 # 9:41, full battery and Wi-Fi, for screenshots · `statusbar live`
+looktap rotate landscape --ls           # or left, right, upsidedown, portrait; no argument prints it
+looktap network offline                 # Android: airplane mode · `network online`
+looktap push com.example.myapp "Your order has shipped"          # iOS: an alert
+looktap push com.example.myapp '{"aps":{"alert":"Hi"},"orderId":7}'   # or any payload / a .json file
 ```
 
 - **`textsize`** uses the iOS Dynamic Type sizes. On Android each size maps to the nearest font scale, from 0.8
@@ -479,49 +480,49 @@ simwright push com.example.myapp '{"aps":{"alert":"Hi"},"orderId":7}'   # or any
 ### Biometrics
 
 ```bash
-simwright bio match       # iOS: Face ID success · Android: enrolled finger 1
-simwright bio nomatch     # iOS: Face ID failure · Android: unknown finger
+looktap bio match       # iOS: Face ID success · Android: enrolled finger 1
+looktap bio nomatch     # iOS: Face ID failure · Android: unknown finger
 ```
 
 On Android, enrol a fingerprint once first: Settings → Security → Fingerprint, using a screen-lock PIN, and touch
-with `simwright bio match` when it asks.
+with `looktap bio match` when it asks.
 
 ### Same screen on several devices
 
 ```bash
-simwright devices
+looktap devices
 # ios      42E41FA7-…  iPhone 14
 # ios      F9213EDC-…  iPhone 16 Pro
 # android  emulator-5554
 
 for d in 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 F9213EDC-180D-412B-B24C-2FD69A37D3AC; do
-  simwright -d $d open myapp://home
-  simwright -d $d wait "Home"
-  simwright -d $d shot -o shots/$d home
+  looktap -d $d open myapp://home
+  looktap -d $d wait "Home"
+  looktap -d $d shot -o shots/$d home
 done
 ```
 
-Passing **both** `-p` and `-d` (or exporting `SIMWRIGHT_PLATFORM` and `SIMWRIGHT_DEVICE`) makes every command about
-0.2 s faster, because simwright then skips listing devices.
+Passing **both** `-p` and `-d` (or exporting `LOOKTAP_PLATFORM` and `LOOKTAP_DEVICE`) makes every command about
+0.2 s faster, because looktap then skips listing devices.
 
 ### A repeatable screenshot sweep
 
 ```bash
 #!/bin/sh
 set -e
-simwright launch
+looktap launch
 for route in home search messages profile settings; do
-  simwright open "myapp://$route" --ls > /dev/null
-  simwright shot "$route"
-  simwright swipe 200 700 200 250
-  simwright shot "${route}__scrolled"
+  looktap open "myapp://$route" --ls > /dev/null
+  looktap shot "$route"
+  looktap swipe 200 700 200 250
+  looktap shot "${route}__scrolled"
 done
 ```
 
 ### Android screenshots of secure screens
 
 Apps that set `FLAG_SECURE` (common in banking and payment apps) make normal Android screenshots come out black. On
-emulators, `simwright shot` takes the frame from the emulator itself, which gets past that. `--plain` takes a normal
+emulators, `looktap shot` takes the frame from the emulator itself, which gets past that. `--plain` takes a normal
 on-device screenshot, for example to check that a screen *is* secure.
 
 ## For AI agents
@@ -529,16 +530,16 @@ on-device screenshot, for example to check that a screen *is* secure.
 Install the skill so your agent knows the loop, the shortcuts and the rules:
 
 ```bash
-simwright skill --install       # → ~/.claude/skills/simwright/SKILL.md   (simwright skill prints it)
+looktap skill --install       # → ~/.claude/skills/looktap/SKILL.md   (looktap skill prints it)
 ```
 
-An agent spends seconds per turn, so **turns** matter more than milliseconds. simwright is built to save them:
+An agent spends seconds per turn, so **turns** matter more than milliseconds. looktap is built to save them:
 
 - **`--ls` on any action** prints the screen once it has settled, so acting and looking take one turn instead of two:
 
   ```bash
-  simwright tap @3 --ls
-  simwright fill "Email" a@b.co --ls
+  looktap tap @3 --ls
+  looktap fill "Email" a@b.co --ls
   ```
 
 - **`wait`** instead of guessing `sleep`s. After an action that loads data, `--ls` can return a loading skeleton,
@@ -547,8 +548,8 @@ An agent spends seconds per turn, so **turns** matter more than milliseconds. si
   at the first failure, and names it:
 
   ```bash
-  simwright run 'tap General; wait About; tap About --ls'
-  simwright run - < steps.txt          # one step per line, # for comments
+  looktap run 'tap General; wait About; tap About --ls'
+  looktap run - < steps.txt          # one step per line, # for comments
   ```
 
 - **`logs` / `crashes`** after a step that misbehaved. Each `logs` shows only what's new since the last one.
@@ -561,18 +562,18 @@ An agent spends seconds per turn, so **turns** matter more than milliseconds. si
 ### MCP server, for clients without a shell
 
 Agents with a shell (Claude Code, Codex, Cursor's agent, …) are best served by the CLI and the skill above.
-For **chat apps and other clients without a shell**, such as Claude Desktop, simwright is also an MCP server:
+For **chat apps and other clients without a shell**, such as Claude Desktop, looktap is also an MCP server:
 
 ```bash
-simwright mcp --config      # prints a ready-to-paste client config with absolute paths
+looktap mcp --config      # prints a ready-to-paste client config with absolute paths
 ```
 
 ```json
 {
   "mcpServers": {
-    "simwright": {
+    "looktap": {
       "command": "/path/to/node",
-      "args": ["/path/to/simwright/bin/simwright.js", "mcp"],
+      "args": ["/path/to/looktap/bin/looktap.js", "mcp"],
       "env": { "PATH": "/path/to/node/bin:/path/to/Android/sdk/platform-tools:/usr/bin:/bin" }
     }
   }
@@ -582,16 +583,16 @@ simwright mcp --config      # prints a ready-to-paste client config with absolut
 - **Where to paste it:**
   - Claude Desktop: `~/Library/Application Support/Claude/claude_desktop_config.json`
   - Cursor: `~/.cursor/mcp.json`
-  - Claude Code: `claude mcp add simwright -- npx -y simwright mcp` (no install needed: it runs the latest
-    version from npm). Or the absolute paths: `claude mcp add simwright -- <node> <simwright.js> mcp`
-- **Why absolute paths:** desktop apps start servers with a minimal `PATH`. `simwright` also finds `adb` in the
+  - Claude Code: `claude mcp add looktap -- npx -y looktap mcp` (no install needed: it runs the latest
+    version from npm). Or the absolute paths: `claude mcp add looktap -- <node> <looktap.js> mcp`
+- **Why absolute paths:** desktop apps start servers with a minimal `PATH`. `looktap` also finds `adb` in the
   Android SDK by itself.
 - **The tools:**
   - `ls`, `tap`, `tap_xy`, `long_press`, `fill`, `type`, `key`, `hide_keyboard`, `swipe`, `scroll_to`, `back`
     and `wait`;
   - `screenshot`, which returns the image itself;
   - `logs` and `crashes`;
-  - `simwright`, for any other command line, or several separated by `;`.
+  - `looktap`, for any other command line, or several separated by `;`.
 - **Actions return the settled screen** unless `ls: false`.
 - **The device is remembered:** name a `platform` (or `device`) once when both an iPhone and an Android are
   booted.
@@ -605,51 +606,51 @@ it gets.
 | Command | What it does |
 |---|---|
 | **Look** | |
-| `simwright ls [--all] [--json]` | Visible elements with a label, plus unlabelled buttons, each with an `@ref`. `--all` includes everything. `--json` prints `{screen, elements}`. While the screen is still loading (nothing labelled yet), waits up to `--wait` |
-| `simwright wait <label\|@ref> [--gone]` | Until it's on screen (with `--gone`, until it isn't). Default up to 10 s, or `--wait`. Exits 2 on timeout |
-| `simwright scrollto <label> [--up]` | Swipes until the element is fully on screen. Fails at the end of the list, or after 15 swipes |
-| `simwright shot <name> [--plain] [--scale f]` | Saves `<out>/<name>.png` and prints its path |
-| `simwright burst <dir> <seconds>` | A frame each time the screen changes. Only distinct frames are kept |
-| `simwright record start [name]` · `record stop` | An MP4 of everything in between, saved to `<out>/<name>.mp4`; `stop` prints the path and the length. Android: at most 3 minutes, `FLAG_SECURE` screens black |
+| `looktap ls [--all] [--json]` | Visible elements with a label, plus unlabelled buttons, each with an `@ref`. `--all` includes everything. `--json` prints `{screen, elements}`. While the screen is still loading (nothing labelled yet), waits up to `--wait` |
+| `looktap wait <label\|@ref> [--gone]` | Until it's on screen (with `--gone`, until it isn't). Default up to 10 s, or `--wait`. Exits 2 on timeout |
+| `looktap scrollto <label> [--up]` | Swipes until the element is fully on screen. Fails at the end of the list, or after 15 swipes |
+| `looktap shot <name> [--plain] [--scale f]` | Saves `<out>/<name>.png` and prints its path |
+| `looktap burst <dir> <seconds>` | A frame each time the screen changes. Only distinct frames are kept |
+| `looktap record start [name]` · `record stop` | An MP4 of everything in between, saved to `<out>/<name>.mp4`; `stop` prints the path and the length. Android: at most 3 minutes, `FLAG_SECURE` screens black |
 | **Act** (add `--ls` to print the settled screen afterwards) | |
-| `simwright tap <label\|@ref> [--exact]` | `@ref` from the last `ls`, or a label: exact, else a prefix/contains match that names a single label (ambiguous → exit 2). Prints what it tapped |
-| `simwright longpress <label\|@ref\|x y> [ms]` | Holds the touch for `ms` (default 800). Same targets as `tap`, or a point |
-| `simwright zoom in\|out [x y] [--scale f]` | Two-finger pinch around a point (default: the screen centre). `--scale` sets how far apart the fingers end up (default 2.5) |
-| `simwright tapxy <x> <y>` | Taps a point (iOS points / Android dp) |
-| `simwright type <text>` | Types into the focused field. Text the keyboard can't type (accents, emoji, CJK) is pasted, which replaces the clipboard |
-| `simwright key <name> …` | `return`, `escape`, `delete`, `tab`, `space`. Android also `back`, `home`, any `KEYCODE_*`. iOS also `selectall`, `paste` |
-| `simwright fill <label\|@ref> <text> [--exact]` | Focuses the field, clears it, types. Empty text just clears |
-| `simwright hidekb` | Dismisses the keyboard, checking after each method. Exits 2 if it's still up |
-| `simwright swipe <x1> <y1> <x2> <y2> [ms]` | Default 150 ms on iOS, 300 ms on Android |
-| `simwright back` | Android system Back · iOS: the navigation bar's back button, else a top-left "Back" button |
-| `simwright open <url>` | Opens a deep link |
-| `simwright launch [app]` | (Re)starts the app |
-| `simwright bio match\|nomatch` | Face ID (iOS) or fingerprint (Android) |
-| `simwright rotate [portrait\|landscape\|left\|right\|upsidedown]` | Turns the device (`landscape` = `left`, turned counter-clockwise). `ls`, taps and screenshots follow the turned screen. Says so if the app doesn't support the orientation. Without an argument, prints the current one |
+| `looktap tap <label\|@ref> [--exact]` | `@ref` from the last `ls`, or a label: exact, else a prefix/contains match that names a single label (ambiguous → exit 2). Prints what it tapped |
+| `looktap longpress <label\|@ref\|x y> [ms]` | Holds the touch for `ms` (default 800). Same targets as `tap`, or a point |
+| `looktap zoom in\|out [x y] [--scale f]` | Two-finger pinch around a point (default: the screen centre). `--scale` sets how far apart the fingers end up (default 2.5) |
+| `looktap tapxy <x> <y>` | Taps a point (iOS points / Android dp) |
+| `looktap type <text>` | Types into the focused field. Text the keyboard can't type (accents, emoji, CJK) is pasted, which replaces the clipboard |
+| `looktap key <name> …` | `return`, `escape`, `delete`, `tab`, `space`. Android also `back`, `home`, any `KEYCODE_*`. iOS also `selectall`, `paste` |
+| `looktap fill <label\|@ref> <text> [--exact]` | Focuses the field, clears it, types. Empty text just clears |
+| `looktap hidekb` | Dismisses the keyboard, checking after each method. Exits 2 if it's still up |
+| `looktap swipe <x1> <y1> <x2> <y2> [ms]` | Default 150 ms on iOS, 300 ms on Android |
+| `looktap back` | Android system Back · iOS: the navigation bar's back button, else a top-left "Back" button |
+| `looktap open <url>` | Opens a deep link |
+| `looktap launch [app]` | (Re)starts the app |
+| `looktap bio match\|nomatch` | Face ID (iOS) or fingerprint (Android) |
+| `looktap rotate [portrait\|landscape\|left\|right\|upsidedown]` | Turns the device (`landscape` = `left`, turned counter-clockwise). `ls`, taps and screenshots follow the turned screen. Says so if the app doesn't support the orientation. Without an argument, prints the current one |
 | **Debug** (`[app]` defaults to `--app` / config, else the app in front) | |
-| `simwright logs [app] [--errors] [--grep re] [--since 5m] [--lines n] [--all]` | The app's log since the last `logs` (the first call covers the last minute). At most 80 lines, newest kept |
-| `simwright crashes [app] [--since 1h]` | Crashes, ANRs and low-memory kills since the last `crashes` (the first call covers the last hour) |
-| `simwright app [app]` | The app in front and its pid, and whether `[app]` is running |
+| `looktap logs [app] [--errors] [--grep re] [--since 5m] [--lines n] [--all]` | The app's log since the last `logs` (the first call covers the last minute). At most 80 lines, newest kept |
+| `looktap crashes [app] [--since 1h]` | Crashes, ANRs and low-memory kills since the last `crashes` (the first call covers the last hour) |
+| `looktap app [app]` | The app in front and its pid, and whether `[app]` is running |
 | **App state** (`<app>` from the argument or `--app` / config, never the app in front) | |
-| `simwright install <path> [--grant]` | iOS: a simulator `.app`. Android: an `.apk`, replacing an installed copy and keeping its data (`--grant`: all runtime permissions). Prints the app id |
-| `simwright uninstall <app>` | Removes the app |
-| `simwright reset <app>` | As if freshly installed: data and permissions cleared. iOS: the keychain survives |
-| `simwright permission grant\|revoke\|reset <name> [app]` | `camera`, `microphone`, `location`, `location-always`, `photos`, `contacts`, `calendar`, `notifications`, `motion`, `all`, … Android also takes `android.permission.*` |
+| `looktap install <path> [--grant]` | iOS: a simulator `.app`. Android: an `.apk`, replacing an installed copy and keeping its data (`--grant`: all runtime permissions). Prints the app id |
+| `looktap uninstall <app>` | Removes the app |
+| `looktap reset <app>` | As if freshly installed: data and permissions cleared. iOS: the keychain survives |
+| `looktap permission grant\|revoke\|reset <name> [app]` | `camera`, `microphone`, `location`, `location-always`, `photos`, `contacts`, `calendar`, `notifications`, `motion`, `all`, … Android also takes `android.permission.*` |
 | **Conditions** | |
-| `simwright location <lat> <lon>` · `location clear` | Simulated GPS. Android: emulators only, and the emulator keeps its last fix (no `clear`) |
-| `simwright appearance [dark\|light]` | Dark mode. Without an argument, prints the current mode |
-| `simwright textsize [size]` | Dynamic Type (iOS) / font scale (Android): `xs s m l xl xxl xxxl ax1…ax5`, or iOS names such as `accessibility-large`. Without an argument, prints the current size |
-| `simwright statusbar clean\|live` | A screenshot-clean status bar (9:41, full battery and Wi-Fi), or back to live values |
-| `simwright network [offline\|online]` | Android only: airplane mode on or off, waiting until the device has lost (or regained) its connection. Without an argument, prints the current state |
-| `simwright push <app> <payload>` | iOS: a remote notification. The payload can be a `.json` file, inline JSON, or plain text for an alert |
+| `looktap location <lat> <lon>` · `location clear` | Simulated GPS. Android: emulators only, and the emulator keeps its last fix (no `clear`) |
+| `looktap appearance [dark\|light]` | Dark mode. Without an argument, prints the current mode |
+| `looktap textsize [size]` | Dynamic Type (iOS) / font scale (Android): `xs s m l xl xxl xxxl ax1…ax5`, or iOS names such as `accessibility-large`. Without an argument, prints the current size |
+| `looktap statusbar clean\|live` | A screenshot-clean status bar (9:41, full battery and Wi-Fi), or back to live values |
+| `looktap network [offline\|online]` | Android only: airplane mode on or off, waiting until the device has lost (or regained) its connection. Without an argument, prints the current state |
+| `looktap push <app> <payload>` | iOS: a remote notification. The payload can be a `.json` file, inline JSON, or plain text for an alert |
 | **Batch, setup & info** | |
-| `simwright mcp [--config]` | Serves these commands over MCP (stdio) for clients without a shell. `--config` prints a client config |
-| `simwright run '<cmd>; <cmd> …'` | Several commands in one process. `run -` reads them from stdin. Stops at the first failure and names it |
-| `simwright skill [--install]` | Prints the AI-agent guide, or installs it as a Claude Code skill |
-| `simwright devices` | Booted simulators and adb devices |
-| `simwright doctor` | Checks Node, Xcode and the simulator frameworks, adb, and booted devices |
-| `simwright setup` | Starts the helper ahead of time. Android: also `adb reverse tcp:8081` for Metro |
-| `simwright teardown` | Stops the helper. Android: also removes `adb reverse` rules |
+| `looktap mcp [--config]` | Serves these commands over MCP (stdio) for clients without a shell. `--config` prints a client config |
+| `looktap run '<cmd>; <cmd> …'` | Several commands in one process. `run -` reads them from stdin. Stops at the first failure and names it |
+| `looktap skill [--install]` | Prints the AI-agent guide, or installs it as a Claude Code skill |
+| `looktap devices` | Booted simulators and adb devices |
+| `looktap doctor` | Checks Node, Xcode and the simulator frameworks, adb, and booted devices |
+| `looktap setup` | Starts the helper ahead of time. Android: also `adb reverse tcp:8081` for Metro |
+| `looktap teardown` | Stops the helper. Android: also removes `adb reverse` rules |
 
 **`--ls`** works on `tap`, `longpress`, `zoom`, `tapxy`, `fill`, `type`, `key`, `hidekb`, `swipe`, `back`, `open`, `launch`, `bio`,
 `rotate` and `scrollto`. After the action it waits for the screen to change (up to 1.5 s, or 6 s for `launch`/`open`), then for
@@ -671,14 +672,14 @@ helper can't start. `1` means anything else failed. A script can `set -e` and st
 
 | Environment variable | Meaning |
 |---|---|
-| `SIMWRIGHT_PLATFORM`, `SIMWRIGHT_DEVICE`, `SIMWRIGHT_OUT`, `SIMWRIGHT_WAIT` | Defaults for `-p`, `-d`, `-o`, `--wait` |
-| `SIMWRIGHT_SCALE` | Override Android's px-per-dp (normally read from `wm density`) |
-| `SIMWRIGHT_ANDROID_HELPER=0` | Plain `adb` + `uiautomator dump` instead of the helper (slower) |
-| `SIMWRIGHT_EMULATOR_GRPC=0` | Don't take emulator frames over gRPC: use the emulator console |
-| `SIMWRIGHT_IOS_HID=indigo\|dtuhid` | Force the iOS input path. Takes effect when the helper starts |
-| `SIMWRIGHT_HOME` | Where sockets, logs and state live (default `~/.simwright`) |
+| `LOOKTAP_PLATFORM`, `LOOKTAP_DEVICE`, `LOOKTAP_OUT`, `LOOKTAP_WAIT` | Defaults for `-p`, `-d`, `-o`, `--wait` |
+| `LOOKTAP_SCALE` | Override Android's px-per-dp (normally read from `wm density`) |
+| `LOOKTAP_ANDROID_HELPER=0` | Plain `adb` + `uiautomator dump` instead of the helper (slower) |
+| `LOOKTAP_EMULATOR_GRPC=0` | Don't take emulator frames over gRPC: use the emulator console |
+| `LOOKTAP_IOS_HID=indigo\|dtuhid` | Force the iOS input path. Takes effect when the helper starts |
+| `LOOKTAP_HOME` | Where sockets, logs and state live (default `~/.looktap`) |
 
-**Config file.** simwright uses the nearest `simwright.config.json`, walking up from the current folder. Put it at
+**Config file.** looktap uses the nearest `looktap.config.json`, walking up from the current folder. Put it at
 the root of your app's repo:
 
 ```json
@@ -693,19 +694,19 @@ the root of your app's repo:
 Precedence: command-line option, then environment variable, then config file, then built-in default.
 
 <details>
-<summary><strong>Files simwright writes</strong></summary>
+<summary><strong>Files looktap writes</strong></summary>
 
 | Path | What |
 |---|---|
-| `~/.simwright/sim-<udid prefix>.sock`, `.log` | The iOS helper's socket and log |
-| `~/.simwright/helpers.json` | Which local port reaches each Android device's helper |
-| `~/.simwright/refs/<device>.json` | What `@1`…`@N` meant in the last `ls` on that device |
-| `~/.simwright/marks/<device>.json` | Where the last `logs` / `crashes` stopped |
-| `~/.simwright/recordings.json` | Recordings in progress, so `record stop` can find them |
-| `~/.simwright/rec-<udid prefix>.log` | The iOS recorder's output |
-| `~/.simwright/shots/` | Where the MCP server saves screenshots unless `-o` / `SIMWRIGHT_OUT` / config says otherwise |
-| `/data/local/tmp/simwright-server.jar` (device) | The Android helper |
-| `/data/local/tmp/simwright-recording.mp4` (device) | An Android recording in progress, removed when it's copied off |
+| `~/.looktap/sim-<udid prefix>.sock`, `.log` | The iOS helper's socket and log |
+| `~/.looktap/helpers.json` | Which local port reaches each Android device's helper |
+| `~/.looktap/refs/<device>.json` | What `@1`…`@N` meant in the last `ls` on that device |
+| `~/.looktap/marks/<device>.json` | Where the last `logs` / `crashes` stopped |
+| `~/.looktap/recordings.json` | Recordings in progress, so `record stop` can find them |
+| `~/.looktap/rec-<udid prefix>.log` | The iOS recorder's output |
+| `~/.looktap/shots/` | Where the MCP server saves screenshots unless `-o` / `LOOKTAP_OUT` / config says otherwise |
+| `/data/local/tmp/looktap-server.jar` (device) | The Android helper |
+| `/data/local/tmp/looktap-recording.mp4` (device) | An Android recording in progress, removed when it's copied off |
 | `<out>/<name>.png`, `<out>/<name>.mp4` | Your screenshots and videos |
 </details>
 
@@ -713,21 +714,21 @@ Precedence: command-line option, then environment variable, then config file, th
 
 | Symptom | Fix |
 |---|---|
-| iOS: `SimulatorKit not found …` / `… has no Indigo HID builders` | Run `simwright doctor`. Point `xcode-select` at a full Xcode: `sudo xcode-select -s /Applications/Xcode.app` |
+| iOS: `SimulatorKit not found …` / `… has no Indigo HID builders` | Run `looktap doctor`. Point `xcode-select` at a full Xcode: `sudo xcode-select -s /Applications/Xcode.app` |
 | iOS: `input unavailable (dtuhid): dtuhidd did not answer` | The simulator is still booting, or its input service is restarting. Retry in a few seconds |
-| iOS: an element you can see is missing from `ls` | Some containers hide their children from accessibility. simwright probes for them, but `tapxy` is the fallback |
-| `only the status bar is readable — a system prompt … may be covering the app` | A passcode, permission or alert prompt drawn by iOS. `simwright shot` to see it |
-| `both iOS and Android devices are up — pass -p ios\|android` | Add `-p`, or `export SIMWRIGHT_PLATFORM=…` |
-| `not found: <label>` | Run `simwright ls` and copy the label. If the screen is slow to load, raise `--wait` |
+| iOS: an element you can see is missing from `ls` | Some containers hide their children from accessibility. looktap probes for them, but `tapxy` is the fallback |
+| `only the status bar is readable — a system prompt … may be covering the app` | A passcode, permission or alert prompt drawn by iOS. `looktap shot` to see it |
+| `both iOS and Android devices are up — pass -p ios\|android` | Add `-p`, or `export LOOKTAP_PLATFORM=…` |
+| `not found: <label>` | Run `looktap ls` and copy the label. If the screen is slow to load, raise `--wait` |
 | `"<label>" is ambiguous — matches N labels` | Use more of the label, a `@ref`, or `--exact` |
 | `keyboard is still up` (iOS) | Search keyboards have no Done key. Tap the screen's Cancel/close control |
 | Android `ls` fails right after boot | Wait until `adb shell getprop sys.boot_completed` prints `1` |
 | Android `ls` fails after Appium was used | Appium still holds UiAutomation: `adb shell am force-stop io.appium.uiautomator2.server` |
-| Appium / `uiautomator` fail after simwright was used | simwright's helper holds UiAutomation: `simwright -p android teardown` |
-| `Android helper did not start — falling back to uiautomator dump` | Something else holds UiAutomation (see above). simwright keeps working, just slower |
+| Appium / `uiautomator` fail after looktap was used | looktap's helper holds UiAutomation: `looktap -p android teardown` |
+| `Android helper did not start — falling back to uiautomator dump` | Something else holds UiAutomation (see above). looktap keeps working, just slower |
 | Android keyboard never appears | Set `hw.keyboard = no` in the AVD's `config.ini`, then cold-boot the emulator |
 | Android screenshot is black | That screen is `FLAG_SECURE`: use `shot` without `--plain` on an emulator. System PIN and biometric sheets stay black in every mode |
-| App sits on the splash screen (Android, React Native) | Metro isn't reachable: `simwright setup` (adds `adb reverse tcp:8081`), make sure Metro runs, then `simwright launch` |
+| App sits on the splash screen (Android, React Native) | Metro isn't reachable: `looktap setup` (adds `adb reverse tcp:8081`), make sure Metro runs, then `looktap launch` |
 | `launch` says `no launchable activity` | The app isn't installed or the id is wrong: `adb shell pm list packages`, or `xcrun simctl listapps booted` |
 
 ## FAQ
@@ -743,7 +744,7 @@ build belong in your app's own test suite (XCTest, Espresso, Detox, Maestro, …
 <details>
 <summary><strong>Does it work on a real iPhone?</strong></summary>
 
-Yes. simwright installs a small XCUITest runner on it, signed with your own Apple ID (a free one works). See
+Yes. looktap installs a small XCUITest runner on it, signed with your own Apple ID (a free one works). See
 [Using a real iPhone](#using-a-real-iphone) for the one-time setup and what works there.
 
 On Android it works with emulators and with USB-debugging devices. (On a device, screenshots go through the
@@ -755,7 +756,7 @@ device, so `FLAG_SECURE` screens are black.)
 
 Nothing on the iOS simulator. On Android it copies an 8 KB helper to `/data/local/tmp` and runs it with
 `app_process`, the way `scrcpy` does. No APK is installed, no app is modified, and there's no SDK to add to your app.
-`simwright teardown` stops the helper.
+`looktap teardown` stops the helper.
 </details>
 
 <details>
@@ -777,8 +778,8 @@ on macOS.
 <details>
 <summary><strong>Will an Xcode update break it?</strong></summary>
 
-It can. The iOS helper uses private simulator frameworks, like `idb` does. `simwright doctor` tells you if something
-it needs has moved. Reading the screen and screenshots have held steady. Input changed in Xcode 27, and simwright
+It can. The iOS helper uses private simulator frameworks, like `idb` does. `looktap doctor` tells you if something
+it needs has moved. Reading the screen and screenshots have held steady. Input changed in Xcode 27, and looktap
 already has a path for that, though it isn't tested yet.
 </details>
 
@@ -794,12 +795,12 @@ continue. The skill tells agents exactly that. See [Safety rules](#safety-rules)
 - Verified Xcode 27 input
 - Rotation verified on iPad simulators
 
-Ideas and votes welcome in [Issues](https://github.com/lakpriya1s/simwright/issues).
+Ideas and votes welcome in [Issues](https://github.com/lakpriya1s/looktap/issues).
 
 ## Safety rules
 
 - **Never script a sign-in with real credentials,** whether from a shell script or an AI agent. A person signs in
-  and enters OTPs, then simwright takes over.
+  and enters OTPs, then looktap takes over.
 - **Never `burst` or `record` a sign-in or passcode screen.** The frames capture what's typed.
 - **Against a live backend, every tap is real.** Use the smallest amounts, then undo what you created.
 - **Logs can contain tokens and personal data.** Quote only the lines that matter, and don't commit screenshots of
@@ -808,17 +809,17 @@ Ideas and votes welcome in [Issues](https://github.com/lakpriya1s/simwright/issu
 ## Contributing
 
 ```bash
-git clone https://github.com/lakpriya1s/simwright.git
-cd simwright
+git clone https://github.com/lakpriya1s/looktap.git
+cd looktap
 npm test                          # unit tests, no device needed
 native/ios/build.sh               # rebuild the iOS helper (needs Xcode)
 native/android/build.sh           # rebuild the Android helper (needs the Android SDK + a JDK)
-node bin/simwright.js --help      # run from source
+node bin/looktap.js --help      # run from source
 npm run site:serve                # build the website and serve it on http://127.0.0.1:4173
 ```
 
 ```
-bin/simwright.js        CLI: arguments, device selection, commands
+bin/looktap.js        CLI: arguments, device selection, commands
 lib/ios.js              iOS driver: helper client, simctl, logs, crash reports
 lib/android.js          Android driver: helper client, adb fallback, logcat, exits
 lib/screen.js           ls rows, @refs, wait, scrollto, settle (platform-neutral)
@@ -827,10 +828,10 @@ lib/helper.js           the JSON-lines socket protocol both helpers speak
 lib/emulator.js         Android emulator gRPC frames, no dependencies
 lib/mcp.js              the MCP server (stdio)
 lib/png.js · lib/mp4.js · lib/util.js · lib/conditions.js · lib/permissions.js
-lib/assets/             built helpers (simwright-sim, simwright-server.jar)
+lib/assets/             built helpers (looktap-sim, looktap-server.jar)
 native/ios/             iOS helper source (Objective-C)
 native/android/         Android helper source (Java)
-skills/simwright/       the AI-agent guide
+skills/looktap/       the AI-agent guide
 site/                   the website: landing page (site/src) and docs generated from this README,
                         SKILL.md and BENCHMARK.md (site/build.mjs); published by .github/workflows/pages.yml
 ```
@@ -842,13 +843,13 @@ Notes for contributors:
   Commit the rebuilt file in `lib/assets/`.
 - **A new command needs:**
   - a method on both `Ios` and `Android`, or, if it only reads the screen, code in `lib/screen.js`;
-  - a `case` in `bin/simwright.js`;
+  - a `case` in `bin/looktap.js`;
   - a row in this README;
-  - a line in `skills/simwright/SKILL.md` if agents should use it;
+  - a line in `skills/looktap/SKILL.md` if agents should use it;
   - a scene that shows it in `site/src/scenes.js` (its `covers` list). `npm run site:build` fails until the
     README row and the scene are there.
 
-Issues and PRs welcome. If simwright saved your agent some tokens, a ⭐ helps others find it.
+Issues and PRs welcome. If looktap saved your agent some tokens, a ⭐ helps others find it.
 
 ## License
 
@@ -857,10 +858,10 @@ modified version as a service for others, you must publish your changes under th
 
 ---
 
-simwright is an independent open-source project, **not affiliated with, endorsed by or sponsored by Apple Inc.,
+looktap is an independent open-source project, **not affiliated with, endorsed by or sponsored by Apple Inc.,
 Google LLC or the Appium project.** iOS, iPhone, Xcode and Face ID are trademarks of Apple Inc. Android is a
 trademark of Google LLC.
 
 <div align="center">
-<sub>Text in · taps out · simwright</sub>
+<sub>Text in · taps out · looktap</sub>
 </div>

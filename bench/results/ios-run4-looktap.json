@@ -1,6 +1,6 @@
 {
   "setup": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 39.45304199999998,
         "bytes": 66,
@@ -10,7 +10,7 @@
     ]
   },
   "ls (read screen)": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 512.6926250000006,
         "bytes": 723,
@@ -74,7 +74,7 @@
     ]
   },
   "tap (by label)": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 132.16449999999986,
         "bytes": 28,
@@ -138,7 +138,7 @@
     ]
   },
   "back": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 163.18091699999968,
         "bytes": 0,
@@ -202,7 +202,7 @@
     ]
   },
   "tapxy": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 124.62033399999927,
         "bytes": 0,
@@ -266,7 +266,7 @@
     ]
   },
   "swipe": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 232.02283299999908,
         "bytes": 0,
@@ -330,7 +330,7 @@
     ]
   },
   "fill": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 811.6741249999995,
         "bytes": 0,
@@ -394,7 +394,7 @@
     ]
   },
   "type": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 53.28241700000035,
         "bytes": 0,
@@ -458,71 +458,71 @@
     ]
   },
   "hidekb": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 221.9535419999993,
         "bytes": 0,
         "calls": 0,
-        "err": "Command failed: node /Volumes/External/simwright/simwright/bin/simwright.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nsimwright: keyboard is still up — "
+        "err": "Command failed: node /Volumes/External/looktap/looktap/bin/looktap.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nlooktap: keyboard is still up — "
       },
       {
         "ms": 210.99291700000322,
         "bytes": 0,
         "calls": 0,
-        "err": "Command failed: node /Volumes/External/simwright/simwright/bin/simwright.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nsimwright: keyboard is still up — "
+        "err": "Command failed: node /Volumes/External/looktap/looktap/bin/looktap.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nlooktap: keyboard is still up — "
       },
       {
         "ms": 209.84525000000576,
         "bytes": 0,
         "calls": 0,
-        "err": "Command failed: node /Volumes/External/simwright/simwright/bin/simwright.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nsimwright: keyboard is still up — "
+        "err": "Command failed: node /Volumes/External/looktap/looktap/bin/looktap.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nlooktap: keyboard is still up — "
       },
       {
         "ms": 468.2394159999967,
         "bytes": 0,
         "calls": 0,
-        "err": "Command failed: node /Volumes/External/simwright/simwright/bin/simwright.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nsimwright: keyboard is still up — "
+        "err": "Command failed: node /Volumes/External/looktap/looktap/bin/looktap.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nlooktap: keyboard is still up — "
       },
       {
         "ms": 596.419458999997,
         "bytes": 0,
         "calls": 0,
-        "err": "Command failed: node /Volumes/External/simwright/simwright/bin/simwright.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nsimwright: keyboard is still up — "
+        "err": "Command failed: node /Volumes/External/looktap/looktap/bin/looktap.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nlooktap: keyboard is still up — "
       },
       {
         "ms": 232.77187499999127,
         "bytes": 0,
         "calls": 0,
-        "err": "Command failed: node /Volumes/External/simwright/simwright/bin/simwright.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nsimwright: keyboard is still up — "
+        "err": "Command failed: node /Volumes/External/looktap/looktap/bin/looktap.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nlooktap: keyboard is still up — "
       },
       {
         "ms": 214.5861670000013,
         "bytes": 0,
         "calls": 0,
-        "err": "Command failed: node /Volumes/External/simwright/simwright/bin/simwright.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nsimwright: keyboard is still up — "
+        "err": "Command failed: node /Volumes/External/looktap/looktap/bin/looktap.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nlooktap: keyboard is still up — "
       },
       {
         "ms": 217.27645899998606,
         "bytes": 0,
         "calls": 0,
-        "err": "Command failed: node /Volumes/External/simwright/simwright/bin/simwright.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nsimwright: keyboard is still up — "
+        "err": "Command failed: node /Volumes/External/looktap/looktap/bin/looktap.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nlooktap: keyboard is still up — "
       },
       {
         "ms": 246.89220800000476,
         "bytes": 0,
         "calls": 0,
-        "err": "Command failed: node /Volumes/External/simwright/simwright/bin/simwright.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nsimwright: keyboard is still up — "
+        "err": "Command failed: node /Volumes/External/looktap/looktap/bin/looktap.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nlooktap: keyboard is still up — "
       },
       {
         "ms": 230.39199999999255,
         "bytes": 0,
         "calls": 0,
-        "err": "Command failed: node /Volumes/External/simwright/simwright/bin/simwright.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nsimwright: keyboard is still up — "
+        "err": "Command failed: node /Volumes/External/looktap/looktap/bin/looktap.js -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 hidekb\nlooktap: keyboard is still up — "
       }
     ]
   },
   "shot (screenshot)": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 146.00862499999857,
         "bytes": 65,
@@ -586,7 +586,7 @@
     ]
   },
   "bio": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 550.3115420000031,
         "bytes": 0,
@@ -650,7 +650,7 @@
     ]
   },
   "launch (restart app)": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 591.8745000000017,
         "bytes": 0,
@@ -714,7 +714,7 @@
     ]
   },
   "burst 5s (frames)": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 5073.288541000016,
         "bytes": 92,
@@ -725,7 +725,7 @@
     ]
   },
   "teardown": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 42.49620799999684,
         "bytes": 19,

@@ -1,6 +1,6 @@
 // The landing page's scroll story: one scene per feature. A scene sets the phone up (start), then plays beats:
-// each types a command into the demo terminal, moves the phone, and prints what simwright prints. `covers`
-// names the commands a scene shows; site/build.mjs fails if a command in bin/simwright.js is in none.
+// each types a command into the demo terminal, moves the phone, and prints what looktap prints. `covers`
+// names the commands a scene shows; site/build.mjs fails if a command in bin/looktap.js is in none.
 // Importable in Node (no DOM at import time) so the build can check coverage.
 
 export const APP = 'com.example.demostore';
@@ -16,10 +16,10 @@ const listed = (p, n = 6) => {
   return [...rows.slice(0, n).map(dim), ...(rows.length > n ? [dim(`… ${rows.length - n} more rows`)] : [])];
 };
 
-/** tap <label>: find it simwright's way, touch it, run `then`, print what simwright prints. */
+/** tap <label>: find it looktap's way, touch it, run `then`, print what looktap prints. */
 async function tap(p, label, { ls = false, then } = {}) {
   const { e, error } = p.find(label);
-  if (error) return [err(`simwright: ${error}`)];
+  if (error) return [err(`looktap: ${error}`)];
   const at = p.centre(e);
   await p.tapEl(e);
   if (then) await then(e);
@@ -37,7 +37,7 @@ export const SCENES = [
     start: (p) => p.show('signin'),
     beats: [
       {
-        cmd: 'simwright ls',
+        cmd: 'looktap ls',
         run: async (p) => {
           p.showRefs();
           return p.rows().map((s) => ({ s, ref: true }));
@@ -54,14 +54,14 @@ export const SCENES = [
     covers: ['tap', 'tapxy'],
     start: (p) => p.show('home'),
     beats: [
-      { cmd: 'simwright tap "milk"', run: (p) => tap(p, 'milk') },
-      { cmd: 'simwright tap "Oat milk, 1 L"', run: (p) => tap(p, 'Oat milk, 1 L') },
+      { cmd: 'looktap tap "milk"', run: (p) => tap(p, 'milk') },
+      { cmd: 'looktap tap "Oat milk, 1 L"', run: (p) => tap(p, 'Oat milk, 1 L') },
       {
-        cmd: 'simwright tap Add --ls',
+        cmd: 'looktap tap Add --ls',
         run: (p) => tap(p, 'Add', { ls: true, then: async () => p.set({ cart: 3 }) }),
       },
       {
-        cmd: (c) => (c.ios ? 'simwright tapxy 348 121' : 'simwright tapxy 367 132'),
+        cmd: (c) => (c.ios ? 'looktap tapxy 348 121' : 'looktap tapxy 367 132'),
         run: async (p) => {
           await p.touch(348, 121);
           return [];
@@ -79,7 +79,7 @@ export const SCENES = [
     start: (p) => p.show('signin'),
     beats: [
       {
-        cmd: 'simwright fill Email sam',
+        cmd: 'looktap fill Email sam',
         run: async (p) => {
           const { e } = p.find('Email');
           await p.tapEl(e);
@@ -89,21 +89,21 @@ export const SCENES = [
         },
       },
       {
-        cmd: 'simwright type "@example.com"',
+        cmd: 'looktap type "@example.com"',
         run: async (p) => {
           await p.typeInto('Email', 'sam@example.com', 40);
           return [];
         },
       },
       {
-        cmd: 'simwright key tab',
+        cmd: 'looktap key tab',
         run: async (p) => {
           p.set({ focus: 'Password' });
           return [];
         },
       },
       {
-        cmd: 'simwright hidekb --ls',
+        cmd: 'looktap hidekb --ls',
         run: async (p) => {
           await p.touch(335, 799);
           p.clear('keyboard');
@@ -123,7 +123,7 @@ export const SCENES = [
     start: (p) => p.show('home'),
     beats: [
       {
-        cmd: (c) => (c.ios ? 'simwright swipe 195 600 195 300' : 'simwright swipe 206 656 206 328'),
+        cmd: (c) => (c.ios ? 'looktap swipe 195 600 195 300' : 'looktap swipe 206 656 206 328'),
         run: async (p) => {
           p.swipe(195, 600, 195, 300);
           await p.scrollList(216);
@@ -131,7 +131,7 @@ export const SCENES = [
         },
       },
       {
-        cmd: 'simwright scrollto "Gift card"',
+        cmd: 'looktap scrollto "Gift card"',
         run: async (p) => {
           await p.swipe(195, 600, 195, 400, 300);
           await p.scrollList(310);
@@ -140,21 +140,21 @@ export const SCENES = [
         },
       },
       {
-        cmd: 'simwright open demostore://stores',
+        cmd: 'looktap open demostore://stores',
         run: async (p) => {
           p.show('map');
           return [];
         },
       },
       {
-        cmd: 'simwright location 51.5072 -0.1276',
+        cmd: 'looktap location 51.5072 -0.1276',
         run: async (p) => {
           p.overlay({ kind: 'dot', x: 196, y: 404 });
           return ['location 51.5072, -0.1276'];
         },
       },
       {
-        cmd: (c) => (c.ios ? 'simwright longpress 120 560 --ls' : 'simwright longpress 126 612 --ls'),
+        cmd: (c) => (c.ios ? 'looktap longpress 120 560 --ls' : 'looktap longpress 126 612 --ls'),
         run: async (p, c) => {
           await p.touch(120, 560, { hold: 800 });
           p.overlay({ kind: 'pin', x: 120, y: 560 });
@@ -163,7 +163,7 @@ export const SCENES = [
         },
       },
       {
-        cmd: 'simwright zoom in',
+        cmd: 'looktap zoom in',
         run: async (p) => {
           const { w, h } = p.screenSize();
           await p.pinch(195, 422);
@@ -172,7 +172,7 @@ export const SCENES = [
         },
       },
       {
-        cmd: 'simwright back --ls',
+        cmd: 'looktap back --ls',
         run: async (p) => {
           const back = p.find('Back').e;
           if (back) await p.tapEl(back);
@@ -195,11 +195,11 @@ export const SCENES = [
     },
     beats: [
       {
-        cmd: 'simwright tap "Sign in"',
+        cmd: 'looktap tap "Sign in"',
         run: (p) => tap(p, 'Sign in', { then: async () => p.overlay({ kind: 'spinner' }) }),
       },
       {
-        cmd: 'simwright wait Welcome',
+        cmd: 'looktap wait Welcome',
         run: async (p) => {
           await sleep(1100);
           p.show('home');
@@ -208,7 +208,7 @@ export const SCENES = [
           return [`found "Welcome back, Sam" at ${p.centre(e).join(',')}`];
         },
       },
-      { cmd: 'simwright wait Loading --gone', run: async () => ['gone: Loading'] },
+      { cmd: 'looktap wait Loading --gone', run: async () => ['gone: Loading'] },
     ],
   },
   {
@@ -221,51 +221,51 @@ export const SCENES = [
     start: (p) => p.show('home'),
     beats: [
       {
-        cmd: 'simwright shot home --scale 0.5',
+        cmd: 'looktap shot home --scale 0.5',
         run: async (p) => {
           p.flash();
           return ['shots/home.png'];
         },
       },
       {
-        cmd: 'simwright record start checkout',
+        cmd: 'looktap record start checkout',
         run: async (p) => {
           p.rec(true);
-          return ['recording to /Users/you/app/shots/checkout.mp4 — stop with: simwright record stop'];
+          return ['recording to /Users/you/app/shots/checkout.mp4 — stop with: looktap record stop'];
         },
       },
       {
-        cmd: 'simwright tap Add',
+        cmd: 'looktap tap Add',
         run: (p) => tap(p, 'Add', { then: async () => (p.set({ cart: 3 }), p.overlay({ kind: 'toast', text: 'Added to bag', y: 630 })) }),
       },
       {
-        cmd: 'simwright record stop',
+        cmd: 'looktap record stop',
         run: async (p) => {
           p.rec(false);
           return ['/Users/you/app/shots/checkout.mp4  6 s'];
         },
       },
-      { cmd: 'simwright burst ./frames 3', run: async () => ['48 frames, 9 distinct, in ./frames'] },
+      { cmd: 'looktap burst ./frames 3', run: async () => ['48 frames, 9 distinct, in ./frames'] },
     ],
   },
   {
     id: 'debug',
     kicker: '07 · Debug',
     title: 'When the app vanishes, you hear why',
-    body: `<p>An app that dies is named the moment simwright notices, right in the output of the tap that killed it.</p>
+    body: `<p>An app that dies is named the moment looktap notices, right in the output of the tap that killed it.</p>
 <p><code>crashes</code> reads the crash report (exception, reason, the top frames), and on Android ANRs and <strong>low-memory kills</strong> too. <code>logs</code> shows only what's new since you last looked, with <code>--errors</code> and <code>--grep</code> to narrow it. <code>app</code> says what's in front.</p>`,
     covers: ['logs', 'crashes', 'app'],
     start: (p) => p.show('home'),
     beats: [
       {
-        cmd: 'simwright tap "Checkout · 2 items" --ls',
+        cmd: 'looktap tap "Checkout · 2 items" --ls',
         run: async (p) => {
           const out = await tap(p, 'Checkout · 2 items', { then: () => p.crash() });
-          return [...out, warn(`simwright: warning: ${APP} is no longer running — it crashed or was killed. See: simwright crashes ${APP}`), ...listed(p, 4)];
+          return [...out, warn(`looktap: warning: ${APP} is no longer running — it crashed or was killed. See: looktap crashes ${APP}`), ...listed(p, 4)];
         },
       },
       {
-        cmd: 'simwright crashes',
+        cmd: 'looktap crashes',
         run: async (p, c) =>
           c.ios
             ? [
@@ -284,15 +284,15 @@ export const SCENES = [
               ],
       },
       {
-        cmd: 'simwright logs --errors',
+        cmd: 'looktap logs --errors',
         run: async (p, c) =>
           c.ios
             ? ['10:24:07.118 E [com.example.demostore:checkout] total requested before cart loaded', '10:24:07.121 F DemoStore/CheckoutView.swift:58: Fatal error: Unexpectedly found nil']
             : ['10:24:07.118 E CheckoutViewModel: total requested before cart loaded', '10:24:07.140 E AndroidRuntime: FATAL EXCEPTION: main'],
       },
       {
-        cmd: 'simwright app',
-        run: async (p, c) => [c.ios ? 'front: com.apple.springboard  pid 2310' : 'front: com.google.android.apps.nexuslauncher  pid 1877', `${APP}: not running — if it was, check: simwright crashes`],
+        cmd: 'looktap app',
+        run: async (p, c) => [c.ios ? 'front: com.apple.springboard  pid 2310' : 'front: com.google.android.apps.nexuslauncher  pid 1877', `${APP}: not running — if it was, check: looktap crashes`],
       },
     ],
   },
@@ -308,7 +308,7 @@ export const SCENES = [
     },
     beats: [
       {
-        cmd: 'simwright bio nomatch',
+        cmd: 'looktap bio nomatch',
         run: async (p) => {
           p.overlay({ kind: 'faceid', state: 'bad' });
           await sleep(700);
@@ -317,7 +317,7 @@ export const SCENES = [
         },
       },
       {
-        cmd: 'simwright bio match --ls',
+        cmd: 'looktap bio match --ls',
         run: async (p) => {
           p.overlay({ kind: 'faceid', state: 'ok' });
           await sleep(650);
@@ -332,51 +332,51 @@ export const SCENES = [
     kicker: '09 · Conditions',
     title: 'Dark mode, big text, landscape, offline',
     body: `<p>Put the device in the state your bug report describes, one command each: <code>appearance dark</code>, <code>textsize ax2</code> (Dynamic Type or font scale), <code>statusbar clean</code> for a 9:41 screenshot, <code>push</code> a notification (iOS), go <code>network offline</code> (Android airplane mode).</p>
-<p><code>rotate landscape</code> turns the device, and everything follows: <code>ls</code> coordinates, taps and screenshots match what's on screen. An app that doesn't support the orientation stays put, and simwright says so.</p>`,
+<p><code>rotate landscape</code> turns the device, and everything follows: <code>ls</code> coordinates, taps and screenshots match what's on screen. An app that doesn't support the orientation stays put, and looktap says so.</p>`,
     covers: ['appearance', 'textsize', 'statusbar', 'push', 'network', 'rotate'],
     start: (p) => p.show('home'),
     beats: [
       {
-        cmd: 'simwright appearance dark',
+        cmd: 'looktap appearance dark',
         run: async (p) => {
           p.set({ dark: true });
           return ['dark'];
         },
       },
       {
-        cmd: 'simwright textsize ax2',
+        cmd: 'looktap textsize ax2',
         run: async (p, c) => {
           p.set({ text: 1.18 });
           return [c.ios ? 'accessibility-large' : 'accessibility-large (font scale 1.7)'];
         },
       },
       {
-        cmd: 'simwright statusbar clean',
+        cmd: 'looktap statusbar clean',
         run: async (p) => {
           p.set({ clean: true });
           return ['status bar: 9:41, full battery and signal'];
         },
       },
       {
-        cmd: `simwright push ${APP} "Your order has shipped"`,
+        cmd: `looktap push ${APP} "Your order has shipped"`,
         run: async (p, c) => {
-          if (!c.ios) return [err('simwright: Android pushes come through Firebase (FCM): send one from your backend or the Firebase console — they can\'t be injected from adb')];
+          if (!c.ios) return [err('looktap: Android pushes come through Firebase (FCM): send one from your backend or the Firebase console — they can\'t be injected from adb')];
           p.overlay({ kind: 'banner', text: 'Your order has shipped' });
           setTimeout(() => p.clear('banner'), 2200);
           return [`pushed to ${APP}`];
         },
       },
       {
-        cmd: 'simwright network offline',
+        cmd: 'looktap network offline',
         run: async (p, c) => {
-          if (c.ios) return [err("simwright: the iOS simulator uses the Mac's own network, so it can't go offline or slow by itself. Network Link Conditioner (…) throttles the whole Mac")];
+          if (c.ios) return [err("looktap: the iOS simulator uses the Mac's own network, so it can't go offline or slow by itself. Network Link Conditioner (…) throttles the whole Mac")];
           p.set({ offline: true });
           p.overlay({ kind: 'offline' });
           return ['network: offline (airplane mode)'];
         },
       },
       {
-        cmd: 'simwright rotate landscape --ls',
+        cmd: 'looktap rotate landscape --ls',
         run: async (p) => {
           p.clear('offline');
           await p.rotate(true);
@@ -396,16 +396,16 @@ export const SCENES = [
     start: (p) => p.show('springboardEmpty'),
     beats: [
       {
-        cmd: (c) => (c.ios ? 'simwright install build/DemoStore.app' : 'simwright install build/demo-store.apk'),
+        cmd: (c) => (c.ios ? 'looktap install build/DemoStore.app' : 'looktap install build/demo-store.apk'),
         run: async (p) => {
           p.set({ screen: 'springboard', freshIcon: true });
           return [`installed ${APP}`];
         },
       },
-      { cmd: `simwright permission grant camera ${APP}`, run: async (p, c) => [`granted: ${c.ios ? 'camera' : 'CAMERA'} for ${APP}`] },
-      { cmd: `simwright reset ${APP}`, run: async () => [`reset ${APP}: data and permissions cleared — launch it to start fresh`] },
+      { cmd: `looktap permission grant camera ${APP}`, run: async (p, c) => [`granted: ${c.ios ? 'camera' : 'CAMERA'} for ${APP}`] },
+      { cmd: `looktap reset ${APP}`, run: async () => [`reset ${APP}: data and permissions cleared — launch it to start fresh`] },
       {
-        cmd: `simwright launch ${APP} --ls`,
+        cmd: `looktap launch ${APP} --ls`,
         run: async (p) => {
           p.set({ freshIcon: false });
           p.show('signin');
@@ -413,9 +413,9 @@ export const SCENES = [
           return listed(p, 4);
         },
       },
-      { cmd: 'simwright tap Allow', run: (p) => tap(p, 'Allow', { then: async () => p.clear('alert') }) },
+      { cmd: 'looktap tap Allow', run: (p) => tap(p, 'Allow', { then: async () => p.clear('alert') }) },
       {
-        cmd: `simwright uninstall ${APP}`,
+        cmd: `looktap uninstall ${APP}`,
         run: async (p) => {
           p.show('springboardEmpty');
           return [`uninstalled ${APP}`];
@@ -436,26 +436,26 @@ export const SCENES = [
     },
     beats: [
       {
-        cmd: 'simwright tap Add',
+        cmd: 'looktap tap Add',
         run: async (p, c) => {
           const out = await tap(p, 'Add');
           const toast = p.toPlatform(p.visible().find((e) => e.kind === 'toast'));
-          return [...out, warn(`simwright: warning: "Added to bag" at ${toast.x},${toast.y} ${toast.w}x${toast.h} covers that point and may have taken the tap`)];
+          return [...out, warn(`looktap: warning: "Added to bag" at ${toast.x},${toast.y} ${toast.w}x${toast.h} covers that point and may have taken the tap`)];
         },
       },
       {
-        cmd: 'simwright tap @9',
+        cmd: 'looktap tap @9',
         run: async (p, c) => {
           p.clear('toast');
           await p.scrollList(150);
-          return [err(`simwright: @9 ("Add" at ${c.ios ? '314,420' : '331,459'}) is no longer on screen — run: simwright ls`)];
+          return [err(`looktap: @9 ("Add" at ${c.ios ? '314,420' : '331,459'}) is no longer on screen — run: looktap ls`)];
         },
       },
       {
-        cmd: 'simwright ls',
+        cmd: 'looktap ls',
         run: async (p) => {
           p.overlay({ kind: 'passcode' });
-          return [err('simwright: only the status bar is readable — a system prompt (passcode, permission, alert) may be covering the app. `simwright shot` shows it')];
+          return [err('looktap: only the status bar is readable — a system prompt (passcode, permission, alert) may be covering the app. `looktap shot` shows it')];
         },
       },
     ],
@@ -465,13 +465,13 @@ export const SCENES = [
     kicker: '12 · For agents',
     title: 'Built for the agent loop',
     body: `<p>Turns cost more than milliseconds. <code>--ls</code> on any action returns the settled screen, so look-then-act is one call. <code>run</code> batches known steps in one process, <code>ls --json</code> gives structure, and the bundled skill teaches Claude Code the loop.</p>
-<p>For chat apps without a shell, <code>simwright mcp</code> serves the same commands over MCP.</p>
+<p>For chat apps without a shell, <code>looktap mcp</code> serves the same commands over MCP.</p>
 <div class="tools" data-tools aria-label="MCP tools"></div>`,
     covers: ['run', 'mcp', 'skill'],
     start: (p) => p.show('signin'),
     beats: [
       {
-        cmd: `simwright run 'fill Email sam@example.com; tap "Sign in"; wait Welcome'`,
+        cmd: `looktap run 'fill Email sam@example.com; tap "Sign in"; wait Welcome'`,
         run: async (p, c) => {
           const { e } = p.find('Email');
           await p.tapEl(e);
@@ -484,7 +484,7 @@ export const SCENES = [
         },
       },
       {
-        cmd: 'simwright ls --json',
+        cmd: 'looktap ls --json',
         run: async (p) => {
           const { w, h } = p.screenSize();
           const els = p.visible().slice(0, 2).map((e, i) => {
@@ -494,35 +494,35 @@ export const SCENES = [
           return [`{"screen":{"w":${w},"h":${h}},"elements":[${els.join(',')},…]}`];
         },
       },
-      { cmd: 'simwright skill --install', run: async () => ['installed /Users/you/.claude/skills/simwright/SKILL.md'] },
+      { cmd: 'looktap skill --install', run: async () => ['installed /Users/you/.claude/skills/looktap/SKILL.md'] },
       {
-        cmd: 'simwright mcp --config',
-        run: async () => ['{', '  "mcpServers": {', '    "simwright": {', '      "command": "/usr/local/bin/node",', '      "args": ["…/simwright/bin/simwright.js", "mcp"]', '    }', '  }', '}'],
+        cmd: 'looktap mcp --config',
+        run: async () => ['{', '  "mcpServers": {', '    "looktap": {', '      "command": "/usr/local/bin/node",', '      "args": ["…/looktap/bin/looktap.js", "mcp"]', '    }', '  }', '}'],
       },
     ],
   },
   {
     id: 'setup',
     kicker: '13 · Setup',
-    title: 'Nothing to install on the device',
-    body: `<p>No server to run and no npm dependencies. simwright's own small helpers start on first use: a macOS helper that speaks to the simulator through Apple's frameworks, and an 8 KB Android helper run with <code>app_process</code>.</p>
+    title: 'Nothing to install on simulators',
+    body: `<p>No server to run and no npm dependencies. looktap's own small helpers start on first use: a macOS helper that speaks to the simulator through Apple's frameworks, and an 8 KB Android helper run with <code>app_process</code>. A real iPhone gets a small XCUITest runner, built and signed with your own Apple ID on first use.</p>
 <p>First command in about a tenth of a second, against 7–39 s for an Appium session.</p>`,
     covers: ['doctor', 'devices', 'setup', 'teardown'],
     start: (p) => p.show('springboard'),
     beats: [
       {
-        cmd: 'simwright doctor',
+        cmd: 'looktap doctor',
         run: async (p, c) =>
           c.ios
             ? [ok('✓ node 22.11.0 (needs ≥ 18)'), ok('✓ xcrun (iOS)'), ok('✓ booted simulators: iPhone 18 Pro'), ok('✓ CoreSimulator.framework (iOS helper)'), dim('  iOS input: indigo (CoreSimulator 1048)')]
             : [ok('✓ node 22.11.0 (needs ≥ 18)'), ok('✓ adb (Android)'), ok('✓ adb devices: emulator-5554')],
       },
-      { cmd: 'simwright devices', run: async (p, c) => [c.ios ? 'ios      9F1C2A44-…-77E0  iPhone 18 Pro' : 'android  emulator-5554'] },
+      { cmd: 'looktap devices', run: async (p, c) => [c.ios ? 'ios      9F1C2A44-…-77E0  iPhone 18 Pro' : 'android  emulator-5554'] },
       {
-        cmd: 'simwright setup',
-        run: async (p, c) => [c.ios ? 'simwright iOS helper ready on 9F1C2A44-…-77E0' : 'adb emulator-5554 ready · scale 2.625 (dp = px ÷ 2.625) · reverse tcp:8081 · helper on · emulator gRPC frames'],
+        cmd: 'looktap setup',
+        run: async (p, c) => [c.ios ? 'looktap iOS helper ready on 9F1C2A44-…-77E0' : 'adb emulator-5554 ready · scale 2.625 (dp = px ÷ 2.625) · reverse tcp:8081 · helper on · emulator gRPC frames'],
       },
-      { cmd: 'simwright teardown', run: async (p, c) => [c.ios ? 'iOS helper stopped' : 'removed adb reverse rules · helper stopped'] },
+      { cmd: 'looktap teardown', run: async (p, c) => [c.ios ? 'iOS helper stopped' : 'removed adb reverse rules · helper stopped'] },
     ],
   },
 ];

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 
-process.env.SIMWRIGHT_HOME = mkdtempSync(join(tmpdir(), 'simwright-test-'));
+process.env.LOOKTAP_HOME = mkdtempSync(join(tmpdir(), 'looktap-test-'));
 const { coveringAt, formatRow, keyboardArea, matches, onlyStatusBar, resolveRef, saveRefs, visibleRows } = await import('../lib/screen.js');
 const { scaleRgb } = await import('../lib/png.js');
 
@@ -83,7 +83,7 @@ test('the keyboard collapses to one row; bars above it and status-bar buttons st
     el('Return to Mail', 'Button', 12, 31, 52, 13),
   ];
   const rows = visibleRows(els);
-  assert.deepEqual(rows.map((r) => r.label), ['Email', 'Previous', 'Return to Mail', 'Keyboard (type with: simwright type)']);
+  assert.deepEqual(rows.map((r) => r.label), ['Email', 'Previous', 'Return to Mail', 'Keyboard (type with: looktap type)']);
   assert.deepEqual(keyboardArea(els), { x: 0, y: 560, w: 386, h: 216 });
   assert.equal(keyboardArea(els.filter((e) => !e.id)), null);
   assert.equal(visibleRows(els, { all: true }).length, els.length);

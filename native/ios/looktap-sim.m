@@ -1,4 +1,4 @@
-// simwright iOS helper: drives a booted simulator from the host through Apple's simulator frameworks.
+// looktap iOS helper: drives a booted simulator from the host through Apple's simulator frameworks.
 // Nothing is installed on the simulator and there is no XCTest/WebDriverAgent in the loop.
 //
 //   screen tree   AccessibilityPlatformTranslation (AXPTranslator), bridged through
@@ -17,7 +17,7 @@
 // "bytes": N is followed by N raw bytes (a PNG).
 //
 // build: clang -fobjc-arc -O2 -framework Foundation -framework AppKit -framework IOSurface \
-//          -framework ImageIO -framework CoreGraphics -framework UniformTypeIdentifiers simwright-sim.m
+//          -framework ImageIO -framework CoreGraphics -framework UniformTypeIdentifiers looktap-sim.m
 
 #import <AppKit/AppKit.h>
 #import <CoreGraphics/CoreGraphics.h>
@@ -84,7 +84,7 @@ static void updateOrientation(id root); // see "orientation" below
 static NSRect nativeFrame(id el);
 
 static void die(NSString *msg) {
-  fprintf(stderr, "simwright-sim: %s\n", msg.UTF8String);
+  fprintf(stderr, "looktap-sim: %s\n", msg.UTF8String);
   exit(2);
 }
 
@@ -980,7 +980,7 @@ static void serve(int fd) {
   size_t cap = 0;
   static dispatch_queue_t work;
   static dispatch_once_t once;
-  dispatch_once(&once, ^{ work = dispatch_queue_create("simwright.work", DISPATCH_QUEUE_SERIAL); });
+  dispatch_once(&once, ^{ work = dispatch_queue_create("looktap.work", DISPATCH_QUEUE_SERIAL); });
   while (getline(&line, &cap, in) > 0) {
     @autoreleasepool {
       NSData *data = [NSData dataWithBytes:line length:strlen(line)];
@@ -1003,17 +1003,17 @@ static void serve(int fd) {
 
 /**
  From CoreSimulator 1155.4 (Xcode 27) the guest drops Indigo input for the whole boot, delivered or
- not, so it has to be dtuhidd — idb's rule. SIMWRIGHT_IOS_HID=indigo|dtuhid overrides it.
+ not, so it has to be dtuhidd — idb's rule. LOOKTAP_IOS_HID=indigo|dtuhid overrides it.
  Input problems are recorded in `inputError`, not fatal: reading the screen still works.
  */
 static void chooseTransport(void *simKit) {
-  const char *forced = getenv("SIMWRIGHT_IOS_HID");
+  const char *forced = getenv("LOOKTAP_IOS_HID");
   NSString *v = coreSimulatorVersion();
   BOOL modern = v && [v compare:@"1155.4" options:NSNumericSearch] != NSOrderedAscending;
   transport = forced && *forced ? @(forced) : modern ? @"dtuhid" : @"indigo";
   if ([transport isEqualToString:@"dtuhid"]) return; // connected on first input (dtuhidd is demand-launched)
   if (![transport isEqualToString:@"indigo"]) {
-    inputError = [NSString stringWithFormat:@"unknown SIMWRIGHT_IOS_HID: %@", transport];
+    inputError = [NSString stringWithFormat:@"unknown LOOKTAP_IOS_HID: %@", transport];
     return;
   }
   indigoMouse = (MouseEventFn)dlsym(simKit, "IndigoHIDMessageForMouseNSEvent");
@@ -1046,7 +1046,7 @@ static void setup(NSString *udid, NSString *developerDir) {
   screenScale = [[device deviceType] mainScreenScale];
   isPad = [str([[device deviceType] valueForKey:@"name"]) hasPrefix:@"iPad"];
 
-  hidQueue = dispatch_queue_create("simwright.hid", DISPATCH_QUEUE_SERIAL);
+  hidQueue = dispatch_queue_create("looktap.hid", DISPATCH_QUEUE_SERIAL);
   chooseTransport(sk);
 
   if (![device respondsToSelector:@selector(sendAccessibilityRequestAsync:completionQueue:completionHandler:)])
@@ -1067,7 +1067,7 @@ int main(int argc, char **argv) {
       else if ([k isEqualToString:@"--version"]) version = v;
       else if ([k isEqualToString:@"--developer-dir"]) developerDir = v;
     }
-    if (!udid || !socketPath) die(@"usage: simwright-sim --udid <udid> --socket <path> [--version v] [--developer-dir dir]");
+    if (!udid || !socketPath) die(@"usage: looktap-sim --udid <udid> --socket <path> [--version v] [--developer-dir dir]");
     setup(udid, developerDir);
 
     struct sockaddr_un addr = {.sun_family = AF_UNIX};
@@ -1076,7 +1076,7 @@ int main(int argc, char **argv) {
     int srv = socket(AF_UNIX, SOCK_STREAM, 0);
     unlink(addr.sun_path);
     if (bind(srv, (struct sockaddr *)&addr, sizeof(addr)) || listen(srv, 8)) die(@"cannot listen on the socket");
-    fprintf(stderr, "simwright-sim %s ready on %s\n", version.UTF8String, socketPath.UTF8String);
+    fprintf(stderr, "looktap-sim %s ready on %s\n", version.UTF8String, socketPath.UTF8String);
 
     // Exit with the simulator: a helper for a shut-down device is useless and holds its socket.
     dispatch_source_t watch = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_global_queue(0, 0));

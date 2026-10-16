@@ -185,7 +185,7 @@ export class Phone {
     return this.state.overlays.some((o) => o.kind === kind);
   }
 
-  // ── elements, as simwright sees them ──
+  // ── elements, as looktap sees them ──
 
   baseElements() {
     const els = SCREENS[this.state.screen](this.state).map((e) => ({ ...e }));
@@ -259,18 +259,18 @@ export class Phone {
     };
   }
 
-  /** The screen size as simwright reports it (points / dp). */
+  /** The screen size as looktap reports it (points / dp). */
   screenSize() {
     const s = this.platform === 'ios' ? { w: W, h: H } : ANDROID;
     return this.landscape ? { w: s.h, h: s.w } : s;
   }
 
-  /** `ls` rows, exactly as simwright formats them. */
+  /** `ls` rows, exactly as looktap formats them. */
   rows(limit = Infinity) {
     return this.visible().slice(0, limit).map((e, i) => formatRow(this.toPlatform(e), i + 1));
   }
 
-  /** The element `tap <label>` picks, simwright's way: exact, else a unique prefix, else a unique substring. */
+  /** The element `tap <label>` picks, looktap's way: exact, else a unique prefix, else a unique substring. */
   find(label) {
     const els = this.visible();
     const hit = els.find((e) => e.label === label);
@@ -284,7 +284,7 @@ export class Phone {
     return { error: `not found: ${label}` };
   }
 
-  /** Where simwright would tap: the element's centre, in the platform's units. */
+  /** Where looktap would tap: the element's centre, in the platform's units. */
   centre(e) {
     const p = this.toPlatform(e);
     return [Math.round(p.x + p.w / 2), Math.round(p.y + p.h / 2)];

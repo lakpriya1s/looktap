@@ -1,9 +1,9 @@
-// simwright Android helper: run with app_process as the shell user, nothing installed.
+// looktap Android helper: run with app_process as the shell user, nothing installed.
 // Holds one UiAutomation connection open so screen reads skip `uiautomator dump`'s reconnect and idle wait.
 //
-// Protocol (localabstract socket "simwright"): one JSON request per line. Each reply is one JSON line;
+// Protocol (localabstract socket "looktap"): one JSON request per line. Each reply is one JSON line;
 // a reply carrying "bytes": N is followed by N raw bytes (a PNG).
-package com.simwright;
+package com.looktap;
 
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.UiAutomation;
@@ -36,7 +36,7 @@ import java.util.List;
 public final class Server {
     /** Set by the host at launch (a hash of this jar), so a stale helper is replaced after an upgrade. */
     static String version = "dev";
-    static final String SOCKET = "simwright";
+    static final String SOCKET = "looktap";
 
     static UiAutomation ua;
     static final Object lock = new Object();
@@ -47,14 +47,14 @@ public final class Server {
         try {
             server = new LocalServerSocket(SOCKET);
         } catch (Exception e) {
-            System.err.println("simwright helper already running");
+            System.err.println("looktap helper already running");
             System.exit(3);
             return;
         }
         // AccessibilityInteractionClient builds Handlers on the main looper; app_process has none by default.
         Looper.prepareMainLooper();
         ua = connect();
-        System.err.println("simwright helper " + version + " ready");
+        System.err.println("looktap helper " + version + " ready");
         for (;;) {
             final LocalSocket client = server.accept();
             Thread t = new Thread(new Runnable() {
@@ -69,7 +69,7 @@ public final class Server {
 
     /** The same UiAutomation the system `uiautomator` tool builds, via hidden constructors. */
     static UiAutomation connect() throws Exception {
-        HandlerThread thread = new HandlerThread("simwright-ua");
+        HandlerThread thread = new HandlerThread("looktap-ua");
         thread.start();
         Class<?> connCls = Class.forName("android.app.UiAutomationConnection");
         Class<?> ifaceCls = Class.forName("android.app.IUiAutomationConnection");
@@ -538,7 +538,7 @@ public final class Server {
         Class<?> sm = Class.forName("android.os.ServiceManager");
         Object binder = sm.getMethod("getService", String.class).invoke(null, "clipboard");
         Object clipboard = Class.forName("android.content.IClipboard$Stub").getMethod("asInterface", android.os.IBinder.class).invoke(null, binder);
-        android.content.ClipData clip = android.content.ClipData.newPlainText("simwright", s);
+        android.content.ClipData clip = android.content.ClipData.newPlainText("looktap", s);
         Method best = null;
         for (Method m : clipboard.getClass().getMethods())
             if (m.getName().equals("setPrimaryClip") && (best == null || m.getParameterTypes().length > best.getParameterTypes().length)) best = m;

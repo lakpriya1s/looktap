@@ -1,4 +1,4 @@
-// simwright's real-device runner: a UI test that never finishes. It listens on a TCP port on the device
+// looktap's real-device runner: a UI test that never finishes. It listens on a TCP port on the device
 // (reached from the Mac through usbmuxd) and answers the same JSON-lines requests as the simulator helper,
 // using XCUITest to read the screen and to tap, swipe and type. Only installed on physical devices.
 import Network
@@ -15,8 +15,8 @@ final class Runner: XCTestCase {
 
   func testServe() throws {
     let env = ProcessInfo.processInfo.environment
-    let port = UInt16(env["SIMWRIGHT_PORT"] ?? "") ?? 22087
-    let server = Server(version: env["SIMWRIGHT_VERSION"] ?? "")
+    let port = UInt16(env["LOOKTAP_PORT"] ?? "") ?? 22087
+    let server = Server(version: env["LOOKTAP_VERSION"] ?? "")
     try server.listen(port: port)
     while !server.stopped { _ = RunLoop.current.run(mode: .default, before: Date(timeIntervalSinceNow: 0.5)) }
   }
@@ -38,12 +38,12 @@ final class Server {
   func listen(port: UInt16) throws {
     let l = try NWListener(using: .tcp, on: NWEndpoint.Port(rawValue: port)!)
     l.newConnectionHandler = { [weak self] c in self?.accept(c) }
-    l.start(queue: DispatchQueue(label: "simwright.listen"))
+    l.start(queue: DispatchQueue(label: "looktap.listen"))
     listener = l
   }
 
   private func accept(_ c: NWConnection) {
-    let q = DispatchQueue(label: "simwright.conn")
+    let q = DispatchQueue(label: "looktap.conn")
     c.start(queue: q)
     var buf = Data()
     func next() {

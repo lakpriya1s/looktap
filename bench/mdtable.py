@@ -1,10 +1,10 @@
 import json,sys,statistics as st
 d=json.load(open(sys.argv[1]))
-tools=['simwright','appium','mcp']
+tools=['looktap','appium','mcp']
 def fmt_ms(ms): return f"{ms/1000:.2f} s" if ms>=1000 else f"{ms:.0f} ms"
 def fmt_b(b):
     return f"{b/1024/1024:.1f} MB" if b>=1024*1024 else (f"{b/1024:.0f} KB" if b>=1024 else f"{b:.0f} B")
-print("| Feature | simwright | Appium (raw HTTP) | Appium MCP |\n|---|---|---|---|")
+print("| Feature | looktap | Appium (raw HTTP) | Appium MCP |\n|---|---|---|---|")
 for op,t in d.items():
     cells=[]
     for tool in tools:

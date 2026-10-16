@@ -36,7 +36,7 @@ function mp4(kind) {
 }
 
 test('setRotation writes the video track display matrix in place', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'simwright-test-'));
+  const dir = mkdtempSync(join(tmpdir(), 'looktap-test-'));
   const path = join(dir, 'v.mp4');
   writeFileSync(path, mp4('vide'));
   assert.equal(setRotation(path, 90), true);

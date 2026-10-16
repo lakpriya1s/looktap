@@ -13,13 +13,13 @@ import { ORIENTATIONS, coordinates, pushPayload, rotation, textSize } from '../l
 import { appGone, center, coveringAt, forgetFront, formatRow, isRef, lastFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, visibleRows, waitFor } from '../lib/screen.js';
 import { ADB, HOME, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
 
-const SKILL = new URL('../skills/simwright/SKILL.md', import.meta.url);
+const SKILL = new URL('../skills/looktap/SKILL.md', import.meta.url);
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
-const HELP = `simwright ${pkg.version} — drive an iOS simulator or Android emulator from the shell.
+const HELP = `looktap ${pkg.version} — drive iPhone and Android devices from the shell.
 
-usage: simwright [options] <command> [args]
+usage: looktap [options] <command> [args]
 
 setup & info
   devices                         booted simulators and adb devices
@@ -91,19 +91,19 @@ batch & agents
                                   --config prints a client config with absolute paths
   run '<cmd>; <cmd> …'            several commands in one process (or: run - < script). Stops at the
                                   first failure, which it names
-  skill [--install]               print the AI-agent guide (--install: ~/.claude/skills/simwright/SKILL.md)
+  skill [--install]               print the AI-agent guide (--install: ~/.claude/skills/looktap/SKILL.md)
 
 options
   -p, --platform ios|android      default: whichever has exactly one booted device
   -d, --device <udid|serial>      default: the only booted one
-  -o, --out <dir>                 screenshots and videos (default ./shots, or "out" in simwright.config.json)
+  -o, --out <dir>                 screenshots and videos (default ./shots, or "out" in looktap.config.json)
       --app <id>                  app id for launch/open (or "ios.app" / "android.app" in config)
       --wait <seconds>            how long tap/fill/back wait for their target to appear (default 3)
   -h, --help · -v, --version
 
-env: SIMWRIGHT_PLATFORM, SIMWRIGHT_DEVICE, SIMWRIGHT_OUT, SIMWRIGHT_WAIT, SIMWRIGHT_SCALE (Android px per dp),
-     SIMWRIGHT_ANDROID_HELPER=0 (plain adb + uiautomator dump),
-     SIMWRIGHT_EMULATOR_GRPC=0 (no emulator gRPC frames)
+env: LOOKTAP_PLATFORM, LOOKTAP_DEVICE, LOOKTAP_OUT, LOOKTAP_WAIT, LOOKTAP_SCALE (Android px per dp),
+     LOOKTAP_ANDROID_HELPER=0 (plain adb + uiautomator dump),
+     LOOKTAP_EMULATOR_GRPC=0 (no emulator gRPC frames)
 
 Never burst or record a sign-in screen: frames capture typed credentials.`;
 
@@ -138,8 +138,8 @@ function parse(argv) {
 const physicalUdid = (id) => /^[0-9A-F]{8}-[0-9A-F]{16}$|^[0-9a-f]{40}$/i.test(id || '');
 
 function pickDriver(opts, config) {
-  let platform = opts.platform || process.env.SIMWRIGHT_PLATFORM;
-  let device = opts.device || process.env.SIMWRIGHT_DEVICE;
+  let platform = opts.platform || process.env.LOOKTAP_PLATFORM;
+  let device = opts.device || process.env.LOOKTAP_DEVICE;
   // With both -p and -d there is nothing to detect — skip listing devices (saves 0.1–0.3 s per command).
   const known = platform && device;
   const sims = known || platform === 'android' ? [] : bootedSimulators();
@@ -169,11 +169,11 @@ function pickDriver(opts, config) {
       );
     device = pool[0].id;
   }
-  const out = opts.out || process.env.SIMWRIGHT_OUT || config.out || 'shots';
+  const out = opts.out || process.env.LOOKTAP_OUT || config.out || 'shots';
   const app = opts.app || config[platform]?.app;
-  const wait = 1000 * Number(opts.wait ?? process.env.SIMWRIGHT_WAIT ?? config.wait ?? 3);
+  const wait = 1000 * Number(opts.wait ?? process.env.LOOKTAP_WAIT ?? config.wait ?? 3);
   if (!(wait >= 0)) throw new UsageError('--wait takes seconds, e.g. --wait 5');
-  if (platform === 'ios' && physicalUdid(device)) return new IosDevice(device, { out, app, wait, team: process.env.SIMWRIGHT_TEAM || config.ios?.team });
+  if (platform === 'ios' && physicalUdid(device)) return new IosDevice(device, { out, app, wait, team: process.env.LOOKTAP_TEAM || config.ios?.team });
   return platform === 'ios' ? new Ios(device, { out, app, wait }) : new Android(device, { out, app, wait });
 }
 
@@ -192,7 +192,7 @@ function doctor() {
     const cs = run('defaults', ['read', '/Library/Developer/PrivateFrameworks/CoreSimulator.framework/Resources/Info', 'CFBundleVersion'], { allowFail: true }).trim();
     if (cs) {
       const modern = cs.localeCompare('1155.4', undefined, { numeric: true }) >= 0;
-      console.log(`  iOS input: ${process.env.SIMWRIGHT_IOS_HID || (modern ? 'dtuhid' : 'indigo')} (CoreSimulator ${cs})`);
+      console.log(`  iOS input: ${process.env.LOOKTAP_IOS_HID || (modern ? 'dtuhid' : 'indigo')} (CoreSimulator ${cs})`);
     }
   }
   const adb = ADB !== 'adb' || has('adb');
@@ -204,7 +204,7 @@ function doctor() {
 }
 
 async function burst(driver, dir, seconds) {
-  if (!dir || !seconds) throw new UsageError('usage: simwright burst <dir> <seconds>');
+  if (!dir || !seconds) throw new UsageError('usage: looktap burst <dir> <seconds>');
   // Native stream: a frame whenever the screen changes, duplicates already dropped.
   const r = await driver.burst?.(dir, Number(seconds));
   if (r) return console.log(`${r.frames} frames, ${r.distinct} distinct, in ${dir}`);
@@ -277,10 +277,10 @@ async function list(d, opts, snap) {
   saveRefs(deviceId(d), rows, front);
   if (opts.flags.has('json'))
     return console.log(JSON.stringify({ screen: snap.screen, elements: rows.map((e, i) => ({ ref: `@${i + 1}`, ...e })) }));
-  if (!rows.length) console.error('simwright: no labelled elements on screen (still loading, or the app sets no accessibility labels)');
+  if (!rows.length) console.error('looktap: no labelled elements on screen (still loading, or the app sets no accessibility labels)');
   else console.log(rows.map((e, i) => formatRow(e, i + 1)).join('\n'));
   if (onlyStatusBar(snap.elements))
-    console.error('simwright: only the status bar is readable — a system prompt (passcode, permission, alert) may be covering the app. `simwright shot` shows it');
+    console.error('looktap: only the status bar is readable — a system prompt (passcode, permission, alert) may be covering the app. `looktap shot` shows it');
 }
 
 /** The element a ref names, if it's still where the last `ls` saw it. */
@@ -302,7 +302,7 @@ async function waitForApp(d, app, ms) {
 }
 
 function warnIfGone(app, when = '') {
-  if (app) console.error(`simwright: warning: ${app} is no longer running${when ? ` (${when})` : ''} — it crashed or was killed. See: simwright crashes ${app}`);
+  if (app) console.error(`looktap: warning: ${app} is no longer running${when ? ` (${when})` : ''} — it crashed or was killed. See: looktap crashes ${app}`);
 }
 
 async function dispatch(d, cmd, args, opts) {
@@ -335,7 +335,7 @@ async function target(d, what, opts) {
 
 async function act(d, cmd, args, opts) {
   const need = (n, usage) => {
-    if (args.length < n) throw new UsageError(`usage: simwright ${usage}`);
+    if (args.length < n) throw new UsageError(`usage: looktap ${usage}`);
   };
 
   switch (cmd) {
@@ -369,7 +369,7 @@ async function act(d, cmd, args, opts) {
       console.log(`tapped ${JSON.stringify(e.label || e.type)} at ${at.join(',')}`);
       // The tap lands on whatever is on top: say so when something else covers the point.
       for (const c of coveringAt(snap.elements, e, at))
-        console.error(`simwright: warning: ${JSON.stringify(c.label || c.type)} at ${c.x},${c.y} ${c.w}x${c.h} covers that point and may have taken the tap`);
+        console.error(`looktap: warning: ${JSON.stringify(c.label || c.type)} at ${c.x},${c.y} ${c.w}x${c.h} covers that point and may have taken the tap`);
       return;
     }
     case 'longpress': {
@@ -391,12 +391,12 @@ async function act(d, cmd, args, opts) {
     }
     case 'zoom': {
       const usage = 'zoom in|out [x y] [--scale f]';
-      if (!['in', 'out'].includes(args[0])) throw new UsageError(`usage: simwright ${usage}`);
+      if (!['in', 'out'].includes(args[0])) throw new UsageError(`usage: looktap ${usage}`);
       const scale = opts.scale ?? 2.5;
       if (!(scale > 1)) throw new UsageError('zoom --scale takes a factor above 1, e.g. --scale 3 (default 2.5)');
       const { w, h } = (await d.snapshot()).screen;
       const [x, y] = args.length >= 3 ? [Number(args[1]), Number(args[2])] : [Math.round(w / 2), Math.round(h / 2)];
-      if (!(x >= 0 && x <= w && y >= 0 && y <= h)) throw new UsageError(`usage: simwright ${usage} — x y within the screen (${w}x${h})`);
+      if (!(x >= 0 && x <= w && y >= 0 && y <= h)) throw new UsageError(`usage: looktap ${usage} — x y within the screen (${w}x${h})`);
       // Fingers on a horizontal line through the point, kept on screen.
       const room = Math.max(20, Math.min(x, w - x) - 8);
       const near = Math.min(40, room / scale), far = Math.min(near * scale, room);
@@ -418,7 +418,7 @@ async function act(d, cmd, args, opts) {
     case 'open': need(1, 'open <url>'); return d.open(args[0]);
     case 'launch': {
       const app = args[0] || d.app;
-      if (!app) throw new UsageError('usage: simwright launch <app-id> (or set --app / simwright.config.json)');
+      if (!app) throw new UsageError('usage: looktap launch <app-id> (or set --app / looktap.config.json)');
       return d.launch(app);
     }
     case 'bio': need(1, 'bio match|nomatch'); return d.bio(args[0]);
@@ -456,17 +456,17 @@ async function act(d, cmd, args, opts) {
       return console.log(`location ${lat}, ${lon}`);
     }
     case 'appearance': {
-      if (args[0] && !['dark', 'light'].includes(args[0])) throw new UsageError('usage: simwright appearance [dark|light]');
+      if (args[0] && !['dark', 'light'].includes(args[0])) throw new UsageError('usage: looktap appearance [dark|light]');
       return console.log(await d.appearance(args[0]));
     }
     case 'textsize': return console.log(await d.textSize(args[0] && textSize(args[0])));
     case 'statusbar': {
-      if (!['clean', 'live'].includes(args[0])) throw new UsageError('usage: simwright statusbar clean|live');
+      if (!['clean', 'live'].includes(args[0])) throw new UsageError('usage: looktap statusbar clean|live');
       await d.statusBar(args[0] === 'clean');
       return console.log(args[0] === 'clean' ? 'status bar: 9:41, full battery and signal' : 'status bar: live');
     }
     case 'network': {
-      if (args[0] && !['offline', 'online'].includes(args[0])) throw new UsageError('usage: simwright network [offline|online]');
+      if (args[0] && !['offline', 'online'].includes(args[0])) throw new UsageError('usage: looktap network [offline|online]');
       return console.log(`network: ${await d.network(args[0])}`);
     }
     case 'push': {
@@ -477,14 +477,14 @@ async function act(d, cmd, args, opts) {
     case 'permission': {
       const usage = `permission ${PERMISSION_ACTIONS.join('|')} <name> [app]`;
       need(2, usage);
-      if (!PERMISSION_ACTIONS.includes(args[0])) throw new UsageError(`usage: simwright ${usage}`);
+      if (!PERMISSION_ACTIONS.includes(args[0])) throw new UsageError(`usage: looktap ${usage}`);
       const app = explicitApp(d, args[2], usage);
       const perms = await d.permission(args[0], args[1], app);
       const what = perms ? perms.join(', ') : args[1];
       return console.log(`${{ grant: 'granted', revoke: 'revoked', reset: 'reset (it will ask again)' }[args[0]]}: ${what} for ${app}`);
     }
     case 'run': return runScript(d, args, opts);
-    default: throw new UsageError(`unknown command: ${cmd} (simwright --help)`);
+    default: throw new UsageError(`unknown command: ${cmd} (looktap --help)`);
   }
 }
 
@@ -492,7 +492,7 @@ const RECORDINGS = join(HOME, 'recordings.json');
 
 /**
  `record start [name]` / `record stop`. The recording runs in the background, so its state (the file, and the
- process to stop) is kept per device in ~/.simwright/recordings.json for the `stop` that may come later.
+ process to stop) is kept per device in ~/.looktap/recordings.json for the `stop` that may come later.
  */
 async function record(d, args) {
   const usage = 'record start [name] | record stop';
@@ -500,7 +500,7 @@ async function record(d, args) {
   const id = deviceId(d);
   const save = () => writeJson(RECORDINGS, all);
   if (args[0] === 'start') {
-    if (all[id]) throw new UsageError(`already recording to ${all[id].path} — stop it first: simwright record stop`);
+    if (all[id]) throw new UsageError(`already recording to ${all[id].path} — stop it first: looktap record stop`);
     mkdirSync(d.out, { recursive: true });
     const t = new Date(), p = (n) => String(n).padStart(2, '0');
     const name = args[1] || `rec_${t.getFullYear()}${p(t.getMonth() + 1)}${p(t.getDate())}_${p(t.getHours())}${p(t.getMinutes())}${p(t.getSeconds())}`;
@@ -508,11 +508,11 @@ async function record(d, args) {
     const path = resolve(d.out, name.endsWith('.mp4') ? name : `${name}.mp4`);
     all[id] = { ...(await d.recordStart(path)), path, started: Date.now() };
     save();
-    return console.log(`recording to ${path} — stop with: simwright record stop`);
+    return console.log(`recording to ${path} — stop with: looktap record stop`);
   }
   if (args[0] === 'stop') {
     const r = all[id];
-    if (!r) throw new UsageError('nothing is recording on this device (simwright record start)');
+    if (!r) throw new UsageError('nothing is recording on this device (looktap record start)');
     delete all[id];
     save();
     await d.recordStop(r);
@@ -520,13 +520,13 @@ async function record(d, args) {
     const capped = d.serial && secs > RECORD_LIMIT_S ? ` (Android stopped it after ${RECORD_LIMIT_S} s)` : '';
     return console.log(`${r.path}  ${Math.min(secs, d.serial ? RECORD_LIMIT_S : secs)} s${capped}`);
   }
-  throw new UsageError(`usage: simwright ${usage}`);
+  throw new UsageError(`usage: looktap ${usage}`);
 }
 
 /** The app a state-changing command acts on: named, or --app / config. Never guessed from the screen. */
 function explicitApp(d, arg, usage) {
   const app = arg || d.app;
-  if (!app) throw new UsageError(`usage: simwright ${usage} — name the app (or set --app / simwright.config.json)`);
+  if (!app) throw new UsageError(`usage: looktap ${usage} — name the app (or set --app / looktap.config.json)`);
   return app;
 }
 
@@ -555,19 +555,19 @@ async function showApp(d, arg) {
   const app = arg || d.app;
   if (app && app !== front?.id) {
     const pid = await d.pidOf(app);
-    console.log(pid ? `${app}: running in the background, pid ${pid}` : `${app}: not running — if it was, check: simwright crashes`);
+    console.log(pid ? `${app}: running in the background, pid ${pid}` : `${app}: not running — if it was, check: looktap crashes`);
   }
 }
 
 /**
- `simwright mcp`: serve the commands over MCP (stdio). Each call's output — console.log/error anywhere
- in simwright — becomes the tool result; stdout carries nothing but protocol messages.
+ `looktap mcp`: serve the commands over MCP (stdio). Each call's output — console.log/error anywhere
+ in looktap — becomes the tool result; stdout carries nothing but protocol messages.
  */
 async function mcp(outer) {
   const { serveMcp } = await import('../lib/mcp.js');
   const config = loadConfig();
   // A client's working directory may be anywhere (even /): screenshots go to a fixed place by default.
-  const base = { ...outer, out: outer.out || process.env.SIMWRIGHT_OUT || config.out || join(HOME, 'shots') };
+  const base = { ...outer, out: outer.out || process.env.LOOKTAP_OUT || config.out || join(HOME, 'shots') };
   const drivers = new Map();
   let last = null; // a call that names no device uses the one the previous call used
   const driverFor = (where) => {
@@ -605,7 +605,7 @@ async function mcp(outer) {
       }
       // Name the tool parameters, not the command-line flags.
       const msg = e.message.replace('pass -p ios|android', 'pass platform: "ios" or "android"').replace(/pass -d one of/, 'pass device: one of');
-      return { text: [...sink, `simwright: ${msg}`].join('\n'), error: true };
+      return { text: [...sink, `looktap: ${msg}`].join('\n'), error: true };
     } finally {
       sink = null;
     }
@@ -613,7 +613,7 @@ async function mcp(outer) {
 
   const script = (text, where) => {
     const steps = splitScript(text || '');
-    if (!steps.length) return { text: 'simwright: empty command', error: true };
+    if (!steps.length) return { text: 'looktap: empty command', error: true };
     return steps.length === 1 ? exec(steps[0], where) : exec(['run', text], where);
   };
 
@@ -628,23 +628,23 @@ async function mcp(outer) {
   for (const d of drivers.values()) d.close?.();
 }
 
-/** A client config for `simwright mcp` with absolute paths: GUI apps start servers with a minimal PATH. */
+/** A client config for `looktap mcp` with absolute paths: GUI apps start servers with a minimal PATH. */
 function mcpConfig() {
   const script = new URL(import.meta.url).pathname;
   const dirs = [dirname(process.execPath), ADB !== 'adb' ? dirname(ADB) : null, '/usr/bin', '/bin', '/usr/sbin', '/sbin'].filter(Boolean);
   const server = { command: process.execPath, args: [script, 'mcp'], env: { PATH: [...new Set(dirs)].join(':') } };
-  console.log(JSON.stringify({ mcpServers: { simwright: server } }, null, 2));
+  console.log(JSON.stringify({ mcpServers: { looktap: server } }, null, 2));
   console.error(`
 Paste into your MCP client's config, e.g.
   Claude Desktop: ~/Library/Application Support/Claude/claude_desktop_config.json
   Cursor:         ~/.cursor/mcp.json
-  Claude Code:    claude mcp add simwright -- ${process.execPath} ${script} mcp
-                  (or, from npm without installing: claude mcp add simwright -- npx -y simwright mcp)`);
+  Claude Code:    claude mcp add looktap -- ${process.execPath} ${script} mcp
+                  (or, from npm without installing: claude mcp add looktap -- npx -y looktap mcp)`);
 }
 
 /** Several commands in this one process: one helper connection, no per-command startup. */
 async function runScript(d, args, outer) {
-  if (!args.length) throw new UsageError("usage: simwright run '<cmd>; <cmd> …'   or   simwright run - < script");
+  if (!args.length) throw new UsageError("usage: looktap run '<cmd>; <cmd> …'   or   looktap run - < script");
   const steps = splitScript(args[0] === '-' ? readFileSync(0, 'utf8') : args.join(' '));
   for (const [i, words] of steps.entries()) {
     const { opts, cmd, args: stepArgs } = parse(words);
@@ -663,13 +663,13 @@ async function runScript(d, args, outer) {
 function skill(opts) {
   const text = readFileSync(SKILL, 'utf8');
   if (!opts.flags.has('install')) return process.stdout.write(text);
-  const dest = join(homedir(), '.claude', 'skills', 'simwright', 'SKILL.md');
+  const dest = join(homedir(), '.claude', 'skills', 'looktap', 'SKILL.md');
   mkdirSync(dirname(dest), { recursive: true });
   writeFileSync(dest, text);
   console.log(`installed ${dest}`);
 }
 
 main().catch((e) => {
-  console.error(`simwright: ${e.message}`);
+  console.error(`looktap: ${e.message}`);
   process.exit(e instanceof UsageError ? 2 : 1);
 });

@@ -1,6 +1,6 @@
 {
   "setup": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 141.747791,
         "bytes": 115,
@@ -10,7 +10,7 @@
     ]
   },
   "ls (read screen)": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 3738.643459,
         "bytes": 975,
@@ -74,7 +74,7 @@
     ]
   },
   "tap (by label)": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 563.7882079999999,
         "bytes": 39,
@@ -103,7 +103,7 @@
         "ms": 3056.396041,
         "bytes": 0,
         "calls": 0,
-        "err": "Command failed: node /Volumes/External/simwright/simwright/bin/simwright.js -p android -d emulator-5554 tap Network & internet\nsimwright: not found: Network & inter"
+        "err": "Command failed: node /Volumes/External/looktap/looktap/bin/looktap.js -p android -d emulator-5554 tap Network & internet\nlooktap: not found: Network & inter"
       },
       {
         "ms": 93.03362500001094,
@@ -138,7 +138,7 @@
     ]
   },
   "back": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 84.27129199999945,
         "bytes": 0,
@@ -202,7 +202,7 @@
     ]
   },
   "tapxy": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 181.88120899999922,
         "bytes": 0,
@@ -266,7 +266,7 @@
     ]
   },
   "swipe": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 412.1412909999999,
         "bytes": 0,
@@ -330,7 +330,7 @@
     ]
   },
   "fill": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 832.4493330000005,
         "bytes": 0,
@@ -341,7 +341,7 @@
         "ms": 3095.684583000002,
         "bytes": 0,
         "calls": 0,
-        "err": "Command failed: node /Volumes/External/simwright/simwright/bin/simwright.js -p android -d emulator-5554 fill Search settings wifi\nsimwright: not found: Search setti"
+        "err": "Command failed: node /Volumes/External/looktap/looktap/bin/looktap.js -p android -d emulator-5554 fill Search settings wifi\nlooktap: not found: Search setti"
       },
       {
         "ms": 708.4956249999959,
@@ -394,7 +394,7 @@
     ]
   },
   "type": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 306.5275839999995,
         "bytes": 0,
@@ -458,7 +458,7 @@
     ]
   },
   "hidekb": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 90.51370800000223,
         "bytes": 12,
@@ -522,7 +522,7 @@
     ]
   },
   "shot (screenshot)": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 503.0253339999981,
         "bytes": 69,
@@ -586,7 +586,7 @@
     ]
   },
   "bio": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 66.52779200000077,
         "bytes": 0,
@@ -650,7 +650,7 @@
     ]
   },
   "launch (restart app)": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 285.02549999999974,
         "bytes": 0,
@@ -714,7 +714,7 @@
     ]
   },
   "burst 5s (frames)": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 5045.668540999992,
         "bytes": 94,
@@ -725,7 +725,7 @@
     ]
   },
   "teardown": {
-    "simwright": [
+    "looktap": [
       {
         "ms": 137.30462499998976,
         "bytes": 44,

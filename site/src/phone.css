@@ -200,7 +200,7 @@
 .k-passcode .dots { display: flex; gap: 16px; }
 .k-passcode .dots i { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid #fff; }
 
-/* @ref boxes: simwright's view of the screen */
+/* @ref boxes: looktap's view of the screen */
 .refs { z-index: 11; pointer-events: none; }
 .ref { position: absolute; border: 1.6px dashed #22d3ee; border-radius: 6px; background: rgba(34, 211, 238, 0.06); animation: refin 0.35s both; animation-delay: var(--d); }
 .ref b { position: absolute; left: -1px; top: -12px; font: 500 8px/12px var(--mono); padding: 0 3px; border-radius: 4px 4px 4px 0; background: #22d3ee; color: #04121a; }
