@@ -181,12 +181,14 @@ sign-in, stop and let me do it, then continue from there.
 | Everything | **Node 18+** (`node -v`) |
 | iOS | A Mac with **Xcode** (command-line tools selected) and at least one simulator runtime. Apple Silicon or Intel |
 | Android | **Android SDK platform-tools** (`adb` on your `PATH`), and an emulator (AVD) or a USB-debugging device |
+| A real iPhone or iPad | The iOS row, plus an **Apple ID signed in to Xcode** (a free one works) and the device paired with the Mac, with Developer Mode on. See [Using a real iPhone](#using-a-real-iphone) |
 
 Tested with Xcode 26 / iOS 26 (iPhone 14 simulator) and Android 16 / API 36 (Pixel 9a emulator).
 
 ## How it works
 
-simwright ships its own small helper for each platform. **Nothing is installed on the simulator or device.**
+simwright ships its own small helper for each platform. **Nothing is installed on simulators, emulators or Android
+devices.** A real iPhone or iPad is the exception: it gets a small test runner ([Using a real iPhone](#using-a-real-iphone)).
 
 | | iOS simulator | Android emulator / device |
 |---|---|---|
@@ -217,6 +219,46 @@ releases. `simwright doctor` checks they're present and shows which input path a
 `SIMWRIGHT_IOS_HID=indigo|dtuhid` overrides the choice. It applies when the helper starts, so run
 `simwright teardown` first.
 </details>
+
+### Using a real iPhone
+
+A simulator can be driven from the Mac with nothing installed in it; a real iPhone or iPad can't. So the first
+command aimed at one builds a small XCUITest runner (`native/ios-device`), signs it with your Apple ID, and installs
+it. It reads the screen and taps, types and swipes through XCUITest, and simwright reaches it through usbmuxd, over
+USB or Wi-Fi. Every simwright user signs the runner with their own Apple ID. A free one is enough; the paid
+Developer Program isn't needed.
+
+**Once per Mac and device:**
+
+1. In Xcode → Settings → Accounts, sign in with your Apple ID. That gives you a "Personal Team".
+2. Pair the device with the Mac (connect it with a cable once and tap Trust; Wi-Fi works after that), and turn on
+   **Developer Mode** on it: Settings → Privacy & Security → Developer Mode.
+3. Unlock the device and run any command against it, for example `simwright -d <hardware UDID> ls`
+   (`simwright devices` lists the UDID). The first run builds the runner, which takes about a minute.
+4. With a free Apple ID, the device asks you to trust the developer the first time: Settings → General →
+   VPN & Device Management → your Apple ID → Trust. Then run the command again.
+
+If Xcode is signed in to more than one team, choose the one to sign with:
+`SIMWRIGHT_TEAM=<team id>`, or `{"ios": {"team": "<team id>"}}` in `simwright.config.json`. The error message
+lists your teams and their ids.
+
+**Picking the device:** `-d <hardware UDID>` always picks it. Without `-d`, a paired device is used only when no
+simulator or emulator is running, so nothing changes for simulator workflows.
+
+**Signing expiry:** a runner signed with a free Apple ID stops launching after **7 days**, and one signed with a
+paid team after a year. simwright reads the expiry date and builds and signs the runner again before it lapses. If
+iOS refuses to launch it anyway (for example, after a certificate was revoked), simwright rebuilds it once and
+retries. Free Apple IDs have Apple's own limits too, about 3 devices and 10 app ids per 7 days; one runner per device
+stays well within them.
+
+**What works on a device:** `ls`, `tap`, `longpress`, `type`, `fill`, `key`, `hidekb`, `swipe`, `scrollto`,
+`zoom` (around the screen's centre), `back`, `wait`, `shot`, `burst` (screenshots in a loop), `launch`, `open`,
+`rotate`, `appearance`, `install` (a device `.app` or `.ipa`), `uninstall` and `app`. `location`, `push`,
+`statusbar`, `textsize`, `bio`, `record`, `permission`, `reset`, `logs` and `crashes` aren't available, and say so.
+A command takes about 1–1.5 s, slower than on a simulator, because XCUITest takes longer to read the screen.
+
+The device must be unlocked while the runner starts. It keeps running until `simwright teardown`, or until the
+device is restarted.
 
 <details>
 <summary><strong>Android: the fallback path</strong></summary>
@@ -574,7 +616,7 @@ it gets.
 | `simwright longpress <label\|@ref\|x y> [ms]` | Holds the touch for `ms` (default 800). Same targets as `tap`, or a point |
 | `simwright zoom in\|out [x y] [--scale f]` | Two-finger pinch around a point (default: the screen centre). `--scale` sets how far apart the fingers end up (default 2.5) |
 | `simwright tapxy <x> <y>` | Taps a point (iOS points / Android dp) |
-| `simwright type <text>` | Types into the focused field. On iOS, characters the keyboard can't type are pasted |
+| `simwright type <text>` | Types into the focused field. Text the keyboard can't type (accents, emoji, CJK) is pasted, which replaces the clipboard |
 | `simwright key <name> …` | `return`, `escape`, `delete`, `tab`, `space`. Android also `back`, `home`, any `KEYCODE_*`. iOS also `selectall`, `paste` |
 | `simwright fill <label\|@ref> <text> [--exact]` | Focuses the field, clears it, types. Empty text just clears |
 | `simwright hidekb` | Dismisses the keyboard, checking after each method. Exits 2 if it's still up |
@@ -687,7 +729,6 @@ Precedence: command-line option, then environment variable, then config file, th
 | Android screenshot is black | That screen is `FLAG_SECURE`: use `shot` without `--plain` on an emulator. System PIN and biometric sheets stay black in every mode |
 | App sits on the splash screen (Android, React Native) | Metro isn't reachable: `simwright setup` (adds `adb reverse tcp:8081`), make sure Metro runs, then `simwright launch` |
 | `launch` says `no launchable activity` | The app isn't installed or the id is wrong: `adb shell pm list packages`, or `xcrun simctl listapps booted` |
-| `type` fails on non-ASCII text (Android) | Type those characters on the device. On iOS, simwright pastes what it can't type |
 
 ## FAQ
 
@@ -702,9 +743,11 @@ build belong in your app's own test suite (XCTest, Espresso, Detox, Maestro, …
 <details>
 <summary><strong>Does it work on a real iPhone?</strong></summary>
 
-No: on iOS it drives **simulators** only, through Apple's simulator frameworks. On Android it works with emulators
-and with USB-debugging devices. (On a device, screenshots go through the device, so `FLAG_SECURE` screens are
-black.)
+Yes. simwright installs a small XCUITest runner on it, signed with your own Apple ID (a free one works). See
+[Using a real iPhone](#using-a-real-iphone) for the one-time setup and what works there.
+
+On Android it works with emulators and with USB-debugging devices. (On a device, screenshots go through the
+device, so `FLAG_SECURE` screens are black.)
 </details>
 
 <details>

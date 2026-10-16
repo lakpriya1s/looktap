@@ -507,14 +507,52 @@ public final class Server {
         return e;
     }
 
-    static void text(String s) {
+    /** Typed as key presses; text the virtual keyboard has no keys for (accents, emoji, CJK) is pasted. */
+    static void text(String s) throws Exception {
         KeyCharacterMap map = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD);
         KeyEvent[] events = map.getEvents(s.toCharArray());
-        if (events == null) throw new IllegalArgumentException("text has characters the virtual keyboard cannot type");
+        if (events == null) {
+            paste(s);
+            return;
+        }
         for (KeyEvent e : events) {
             KeyEvent k = KeyEvent.changeTimeRepeat(e, SystemClock.uptimeMillis(), 0);
             k.setSource(InputDevice.SOURCE_KEYBOARD);
             inject(k);
         }
+    }
+
+    /** Put `s` on the clipboard and paste it into the focused field. Replaces what the clipboard held. */
+    static void paste(String s) throws Exception {
+        setClipboard(s);
+        AccessibilityNodeInfo field = ua.findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
+        if (field != null && field.performAction(AccessibilityNodeInfo.ACTION_PASTE)) return;
+        key("PASTE"); // no focused node that takes the action: the paste key, which EditTexts handle too
+    }
+
+    /**
+     The clipboard service as the shell, the way scrcpy sets it: IClipboard.setPrimaryClip, whose arguments
+     differ between Android versions (calling package, attribution tag, user id, device id), filled by type.
+     */
+    static void setClipboard(String s) throws Exception {
+        Class<?> sm = Class.forName("android.os.ServiceManager");
+        Object binder = sm.getMethod("getService", String.class).invoke(null, "clipboard");
+        Object clipboard = Class.forName("android.content.IClipboard$Stub").getMethod("asInterface", android.os.IBinder.class).invoke(null, binder);
+        android.content.ClipData clip = android.content.ClipData.newPlainText("simwright", s);
+        Method best = null;
+        for (Method m : clipboard.getClass().getMethods())
+            if (m.getName().equals("setPrimaryClip") && (best == null || m.getParameterTypes().length > best.getParameterTypes().length)) best = m;
+        if (best == null) throw new IllegalStateException("this Android has no IClipboard.setPrimaryClip");
+        Class<?>[] types = best.getParameterTypes();
+        Object[] args = new Object[types.length];
+        boolean firstString = true;
+        for (int i = 0; i < types.length; i++) {
+            if (types[i] == android.content.ClipData.class) args[i] = clip;
+            else if (types[i] == String.class) {
+                args[i] = firstString ? "com.android.shell" : null; // calling package, then attribution tag
+                firstString = false;
+            } else if (types[i] == int.class) args[i] = 0; // user 0, default device
+        }
+        best.invoke(clipboard, args);
     }
 }

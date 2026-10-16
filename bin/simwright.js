@@ -6,6 +6,7 @@ import { dirname, join, resolve } from 'node:path';
 
 import { Android, RECORD_LIMIT_S, adbDevices } from '../lib/android.js';
 import { Ios, bootedSimulators } from '../lib/ios.js';
+import { IosDevice, physicalDevices } from '../lib/iosdevice.js';
 import { clock, grepper, startOf, tail, whichApp } from '../lib/logs.js';
 import { ACTIONS as PERMISSION_ACTIONS } from '../lib/permissions.js';
 import { ORIENTATIONS, coordinates, pushPayload, rotation, textSize } from '../lib/conditions.js';
@@ -133,6 +134,9 @@ function parse(argv) {
   return { opts, cmd: pos[0], args: pos.slice(1) };
 }
 
+/** A physical iPhone/iPad's hardware UDID (00008110-000A…, or 40 hex digits on older ones), not a simulator's. */
+const physicalUdid = (id) => /^[0-9A-F]{8}-[0-9A-F]{16}$|^[0-9a-f]{40}$/i.test(id || '');
+
 function pickDriver(opts, config) {
   let platform = opts.platform || process.env.SIMWRIGHT_PLATFORM;
   let device = opts.device || process.env.SIMWRIGHT_DEVICE;
@@ -140,18 +144,24 @@ function pickDriver(opts, config) {
   const known = platform && device;
   const sims = known || platform === 'android' ? [] : bootedSimulators();
   const droids = known || platform === 'ios' ? [] : adbDevices();
+  // Real iPhones are looked for only when nothing else answers, or when -d names one: simulator and
+  // emulator choice works exactly as it did.
+  let phones = null;
+  const lookForPhones = () => (phones ??= physicalDevices());
 
   if (device && !platform) {
     platform = sims.some((s) => s.id === device) ? 'ios' : droids.some((d) => d.id === device) ? 'android' : null;
+    if (!platform && lookForPhones().some((p) => p.id === device)) platform = 'ios';
     if (!platform) throw new UsageError(`device ${device} is not booted`);
   }
   if (!platform) {
     if (sims.length && !droids.length) platform = 'ios';
     else if (droids.length && !sims.length) platform = 'android';
+    else if (!sims.length && lookForPhones().length) platform = 'ios';
     else if (!sims.length) throw new UsageError('no booted simulator or adb device');
     else throw new UsageError('both iOS and Android devices are up — pass -p ios|android');
   }
-  const pool = platform === 'ios' ? sims : droids;
+  const pool = platform === 'ios' ? (sims.length || known || device ? sims : lookForPhones()) : droids;
   if (!device && !known) {
     if (pool.length !== 1)
       throw new UsageError(
@@ -163,6 +173,7 @@ function pickDriver(opts, config) {
   const app = opts.app || config[platform]?.app;
   const wait = 1000 * Number(opts.wait ?? process.env.SIMWRIGHT_WAIT ?? config.wait ?? 3);
   if (!(wait >= 0)) throw new UsageError('--wait takes seconds, e.g. --wait 5');
+  if (platform === 'ios' && physicalUdid(device)) return new IosDevice(device, { out, app, wait, team: process.env.SIMWRIGHT_TEAM || config.ios?.team });
   return platform === 'ios' ? new Ios(device, { out, app, wait }) : new Android(device, { out, app, wait });
 }
 
@@ -226,6 +237,7 @@ async function main() {
   if (cmd === 'devices') {
     for (const s of bootedSimulators()) console.log(`ios      ${s.id}  ${s.name}`);
     for (const d of adbDevices()) console.log(`android  ${d.id}`);
+    for (const p of physicalDevices()) console.log(`ios      ${p.id}  ${p.name} (device, iOS ${p.os})`);
     return;
   }
 
@@ -578,6 +590,7 @@ async function mcp(outer) {
       else if (cmd === 'devices') {
         for (const s of bootedSimulators()) capture(`ios      ${s.id}  ${s.name}`);
         for (const a of adbDevices()) capture(`android  ${a.id}`);
+        for (const p of physicalDevices()) capture(`ios      ${p.id}  ${p.name} (device, iOS ${p.os})`);
       } else if (['mcp', 'skill'].includes(cmd)) throw new UsageError(`${cmd} isn't available over MCP`);
       else {
         const d = driverFor({ platform: opts.platform || where.platform, device: opts.device || where.device });
