@@ -120,7 +120,13 @@ looktap shot general
 
 Or try it without installing anything: `npx @looktap/cli doctor` (any command works the same way).
 
-To add the agent skill, which teaches Claude Code how to use looktap:
+To teach Claude Code how to use looktap, install the plugin. In Claude Code:
+
+```
+/plugin install looktap --marketplace lakpriya1s/looktap
+```
+
+It adds the looktap skill and keeps it up to date. Or copy the skill in by hand:
 
 ```bash
 looktap skill --install      # → ~/.claude/skills/looktap/SKILL.md
@@ -527,7 +533,14 @@ on-device screenshot, for example to check that a screen *is* secure.
 
 ## For AI agents
 
-Install the skill so your agent knows the loop, the shortcuts and the rules:
+Install the skill so your agent knows the loop, the shortcuts and the rules. In Claude Code, as a plugin that
+stays up to date:
+
+```
+/plugin install looktap --marketplace lakpriya1s/looktap
+```
+
+Or for any agent that reads skills from disk:
 
 ```bash
 looktap skill --install       # → ~/.claude/skills/looktap/SKILL.md   (looktap skill prints it)

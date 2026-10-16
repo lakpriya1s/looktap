@@ -1,0 +1,38 @@
+{
+  "name": "looktap",
+  "owner": {
+    "name": "Lakpriya Senevirathna",
+    "url": "https://github.com/lakpriya1s"
+  },
+  "metadata": {
+    "description": "looktap: hands on the phone for Claude Code",
+    "version": "0.2.0"
+  },
+  "plugins": [
+    {
+      "name": "looktap",
+      "source": "./",
+      "description": "Lets Claude see and use the iPhone or Android app it is building: reads the screen as text, taps by label, types, swipes, takes screenshots, and reads logs and crashes. Works with simulators, emulators and real phones.",
+      "version": "0.2.0",
+      "author": {
+        "name": "Lakpriya Senevirathna"
+      },
+      "homepage": "https://lakpriya1s.github.io/looktap/",
+      "repository": "https://github.com/lakpriya1s/looktap",
+      "license": "AGPL-3.0-only",
+      "keywords": [
+        "mobile",
+        "ios",
+        "iphone",
+        "android",
+        "simulator",
+        "emulator",
+        "mobile-automation",
+        "testing",
+        "screenshots",
+        "react-native"
+      ],
+      "category": "development"
+    }
+  ]
+}
