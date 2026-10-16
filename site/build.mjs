@@ -6,7 +6,8 @@
 //   - a README section that no docs page includes
 //   - an internal link or #anchor that doesn't resolve
 // Zero dependencies: node site/build.mjs
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -308,6 +309,17 @@ export async function build() {
       else if (hash && file.endsWith('.html') && !readFileSync(target, 'utf8').includes(`id="${hash}"`)) problems.push(`${p.slug}: broken anchor ${href}`);
     }
   }
+  if (problems.length) return problems;
+
+  // GitHub Pages lets browsers keep a file for 10 minutes, so right after a deploy a page could get new HTML and old
+  // CSS. Every stylesheet and script reference, module imports included, carries one hash of all of them.
+  const assets = [...readdirSync(DIST), ...readdirSync(join(DIST, 'docs')).map((f) => `docs/${f}`)].filter((f) => /\.(css|js)$/.test(f)).sort();
+  const sum = createHash('sha1');
+  for (const f of assets) sum.update(f).update(readFileSync(join(DIST, f)));
+  const v = sum.digest('hex').slice(0, 10);
+  const stamp = (file, pattern) => writeFileSync(file, readFileSync(file, 'utf8').replace(pattern, (m, a, ref, b) => `${a}${ref}?v=${v}${b}`));
+  for (const page of ['index.html', ...PAGES.map((p) => `docs/${p.slug}.html`)]) stamp(join(DIST, page), /((?:href|src)=")([^"?#:]+\.(?:css|js))(")/g);
+  for (const f of assets.filter((f) => f.endsWith('.js'))) stamp(join(DIST, f), /(from\s+['"])(\.{1,2}\/[^'"?]+\.js)(['"])/g);
   return problems;
 }
 
