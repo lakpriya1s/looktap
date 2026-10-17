@@ -30,6 +30,9 @@
   field counts the attempts), `launch` opened behind it, and `home` reported the home screen. `app` names the lock
   screen. On a real iPhone, a locked device used to give raw XCTest errors, or hang for 3 minutes waiting for the
   runner; it now answers within seconds. `stop`, `key wakeup`, and Android screenshots still work while locked.
+- **Android: a recording stopped right after it started kept no video.** `record start` returned as soon as
+  `screenrecord` was running, but it writes nothing for its first ~250 ms (longer on a busy phone), so a quick
+  `record stop` failed with "screenrecord wrote nothing". `record start` now returns once the file is being written.
 - On Android, `rotate` warns when it's used with the home screen in front: Android 16 doesn't keep that turn, and the
   next app reopens in the orientation it was last shown in.
 
