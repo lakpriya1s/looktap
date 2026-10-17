@@ -323,7 +323,12 @@ Then look at the few frames that matter, not all of them.
 - **Against a live backend every tap is real.** Use the smallest amounts, and undo what you create.
 - **`reset` signs the user out** of most apps: ask before resetting an app someone else signed in to.
 - **Set back what you change.** Appearance, text size, the status bar, the orientation and the network stay as
-  you leave them, for the next person and for other apps.
+  you leave them, for the next person and for other apps. On Android, turn the orientation back with the app in
+  front: a turn made from the home screen doesn't last.
+- **Not sure a command works on this device?** `looktap capabilities` says what it can't do, and why. A command
+  that can't run exits 2 with the reason, so don't retry it.
+- **Let a screen settle before typing into it.** Add `--ls` to the tap that opens it: some screens (search
+  screens especially) clear their field just after they open, taking the first letters with them.
 - **App-state and condition commands need the app id.** They never act on whatever happens to be on screen.
 - **If `tap` warns that another element covers the point** (a toast, a banner, a floating bar), the tap
   probably hit that: dismiss it, then tap again.
