@@ -93,7 +93,7 @@ looktap fill "Email" sam@example.com
 looktap fill @4 ""
 # into the focused field
 looktap type "@example.com"
-# return escape delete tab space; Android also back home KEYCODE_*; iOS also selectall paste
+# return escape delete tab space selectall paste; Android also back home KEYCODE_*
 looktap key return
 looktap key selectall delete
 # dismiss the keyboard; exits 2 if it's still up
@@ -110,6 +110,7 @@ looktap open "myapp://orders/42"
 # (re)start the app
 looktap launch
 looktap launch com.example.myapp
+looktap stop com.example.myapp   # terminate it; waits until the process is gone
 # Face ID / fingerprint
 looktap bio match
 looktap bio nomatch

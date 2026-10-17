@@ -45,14 +45,15 @@ act                               add --ls to any of these to print the settled 
   zoom in|out [x y] [--scale f]   two-finger pinch around a point (default: the screen centre; scale 2.5)
   tapxy <x> <y>                   iOS points / Android dp
   type <text>                     into the focused field
-  key <name> …                    return, escape, delete, tab, space (Android: also back, home,
-                                  or any KEYCODE_*; iOS: also selectall, paste)
+  key <name> …                    return, escape, delete, tab, space, selectall, paste (Android:
+                                  also back, home, or any KEYCODE_*)
   fill <label|@ref> <text>        clear the field, type, leave it
   hidekb                          dismiss the keyboard
   swipe <x1> <y1> <x2> <y2> [ms]
   back                            Android system back · iOS navigation-bar back button
   open <url>                      deep link (e.g. myapp://home)
   launch [app]                    (re)start the app
+  stop [app]                      terminate it, and wait until its process is gone
   bio match|nomatch               Face ID / fingerprint
   rotate [portrait|landscape|left|right|upsidedown]
                                   turn the device (landscape = left: turned counter-clockwise); no
@@ -405,7 +406,7 @@ async function act(d, cmd, args, opts) {
     }
     case 'tapxy': need(2, 'tapxy <x> <y>'); return d.tapxy(Number(args[0]), Number(args[1]));
     case 'type': need(1, 'type <text>'); return d.type(args.join(' '));
-    case 'key': need(1, 'key <name> … (return, escape, delete, tab, space)'); return d.keys(args);
+    case 'key': need(1, 'key <name> … (return, escape, delete, tab, space, selectall, paste)'); return d.keys(args);
     case 'fill': {
       need(1, 'fill <label|@ref> <text>');
       const text = args.slice(1).join(' ');
@@ -420,6 +421,16 @@ async function act(d, cmd, args, opts) {
       const app = args[0] || d.app;
       if (!app) throw new UsageError('usage: looktap launch <app-id> (or set --app / looktap.config.json)');
       return d.launch(app);
+    }
+    case 'stop': {
+      const app = explicitApp(d, args[0], 'stop <app>');
+      const was = await d.stop(app);
+      if (!was) return console.log(`${app} wasn't running`);
+      // Stopped means its process is gone, not that the stop was sent.
+      for (let i = 0; i < 20 && (await d.pidOf(app)); i++) await sleep(250);
+      const pid = await d.pidOf(app);
+      if (pid) throw new Error(`${app} is still running (pid ${pid}) after the stop`);
+      return console.log(`stopped ${app} (pid ${was})`);
     }
     case 'bio': need(1, 'bio match|nomatch'); return d.bio(args[0]);
     case 'rotate': {

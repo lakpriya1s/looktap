@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- **`looktap stop [app]`** terminates an app on both platforms (iOS simulator: `simctl terminate`, Android:
+  `am force-stop`, real iPhones: `devicectl`). It prints "stopped" only once the app's process is gone, and says when
+  the app wasn't running.
+- **Android `key selectall` and `key paste`**, as on iOS. Select-all is Ctrl+A; paste uses the focused field's paste
+  action first (WebViews ignore the paste key), else the paste key. Without the helper, select-all needs Android 13+.
+
 ## 0.2.2
 
 ### Benchmark

@@ -494,12 +494,23 @@ public final class Server {
         touch(MotionEvent.ACTION_UP, down, SystemClock.uptimeMillis(), x2, y2);
     }
 
+    /** A KEYCODE_* name, or CTRL+<name> for a shortcut (CTRL+KEYCODE_A selects all). */
     static void key(String name) {
-        int code = KeyEvent.keyCodeFromString(name.startsWith("KEYCODE_") ? name : "KEYCODE_" + name);
+        boolean ctrl = name.startsWith("CTRL+");
+        String bare = ctrl ? name.substring(5) : name;
+        int code = KeyEvent.keyCodeFromString(bare.startsWith("KEYCODE_") ? bare : "KEYCODE_" + bare);
         if (code == KeyEvent.KEYCODE_UNKNOWN) throw new IllegalArgumentException("unknown key: " + name);
+        if (code == KeyEvent.KEYCODE_PASTE && !ctrl) {
+            // WebViews and some custom fields ignore the paste key but take the accessibility action.
+            AccessibilityNodeInfo field = ua.findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
+            if (field != null && field.performAction(AccessibilityNodeInfo.ACTION_PASTE)) return;
+        }
+        int meta = ctrl ? KeyEvent.META_CTRL_ON | KeyEvent.META_CTRL_LEFT_ON : 0;
         long t = SystemClock.uptimeMillis();
-        inject(keyEvent(t, KeyEvent.ACTION_DOWN, code, 0));
-        inject(keyEvent(t, KeyEvent.ACTION_UP, code, 0));
+        if (ctrl) inject(keyEvent(t, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_CTRL_LEFT, meta));
+        inject(keyEvent(t, KeyEvent.ACTION_DOWN, code, meta));
+        inject(keyEvent(t, KeyEvent.ACTION_UP, code, meta));
+        if (ctrl) inject(keyEvent(t, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_CTRL_LEFT, 0));
     }
 
     static KeyEvent keyEvent(long t, int action, int code, int meta) {

@@ -669,13 +669,14 @@ to settle unless asked (`--ls`).
 | `looktap zoom in\|out [x y] [--scale f]` | Two-finger pinch around a point (default: the screen centre). `--scale` sets how far apart the fingers end up (default 2.5) |
 | `looktap tapxy <x> <y>` | Taps a point (iOS points / Android dp) |
 | `looktap type <text>` | Types into the focused field. Text the keyboard can't type (accents, emoji, CJK) is pasted, which replaces the clipboard |
-| `looktap key <name> …` | `return`, `escape`, `delete`, `tab`, `space`. Android also `back`, `home`, any `KEYCODE_*`. iOS also `selectall`, `paste` |
+| `looktap key <name> …` | `return`, `escape`, `delete`, `tab`, `space`, `selectall`, `paste`. Android also `back`, `home`, any `KEYCODE_*` |
 | `looktap fill <label\|@ref> <text> [--exact]` | Focuses the field, clears it, types. Empty text just clears |
 | `looktap hidekb` | Dismisses the keyboard, checking after each method. Exits 2 if it's still up |
 | `looktap swipe <x1> <y1> <x2> <y2> [ms]` | Default 150 ms on iOS, 300 ms on Android |
 | `looktap back` | Android system Back · iOS: the navigation bar's back button, else a top-left "Back" button |
 | `looktap open <url>` | Opens a deep link |
 | `looktap launch [app]` | (Re)starts the app |
+| `looktap stop [app]` | Terminates the app and waits until its process is gone |
 | `looktap bio match\|nomatch` | Face ID (iOS) or fingerprint (Android) |
 | `looktap rotate [portrait\|landscape\|left\|right\|upsidedown]` | Turns the device (`landscape` = `left`, turned counter-clockwise). `ls`, taps and screenshots follow the turned screen. Says so if the app doesn't support the orientation. Without an argument, prints the current one |
 | **Debug** (`[app]` defaults to `--app` / config, else the app in front) | |

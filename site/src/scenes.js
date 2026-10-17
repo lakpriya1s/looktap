@@ -392,7 +392,7 @@ export const SCENES = [
     title: 'Fresh installs and permission prompts, on demand',
     body: `<p><code>install</code> a build and get its app id back. <code>reset</code> puts an app back to a fresh install (data and permissions cleared), and <code>permission grant|revoke|reset</code> uses the same names on both platforms: camera, location, photos, notifications and more.</p>
 <p>These commands always need the app id. They never act on whatever happens to be on screen.</p>`,
-    covers: ['install', 'permission', 'reset', 'launch', 'uninstall'],
+    covers: ['install', 'permission', 'reset', 'launch', 'stop', 'uninstall'],
     start: (p) => p.show('springboardEmpty'),
     beats: [
       {
@@ -414,6 +414,13 @@ export const SCENES = [
         },
       },
       { cmd: 'looktap tap Allow', run: (p) => tap(p, 'Allow', { then: async () => p.clear('alert') }) },
+      {
+        cmd: `looktap stop ${APP}`,
+        run: async (p) => {
+          p.set({ screen: 'springboard' });
+          return [`stopped ${APP} (pid 4127)`];
+        },
+      },
       {
         cmd: `looktap uninstall ${APP}`,
         run: async (p) => {
