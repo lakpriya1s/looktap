@@ -334,6 +334,8 @@ Then look at the few frames that matter, not all of them.
   probably hit that: dismiss it, then tap again.
 - **If `ls` says only the status bar is readable**, a system prompt (passcode, permission, alert) is on top.
   `shot` to see it. Never enter a passcode unless the user gave it to you for this device.
+- **If a command says the device is locked**, ask the user to unlock it. Don't retry, and never enter a passcode
+  unless they gave it to you for this device.
 - **If `hidekb` exits 2** (iOS search keyboards have no Done key), tap the screen's close or cancel control.
 - **Log lines can contain tokens or personal data.** Quote only the lines that matter.
 

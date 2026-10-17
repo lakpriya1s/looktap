@@ -811,6 +811,7 @@ Precedence: command-line option, then environment variable, then config file, th
 | `Android helper did not start — falling back to uiautomator dump` | Something else holds UiAutomation (see above). looktap keeps working, just slower |
 | Android keyboard never appears | Set `hw.keyboard = no` in the AVD's `config.ini`, then cold-boot the emulator |
 | Android screenshot is black | That screen is `FLAG_SECURE`: use `shot` without `--plain` on an emulator. System PIN and biometric sheets stay black in every mode |
+| `the device is locked: unlock it, then run the command again` | Unlock the phone (and on an iPhone keep it unlocked while the runner starts). Commands that need the screen stop rather than act on the lock screen; `stop`, `key wakeup` and Android screenshots still work |
 | App sits on the splash screen (Android, React Native) | Metro isn't reachable: `looktap setup` (adds `adb reverse tcp:8081`), make sure Metro runs, then `looktap launch` |
 | `launch` says `no launchable activity` | The app isn't installed or the id is wrong: `adb shell pm list packages`, or `xcrun simctl listapps booted` |
 
