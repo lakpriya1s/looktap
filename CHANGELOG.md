@@ -21,6 +21,10 @@
 - `stop` no longer reports a failure when Android immediately starts a new process for the app it stopped (it does
   for the top screen of another app's task); it says the app was started again, with the new pid.
 - The platform table lists the permission names each platform lacks (iOS simulator: camera and notifications).
+- **Real iPhones: a runner that lost permission to drive the UI is restarted.** A test session can stop being
+  allowed to act ("Not authorized for performing UI testing actions") while still answering, and every command
+  then failed with that raw XCTest error. looktap now starts a fresh session once and retries; if that's refused
+  too, it says to unlock the device and check Settings → Developer → Enable UI Automation.
 - On Android, `rotate` warns when it's used with the home screen in front: Android 16 doesn't keep that turn, and the
   next app reopens in the orientation it was last shown in.
 
