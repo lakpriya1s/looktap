@@ -70,7 +70,7 @@ It's just as handy by hand, or in a shell script for screenshot sweeps and bug r
 | 🧹 | **App state for repros.** `install` a build, `reset` an app to a fresh install, `uninstall`, and `permission grant\|revoke\|reset camera\|location\|photos\|…`, with the same names on both platforms |
 | 🤖 | **Built for agents.** `--ls` on any action, `run` to batch steps, `--json`, `capabilities` to check what the device in use can and can't do, and a [Claude Code skill](#for-ai-agents) you install with one command |
 | 🧩 | **Nothing to install on simulators, emulators or Android phones**, no server to run, no npm dependencies. The helpers start on first use. A real iPhone gets a small test runner, built for you |
-| ⚠️ | **Honest failures.** A tap that's covered by a toast prints a warning, a stale `@ref` is an error rather than a wrong tap, a system prompt over the app is reported as one, and **an app that dies is named the moment looktap notices** |
+| ⚠️ | **Honest failures.** A tap that's covered by a toast prints a warning, a stale `@ref` is an error rather than a wrong tap, a system prompt over the app is reported as one, a locked device is reported as locked (never typed into), and **an app that dies is named the moment looktap notices** |
 
 ## How it compares
 
@@ -266,7 +266,9 @@ looktap names the apps it found and you delete one.
 [Platform support](#platform-support) has the reasons, and `looktap capabilities` prints them. A command takes about 1–1.5 s, slower than on a simulator, because XCUITest takes longer to read the screen.
 
 The device must be unlocked while the runner starts. It keeps running until `looktap teardown`, or until the
-device is restarted.
+device is restarted. While the device is locked, commands that need the screen stop with "the device is locked"
+(`stop` still works). A runner can lose its permission to drive the screen while it keeps running (seen after the
+device sat idle); looktap then starts a fresh one, once, and carries on.
 
 <details>
 <summary><strong>Android: the fallback path</strong></summary>

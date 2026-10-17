@@ -460,7 +460,7 @@ export const SCENES = [
     id: 'honest',
     kicker: '11 · Honest failures',
     title: 'It tells you when something is off',
-    body: `<p>A tap that lands on a toast instead of the button prints a warning. A stale <code>@ref</code> is an error, not a tap on whatever moved into its place. When a system prompt covers the app, <code>ls</code> says so instead of returning an empty screen.</p>
+    body: `<p>A tap that lands on a toast instead of the button prints a warning. A stale <code>@ref</code> is an error, not a tap on whatever moved into its place. When a system prompt covers the app, <code>ls</code> says so instead of returning an empty screen, and on a locked phone every command that needs the screen stops with <em>the device is locked</em> instead of typing into the lock screen.</p>
 <p>Exit code 2 means usage: bad arguments, element not found, no device. A script can <code>set -e</code> and stop at the first surprise.</p>`,
     covers: [],
     start: (p) => {
