@@ -12,7 +12,7 @@ import { ACTIONS as PERMISSION_ACTIONS } from '../lib/permissions.js';
 import { KINDS, capabilities, capability } from '../lib/capabilities.js';
 import { ORIENTATIONS, coordinates, pushPayload, rotation, textSize } from '../lib/conditions.js';
 import { appGone, center, coveringAt, forgetFront, formatRow, isRef, lastFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, visibleRows, waitFor } from '../lib/screen.js';
-import { ADB, HOME, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
+import { ADB, HOME, LOCKED, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
 
 const SKILL = new URL('../skills/looktap/SKILL.md', import.meta.url);
 
@@ -292,6 +292,9 @@ async function byRef(d, ref) {
   return resolveRef(deviceId(d), ref, (await d.snapshot()).elements);
 }
 
+/** Commands that read or act on the screen: they stop while the lock screen is up (bio can unlock it). */
+const SCREEN = new Set([...ACTIONS, 'ls', 'wait', 'scrollto'].filter((c) => c !== 'bio'));
+
 /** Actions after which a vanished app is worth a warning (launch replaces the app on purpose). */
 const WATCHED = new Set([...ACTIONS].filter((c) => c !== 'launch'));
 
@@ -314,6 +317,7 @@ async function dispatch(d, cmd, args, opts) {
   const look = opts.flags.has('ls') && ACTIONS.has(cmd);
   // Remember the screen before acting, so --ls waits for the action to show before printing.
   const before = look ? await d.snapshot({ all }) : null;
+  if (d.assertUnlocked && SCREEN.has(cmd)) await d.assertUnlocked(cmd, args);
   const app = WATCHED.has(cmd) ? await d.frontApp().catch(() => null) : null;
   await act(d, cmd, args, opts);
   if (['launch', 'reset', 'uninstall', 'install'].includes(cmd)) forgetFront(deviceId(d));
@@ -431,6 +435,7 @@ async function act(d, cmd, args, opts) {
         await sleep(250);
       }
       if (front && front.id !== launcher) throw new Error(`pressed Home, but ${front.id || 'an app'} is still in front`);
+      if (!front && (await d.locked())) throw new UsageError(LOCKED); // no app in front: the lock screen looks the same
       const left = before && before.id !== launcher && before.id ? await d.pidOf(before.id) : 0;
       return console.log(`home screen${left ? ` · ${before.id} still running in the background, pid ${left}` : ''}`);
     }
@@ -596,7 +601,8 @@ function showCapabilities(d, opts) {
 
 async function showApp(d, arg) {
   const front = await d.foreground();
-  console.log(front ? `front: ${front.id || '(unknown app)'}  pid ${front.pid}` : 'front: no app (home screen or a system sheet)');
+  if (!front && (await d.locked())) console.log('front: the lock screen (the device is locked)');
+  else console.log(front ? `front: ${front.id || '(unknown app)'}  pid ${front.pid}` : 'front: no app (home screen or a system sheet)');
   const app = arg || d.app;
   if (app && app !== front?.id) {
     const pid = await d.pidOf(app);

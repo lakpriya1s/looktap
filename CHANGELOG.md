@@ -25,6 +25,11 @@
   allowed to act ("Not authorized for performing UI testing actions") while still answering, and every command
   then failed with that raw XCTest error. looktap now starts a fresh session once and retries; if that's refused
   too, it says to unlock the device and check Settings → Developer → Enable UI Automation.
+- **A locked device says so.** Commands that read or act on the screen stop with "the device is locked: unlock it,
+  then run the command again" (exit 2). On Android they used to act on the lock screen: `type` typed into it (a PIN
+  field counts the attempts), `launch` opened behind it, and `home` reported the home screen. `app` names the lock
+  screen. On a real iPhone, a locked device used to give raw XCTest errors, or hang for 3 minutes waiting for the
+  runner; it now answers within seconds. `stop`, `key wakeup`, and Android screenshots still work while locked.
 - On Android, `rotate` warns when it's used with the home screen in front: Android 16 doesn't keep that turn, and the
   next app reopens in the orientation it was last shown in.
 

@@ -180,6 +180,9 @@ public final class Server {
             case "keyboard":
                 reply(out, ok().put("shown", keyboardShown()), null);
                 return;
+            case "locked":
+                reply(out, ok().put("locked", keyguardLocked()), null);
+                return;
             case "shot": {
                 Bitmap b = screenshot();
                 double scale = req.optDouble("scale", 1);
@@ -358,6 +361,12 @@ public final class Server {
             if (SystemClock.uptimeMillis() >= until) return false;
             SystemClock.sleep(50);
         }
+    }
+
+    /** The lock screen is up: the window manager's own answer (IWindowManager.isKeyguardLocked, hidden). */
+    static boolean keyguardLocked() throws Exception {
+        Object wm = Class.forName("android.view.WindowManagerGlobal").getMethod("getWindowManagerService").invoke(null);
+        return (Boolean) wm.getClass().getMethod("isKeyguardLocked").invoke(wm);
     }
 
     static boolean keyboardShown() {
