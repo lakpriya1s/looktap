@@ -572,4 +572,54 @@ export const SCENES = [
       },
     ],
   },
+  {
+    id: 'phones',
+    kicker: '14 · Real phones',
+    title: 'Your own phone, same commands',
+    body: `<p>Plug in an iPhone or an Android phone and the commands are the same. <code>devices</code> says which is a simulator, an emulator or a real phone, and when a phone isn't ready yet, what to tap on it: Trust, "Allow USB debugging?", Developer Mode.</p>
+<p>What a real phone can't do, it says up front, with what to do instead: no fake GPS, no injected pushes. And a locked phone stops every command with <em>the device is locked</em>, instead of typing into the passcode screen.</p>`,
+    covers: [],
+    device: (ios) => (ios ? 'Sam’s iPhone · USB' : 'Samsung SM-S931B · USB'),
+    start: (p) => p.show('home'),
+    beats: [
+      {
+        cmd: 'looktap devices --all',
+        run: async (p, c) =>
+          c.ios
+            ? [
+                'ios      00008150-…-401E  Sam’s iPhone (iPhone 17 Pro) · device · iOS 26.0 · USB',
+                'ios      9F1C2A44-…-77E0  iPhone 18 Pro · simulator · iOS 26.0 · window',
+                warn('ios      00008120-…-1C2E  Sam’s iPad (iPad Air) · device · iOS 26.0 · Wi-Fi  ✗ not ready: Developer Mode is off: Settings → Privacy & Security → Developer Mode'),
+                '',
+                dim('not running (looktap boot <name>):'),
+                dim('ios      4B7D0E19-…-A3C2  iPad Pro 13-inch (M5) · simulator · iOS 26.0'),
+              ]
+            : [
+                'android  R58N30ABCDE  Samsung SM-S931B · device · Android 16 · USB',
+                'android  emulator-5554  Pixel_9a · emulator · Android 16 · window',
+                warn('android  R9TX21KLMNP  SM A065F · device · USB  ✗ not ready: accept "Allow USB debugging?" on the phone (tick "Always allow")'),
+                '',
+                dim('not running (looktap boot <name>):'),
+                dim('android  Pixel_Tablet  Pixel_Tablet · emulator'),
+              ],
+      },
+      {
+        cmd: (c) => `looktap -d ${c.ios ? '00008150-…-401E' : 'R58N30ABCDE'} tap "Oat milk, 1 L"`,
+        run: (p) => tap(p, 'Oat milk, 1 L'),
+      },
+      {
+        cmd: (c) => `looktap -d ${c.ios ? '00008150-…-401E' : 'R58N30ABCDE'} location 51.5072 -0.1276`,
+        run: async (p, c) => [
+          err(`looktap: location isn't available on ${c.ios ? 'a real iPhone or iPad — a real device uses its own GPS; use a simulator to fake one' : 'an Android device — a device uses its own GPS (faking it needs a mock-location app)'}`),
+        ],
+      },
+      {
+        cmd: (c) => `looktap -d ${c.ios ? '00008150-…-401E' : 'R58N30ABCDE'} type "oat milk"`,
+        run: async (p) => {
+          p.overlay({ kind: 'passcode' });
+          return [err('looktap: the device is locked: unlock it, then run the command again')];
+        },
+      },
+    ],
+  },
 ];

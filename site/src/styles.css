@@ -165,9 +165,16 @@ a.version:hover { color: var(--accent); border-color: var(--accent); }
 .stats dd { margin: 4px 0 0; font: 400 11px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
 .hero-scene { margin-top: 12vh; padding-top: 28px; border-top: 1px solid var(--line); }
 .hero-scene h2 { font: 400 clamp(32px, 3.2vw, 44px)/1.05 var(--display); margin: 6px 0 12px; }
-.scroll-hint { font: 400 11.5px var(--mono); color: var(--muted) !important; display: flex; align-items: center; gap: 10px; }
-.scroll-hint::before { content: ''; width: 1px; height: 34px; background: linear-gradient(var(--accent), transparent); animation: drip 1.8s infinite; }
-@keyframes drip { 0% { transform: scaleY(0); transform-origin: top; } 60% { transform: scaleY(1); transform-origin: top; } 100% { transform: scaleY(1); opacity: 0; } }
+/* The scroll cue: floats at the bottom until the story starts moving, then fades away for good. */
+.scroll-cue { position: fixed; left: 50%; bottom: max(18px, env(safe-area-inset-bottom)); z-index: 30; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 6px 10px 10px; color: var(--muted); font: 500 10.5px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; transition: opacity 0.4s, transform 0.4s, visibility 0.4s; }
+.scroll-cue:hover { color: var(--accent); }
+/* Two chevrons that light up one after the other, falling. */
+.scroll-cue .chev { display: grid; justify-items: center; }
+.scroll-cue .chev i { width: 11px; height: 11px; margin-top: -4px; color: var(--accent); border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); opacity: 0.15; animation: cue-fall 1.6s ease-in-out infinite; }
+.scroll-cue .chev i + i { animation-delay: 0.2s; }
+.scroll-cue.gone { opacity: 0; visibility: hidden; transform: translate(-50%, 12px); pointer-events: none; }
+@keyframes cue-fall { 0%, 100% { opacity: 0.15; translate: 0 -2px; } 40% { opacity: 1; translate: 0 2px; } }
+@media (prefers-reduced-motion: reduce) { .scroll-cue .chev i { animation: none; opacity: 0.7; } .scroll-cue { transition: none; } }
 
 /* The stage: sticky phone + terminal. */
 .stage { position: relative; }
@@ -198,6 +205,14 @@ a.version:hover { color: var(--accent); border-color: var(--accent); }
 .term-bar span { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .term-bar button { border: 0; background: none; color: #8b93a7; font-size: 15px; cursor: pointer; padding: 2px 4px; }
 .term-bar button:hover { color: var(--term-prompt); }
+.term-bar .sound { display: grid; place-items: center; width: 24px; height: 24px; padding: 0; }
+.term-bar .sound svg { width: 15px; height: 15px; }
+.term-bar .sound[aria-pressed='true'] { color: var(--term-prompt); }
+.term-bar .sound[aria-pressed='true'] .mute, .term-bar .sound[aria-pressed='false'] .waves { display: none; }
+/* Sound is on but the browser waits for a first click: a gentle pulse says so. */
+.term-bar .sound.waiting { animation: sound-wait 1.6s ease-in-out infinite; }
+@keyframes sound-wait { 50% { opacity: 0.35; transform: scale(0.88); } }
+@media (prefers-reduced-motion: reduce) { .term-bar .sound.waiting { animation: none; opacity: 0.6; } }
 .term-body { height: 300px; overflow-y: auto; scrollbar-width: none; padding: 12px 14px 14px; font: 400 11px/1.6 var(--mono); letter-spacing: -0.03em; }
 .term-body::-webkit-scrollbar { display: none; }
 .tl { white-space: pre-wrap; word-break: break-word; }
