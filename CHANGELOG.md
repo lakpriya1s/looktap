@@ -21,6 +21,8 @@
 - `stop` no longer reports a failure when Android immediately starts a new process for the app it stopped (it does
   for the top screen of another app's task); it says the app was started again, with the new pid.
 - The platform table lists the permission names each platform lacks (iOS simulator: camera and notifications).
+- On Android, `rotate` warns when it's used with the home screen in front: Android 16 doesn't keep that turn, and the
+  next app reopens in the orientation it was last shown in.
 
 ## 0.2.2
 

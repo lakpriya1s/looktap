@@ -733,6 +733,7 @@ front of you (`--json` for every command).
 | `push` | ✅ | ❌ send a real push through APNs | ❌ Android pushes come through Firebase (FCM), so adb can't inject one: send it from your backend or the Firebase console | ❌ Android pushes come through Firebase (FCM), so adb can't inject one: send it from your backend or the Firebase console |
 | `record` | ✅ | ❌ use burst for frames, or QuickTime Player for video | ⚠️ at most 3 minutes, and FLAG_SECURE screens record black | ⚠️ at most 3 minutes, and FLAG_SECURE screens record black |
 | `reset` | ✅ | ❌ uninstall and install the app again | ✅ | ✅ |
+| `rotate` | ✅ | ✅ | ⚠️ turned while the home screen is in front, it doesn't last: the next app reopens in the orientation it was last shown in. Turn it with the app in front | ⚠️ turned while the home screen is in front, it doesn't last: the next app reopens in the orientation it was last shown in. Turn it with the app in front |
 | `shot` | ✅ | ✅ | ✅ | ⚠️ FLAG_SECURE screens come out black (emulators bypass it) |
 | `statusbar` | ✅ | ❌ only simulators can override the status bar | ✅ | ✅ |
 | `textsize` | ✅ | ❌ change it in Settings → Display & Brightness → Text Size | ✅ | ✅ |

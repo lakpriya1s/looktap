@@ -9,7 +9,7 @@ import { Ios, bootedSimulators } from '../lib/ios.js';
 import { IosDevice, physicalDevices } from '../lib/iosdevice.js';
 import { clock, grepper, startOf, tail, whichApp } from '../lib/logs.js';
 import { ACTIONS as PERMISSION_ACTIONS } from '../lib/permissions.js';
-import { KINDS, capabilities } from '../lib/capabilities.js';
+import { KINDS, capabilities, capability } from '../lib/capabilities.js';
 import { ORIENTATIONS, coordinates, pushPayload, rotation, textSize } from '../lib/conditions.js';
 import { appGone, center, coveringAt, forgetFront, formatRow, isRef, lastFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, visibleRows, waitFor } from '../lib/screen.js';
 import { ADB, HOME, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
@@ -457,6 +457,8 @@ async function act(d, cmd, args, opts) {
       const r = await d.rotate(want);
       const now = `${ORIENTATIONS[r.turns]} (${r.w}x${r.h})`;
       if (want == null) return console.log(now);
+      const limit = capability(d.kind, 'rotate');
+      if (limit.why && d.homeScreen && (await d.foreground())?.id === (await d.homeScreen())) console.error(`looktap: warning: ${limit.why}`);
       if (r.turns === want) return console.log(`rotated: ${now}`);
       return console.log(`turned the device to ${ORIENTATIONS[want]}, but the screen stays ${now}: the app in front doesn't support that orientation`);
     }
