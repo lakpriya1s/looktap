@@ -538,9 +538,9 @@ export const SCENES = [
     id: 'setup',
     kicker: '13 · Setup',
     title: 'Nothing to install on simulators',
-    body: `<p>No server to run and no npm dependencies. looktap's own small helpers start on first use: a macOS helper that speaks to the simulator through Apple's frameworks, and an 8 KB Android helper run with <code>app_process</code>. A real iPhone gets a small XCUITest runner, built and signed with your own Apple ID on first use.</p>
-<p>Ready for the first command in under a second, against 8–29 s for mobile-mcp, Maestro and Appium.</p>`,
-    covers: ['doctor', 'devices', 'setup', 'teardown'],
+    body: `<p>No server to run and no npm dependencies. looktap's own small helpers start on first use: a macOS helper that speaks to the simulator through Apple's frameworks, and a 10 KB Android helper run with <code>app_process</code>. A real iPhone gets a small XCUITest runner, built and signed with your own Apple ID on first use.</p>
+<p><code>boot</code> starts a simulator or emulator by name and waits until it's ready; <code>shutdown</code> stops it. Ready for the first command in under a second, against 8–29 s for mobile-mcp, Maestro and Appium.</p>`,
+    covers: ['doctor', 'devices', 'boot', 'shutdown', 'setup', 'teardown'],
     start: (p) => p.show('springboard'),
     beats: [
       {
@@ -550,12 +550,26 @@ export const SCENES = [
             ? [ok('✓ node 22.11.0 (needs ≥ 18)'), ok('✓ xcrun (iOS)'), ok('✓ booted simulators: iPhone 18 Pro'), ok('✓ CoreSimulator.framework (iOS helper)'), dim('  iOS input: indigo (CoreSimulator 1048)')]
             : [ok('✓ node 22.11.0 (needs ≥ 18)'), ok('✓ adb (Android)'), ok('✓ adb devices: emulator-5554')],
       },
-      { cmd: 'looktap devices', run: async (p, c) => [c.ios ? 'ios      9F1C2A44-…-77E0  iPhone 18 Pro' : 'android  emulator-5554'] },
+      {
+        cmd: (c) => (c.ios ? 'looktap boot "iPhone 18 Pro"' : 'looktap boot Pixel_9a'),
+        run: async (p, c) => [c.ios ? 'booted: ios  9F1C2A44-…-77E0  iPhone 18 Pro (iOS 26.0)' : 'booted: android  emulator-5554  Pixel_9a'],
+      },
+      {
+        cmd: 'looktap devices',
+        run: async (p, c) =>
+          c.ios
+            ? ['ios      9F1C2A44-…-77E0  iPhone 18 Pro · simulator · iOS 26.0 · window', 'ios      00008150-…-401E  Sam’s iPhone (iPhone 17 Pro) · device · iOS 26.0 · USB']
+            : ['android  emulator-5554  Pixel_9a · emulator · Android 16 · window', 'android  R58N30ABCDE  Samsung SM-S931B · device · Android 16 · USB'],
+      },
       {
         cmd: 'looktap setup',
         run: async (p, c) => [c.ios ? 'looktap iOS helper ready on 9F1C2A44-…-77E0' : 'adb emulator-5554 ready · scale 2.625 (dp = px ÷ 2.625) · reverse tcp:8081 · helper on · emulator gRPC frames'],
       },
       { cmd: 'looktap teardown', run: async (p, c) => [c.ios ? 'iOS helper stopped' : 'removed adb reverse rules · helper stopped'] },
+      {
+        cmd: (c) => (c.ios ? 'looktap shutdown "iPhone 18 Pro"' : 'looktap shutdown Pixel_9a'),
+        run: async (p, c) => [c.ios ? 'shut down: ios  9F1C2A44-…-77E0  iPhone 18 Pro' : 'shut down: android  emulator-5554  Pixel_9a'],
+      },
     ],
   },
 ];

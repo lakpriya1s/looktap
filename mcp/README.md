@@ -34,8 +34,9 @@ with `npm install -g @looktap/cli` and paste the config that `looktap mcp --conf
 ## Requirements
 
 - Node 18+
-- iPhone: macOS with Xcode, and a booted simulator or a paired iPhone (a free Apple ID is enough)
-- Android: `adb`, with an emulator or a phone with USB or wireless debugging
+- iPhone: macOS with Xcode, and a simulator or a paired iPhone (a free Apple ID is enough). The `looktap` tool's
+  `boot "iPhone 16 Pro"` starts a simulator, and `devices` lists what's connected
+- Android: `adb`, with an emulator (`boot <AVD name>` starts one) or a phone with USB or wireless debugging
 
 ## Tools
 

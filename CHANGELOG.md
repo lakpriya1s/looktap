@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- **`looktap boot [name]`** boots an iOS simulator or Android emulator by name, UDID or AVD name, and waits until
+  it's ready to drive (the simulator's boot status; Android's `sys.boot_completed`). It opens the Simulator or
+  emulator window unless `--headless`, and says so when the device is already running. `-p` picks a platform.
+- **`looktap shutdown [name]`** shuts one down and waits until it's gone.
+- **`looktap devices` says what each device is:** simulator, emulator (with its AVD name) or real device, with the
+  model, OS version and, for a phone, USB or Wi-Fi; and whether a simulator or emulator has a window or runs headless.
+  A phone that's connected but not ready is listed with what to do: accept "Allow USB debugging?", tap Trust, turn on
+  Developer Mode. `--all` also lists what `boot` can start, and `--json` gives it all to scripts and agents.
+- **Window or headless:** `boot --window` / `--headless`, with a default from `LOOKTAP_HEADLESS=1` or `"headless": true`
+  in `looktap.config.json`. `--window` opens a running simulator's window. A running device can't drop its window
+  (quitting the Simulator app shuts its simulators down; an emulator starts with or without one), so `--headless`
+  then says how to restart it instead of pretending.
+
+### Changed
+- `doctor`, the "no booted device" error and the Claude Code `/looktap:setup` command point to `looktap boot`
+  instead of `xcrun simctl boot` and `emulator -avd`.
+
 ## 0.3.0
 
 ### Added
