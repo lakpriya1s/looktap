@@ -1,5 +1,41 @@
 # Changelog
 
+## Unreleased
+
+- **`looktap stop [app]`** terminates an app on both platforms (iOS simulator: `simctl terminate`, Android:
+  `am force-stop`, real iPhones: `devicectl`). It prints "stopped" only once the app's process is gone, and says when
+  the app wasn't running.
+- **Android `key selectall` and `key paste`**, as on iOS. Select-all is Ctrl+A; paste uses the focused field's paste
+  action first (WebViews ignore the paste key), else the paste key. Without the helper, select-all needs Android 13+.
+- **`looktap home`** presses the Home button on both platforms; on the iOS simulator it's the hardware Home button
+  event, which the simulator had no way to send before. It prints "home screen" only once the home screen is in front,
+  and names the app it left running. `key home` now works on iOS too, and `home` takes `--ls`.
+- **`looktap capabilities [--json]`** says what the device in use can't do, or can only in part, and why. One table
+  (`lib/capabilities.js`) now drives it, the errors those commands throw, and a new README section, "Platform
+  support", that compares the iOS simulator, real iPhones, the Android emulator and Android devices.
+- `bio` on an Android device now says it's emulator-only, instead of failing with a raw `adb emu` error.
+- **Android paste into React Native fields:** a React Native `TextInput` reports the accessibility paste action as done
+  without pasting, so `key paste`, and `type` for text the keyboard can't type (é, emoji, CJK), did nothing there. The
+  helper now checks the field changed and otherwise sends the paste key. Checked in native, React Native and WebView
+  fields.
+- `stop` no longer reports a failure when Android immediately starts a new process for the app it stopped (it does
+  for the top screen of another app's task); it says the app was started again, with the new pid.
+- The platform table lists the permission names each platform lacks (iOS simulator: camera and notifications).
+- **Real iPhones: a runner that lost permission to drive the UI is restarted.** A test session can stop being
+  allowed to act ("Not authorized for performing UI testing actions") while still answering, and every command
+  then failed with that raw XCTest error. looktap now starts a fresh session once and retries; if that's refused
+  too, it says to unlock the device and check Settings → Developer → Enable UI Automation.
+- **A locked device says so.** Commands that read or act on the screen stop with "the device is locked: unlock it,
+  then run the command again" (exit 2). On Android they used to act on the lock screen: `type` typed into it (a PIN
+  field counts the attempts), `launch` opened behind it, and `home` reported the home screen. `app` names the lock
+  screen. On a real iPhone, a locked device used to give raw XCTest errors, or hang for 3 minutes waiting for the
+  runner; it now answers within seconds. `stop`, `key wakeup`, and Android screenshots still work while locked.
+- **Android: a recording stopped right after it started kept no video.** `record start` returned as soon as
+  `screenrecord` was running, but it writes nothing for its first ~250 ms (longer on a busy phone), so a quick
+  `record stop` failed with "screenrecord wrote nothing". `record start` now returns once the file is being written.
+- On Android, `rotate` warns when it's used with the home screen in front: Android 16 doesn't keep that turn, and the
+  next app reopens in the orientation it was last shown in.
+
 ## 0.2.2
 
 ### Benchmark

@@ -48,7 +48,7 @@ It's just as handy by hand, or in a shell script for screenshot sweeps and bug r
 - [How it works](#how-it-works)
 - [Examples](#examples): tap by label, forms, waiting, scrolling, debugging, bursts and video, several devices
 - [For AI agents](#for-ai-agents)
-- [Commands](#commands) · [Options & config](#options-environment-variables-config-file)
+- [Commands](#commands) · [Platform support](#platform-support) · [Options & config](#options-environment-variables-config-file)
 - [Troubleshooting](#troubleshooting) · [FAQ](#faq) · [Roadmap](#roadmap)
 - [Safety rules](#safety-rules) · [Contributing](#contributing) · [License](#license)
 
@@ -58,8 +58,8 @@ It's just as handy by hand, or in a shell script for screenshot sweeps and bug r
 |---|---|
 | 👀 | **Read the screen as text.** `ls` lists what's visible, one row per element: `@ref  type  x,y  w×h  label  = value`. It reads native screens, React Native screens and web content (Safari, in-app browsers, web views) |
 | 👆 | **Tap by label.** Exact match first, then a prefix or substring that names exactly one label. An ambiguous match is an error, never a guess. Also by `@ref` from the last `ls`, or by `x y` coordinates |
-| ⌨️ | **Type and fill.** `type` into the focused field, `fill` to clear a field and type, `key return\|escape\|delete\|tab\|…`, and `hidekb`, which never reports success while the keyboard is still up |
-| 🧭 | **Navigate and gesture.** `swipe`, `scrollto <label>`, `back`, `open <deep link>`, `launch <app>`, `longpress`, and two-finger `zoom in\|out` |
+| ⌨️ | **Type and fill.** `type` into the focused field, `fill` to clear a field and type, `key return\|escape\|delete\|tab\|selectall\|paste\|…` (the same names on both platforms), and `hidekb`, which never reports success while the keyboard is still up |
+| 🧭 | **Navigate and gesture.** `swipe`, `scrollto <label>`, `back`, `home` (the Home button, the app keeps running), `open <deep link>`, `launch <app>`, `stop <app>`, `longpress`, and two-finger `zoom in\|out` |
 | ⏱️ | **Wait instead of sleep.** `wait "Welcome"`, `wait "Loading" --gone`. Actions already wait up to 3 s for their target |
 | 📸 | **Screenshots.** `shot` saves a PNG and prints its path, with `--scale 0.5` for fewer image tokens. On Android emulators it also captures `FLAG_SECURE` screens |
 | 🎞️ | **Burst capture and video.** `burst` saves a frame each time the screen changes, to catch spinners, toasts and transitions. `record start` … `record stop` saves an MP4 of everything in between |
@@ -68,9 +68,9 @@ It's just as handy by hand, or in a shell script for screenshot sweeps and bug r
 | 🫆 | **Biometrics.** `bio match\|nomatch` simulates Face ID or a fingerprint |
 | 🌍 | **Simulated conditions.** `location <lat> <lon>`, `appearance dark`, `textsize xxl` (Dynamic Type / font scale), `statusbar clean` (9:41 for screenshots), `rotate landscape` (`ls`, taps and screenshots follow the turned screen), Android `network offline`, and iOS `push` notifications |
 | 🧹 | **App state for repros.** `install` a build, `reset` an app to a fresh install, `uninstall`, and `permission grant\|revoke\|reset camera\|location\|photos\|…`, with the same names on both platforms |
-| 🤖 | **Built for agents.** `--ls` on any action, `run` to batch steps, `--json`, and a [Claude Code skill](#for-ai-agents) you install with one command |
+| 🤖 | **Built for agents.** `--ls` on any action, `run` to batch steps, `--json`, `capabilities` to check what the device in use can and can't do, and a [Claude Code skill](#for-ai-agents) you install with one command |
 | 🧩 | **Nothing to install on simulators, emulators or Android phones**, no server to run, no npm dependencies. The helpers start on first use. A real iPhone gets a small test runner, built for you |
-| ⚠️ | **Honest failures.** A tap that's covered by a toast prints a warning, a stale `@ref` is an error rather than a wrong tap, a system prompt over the app is reported as one, and **an app that dies is named the moment looktap notices** |
+| ⚠️ | **Honest failures.** A tap that's covered by a toast prints a warning, a stale `@ref` is an error rather than a wrong tap, a system prompt over the app is reported as one, a locked device is reported as locked (never typed into), and **an app that dies is named the moment looktap notices** |
 
 ## How it compares
 
@@ -200,12 +200,13 @@ devices.** A real iPhone or iPad is the exception: it gets a small test runner (
 
 | | iOS simulator | Android emulator / device |
 |---|---|---|
-| Read the screen | `looktap-sim`, a macOS helper that reads the simulator's accessibility tree through Apple's simulator frameworks (CoreSimulator, AccessibilityPlatformTranslation). Web content is found by probing the screen | `looktap-server.jar`, an 8 KB helper pushed to `/data/local/tmp` and run with `app_process`. It keeps one UiAutomation connection open |
+| Read the screen | `looktap-sim`, a macOS helper that reads the simulator's accessibility tree through Apple's simulator frameworks (CoreSimulator, AccessibilityPlatformTranslation). Web content is found by probing the screen | `looktap-server.jar`, a 10 KB helper pushed to `/data/local/tmp` and run with `app_process`. It keeps one UiAutomation connection open |
 | Tap, type, swipe, keys | The same helper, as touch and keyboard events through SimulatorKit | The same helper, as input events through UiAutomation |
 | Screenshots, `burst` | The simulator display's framebuffer, read in-process | Emulators: the emulator's gRPC API, which also gets past `FLAG_SECURE`. Devices: the helper |
 | Video (`record`) | `simctl io recordVideo` | `screenrecord` on the device |
 | Orientation (`rotate`) | The orientation event Simulator.app sends to the guest. Coordinates and frames are converted, so everything looktap prints and takes is as the user sees the screen | `settings` (user rotation, auto-rotate off). The helper reports the turned display size |
 | Logs, crashes | `log show` inside the simulator, and its `.ips` crash reports | `logcat` (by app uid), the crash buffer, and `dumpsys activity exit-info` |
+| Home button, `stop` | The helper sends the hardware Home button; `simctl terminate` | `KEYCODE_HOME`; `am force-stop` |
 | Deep links, launch, biometrics | `xcrun simctl` | `adb` and the emulator console |
 
 Each helper starts on first use, keeps running in the background, and is replaced automatically when looktap is
@@ -218,9 +219,9 @@ local socket, using JSON lines.
 The iOS helper uses Apple's private simulator frameworks, the same ones `idb` uses. They can change between Xcode
 releases. `looktap doctor` checks they're present and shows which input path applies:
 
-- **Xcode 26 and earlier** (CoreSimulator below 1155.4): touches and keys go through SimulatorKit's HID client
+- **Xcode 26 and earlier** (CoreSimulator below 1155.4): touches, keys and the Home button go through SimulatorKit's HID client
   ("indigo"). Tested.
-- **Xcode 27** (CoreSimulator 1155.4 and later): touches and keys go as XPC messages to the simulator's
+- **Xcode 27** (CoreSimulator 1155.4 and later): touches, keys and the Home button go as XPC messages to the simulator's
   `dtuhidd` service ("dtuhid"), the same way idb does it. **Implemented, not yet tested against Xcode 27.**
   Reading the screen and screenshots don't depend on it.
 
@@ -260,14 +261,14 @@ retries. Free Apple IDs have Apple's own limits too: about 3 devices and 10 app 
 signed by the free account installed on one device at a time**. The runner counts as one, so if the device is full,
 looktap names the apps it found and you delete one.
 
-**What works on a device:** `ls`, `tap`, `longpress`, `type`, `fill`, `key`, `hidekb`, `swipe`, `scrollto`,
-`zoom` (around the screen's centre), `back`, `wait`, `shot`, `burst` (screenshots in a loop), `launch`, `open`,
-`rotate`, `appearance`, `install` (a device `.app` or `.ipa`), `uninstall` and `app`. `location`, `push`,
-`statusbar`, `textsize`, `bio`, `record`, `permission`, `reset`, `logs` and `crashes` aren't available, and say so.
-A command takes about 1–1.5 s, slower than on a simulator, because XCUITest takes longer to read the screen.
+**What works on a device:** everything except `location`, `network`, `push`, `statusbar`, `textsize`, `bio`,
+`record`, `permission`, `reset`, `logs` and `crashes`, which say so; `zoom` works around the screen's centre only.
+[Platform support](#platform-support) has the reasons, and `looktap capabilities` prints them. A command takes about 1–1.5 s, slower than on a simulator, because XCUITest takes longer to read the screen.
 
 The device must be unlocked while the runner starts. It keeps running until `looktap teardown`, or until the
-device is restarted.
+device is restarted. While the device is locked, commands that need the screen stop with "the device is locked"
+(`stop` still works). A runner can lose its permission to drive the screen while it keeps running (seen after the
+device sat idle); looktap then starts a fresh one, once, and carries on.
 
 <details>
 <summary><strong>Android: the fallback path</strong></summary>
@@ -356,6 +357,7 @@ looktap scrollto "Privacy & Security"   # swipe until fully on screen; fails at 
 looktap scrollto "General" --up
 looktap swipe 200 700 200 250           # scroll down (finger moves up); optional 5th arg: ms
 looktap back                            # Android: system Back · iOS: the navigation bar's back button
+looktap home                            # the Home button: home screen, the app keeps running
 ```
 
 ### Debug: logs, crashes, "where did my app go?"
@@ -441,6 +443,7 @@ looktap reset com.example.myapp          # as if freshly installed: data and per
 looktap permission grant location com.example.myapp    # no prompt
 looktap permission revoke photos com.example.myapp     # test the "denied" path
 looktap permission reset camera com.example.myapp      # it asks again on next use
+looktap stop com.example.myapp          # end it; prints "stopped" once its process is gone
 looktap uninstall com.example.myapp
 ```
 
@@ -454,7 +457,7 @@ looktap uninstall com.example.myapp
   - Android also takes any `android.permission.*`, and acts only on permissions the app declares. A `reset` also
     clears "don't ask again".
   - The iOS simulator can't set `camera` or `notifications`; looktap says so.
-- **These commands never guess the app from the screen.** `uninstall`, `reset` and `permission` take the app id
+- **These commands never guess the app from the screen.** `stop`, `uninstall`, `reset` and `permission` take the app id
   as an argument, or from `--app` / `looktap.config.json`.
 
 ### Simulated conditions: location, dark mode, text size, orientation, network, push
@@ -636,8 +639,8 @@ looktap mcp --config      # prints a ready-to-paste client config with absolute 
 - **Why absolute paths:** desktop apps start servers with a minimal `PATH`. `looktap` also finds `adb` in the
   Android SDK by itself.
 - **The tools:**
-  - `ls`, `tap`, `tap_xy`, `long_press`, `fill`, `type`, `key`, `hide_keyboard`, `swipe`, `scroll_to`, `back`
-    and `wait`;
+  - `ls`, `tap`, `tap_xy`, `long_press`, `fill`, `type`, `key`, `hide_keyboard`, `swipe`, `scroll_to`, `back`,
+    `home` and `wait`;
   - `screenshot`, which returns the image itself;
   - `logs` and `crashes`;
   - `looktap`, for any other command line, or several separated by `;`.
@@ -669,19 +672,22 @@ to settle unless asked (`--ls`).
 | `looktap zoom in\|out [x y] [--scale f]` | Two-finger pinch around a point (default: the screen centre). `--scale` sets how far apart the fingers end up (default 2.5) |
 | `looktap tapxy <x> <y>` | Taps a point (iOS points / Android dp) |
 | `looktap type <text>` | Types into the focused field. Text the keyboard can't type (accents, emoji, CJK) is pasted, which replaces the clipboard |
-| `looktap key <name> …` | `return`, `escape`, `delete`, `tab`, `space`. Android also `back`, `home`, any `KEYCODE_*`. iOS also `selectall`, `paste` |
+| `looktap key <name> …` | `return`, `escape`, `delete`, `tab`, `space`, `selectall`, `paste`, `home`. Android also `back`, any `KEYCODE_*` |
 | `looktap fill <label\|@ref> <text> [--exact]` | Focuses the field, clears it, types. Empty text just clears |
 | `looktap hidekb` | Dismisses the keyboard, checking after each method. Exits 2 if it's still up |
 | `looktap swipe <x1> <y1> <x2> <y2> [ms]` | Default 150 ms on iOS, 300 ms on Android |
 | `looktap back` | Android system Back · iOS: the navigation bar's back button, else a top-left "Back" button |
+| `looktap home` | The Home button: goes to the home screen and checks it's in front; the app keeps running |
 | `looktap open <url>` | Opens a deep link |
 | `looktap launch [app]` | (Re)starts the app |
+| `looktap stop [app]` | Terminates the app and waits until its process is gone |
 | `looktap bio match\|nomatch` | Face ID (iOS) or fingerprint (Android) |
 | `looktap rotate [portrait\|landscape\|left\|right\|upsidedown]` | Turns the device (`landscape` = `left`, turned counter-clockwise). `ls`, taps and screenshots follow the turned screen. Says so if the app doesn't support the orientation. Without an argument, prints the current one |
 | **Debug** (`[app]` defaults to `--app` / config, else the app in front) | |
 | `looktap logs [app] [--errors] [--grep re] [--since 5m] [--lines n] [--all]` | The app's log since the last `logs` (the first call covers the last minute). At most 80 lines, newest kept |
 | `looktap crashes [app] [--since 1h]` | Crashes, ANRs and low-memory kills since the last `crashes` (the first call covers the last hour) |
 | `looktap app [app]` | The app in front and its pid, and whether `[app]` is running |
+| `looktap capabilities [--json]` | What this device can't do, or can only in part, and why. `--json`: every command with `supported`, `conditional` or `unsupported` |
 | **App state** (`<app>` from the argument or `--app` / config, never the app in front) | |
 | `looktap install <path> [--grant]` | iOS: a simulator `.app`. Android: an `.apk`, replacing an installed copy and keeping its data (`--grant`: all runtime permissions). Prints the app id |
 | `looktap uninstall <app>` | Removes the app |
@@ -703,12 +709,40 @@ to settle unless asked (`--ls`).
 | `looktap setup` | Starts the helper ahead of time. Android: also `adb reverse tcp:8081` for Metro |
 | `looktap teardown` | Stops the helper. Android: also removes `adb reverse` rules |
 
-**`--ls`** works on `tap`, `longpress`, `zoom`, `tapxy`, `fill`, `type`, `key`, `hidekb`, `swipe`, `back`, `open`, `launch`, `bio`,
+**`--ls`** works on `tap`, `longpress`, `zoom`, `tapxy`, `fill`, `type`, `key`, `hidekb`, `swipe`, `back`, `home`, `open`, `launch`, `bio`,
 `rotate` and `scrollto`. After the action it waits for the screen to change (up to 1.5 s, or 6 s for `launch`/`open`), then for
 it to stop changing, then prints it like `ls`.
 
 **Exit codes:** `0` means OK. `2` means a usage problem: bad arguments, element not found, no device, or the
 helper can't start. `1` means anything else failed. A script can `set -e` and stop at the first missing element.
+
+## Platform support
+
+Every command works on all four kinds of device except the ones below. ⚠️ means it works with the limit shown; ❌
+means it doesn't run there and exits 2 with that reason. `looktap capabilities` prints the same for the device in
+front of you (`--json` for every command).
+
+<!-- capabilities: generated by npm run docs:capabilities -->
+| Command | iOS simulator | iPhone / iPad | Android emulator | Android device |
+|---|---|---|---|---|
+| `back` | ⚠️ iOS has no system Back: it taps the navigation bar's back button, else a top-left Back button | ⚠️ iOS has no system Back: it taps the navigation bar's back button, else a top-left Back button | ✅ | ✅ |
+| `bio` | ✅ | ❌ Face ID needs a real face on a device | ✅ | ❌ fingerprints can only be simulated on an emulator |
+| `burst` | ✅ | ✅ | ✅ | ⚠️ FLAG_SECURE screens come out black (emulators bypass it) |
+| `crashes` | ✅ | ❌ see Xcode → Window → Devices and Simulators → View Device Logs | ✅ | ✅ |
+| `location` | ✅ | ❌ a real device uses its own GPS; use a simulator to fake one | ✅ | ❌ a device uses its own GPS (faking it needs a mock-location app) |
+| `location clear` | ✅ | ❌ a real device uses its own GPS; use a simulator to fake one | ❌ the emulator keeps its last location: set a new one instead | ❌ a device uses its own GPS (faking it needs a mock-location app) |
+| `logs` | ✅ | ❌ use Console.app with the device selected | ✅ | ✅ |
+| `network` | ❌ the simulator uses the Mac's own network, so it can't go offline or slow by itself. Network Link Conditioner (Xcode → Open Developer Tool → More Developer Tools → Additional Tools) throttles the whole Mac | ❌ turn on Airplane Mode in Control Center | ✅ | ⚠️ airplane mode: over wireless adb, going offline also drops looktap's connection |
+| `permission` | ⚠️ camera and notifications can't be set: simctl privacy has no such service | ❌ change it in the Settings app | ⚠️ contacts-limited, reminders and siri are iOS-only; any android.permission.* works | ⚠️ contacts-limited, reminders and siri are iOS-only; any android.permission.* works |
+| `push` | ✅ | ❌ send a real push through APNs | ❌ Android pushes come through Firebase (FCM), so adb can't inject one: send it from your backend or the Firebase console | ❌ Android pushes come through Firebase (FCM), so adb can't inject one: send it from your backend or the Firebase console |
+| `record` | ✅ | ❌ use burst for frames, or QuickTime Player for video | ⚠️ at most 3 minutes, and FLAG_SECURE screens record black | ⚠️ at most 3 minutes, and FLAG_SECURE screens record black |
+| `reset` | ✅ | ❌ uninstall and install the app again | ✅ | ✅ |
+| `rotate` | ✅ | ✅ | ⚠️ turned while the home screen is in front, it doesn't last: the next app reopens in the orientation it was last shown in. Turn it with the app in front | ⚠️ turned while the home screen is in front, it doesn't last: the next app reopens in the orientation it was last shown in. Turn it with the app in front |
+| `shot` | ✅ | ✅ | ✅ | ⚠️ FLAG_SECURE screens come out black (emulators bypass it) |
+| `statusbar` | ✅ | ❌ only simulators can override the status bar | ✅ | ✅ |
+| `textsize` | ✅ | ❌ change it in Settings → Display & Brightness → Text Size | ✅ | ✅ |
+| `zoom` | ✅ | ⚠️ around the screen's centre only | ⚠️ only through the Android helper (the default): adb input has no multi-touch | ⚠️ only through the Android helper (the default): adb input has no multi-touch |
+<!-- /capabilities -->
 
 ## Options, environment variables, config file
 
@@ -718,7 +752,7 @@ helper can't start. `1` means anything else failed. A script can `set -e` and st
 | `-d, --device <udid\|serial>` | Default: the only booted one |
 | `-o, --out <dir>` | Folder for screenshots and videos (default `shots`) |
 | `--wait <seconds>` | How long `tap`, `fill` and `back` look for their target (default `3`). An ambiguous match fails at once |
-| `--app <id>` | App id for `launch`, `open`, `logs`, `crashes`, `app`, `uninstall`, `reset` and `permission` |
+| `--app <id>` | App id for `launch`, `stop`, `open`, `logs`, `crashes`, `app`, `uninstall`, `reset` and `permission` |
 | `-h, --help` · `-v, --version` | |
 
 | Environment variable | Meaning |
@@ -779,6 +813,7 @@ Precedence: command-line option, then environment variable, then config file, th
 | `Android helper did not start — falling back to uiautomator dump` | Something else holds UiAutomation (see above). looktap keeps working, just slower |
 | Android keyboard never appears | Set `hw.keyboard = no` in the AVD's `config.ini`, then cold-boot the emulator |
 | Android screenshot is black | That screen is `FLAG_SECURE`: use `shot` without `--plain` on an emulator. System PIN and biometric sheets stay black in every mode |
+| `the device is locked: unlock it, then run the command again` | Unlock the phone (and on an iPhone keep it unlocked while the runner starts). Commands that need the screen stop rather than act on the lock screen; `stop`, `key wakeup` and Android screenshots still work |
 | App sits on the splash screen (Android, React Native) | Metro isn't reachable: `looktap setup` (adds `adb reverse tcp:8081`), make sure Metro runs, then `looktap launch` |
 | `launch` says `no launchable activity` | The app isn't installed or the id is wrong: `adb shell pm list packages`, or `xcrun simctl listapps booted` |
 
@@ -843,7 +878,7 @@ continue. The skill tells agents exactly that. See [Safety rules](#safety-rules)
 
 ## Roadmap
 
-- Verified Xcode 27 input
+- Verified Xcode 27 input (touches, keys and the Home button)
 - Rotation verified on iPad simulators
 
 Ideas and votes welcome in [Issues](https://github.com/lakpriya1s/looktap/issues).

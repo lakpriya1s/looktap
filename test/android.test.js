@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { escapeInput, parseDensity, parseNodes, parseRotation } from '../lib/android.js';
+import { escapeInput, keycode, parseDensity, parseNodes, parseRotation } from '../lib/android.js';
 
 test('parseDensity prefers the override and converts to px per dp', () => {
   assert.equal(parseDensity('Physical density: 420\n'), 2.625);
@@ -12,6 +12,14 @@ test('parseDensity prefers the override and converts to px per dp', () => {
 test('escapeInput encodes spaces and shell metacharacters', () => {
   assert.equal(escapeInput('Photo album (2)'), 'Photo%salbum%s\\(2\\)');
   assert.equal(escapeInput("it's $1"), "it\\'s%s\\$1");
+});
+
+test('keycode maps key names to KEYCODE_* (selectall is the Ctrl+A shortcut)', () => {
+  assert.equal(keycode('return'), 'KEYCODE_ENTER');
+  assert.equal(keycode('Paste'), 'KEYCODE_PASTE');
+  assert.equal(keycode('selectall'), 'CTRL+KEYCODE_A');
+  assert.equal(keycode('KEYCODE_VOLUME_UP'), 'KEYCODE_VOLUME_UP');
+  assert.equal(keycode('menu'), 'KEYCODE_MENU');
 });
 
 test('parseNodes reads labels and scales bounds to dp', () => {

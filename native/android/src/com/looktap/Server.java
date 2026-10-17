@@ -180,6 +180,9 @@ public final class Server {
             case "keyboard":
                 reply(out, ok().put("shown", keyboardShown()), null);
                 return;
+            case "locked":
+                reply(out, ok().put("locked", keyguardLocked()), null);
+                return;
             case "shot": {
                 Bitmap b = screenshot();
                 double scale = req.optDouble("scale", 1);
@@ -360,6 +363,12 @@ public final class Server {
         }
     }
 
+    /** The lock screen is up: the window manager's own answer (IWindowManager.isKeyguardLocked, hidden). */
+    static boolean keyguardLocked() throws Exception {
+        Object wm = Class.forName("android.view.WindowManagerGlobal").getMethod("getWindowManagerService").invoke(null);
+        return (Boolean) wm.getClass().getMethod("isKeyguardLocked").invoke(wm);
+    }
+
     static boolean keyboardShown() {
         for (AccessibilityWindowInfo w : ua.getWindows())
             if (w.getType() == AccessibilityWindowInfo.TYPE_INPUT_METHOD) return true;
@@ -494,12 +503,22 @@ public final class Server {
         touch(MotionEvent.ACTION_UP, down, SystemClock.uptimeMillis(), x2, y2);
     }
 
+    /** A KEYCODE_* name, or CTRL+<name> for a shortcut (CTRL+KEYCODE_A selects all). */
     static void key(String name) {
-        int code = KeyEvent.keyCodeFromString(name.startsWith("KEYCODE_") ? name : "KEYCODE_" + name);
+        boolean ctrl = name.startsWith("CTRL+");
+        String bare = ctrl ? name.substring(5) : name;
+        int code = KeyEvent.keyCodeFromString(bare.startsWith("KEYCODE_") ? bare : "KEYCODE_" + bare);
         if (code == KeyEvent.KEYCODE_UNKNOWN) throw new IllegalArgumentException("unknown key: " + name);
+        if (code == KeyEvent.KEYCODE_PASTE && !ctrl) {
+            // WebViews and some custom fields ignore the paste key but take the accessibility action.
+            if (pasteAction()) return;
+        }
+        int meta = ctrl ? KeyEvent.META_CTRL_ON | KeyEvent.META_CTRL_LEFT_ON : 0;
         long t = SystemClock.uptimeMillis();
-        inject(keyEvent(t, KeyEvent.ACTION_DOWN, code, 0));
-        inject(keyEvent(t, KeyEvent.ACTION_UP, code, 0));
+        if (ctrl) inject(keyEvent(t, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_CTRL_LEFT, meta));
+        inject(keyEvent(t, KeyEvent.ACTION_DOWN, code, meta));
+        inject(keyEvent(t, KeyEvent.ACTION_UP, code, meta));
+        if (ctrl) inject(keyEvent(t, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_CTRL_LEFT, 0));
     }
 
     static KeyEvent keyEvent(long t, int action, int code, int meta) {
@@ -522,12 +541,32 @@ public final class Server {
         }
     }
 
+    /**
+     The focused field's paste action, true only if the field changed: some fields (React Native's TextInput)
+     report the action done without pasting, and then only the paste key works.
+     */
+    static boolean pasteAction() {
+        AccessibilityNodeInfo field = ua.findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
+        if (field == null) return false;
+        String before = fieldState(field);
+        if (!field.performAction(AccessibilityNodeInfo.ACTION_PASTE)) return false;
+        for (int i = 0; i < 10; i++) {
+            SystemClock.sleep(30);
+            if (field.refresh() && !fieldState(field).equals(before)) return true;
+        }
+        return false;
+    }
+
+    /** Text and selection: a paste changes one of them, even when the pasted text replaces itself. */
+    static String fieldState(AccessibilityNodeInfo field) {
+        return field.getText() + "\u0000" + field.getTextSelectionStart() + ":" + field.getTextSelectionEnd();
+    }
+
     /** Put `s` on the clipboard and paste it into the focused field. Replaces what the clipboard held. */
     static void paste(String s) throws Exception {
         setClipboard(s);
-        AccessibilityNodeInfo field = ua.findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
-        if (field != null && field.performAction(AccessibilityNodeInfo.ACTION_PASTE)) return;
-        key("PASTE"); // no focused node that takes the action: the paste key, which EditTexts handle too
+        if (pasteAction()) return;
+        key("PASTE"); // no focused node that took the action: the paste key, which EditTexts handle too
     }
 
     /**

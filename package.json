@@ -49,6 +49,7 @@
     "test": "node --test test/*.test.js",
     "build:ios": "sh native/ios/build.sh",
     "build:android": "sh native/android/build.sh",
+    "docs:capabilities": "node scripts/capabilities.mjs",
     "site:build": "node site/build.mjs",
     "site:serve": "node site/serve.mjs"
   }

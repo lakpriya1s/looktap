@@ -77,8 +77,10 @@ static dispatch_queue_t hidQueue;
 
 typedef void *(*MouseEventFn)(CGPoint *, CGPoint *, uint32_t, unsigned long, CGSize, uint32_t);
 typedef void *(*KeyboardFn)(int32_t, int32_t);
+typedef void *(*ButtonFn)(int32_t, int32_t, int32_t);
 static MouseEventFn indigoMouse;
 static KeyboardFn indigoKeyboard;
+static ButtonFn indigoButton; // optional: only the Home button needs it
 
 static void updateOrientation(id root); // see "orientation" below
 static NSRect nativeFrame(id el);
@@ -342,7 +344,8 @@ static NSString *coreSimulatorVersion(void) {
 //   indigo  SimulatorKit's SimDeviceLegacyHIDClient + Indigo messages. CoreSimulator < 1155.4 (Xcode ≤ 26).
 //   dtuhid  plain-XPC messages to the guest's `dtuhidd` digitizer service. CoreSimulator ≥ 1155.4
 //           (Xcode 27), whose guest silently drops Indigo input.
-// Both expose the same primitives: touch start/move/end, key down/up, and sync (wait until delivered).
+// Both expose the same primitives: touch start/move/end, key down/up, the Home button, and sync (wait
+// until delivered).
 
 typedef enum { TouchStart = 0, TouchMove = 1, TouchEnd = 2 } TouchPhase; // = dtuhidd's eventType
 
@@ -547,6 +550,15 @@ static xpc_object_t dtuKeyMessage(int usage, BOOL down, BOOL barrier) {
   return dtuMessage("IndigoKeyboardButtonEvent", p, barrier);
 }
 
+/** IndigoButtonEvent: a hardware button as a consumer-page usage (Home is 0x0C/0x40, Menu), state 1 down, 2 up. */
+static xpc_object_t dtuButtonMessage(int page, int usage, BOOL down) {
+  xpc_object_t p = xpc_dictionary_create(NULL, NULL, 0);
+  xpc_dictionary_set_uint64(p, "usagePage", (uint64_t)page);
+  xpc_dictionary_set_uint64(p, "usageCode", (uint64_t)usage);
+  xpc_dictionary_set_uint64(p, "state", down ? 1 : 2);
+  return dtuMessage("IndigoButtonEvent", p, NO);
+}
+
 static xpc_object_t dtuPoint(double x, double y) {
   CGPoint r = ratioFor(x, y);
   xpc_object_t pt = xpc_dictionary_create(NULL, NULL, 0);
@@ -650,6 +662,16 @@ static void keyEvent(int usage, BOOL down) {
   else indigoSend(indigoKeyboard(usage, down ? 1 : 2));
 }
 
+// Indigo.h: ButtonEventSourceHomeButton 0x0, ButtonEventTargetHardware 0x33; direction 1 down, 2 up.
+enum { BUTTON_HOME = 0x0, BUTTON_TARGET_HARDWARE = 0x33 };
+
+static void homeEvent(BOOL down) {
+  requireInput();
+  if (dtuConnection) xpc_connection_send_message(dtuConnection, dtuButtonMessage(0x0C, 0x40, down));
+  else if (indigoButton) indigoSend(indigoButton(BUTTON_HOME, down ? 1 : 2, BUTTON_TARGET_HARDWARE));
+  else [NSException raise:@"hid" format:@"this Xcode's SimulatorKit has no IndigoHIDMessageForButton"];
+}
+
 /** Wait until everything sent so far has been taken by the simulator, so the next read sees its effect. */
 static void hidSync(void) {
   if (dtuConnection) {
@@ -662,6 +684,15 @@ static void hidSync(void) {
     indigoFailure = nil;
     [NSException raise:@"hid" format:@"HID send failed: %@", e.localizedDescription];
   }
+}
+
+/** One press of the Home button (the gesture's equivalent on Face ID devices): to the home screen. */
+static void home(void) {
+  homeEvent(YES);
+  hidSync();
+  usleep(50000);
+  homeEvent(NO);
+  hidSync();
 }
 
 static void tap(double x, double y, int holdMs) {
@@ -748,7 +779,7 @@ static void typeString(NSString *s) {
   }
 }
 
-/** Named keys, or a raw HID usage number. "selectall" is Cmd-A, "paste" Cmd-V. */
+/** Named keys, or a raw HID usage number. "selectall" is Cmd-A, "paste" Cmd-V, "home" the Home button. */
 static void key(NSString *name) {
   NSDictionary *named = @{
     @"return" : @(KEY_ENTER), @"enter" : @(KEY_ENTER), @"escape" : @(KEY_ESCAPE), @"delete" : @(KEY_BACKSPACE),
@@ -757,6 +788,7 @@ static void key(NSString *name) {
   NSString *k = name.lowercaseString;
   if ([k isEqualToString:@"selectall"]) return press(4, @[ @(KEY_CMD) ]);
   if ([k isEqualToString:@"paste"]) return press(25, @[ @(KEY_CMD) ]);
+  if ([k isEqualToString:@"home"]) return home();
   NSNumber *u = named[k];
   if (!u && k.integerValue > 0) u = @(k.integerValue);
   if (!u) [NSException raise:@"key" format:@"unknown key: %@", name];
@@ -932,6 +964,10 @@ static void handle(int fd, NSDictionary *r) {
     for (NSString *k in r[@"keys"]) key(k);
     return reply(fd, @{@"ok" : @YES}, nil);
   }
+  if ([op isEqualToString:@"home"]) {
+    home();
+    return reply(fd, @{@"ok" : @YES}, nil);
+  }
   if ([op isEqualToString:@"front"]) {
     // The frontmost app's pid (0 when none, e.g. the home screen): the CLI maps it to a bundle id.
     id app = [translator frontmostApplicationWithDisplayId:0 bridgeDelegateToken:axToken];
@@ -1018,6 +1054,7 @@ static void chooseTransport(void *simKit) {
   }
   indigoMouse = (MouseEventFn)dlsym(simKit, "IndigoHIDMessageForMouseNSEvent");
   indigoKeyboard = (KeyboardFn)dlsym(simKit, "IndigoHIDMessageForKeyboardArbitrary");
+  indigoButton = (ButtonFn)dlsym(simKit, "IndigoHIDMessageForButton");
   Class hidClass = NSClassFromString(@"SimulatorKit.SimDeviceLegacyHIDClient");
   NSError *err = nil;
   if (!indigoMouse || !indigoKeyboard) inputError = @"this Xcode's SimulatorKit has no Indigo HID builders";

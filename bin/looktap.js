@@ -9,9 +9,10 @@ import { Ios, bootedSimulators } from '../lib/ios.js';
 import { IosDevice, physicalDevices } from '../lib/iosdevice.js';
 import { clock, grepper, startOf, tail, whichApp } from '../lib/logs.js';
 import { ACTIONS as PERMISSION_ACTIONS } from '../lib/permissions.js';
+import { KINDS, capabilities, capability } from '../lib/capabilities.js';
 import { ORIENTATIONS, coordinates, pushPayload, rotation, textSize } from '../lib/conditions.js';
 import { appGone, center, coveringAt, forgetFront, formatRow, isRef, lastFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, visibleRows, waitFor } from '../lib/screen.js';
-import { ADB, HOME, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
+import { ADB, HOME, LOCKED, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
 
 const SKILL = new URL('../skills/looktap/SKILL.md', import.meta.url);
 
@@ -45,14 +46,16 @@ act                               add --ls to any of these to print the settled 
   zoom in|out [x y] [--scale f]   two-finger pinch around a point (default: the screen centre; scale 2.5)
   tapxy <x> <y>                   iOS points / Android dp
   type <text>                     into the focused field
-  key <name> …                    return, escape, delete, tab, space (Android: also back, home,
-                                  or any KEYCODE_*; iOS: also selectall, paste)
+  key <name> …                    return, escape, delete, tab, space, selectall, paste, home
+                                  (Android: also back, or any KEYCODE_*)
   fill <label|@ref> <text>        clear the field, type, leave it
   hidekb                          dismiss the keyboard
   swipe <x1> <y1> <x2> <y2> [ms]
   back                            Android system back · iOS navigation-bar back button
+  home                            the Home button: to the home screen, the app left running
   open <url>                      deep link (e.g. myapp://home)
   launch [app]                    (re)start the app
+  stop [app]                      terminate it, and wait until its process is gone
   bio match|nomatch               Face ID / fingerprint
   rotate [portrait|landscape|left|right|upsidedown]
                                   turn the device (landscape = left: turned counter-clockwise); no
@@ -64,6 +67,7 @@ debug                             [app] defaults to --app / config, else the app
                                   iOS hides Apple-framework chatter unless it's an error (--all keeps it)
   crashes [app] [--since 1h]      crashes, ANRs, low-memory kills since the last \`crashes\` (first: last hour)
   app [app]                       which app is in front, and whether [app] is running (pid)
+  capabilities [--json]           what this device can't do, or can only in part, and why
 
 app state                         <app> defaults to --app / config (never the app in front)
   install <path> [--grant]        iOS: a simulator .app · Android: an .apk (keeps data; --grant: all
@@ -251,7 +255,7 @@ async function main() {
 }
 
 const deviceId = (d) => d.udid || d.serial;
-const ACTIONS = new Set(['tap', 'longpress', 'zoom', 'tapxy', 'type', 'key', 'fill', 'hidekb', 'swipe', 'back', 'open', 'launch', 'bio', 'scrollto', 'rotate']);
+const ACTIONS = new Set(['tap', 'longpress', 'zoom', 'tapxy', 'type', 'key', 'fill', 'hidekb', 'swipe', 'back', 'home', 'open', 'launch', 'bio', 'scrollto', 'rotate']);
 
 /** Print the listing (text or --json) and remember its @refs. `snap` defaults to a fresh read. */
 async function list(d, opts, snap) {
@@ -288,6 +292,9 @@ async function byRef(d, ref) {
   return resolveRef(deviceId(d), ref, (await d.snapshot()).elements);
 }
 
+/** Commands that read or act on the screen: they stop while the lock screen is up (bio can unlock it). */
+const SCREEN = new Set([...ACTIONS, 'ls', 'wait', 'scrollto'].filter((c) => c !== 'bio'));
+
 /** Actions after which a vanished app is worth a warning (launch replaces the app on purpose). */
 const WATCHED = new Set([...ACTIONS].filter((c) => c !== 'launch'));
 
@@ -310,6 +317,7 @@ async function dispatch(d, cmd, args, opts) {
   const look = opts.flags.has('ls') && ACTIONS.has(cmd);
   // Remember the screen before acting, so --ls waits for the action to show before printing.
   const before = look ? await d.snapshot({ all }) : null;
+  if (d.assertUnlocked && SCREEN.has(cmd)) await d.assertUnlocked(cmd, args);
   const app = WATCHED.has(cmd) ? await d.frontApp().catch(() => null) : null;
   await act(d, cmd, args, opts);
   if (['launch', 'reset', 'uninstall', 'install'].includes(cmd)) forgetFront(deviceId(d));
@@ -405,7 +413,7 @@ async function act(d, cmd, args, opts) {
     }
     case 'tapxy': need(2, 'tapxy <x> <y>'); return d.tapxy(Number(args[0]), Number(args[1]));
     case 'type': need(1, 'type <text>'); return d.type(args.join(' '));
-    case 'key': need(1, 'key <name> … (return, escape, delete, tab, space)'); return d.keys(args);
+    case 'key': need(1, 'key <name> … (return, escape, delete, tab, space, selectall, paste, home)'); return d.keys(args);
     case 'fill': {
       need(1, 'fill <label|@ref> <text>');
       const text = args.slice(1).join(' ');
@@ -415,11 +423,38 @@ async function act(d, cmd, args, opts) {
     case 'hidekb': return d.hidekb();
     case 'swipe': need(4, 'swipe <x1> <y1> <x2> <y2> [ms]'); return d.swipe(...args.slice(0, 4).map(Number), args[4] ? Number(args[4]) : undefined);
     case 'back': return d.back();
+    case 'home': {
+      const before = await d.foreground();
+      await d.home();
+      // Done means the home screen is in front, not that the button was pressed.
+      const launcher = await d.homeScreen();
+      let front;
+      for (let i = 0; i < 12; i++) {
+        front = await d.foreground();
+        if (!front || front.id === launcher) break; // no app in front is the home screen too
+        await sleep(250);
+      }
+      if (front && front.id !== launcher) throw new Error(`pressed Home, but ${front.id || 'an app'} is still in front`);
+      if (!front && (await d.locked())) throw new UsageError(LOCKED); // no app in front: the lock screen looks the same
+      const left = before && before.id !== launcher && before.id ? await d.pidOf(before.id) : 0;
+      return console.log(`home screen${left ? ` · ${before.id} still running in the background, pid ${left}` : ''}`);
+    }
     case 'open': need(1, 'open <url>'); return d.open(args[0]);
     case 'launch': {
       const app = args[0] || d.app;
       if (!app) throw new UsageError('usage: looktap launch <app-id> (or set --app / looktap.config.json)');
       return d.launch(app);
+    }
+    case 'stop': {
+      const app = explicitApp(d, args[0], 'stop <app>');
+      const was = await d.stop(app);
+      if (!was) return console.log(`${app} wasn't running`);
+      // Stopped means that process is gone, not that the stop was sent. The system may start a new one at once
+      // (Android does for the top screen of another app's task): that's a restart, not a failed stop.
+      let pid = await d.pidOf(app);
+      for (let i = 0; i < 20 && pid === was; i++) await sleep(250), (pid = await d.pidOf(app));
+      if (pid === was) throw new Error(`${app} is still running (pid ${pid}) after the stop`);
+      return console.log(`stopped ${app} (pid ${was})${pid ? ` · the system started it again right away, pid ${pid}` : ''}`);
     }
     case 'bio': need(1, 'bio match|nomatch'); return d.bio(args[0]);
     case 'rotate': {
@@ -427,6 +462,8 @@ async function act(d, cmd, args, opts) {
       const r = await d.rotate(want);
       const now = `${ORIENTATIONS[r.turns]} (${r.w}x${r.h})`;
       if (want == null) return console.log(now);
+      const limit = capability(d.kind, 'rotate');
+      if (limit.why && d.homeScreen && (await d.foreground())?.id === (await d.homeScreen())) console.error(`looktap: warning: ${limit.why}`);
       if (r.turns === want) return console.log(`rotated: ${now}`);
       return console.log(`turned the device to ${ORIENTATIONS[want]}, but the screen stays ${now}: the app in front doesn't support that orientation`);
     }
@@ -484,6 +521,7 @@ async function act(d, cmd, args, opts) {
       return console.log(`${{ grant: 'granted', revoke: 'revoked', reset: 'reset (it will ask again)' }[args[0]]}: ${what} for ${app}`);
     }
     case 'run': return runScript(d, args, opts);
+    case 'capabilities': return showCapabilities(d, opts);
     default: throw new UsageError(`unknown command: ${cmd} (looktap --help)`);
   }
 }
@@ -549,9 +587,22 @@ async function showCrashes(d, arg, opts) {
   console.log(found.map((c) => c.text).join('\n\n'));
 }
 
+/** What this device can't do, or can do only in part; --json: every command with its status. */
+function showCapabilities(d, opts) {
+  const all = capabilities(d.kind);
+  if (opts.flags.has('json')) return console.log(JSON.stringify({ kind: d.kind, device: deviceId(d), commands: all }, null, 2));
+  console.log(`${KINDS[d.kind].title} ${deviceId(d)}`);
+  const limited = Object.entries(all).filter(([, c]) => c.status !== 'supported');
+  const width = Math.max(...limited.map(([name]) => name.length));
+  for (const [name, c] of limited) console.log(`${c.status === 'unsupported' ? 'no     ' : 'partly '} ${name.padEnd(width)}  ${c.why}`);
+  const rest = Object.keys(all).filter((name) => all[name].status === 'supported');
+  console.log(`yes     ${rest.join(', ')}`);
+}
+
 async function showApp(d, arg) {
   const front = await d.foreground();
-  console.log(front ? `front: ${front.id || '(unknown app)'}  pid ${front.pid}` : 'front: no app (home screen or a system sheet)');
+  if (!front && (await d.locked())) console.log('front: the lock screen (the device is locked)');
+  else console.log(front ? `front: ${front.id || '(unknown app)'}  pid ${front.pid}` : 'front: no app (home screen or a system sheet)');
   const app = arg || d.app;
   if (app && app !== front?.id) {
     const pid = await d.pidOf(app);

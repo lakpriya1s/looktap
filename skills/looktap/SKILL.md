@@ -39,8 +39,8 @@ Look, act, read the result. `ls` prints one row per element:
 The columns are: ref, type, x,y, width×height (iOS points / Android dp), label, and `= value` for fields.
 
 Add **`--ls`** to an action and it prints the screen once it has settled, so you don't need a separate `ls`.
-It works on `tap`, `longpress`, `zoom`, `tapxy`, `fill`, `type`, `key`, `hidekb`, `swipe`, `back`, `open`,
-`launch`, `bio`, `rotate` and `scrollto`. It waits for the screen to change (up to 1.5 s, 6 s for
+It works on `tap`, `longpress`, `zoom`, `tapxy`, `fill`, `type`, `key`, `hidekb`, `swipe`, `back`, `home`,
+`open`, `launch`, `bio`, `rotate` and `scrollto`. It waits for the screen to change (up to 1.5 s, 6 s for
 `launch`/`open`), then for it to stop changing.
 
 **`--ls` stops at a loading skeleton too.** If it shows a heading but none of the content, run
@@ -83,6 +83,8 @@ looktap zoom in
 looktap zoom out 200 400 --scale 4
 # Android: system Back · iOS: the navigation bar's back button
 looktap back
+# the Home button: to the home screen, the app keeps running in the background
+looktap home
 ```
 
 ### Type
@@ -93,7 +95,7 @@ looktap fill "Email" sam@example.com
 looktap fill @4 ""
 # into the focused field
 looktap type "@example.com"
-# return escape delete tab space; Android also back home KEYCODE_*; iOS also selectall paste
+# return escape delete tab space selectall paste home; Android also back KEYCODE_*
 looktap key return
 looktap key selectall delete
 # dismiss the keyboard; exits 2 if it's still up
@@ -110,6 +112,7 @@ looktap open "myapp://orders/42"
 # (re)start the app
 looktap launch
 looktap launch com.example.myapp
+looktap stop com.example.myapp   # terminate it; waits until the process is gone
 # Face ID / fingerprint
 looktap bio match
 looktap bio nomatch
@@ -146,6 +149,8 @@ looktap crashes com.example.myapp --since 1h
 # which app is in front, and whether the given one is running
 looktap app
 looktap app com.example.myapp
+# what this device can't do (or only in part) and why; --json lists every command's status
+looktap capabilities
 ```
 
 ### App state
@@ -318,12 +323,19 @@ Then look at the few frames that matter, not all of them.
 - **Against a live backend every tap is real.** Use the smallest amounts, and undo what you create.
 - **`reset` signs the user out** of most apps: ask before resetting an app someone else signed in to.
 - **Set back what you change.** Appearance, text size, the status bar, the orientation and the network stay as
-  you leave them, for the next person and for other apps.
+  you leave them, for the next person and for other apps. On Android, turn the orientation back with the app in
+  front: a turn made from the home screen doesn't last.
+- **Not sure a command works on this device?** `looktap capabilities` says what it can't do, and why. A command
+  that can't run exits 2 with the reason, so don't retry it.
+- **Let a screen settle before typing into it.** Add `--ls` to the tap that opens it: some screens (search
+  screens especially) clear their field just after they open, taking the first letters with them.
 - **App-state and condition commands need the app id.** They never act on whatever happens to be on screen.
 - **If `tap` warns that another element covers the point** (a toast, a banner, a floating bar), the tap
   probably hit that: dismiss it, then tap again.
 - **If `ls` says only the status bar is readable**, a system prompt (passcode, permission, alert) is on top.
   `shot` to see it. Never enter a passcode unless the user gave it to you for this device.
+- **If a command says the device is locked**, ask the user to unlock it. Don't retry, and never enter a passcode
+  unless they gave it to you for this device.
 - **If `hidekb` exits 2** (iOS search keyboards have no Done key), tap the screen's close or cancel control.
 - **Log lines can contain tokens or personal data.** Quote only the lines that matter.
 
