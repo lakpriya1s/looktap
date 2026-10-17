@@ -68,6 +68,7 @@ It's just as handy by hand, or in a shell script for screenshot sweeps and bug r
 | 🫆 | **Biometrics.** `bio match\|nomatch` simulates Face ID or a fingerprint |
 | 🌍 | **Simulated conditions.** `location <lat> <lon>`, `appearance dark`, `textsize xxl` (Dynamic Type / font scale), `statusbar clean` (9:41 for screenshots), `rotate landscape` (`ls`, taps and screenshots follow the turned screen), Android `network offline`, and iOS `push` notifications |
 | 🧹 | **App state for repros.** `install` a build, `reset` an app to a fresh install, `uninstall`, and `permission grant\|revoke\|reset camera\|location\|photos\|…`, with the same names on both platforms |
+| 📱 | **Devices on demand.** `boot "iPhone 16 Pro"` or `boot Pixel_9a` starts a simulator or emulator by name and waits until it's ready, with a window or `--headless`; `shutdown` stops it. `devices` tells real phones from simulators and emulators (model, OS, USB or Wi-Fi), and says what to do for a phone that isn't ready yet |
 | 🤖 | **Built for agents.** `--ls` on any action, `run` to batch steps, `--json`, `capabilities` to check what the device in use can and can't do, and a [Claude Code skill](#for-ai-agents) you install with one command |
 | 🧩 | **Nothing to install on simulators, emulators or Android phones**, no server to run, no npm dependencies. The helpers start on first use. A real iPhone gets a small test runner, built for you |
 | ⚠️ | **Honest failures.** A tap that's covered by a toast prints a warning, a stale `@ref` is an error rather than a wrong tap, a system prompt over the app is reported as one, a locked device is reported as locked (never typed into), and **an app that dies is named the moment looktap notices** |
@@ -171,7 +172,7 @@ Install looktap (https://github.com/lakpriya1s/looktap) so you can drive
 my app in the iOS simulator / Android emulator:
 
 1. Run `npm install -g @looktap/cli`, then `looktap doctor`,
-   and fix anything it reports (boot a simulator or emulator, or connect a device, if none is up).
+   and fix anything it reports. If no device is up, boot one: `looktap devices --all` lists them, `looktap boot "<name>"` starts one.
 2. Run `looktap skill --install` and read the skill it installs.
 3. Find my app's bundle id / package name in this repo and write a
    looktap.config.json with it at the repo root.
@@ -186,8 +187,8 @@ sign-in, stop and let me do it, then continue from there.
 | For | You need |
 |---|---|
 | Everything | **Node 18+** (`node -v`) |
-| iOS | A Mac with **Xcode** (command-line tools selected) and at least one simulator runtime. Apple Silicon or Intel |
-| Android | **Android SDK platform-tools** (`adb` on your `PATH`), and an emulator (AVD) or a USB-debugging device |
+| iOS | A Mac with **Xcode** (command-line tools selected) and at least one simulator runtime. Apple Silicon or Intel. `looktap boot` starts a simulator |
+| Android | **Android SDK platform-tools** (`adb` on your `PATH`), and an emulator (AVD) or a USB-debugging device. `looktap boot` starts an emulator (it needs the SDK's Emulator package) |
 | A real iPhone or iPad | The iOS row, plus an **Apple ID signed in to Xcode** (a free one works) and the device paired with the Mac, with Developer Mode on. See [Using a real iPhone](#using-a-real-iphone) |
 
 Tested with Xcode 26 / iOS 26 (iPhone 14 simulator) and Android 16 / API 36 (Pixel 9a emulator).
@@ -242,7 +243,7 @@ Developer Program isn't needed.
 2. Pair the device with the Mac (connect it with a cable once and tap Trust; Wi-Fi works after that), and turn on
    **Developer Mode** on it: Settings → Privacy & Security → Developer Mode.
 3. Unlock the device and run any command against it, for example `looktap -d <hardware UDID> ls`
-   (`looktap devices` lists the UDID). The first run builds the runner, which takes about a minute.
+   (`looktap devices` lists the UDID, and says what to do if the device isn't ready yet: Trust, Developer Mode). The first run builds the runner, which takes about a minute.
 4. With a free Apple ID, the device asks you to trust the developer the first time: Settings → General →
    VPN & Device Management → your Apple ID → Trust. Then run the command again.
 
@@ -500,10 +501,11 @@ with `looktap bio match` when it asks.
 ### Same screen on several devices
 
 ```bash
+looktap boot "iPhone 14" --headless && looktap boot "iPhone 16 Pro" --headless
 looktap devices
-# ios      42E41FA7-…  iPhone 14
-# ios      F9213EDC-…  iPhone 16 Pro
-# android  emulator-5554
+# ios      42E41FA7-…  iPhone 14 · simulator · iOS 26.0 · headless
+# ios      F9213EDC-…  iPhone 16 Pro · simulator · iOS 26.0 · headless
+# android  emulator-5554  Pixel_9a · emulator · Android 16 · window
 
 for d in 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 F9213EDC-180D-412B-B24C-2FD69A37D3AC; do
   looktap -d $d open myapp://home

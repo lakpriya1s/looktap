@@ -12,8 +12,11 @@ prints a few lines of plain text. Nothing is installed on simulators, emulators 
 ## Quick start
 
 ```bash
-# check the toolchain and see what's booted
+# check the toolchain, and see what's running or connected (real phones, simulators, emulators)
 looktap doctor
+looktap devices
+# nothing up? boot one by name (looktap devices --all lists them)
+looktap boot "iPhone 16 Pro"
 # start the app (id from --app or looktap.config.json)
 looktap launch com.example.myapp --ls
 # act by label or by @ref from the last screen read, and read the new screen in the same call
@@ -359,4 +362,5 @@ npm install -g @looktap/cli
 looktap doctor
 ```
 
-Needs Node 18+. iOS: macOS with Xcode and a booted simulator. Android: adb, with an emulator or a device.
+Needs Node 18+. iOS: macOS with Xcode and a simulator (`looktap boot` starts one) or a paired iPhone. Android: adb, with
+an emulator (`looktap boot` starts one) or a device.
