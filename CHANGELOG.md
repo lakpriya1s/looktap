@@ -7,6 +7,9 @@
   the app wasn't running.
 - **Android `key selectall` and `key paste`**, as on iOS. Select-all is Ctrl+A; paste uses the focused field's paste
   action first (WebViews ignore the paste key), else the paste key. Without the helper, select-all needs Android 13+.
+- **`looktap home`** presses the Home button on both platforms; on the iOS simulator it's the hardware Home button
+  event, which the simulator had no way to send before. It prints "home screen" only once the home screen is in front,
+  and names the app it left running. `key home` now works on iOS too, and `home` takes `--ls`.
 
 ## 0.2.2
 

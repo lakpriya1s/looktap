@@ -118,8 +118,8 @@ export const SCENES = [
     kicker: '04 · Move',
     title: 'Swipe, scroll, hold, pinch',
     body: `<p><code>swipe</code> drags, <code>scrollto</code> swipes until a row is fully on screen, <code>longpress</code> holds, and <code>zoom</code> is a real two-finger pinch on both platforms.</p>
-<p><code>open</code> follows a deep link, <code>back</code> goes back (Android's system Back, or the iOS navigation bar's), and <code>location</code> moves the GPS.</p>`,
-    covers: ['swipe', 'scrollto', 'longpress', 'zoom', 'open', 'back', 'location'],
+<p><code>open</code> follows a deep link, <code>back</code> goes back (Android's system Back, or the iOS navigation bar's), <code>home</code> presses the Home button, and <code>location</code> moves the GPS.</p>`,
+    covers: ['swipe', 'scrollto', 'longpress', 'zoom', 'open', 'back', 'home', 'location'],
     start: (p) => p.show('home'),
     beats: [
       {
@@ -178,6 +178,13 @@ export const SCENES = [
           if (back) await p.tapEl(back);
           p.show('home');
           return listed(p, 4);
+        },
+      },
+      {
+        cmd: 'looktap home',
+        run: async (p) => {
+          p.set({ screen: 'springboard' });
+          return [`home screen · ${APP} still running in the background, pid 4127`];
         },
       },
     ],

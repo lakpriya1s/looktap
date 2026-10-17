@@ -356,6 +356,7 @@ looktap scrollto "Privacy & Security"   # swipe until fully on screen; fails at 
 looktap scrollto "General" --up
 looktap swipe 200 700 200 250           # scroll down (finger moves up); optional 5th arg: ms
 looktap back                            # Android: system Back · iOS: the navigation bar's back button
+looktap home                            # the Home button: home screen, the app keeps running
 ```
 
 ### Debug: logs, crashes, "where did my app go?"
@@ -669,11 +670,12 @@ to settle unless asked (`--ls`).
 | `looktap zoom in\|out [x y] [--scale f]` | Two-finger pinch around a point (default: the screen centre). `--scale` sets how far apart the fingers end up (default 2.5) |
 | `looktap tapxy <x> <y>` | Taps a point (iOS points / Android dp) |
 | `looktap type <text>` | Types into the focused field. Text the keyboard can't type (accents, emoji, CJK) is pasted, which replaces the clipboard |
-| `looktap key <name> …` | `return`, `escape`, `delete`, `tab`, `space`, `selectall`, `paste`. Android also `back`, `home`, any `KEYCODE_*` |
+| `looktap key <name> …` | `return`, `escape`, `delete`, `tab`, `space`, `selectall`, `paste`, `home`. Android also `back`, any `KEYCODE_*` |
 | `looktap fill <label\|@ref> <text> [--exact]` | Focuses the field, clears it, types. Empty text just clears |
 | `looktap hidekb` | Dismisses the keyboard, checking after each method. Exits 2 if it's still up |
 | `looktap swipe <x1> <y1> <x2> <y2> [ms]` | Default 150 ms on iOS, 300 ms on Android |
 | `looktap back` | Android system Back · iOS: the navigation bar's back button, else a top-left "Back" button |
+| `looktap home` | The Home button: goes to the home screen and checks it's in front; the app keeps running |
 | `looktap open <url>` | Opens a deep link |
 | `looktap launch [app]` | (Re)starts the app |
 | `looktap stop [app]` | Terminates the app and waits until its process is gone |

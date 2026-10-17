@@ -45,12 +45,13 @@ act                               add --ls to any of these to print the settled 
   zoom in|out [x y] [--scale f]   two-finger pinch around a point (default: the screen centre; scale 2.5)
   tapxy <x> <y>                   iOS points / Android dp
   type <text>                     into the focused field
-  key <name> …                    return, escape, delete, tab, space, selectall, paste (Android:
-                                  also back, home, or any KEYCODE_*)
+  key <name> …                    return, escape, delete, tab, space, selectall, paste, home
+                                  (Android: also back, or any KEYCODE_*)
   fill <label|@ref> <text>        clear the field, type, leave it
   hidekb                          dismiss the keyboard
   swipe <x1> <y1> <x2> <y2> [ms]
   back                            Android system back · iOS navigation-bar back button
+  home                            the Home button: to the home screen, the app left running
   open <url>                      deep link (e.g. myapp://home)
   launch [app]                    (re)start the app
   stop [app]                      terminate it, and wait until its process is gone
@@ -252,7 +253,7 @@ async function main() {
 }
 
 const deviceId = (d) => d.udid || d.serial;
-const ACTIONS = new Set(['tap', 'longpress', 'zoom', 'tapxy', 'type', 'key', 'fill', 'hidekb', 'swipe', 'back', 'open', 'launch', 'bio', 'scrollto', 'rotate']);
+const ACTIONS = new Set(['tap', 'longpress', 'zoom', 'tapxy', 'type', 'key', 'fill', 'hidekb', 'swipe', 'back', 'home', 'open', 'launch', 'bio', 'scrollto', 'rotate']);
 
 /** Print the listing (text or --json) and remember its @refs. `snap` defaults to a fresh read. */
 async function list(d, opts, snap) {
@@ -406,7 +407,7 @@ async function act(d, cmd, args, opts) {
     }
     case 'tapxy': need(2, 'tapxy <x> <y>'); return d.tapxy(Number(args[0]), Number(args[1]));
     case 'type': need(1, 'type <text>'); return d.type(args.join(' '));
-    case 'key': need(1, 'key <name> … (return, escape, delete, tab, space, selectall, paste)'); return d.keys(args);
+    case 'key': need(1, 'key <name> … (return, escape, delete, tab, space, selectall, paste, home)'); return d.keys(args);
     case 'fill': {
       need(1, 'fill <label|@ref> <text>');
       const text = args.slice(1).join(' ');
@@ -416,6 +417,21 @@ async function act(d, cmd, args, opts) {
     case 'hidekb': return d.hidekb();
     case 'swipe': need(4, 'swipe <x1> <y1> <x2> <y2> [ms]'); return d.swipe(...args.slice(0, 4).map(Number), args[4] ? Number(args[4]) : undefined);
     case 'back': return d.back();
+    case 'home': {
+      const before = await d.foreground();
+      await d.home();
+      // Done means the home screen is in front, not that the button was pressed.
+      const launcher = await d.homeScreen();
+      let front;
+      for (let i = 0; i < 12; i++) {
+        front = await d.foreground();
+        if (!front || front.id === launcher) break; // no app in front is the home screen too
+        await sleep(250);
+      }
+      if (front && front.id !== launcher) throw new Error(`pressed Home, but ${front.id || 'an app'} is still in front`);
+      const left = before && before.id !== launcher && before.id ? await d.pidOf(before.id) : 0;
+      return console.log(`home screen${left ? ` · ${before.id} still running in the background, pid ${left}` : ''}`);
+    }
     case 'open': need(1, 'open <url>'); return d.open(args[0]);
     case 'launch': {
       const app = args[0] || d.app;

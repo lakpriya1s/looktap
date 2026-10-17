@@ -39,8 +39,8 @@ Look, act, read the result. `ls` prints one row per element:
 The columns are: ref, type, x,y, width×height (iOS points / Android dp), label, and `= value` for fields.
 
 Add **`--ls`** to an action and it prints the screen once it has settled, so you don't need a separate `ls`.
-It works on `tap`, `longpress`, `zoom`, `tapxy`, `fill`, `type`, `key`, `hidekb`, `swipe`, `back`, `open`,
-`launch`, `bio`, `rotate` and `scrollto`. It waits for the screen to change (up to 1.5 s, 6 s for
+It works on `tap`, `longpress`, `zoom`, `tapxy`, `fill`, `type`, `key`, `hidekb`, `swipe`, `back`, `home`,
+`open`, `launch`, `bio`, `rotate` and `scrollto`. It waits for the screen to change (up to 1.5 s, 6 s for
 `launch`/`open`), then for it to stop changing.
 
 **`--ls` stops at a loading skeleton too.** If it shows a heading but none of the content, run
@@ -83,6 +83,8 @@ looktap zoom in
 looktap zoom out 200 400 --scale 4
 # Android: system Back · iOS: the navigation bar's back button
 looktap back
+# the Home button: to the home screen, the app keeps running in the background
+looktap home
 ```
 
 ### Type
@@ -93,7 +95,7 @@ looktap fill "Email" sam@example.com
 looktap fill @4 ""
 # into the focused field
 looktap type "@example.com"
-# return escape delete tab space selectall paste; Android also back home KEYCODE_*
+# return escape delete tab space selectall paste home; Android also back KEYCODE_*
 looktap key return
 looktap key selectall delete
 # dismiss the keyboard; exits 2 if it's still up
