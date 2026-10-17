@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.0
 
 ### Added
 - **`looktap boot [name]`** boots an iOS simulator or Android emulator by name, UDID or AVD name, and waits until
@@ -19,6 +19,10 @@
 ### Changed
 - `doctor`, the "no booted device" error and the Claude Code `/looktap:setup` command point to `looktap boot`
   instead of `xcrun simctl boot` and `emulator -avd`.
+
+### Docs
+- The quick start, the kickstart prompt, the landing page's "Get started", the agent skill and the MCP server's
+  instructions boot devices with `looktap boot`, and tell agents to start with `looktap devices`.
 
 ## 0.3.0
 
