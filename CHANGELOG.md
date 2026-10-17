@@ -14,6 +14,13 @@
   (`lib/capabilities.js`) now drives it, the errors those commands throw, and a new README section, "Platform
   support", that compares the iOS simulator, real iPhones, the Android emulator and Android devices.
 - `bio` on an Android device now says it's emulator-only, instead of failing with a raw `adb emu` error.
+- **Android paste into React Native fields:** a React Native `TextInput` reports the accessibility paste action as done
+  without pasting, so `key paste`, and `type` for text the keyboard can't type (é, emoji, CJK), did nothing there. The
+  helper now checks the field changed and otherwise sends the paste key. Checked in native, React Native and WebView
+  fields.
+- `stop` no longer reports a failure when Android immediately starts a new process for the app it stopped (it does
+  for the top screen of another app's task); it says the app was started again, with the new pid.
+- The platform table lists the permission names each platform lacks (iOS simulator: camera and notifications).
 
 ## 0.2.2
 

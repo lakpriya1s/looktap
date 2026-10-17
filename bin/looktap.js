@@ -444,11 +444,12 @@ async function act(d, cmd, args, opts) {
       const app = explicitApp(d, args[0], 'stop <app>');
       const was = await d.stop(app);
       if (!was) return console.log(`${app} wasn't running`);
-      // Stopped means its process is gone, not that the stop was sent.
-      for (let i = 0; i < 20 && (await d.pidOf(app)); i++) await sleep(250);
-      const pid = await d.pidOf(app);
-      if (pid) throw new Error(`${app} is still running (pid ${pid}) after the stop`);
-      return console.log(`stopped ${app} (pid ${was})`);
+      // Stopped means that process is gone, not that the stop was sent. The system may start a new one at once
+      // (Android does for the top screen of another app's task): that's a restart, not a failed stop.
+      let pid = await d.pidOf(app);
+      for (let i = 0; i < 20 && pid === was; i++) await sleep(250), (pid = await d.pidOf(app));
+      if (pid === was) throw new Error(`${app} is still running (pid ${pid}) after the stop`);
+      return console.log(`stopped ${app} (pid ${was})${pid ? ` · the system started it again right away, pid ${pid}` : ''}`);
     }
     case 'bio': need(1, 'bio match|nomatch'); return d.bio(args[0]);
     case 'rotate': {

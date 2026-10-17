@@ -502,8 +502,7 @@ public final class Server {
         if (code == KeyEvent.KEYCODE_UNKNOWN) throw new IllegalArgumentException("unknown key: " + name);
         if (code == KeyEvent.KEYCODE_PASTE && !ctrl) {
             // WebViews and some custom fields ignore the paste key but take the accessibility action.
-            AccessibilityNodeInfo field = ua.findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
-            if (field != null && field.performAction(AccessibilityNodeInfo.ACTION_PASTE)) return;
+            if (pasteAction()) return;
         }
         int meta = ctrl ? KeyEvent.META_CTRL_ON | KeyEvent.META_CTRL_LEFT_ON : 0;
         long t = SystemClock.uptimeMillis();
@@ -533,12 +532,32 @@ public final class Server {
         }
     }
 
+    /**
+     The focused field's paste action, true only if the field changed: some fields (React Native's TextInput)
+     report the action done without pasting, and then only the paste key works.
+     */
+    static boolean pasteAction() {
+        AccessibilityNodeInfo field = ua.findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
+        if (field == null) return false;
+        String before = fieldState(field);
+        if (!field.performAction(AccessibilityNodeInfo.ACTION_PASTE)) return false;
+        for (int i = 0; i < 10; i++) {
+            SystemClock.sleep(30);
+            if (field.refresh() && !fieldState(field).equals(before)) return true;
+        }
+        return false;
+    }
+
+    /** Text and selection: a paste changes one of them, even when the pasted text replaces itself. */
+    static String fieldState(AccessibilityNodeInfo field) {
+        return field.getText() + "\u0000" + field.getTextSelectionStart() + ":" + field.getTextSelectionEnd();
+    }
+
     /** Put `s` on the clipboard and paste it into the focused field. Replaces what the clipboard held. */
     static void paste(String s) throws Exception {
         setClipboard(s);
-        AccessibilityNodeInfo field = ua.findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
-        if (field != null && field.performAction(AccessibilityNodeInfo.ACTION_PASTE)) return;
-        key("PASTE"); // no focused node that takes the action: the paste key, which EditTexts handle too
+        if (pasteAction()) return;
+        key("PASTE"); // no focused node that took the action: the paste key, which EditTexts handle too
     }
 
     /**
