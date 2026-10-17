@@ -49,6 +49,7 @@
 </header>
 
 <main id="top">
+  <a class="scroll-cue" href="#tap" data-scroll-cue aria-label="Scroll to the next feature">Scroll<span class="chev" aria-hidden="true"><i></i><i></i></span></a>
   <div class="story" id="story">
     <div class="story-text" data-scenes>
       <section class="hero scene" data-scene="look" id="look" aria-labelledby="hero-title">
@@ -70,7 +71,6 @@
           <p class="kicker">01 · Look</p>
           <h2>The screen, as text</h2>
           <p><code>ls</code> lists what's on screen, one row per element: a ref, its type, where it is, and its label. Hover a row in the terminal to see which element it is.</p>
-          <p class="scroll-hint" aria-hidden="true">Scroll, and each feature plays on the phone</p>
         </div>
       </section>
     </div>
@@ -81,7 +81,7 @@
         <div class="rig">
           <div class="phone" data-phone></div>
           <div class="term" data-term role="log" aria-live="off" aria-label="Demo terminal">
-            <div class="term-bar"><i></i><i></i><i></i><span data-term-title>agent ➜ iPhone 18 Pro simulator</span><button type="button" data-replay aria-label="Replay this scene">↻</button></div>
+            <div class="term-bar"><i></i><i></i><i></i><span data-term-title>agent ➜ iPhone 18 Pro simulator</span><button type="button" data-sound class="sound" aria-pressed="false" aria-label="Turn sound on"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M4 9h3.5L12 5v14l-4.5-4H4z"/><path class="waves" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M15.5 9.2a4 4 0 0 1 0 5.6M18 6.8a7.4 7.4 0 0 1 0 10.4"/><path class="mute" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M16 9.5l5 5m0-5l-5 5"/></svg></button><button type="button" data-replay aria-label="Replay this scene">↻</button></div>
             <div class="term-body" data-term-body></div>
           </div>
         </div>

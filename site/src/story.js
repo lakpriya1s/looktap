@@ -4,6 +4,7 @@
 import { INVENTORY } from './inventory.js';
 import { Phone } from './phone.js';
 import { SCENES } from './scenes.js';
+import { hookPhone, play as sound, result, soundButton } from './sound.js';
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)');
 const $ = (s, el = document) => el.querySelector(s);
@@ -36,7 +37,7 @@ function setPlatform(p) {
   root.dataset.platform = p;
   store('sw-platform', p);
   for (const b of $$('[data-platform-set]')) b.setAttribute('aria-pressed', String(b.dataset.platformSet === p));
-  $('[data-term-title]').textContent = p === 'ios' ? 'agent ➜ iPhone 18 Pro simulator' : 'agent ➜ Pixel 11 emulator';
+  termTitle();
   phone.fit();
   if (active) play(active, { restart: true });
 }
@@ -73,13 +74,16 @@ async function typeCommand(cmd, token) {
     for (const ch of cmd) {
       if (token !== run) throw new Cancelled();
       out.textContent += ch;
+      sound('key', ch === ' ' ? 'space' : 'key');
       body.scrollTop = body.scrollHeight;
       await sleep(cmd.length > 50 ? 9 : 16);
     }
   el.querySelector('.caret').remove();
+  if (!reduce.matches) sound('key', 'enter');
 }
 
 function print(lines) {
+  result(lines);
   lines.forEach((l, i) => {
     const o = typeof l === 'string' ? { s: l } : l;
     const el = line(esc(o.s), `out ${o.c || ''}${o.ref ? ' ref-row' : ''}`);
@@ -93,15 +97,23 @@ function print(lines) {
 
 // ── playing scenes ──
 
+hookPhone(Phone);
 const phone = new Phone($('[data-phone]'));
 let run = 0;
 let active = null;
+
+/** The terminal's title: the device the scene drives (a scene can name its own, e.g. a real phone). */
+function termTitle() {
+  const { ios } = ctx();
+  $('[data-term-title]').textContent = `agent ➜ ${active?.device?.(ios) || (ios ? 'iPhone 18 Pro simulator' : 'Pixel 11 emulator')}`;
+}
 
 async function play(scene, { restart = false } = {}) {
   const token = ++run;
   active = scene;
   if (!restart) for (const s of $$('.scene')) s.classList.toggle('is-active', s.dataset.scene === scene.id);
   $('[data-scene-label]').textContent = scene.kicker;
+  termTitle();
   for (const d of $$('[data-dot]')) d.classList.toggle('on', d.dataset.dot === scene.id);
   body.innerHTML = '';
   phone.reset();
@@ -126,6 +138,7 @@ async function play(scene, { restart = false } = {}) {
 }
 
 $('[data-replay]').addEventListener('click', () => active && play(active, { restart: true }));
+soundButton($('[data-sound]'), { stored, store, unlocked: () => active && play(active, { restart: true }) });
 for (const b of $$('[data-platform-set]')) b.addEventListener('click', () => setPlatform(b.dataset.platformSet));
 
 // The section crossing the viewport's middle line is the one playing.
@@ -205,3 +218,28 @@ const bars = new IntersectionObserver((entries) => {
 for (const el of $$('.bench')) bars.observe(el);
 
 setPlatform(root.dataset.platform);
+
+// The scroll cue goes once the reader has scrolled a little, or followed it.
+const cue = $('[data-scroll-cue]');
+const hideCue = () => {
+  if (scrollY < 120) return;
+  cue.classList.add('gone');
+  removeEventListener('scroll', hideCue);
+};
+addEventListener('scroll', hideCue, { passive: true });
+hideCue();
+
+// A reader still at the top after a few seconds gets a small nudge: the page dips and comes back, once.
+// Any touch, wheel or key first, and it never happens.
+let nudge = setTimeout(async () => {
+  if (reduce.matches || scrollY > 0) return;
+  scrollTo({ top: 70, behavior: 'smooth' });
+  await new Promise((r) => setTimeout(r, 650));
+  if (nudge && scrollY <= 80) scrollTo({ top: 0, behavior: 'smooth' });
+}, 5000);
+const noNudge = () => {
+  clearTimeout(nudge);
+  nudge = null;
+  for (const ev of ['wheel', 'touchstart', 'keydown', 'pointerdown']) removeEventListener(ev, noNudge, true);
+};
+for (const ev of ['wheel', 'touchstart', 'keydown', 'pointerdown']) addEventListener(ev, noNudge, { capture: true, passive: true });
