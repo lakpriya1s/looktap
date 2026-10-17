@@ -31,7 +31,9 @@ Skip what the user didn't ask for: with `ios`, an adb ✗ doesn't matter, and th
 
 ## 3. What's connected
 
-Run `looktap devices`. It lists booted simulators, Android devices (emulators with their AVD name) and paired iPhones.
+Run `looktap devices`. It lists booted simulators, emulators and real phones, with each one's model, OS version and
+connection. A phone marked "not ready" says what the user has to do (accept the USB debugging prompt, tap Trust,
+turn on Developer Mode): tell them, and run it again once they have.
 
 ## 4. A real iPhone (only if asked for, or one is listed)
 

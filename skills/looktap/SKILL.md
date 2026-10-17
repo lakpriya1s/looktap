@@ -205,10 +205,11 @@ looktap run - < steps.txt
 ### Devices and setup
 
 ```bash
-# what's running; --all: also the simulators and emulators boot can start
+# what's running or connected: simulator, emulator or real phone (model, OS, USB/Wi-Fi), window or headless,
+# and what the user must do for a phone that isn't ready. --all: also what boot can start. --json: structured
 looktap devices --all
-# boot one by name (UDID or AVD too), wait until it's ready; --headless: no window
-looktap boot "iPhone 16 Pro"
+# boot one by name (UDID or AVD too), wait until it's ready; --window (default) or --headless
+looktap boot "iPhone 16 Pro" --window
 looktap boot Pixel_9a --headless
 looktap shutdown Pixel_9a
 looktap devices
@@ -340,6 +341,9 @@ Then look at the few frames that matter, not all of them.
   probably hit that: dismiss it, then tap again.
 - **If `ls` says only the status bar is readable**, a system prompt (passcode, permission, alert) is on top.
   `shot` to see it. Never enter a passcode unless the user gave it to you for this device.
+- **Start with `looktap devices`** to see which devices are real phones and which are simulators or emulators.
+  A phone marked "not ready" needs the user: tell them exactly what it says (accept the USB debugging prompt, tap
+  Trust, turn on Developer Mode).
 - **If a command says the device is locked**, ask the user to unlock it. Don't retry, and never enter a passcode
   unless they gave it to you for this device.
 - **If `hidekb` exits 2** (iOS search keyboards have no Done key), tap the screen's close or cancel control.

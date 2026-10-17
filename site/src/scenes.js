@@ -554,7 +554,13 @@ export const SCENES = [
         cmd: (c) => (c.ios ? 'looktap boot "iPhone 18 Pro"' : 'looktap boot Pixel_9a'),
         run: async (p, c) => [c.ios ? 'booted: ios  9F1C2A44-…-77E0  iPhone 18 Pro (iOS 26.0)' : 'booted: android  emulator-5554  Pixel_9a'],
       },
-      { cmd: 'looktap devices', run: async (p, c) => [c.ios ? 'ios      9F1C2A44-…-77E0  iPhone 18 Pro' : 'android  emulator-5554  Pixel_9a'] },
+      {
+        cmd: 'looktap devices',
+        run: async (p, c) =>
+          c.ios
+            ? ['ios      9F1C2A44-…-77E0  iPhone 18 Pro · simulator · iOS 26.0 · window', 'ios      00008150-…-401E  Sam’s iPhone (iPhone 17 Pro) · device · iOS 26.0 · USB']
+            : ['android  emulator-5554  Pixel_9a · emulator · Android 16 · window', 'android  R58N30ABCDE  Samsung SM-S931B · device · Android 16 · USB'],
+      },
       {
         cmd: 'looktap setup',
         run: async (p, c) => [c.ios ? 'looktap iOS helper ready on 9F1C2A44-…-77E0' : 'adb emulator-5554 ready · scale 2.625 (dp = px ÷ 2.625) · reverse tcp:8081 · helper on · emulator gRPC frames'],

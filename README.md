@@ -703,8 +703,8 @@ to settle unless asked (`--ls`).
 | `looktap mcp [--config]` | Serves these commands over MCP (stdio) for clients without a shell. `--config` prints a client config |
 | `looktap run '<cmd>; <cmd> …'` | Several commands in one process. `run -` reads them from stdin. Stops at the first failure and names it |
 | `looktap skill [--install]` | Prints the AI-agent guide, or installs it as a Claude Code skill |
-| `looktap devices [--all]` | Running simulators, emulators (with their AVD name) and devices. `--all` also lists what `boot` can start |
-| `looktap boot [name] [--headless]` | Boots an iOS simulator or Android emulator by name, UDID or AVD name (exact, else a unique prefix or substring; `-p` to choose a platform) and waits until it's ready to drive. Opens its window unless `--headless`. Says so when it's already running |
+| `looktap devices [--all] [--json]` | What's running or connected, and what each is: simulator, emulator (with its AVD name) or real device (model, OS version, USB or Wi-Fi), and whether it has a window or runs headless. A phone that's connected but not ready is listed with what to do (accept the USB debugging prompt, tap Trust, turn on Developer Mode). `--all` also lists what `boot` can start; `--json` for scripts and agents |
+| `looktap boot [name] [--window\|--headless]` | Boots an iOS simulator or Android emulator by name, UDID or AVD name (exact, else a unique prefix or substring; `-p` to choose a platform) and waits until it's ready to drive. Opens its window unless `--headless` (or `LOOKTAP_HEADLESS=1`, or `"headless": true` in the config file). Already running: says so, and `--window` opens a simulator's window. A running device can't drop its window (closing the Simulator app shuts its simulators down; an emulator starts with or without one), so `--headless` then says how to restart it |
 | `looktap shutdown [name]` | Shuts down a simulator or emulator (name, UDID, AVD name or serial), and waits until it's gone |
 | `looktap doctor` | Checks Node, Xcode and the simulator frameworks, adb, and booted devices |
 | `looktap setup` | Starts the helper ahead of time. Android: also `adb reverse tcp:8081` for Metro |
@@ -764,6 +764,7 @@ front of you (`--json` for every command).
 | `LOOKTAP_EMULATOR_GRPC=0` | Don't take emulator frames over gRPC: use the emulator console |
 | `LOOKTAP_IOS_HID=indigo\|dtuhid` | Force the iOS input path. Takes effect when the helper starts |
 | `LOOKTAP_HOME` | Where sockets, logs and state live (default `~/.looktap`) |
+| `LOOKTAP_HEADLESS=1` | `boot` without a window by default (`=0`: with one). Overrides `"headless"` in the config file |
 
 **Config file.** looktap uses the nearest `looktap.config.json`, walking up from the current folder. Put it at
 the root of your app's repo:
@@ -772,6 +773,7 @@ the root of your app's repo:
 {
   "out": "shots",
   "wait": 3,
+  "headless": false,
   "ios": { "app": "com.example.myapp" },
   "android": { "app": "com.example.myapp" }
 }

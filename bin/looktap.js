@@ -10,7 +10,8 @@ import { IosDevice, physicalDevices } from '../lib/iosdevice.js';
 import { clock, grepper, startOf, tail, whichApp } from '../lib/logs.js';
 import { ACTIONS as PERMISSION_ACTIONS } from '../lib/permissions.js';
 import { KINDS, capabilities, capability } from '../lib/capabilities.js';
-import { avds, boot, runningEmulators, shutdown, simulators } from '../lib/boot.js';
+import { boot, shutdown } from '../lib/boot.js';
+import { formatDevice, inventory } from '../lib/devices.js';
 import { ORIENTATIONS, coordinates, pushPayload, rotation, textSize } from '../lib/conditions.js';
 import { appGone, center, coveringAt, forgetFront, formatRow, isRef, lastFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, visibleRows, waitFor } from '../lib/screen.js';
 import { ADB, HOME, LOCKED, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
@@ -24,9 +25,12 @@ const HELP = `looktap ${pkg.version} — drive iPhone and Android devices from t
 usage: looktap [options] <command> [args]
 
 setup & info
-  devices [--all]                 running simulators, emulators and devices; --all: also what boot can start
-  boot [name] [--headless]        boot a simulator or emulator (name, UDID or AVD; -p to choose) and wait until
-                                  it's ready. Opens its window unless --headless
+  devices [--all] [--json]        what's running or connected: simulator, emulator or real device (model, OS,
+                                  USB/Wi-Fi), with window or headless, and what to do for a phone not ready yet.
+                                  --all: also what boot can start
+  boot [name] [--window|--headless]  boot a simulator or emulator (name, UDID or AVD; -p to choose) and wait until
+                                  it's ready. Default: a window (LOOKTAP_HEADLESS=1 or "headless": true in config
+                                  for headless). On a running simulator --window opens its window
   shutdown [name]                 shut down a simulator or emulator
   doctor                          check the toolchain
   setup                           start the helper (optional: commands start it on first use)
@@ -111,7 +115,7 @@ options
 
 env: LOOKTAP_PLATFORM, LOOKTAP_DEVICE, LOOKTAP_OUT, LOOKTAP_WAIT, LOOKTAP_SCALE (Android px per dp),
      LOOKTAP_ANDROID_HELPER=0 (plain adb + uiautomator dump),
-     LOOKTAP_EMULATOR_GRPC=0 (no emulator gRPC frames)
+     LOOKTAP_EMULATOR_GRPC=0 (no emulator gRPC frames), LOOKTAP_HEADLESS=1 (boot without a window)
 
 Never burst or record a sign-in screen: frames capture typed credentials.`;
 
@@ -135,7 +139,7 @@ function parse(argv) {
     else if (a === '--since') opts.since = val();
     else if (a === '--grep') opts.grep = val();
     else if (a === '--lines') opts.lines = Number(val());
-    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless'].includes(a)) opts.flags.add(a.slice(2));
+    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window'].includes(a)) opts.flags.add(a.slice(2));
     else if (a === '--') pos.push(...argv.slice(i + 1)), (i = argv.length);
     else pos.push(a);
   }
@@ -242,8 +246,8 @@ async function main() {
   if (cmd === 'doctor') return doctor();
   if (cmd === 'skill') return skill(opts);
   if (cmd === 'mcp') return opts.flags.has('config') ? mcpConfig() : mcp(opts);
-  if (cmd === 'devices') return console.log(deviceLines(opts.flags.has('all')).join('\n'));
-  if (cmd === 'boot') return console.log(booted(await boot(args.join(' ') || null, { platform: opts.platform, headless: opts.flags.has('headless') })));
+  if (cmd === 'devices') return console.log(deviceLines(opts).join('\n'));
+  if (cmd === 'boot') return console.log(booted(await boot(args.join(' ') || null, { platform: opts.platform, ...display(opts, loadConfig()) })));
   if (cmd === 'shutdown') return console.log(shutDown(await shutdown(args.join(' ') || opts.device || null, { platform: opts.platform })));
 
   const config = loadConfig();
@@ -257,25 +261,27 @@ async function main() {
 
 const deviceId = (d) => d.udid || d.serial;
 
-/** `devices`: what's running (and with --all, what `boot` can start), one per line. */
-function deviceLines(all) {
-  const avd = runningEmulators();
-  const lines = [
-    ...bootedSimulators().map((s) => `ios      ${s.id}  ${s.name}`),
-    ...adbDevices().map((d) => `android  ${d.id}${avd.get(d.id) ? `  ${avd.get(d.id)}` : ''}`),
-    ...physicalDevices().map((p) => `ios      ${p.id}  ${p.name} (device, iOS ${p.os})`),
-  ];
-  if (all) {
-    const off = [
-      ...simulators().filter((s) => !s.booted).map((s) => `ios      ${s.id}  ${s.name} (${s.os})`),
-      ...avds().filter((a) => !a.serial).map((a) => `android  ${a.name}`),
-    ];
-    if (off.length) lines.push('', 'not running (looktap boot <name>):', ...off);
-  }
-  return lines.length ? lines : ['no device running — looktap devices --all lists what looktap boot can start'];
+/** `devices`: every device, what it is and whether it's ready; --all adds what `boot` can start; --json for agents. */
+function deviceLines(opts) {
+  const list = inventory({ all: opts.flags.has('all') });
+  if (opts.flags.has('json')) return [JSON.stringify(list, null, 2)];
+  const on = list.filter((d) => d.running !== false), off = list.filter((d) => d.running === false);
+  const lines = on.map(formatDevice);
+  if (off.length) lines.push('', 'not running (looktap boot <name>):', ...off.map(formatDevice));
+  return lines.length ? lines : ['no device running or connected — looktap devices --all lists what looktap boot can start'];
 }
 
-const booted = (r) => `${r.already ? 'already running' : 'booted'}: ${r.platform}  ${r.id}  ${r.name}${r.os ? ` (${r.os})` : ''}`;
+const booted = (r) => `${r.already ? 'already running' : 'booted'}: ${r.platform}  ${r.id}  ${r.name}${r.os ? ` (${r.os})` : ''} · ${r.display}${r.note ? ` — ${r.note}` : ''}`;
+
+/** boot's window: --window / --headless, else LOOKTAP_HEADLESS=1|0, else "headless" in looktap.config.json. */
+function display(opts, config) {
+  if (opts.flags.has('window') && opts.flags.has('headless')) throw new UsageError('boot takes --window or --headless, not both');
+  const flag = opts.flags.has('headless') ? 'headless' : opts.flags.has('window') ? 'window' : null;
+  if (flag) return { display: flag, explicit: true };
+  const env = process.env.LOOKTAP_HEADLESS;
+  const headless = env != null && env !== '' ? env !== '0' : config.headless === true;
+  return { display: headless ? 'headless' : 'window', explicit: false };
+}
 const shutDown = (r) => `shut down: ${r.platform}  ${r.id}  ${r.name}`;
 const ACTIONS = new Set(['tap', 'longpress', 'zoom', 'tapxy', 'type', 'key', 'fill', 'hidekb', 'swipe', 'back', 'home', 'open', 'launch', 'bio', 'scrollto', 'rotate']);
 
@@ -660,8 +666,8 @@ async function mcp(outer) {
       const { opts, cmd, args } = parse(words);
       if (!cmd || cmd === 'help') capture(HELP);
       else if (cmd === 'doctor') doctor();
-      else if (cmd === 'devices') capture(deviceLines(opts.flags.has('all')).join('\n'));
-      else if (cmd === 'boot') capture(booted(await boot(args.join(' ') || null, { platform: opts.platform, headless: opts.flags.has('headless') })));
+      else if (cmd === 'devices') capture(deviceLines(opts).join('\n'));
+      else if (cmd === 'boot') capture(booted(await boot(args.join(' ') || null, { platform: opts.platform, ...display(opts, config) })));
       else if (cmd === 'shutdown') capture(shutDown(await shutdown(args.join(' ') || opts.device || null, { platform: opts.platform })));
       else if (['mcp', 'skill'].includes(cmd)) throw new UsageError(`${cmd} isn't available over MCP`);
       else {
