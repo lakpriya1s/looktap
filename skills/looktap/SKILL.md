@@ -205,6 +205,12 @@ looktap run - < steps.txt
 ### Devices and setup
 
 ```bash
+# what's running; --all: also the simulators and emulators boot can start
+looktap devices --all
+# boot one by name (UDID or AVD too), wait until it's ready; --headless: no window
+looktap boot "iPhone 16 Pro"
+looktap boot Pixel_9a --headless
+looktap shutdown Pixel_9a
 looktap devices
 looktap doctor
 # start the helper ahead of time (Android: also adb reverse tcp:8081 for Metro); teardown undoes it

@@ -108,10 +108,9 @@ npm install -g @looktap/cli
 # 2. check the toolchain
 looktap doctor
 
-# 3. boot a device: an iOS simulator…
-xcrun simctl boot "iPhone 16" && open -a Simulator
-#    …or an Android emulator
-$ANDROID_HOME/emulator/emulator -avd Pixel_9a &
+# 3. boot a device: an iOS simulator or an Android emulator, by name
+looktap devices --all                         # what's running, and what you can boot
+looktap boot "iPhone 16 Pro"                  # or an AVD: looktap boot Pixel_9a
 
 # 4. drive it
 looktap launch com.apple.Preferences --ls     # (Android: com.android.settings)
@@ -704,7 +703,9 @@ to settle unless asked (`--ls`).
 | `looktap mcp [--config]` | Serves these commands over MCP (stdio) for clients without a shell. `--config` prints a client config |
 | `looktap run '<cmd>; <cmd> …'` | Several commands in one process. `run -` reads them from stdin. Stops at the first failure and names it |
 | `looktap skill [--install]` | Prints the AI-agent guide, or installs it as a Claude Code skill |
-| `looktap devices` | Booted simulators and adb devices |
+| `looktap devices [--all]` | Running simulators, emulators (with their AVD name) and devices. `--all` also lists what `boot` can start |
+| `looktap boot [name] [--headless]` | Boots an iOS simulator or Android emulator by name, UDID or AVD name (exact, else a unique prefix or substring; `-p` to choose a platform) and waits until it's ready to drive. Opens its window unless `--headless`. Says so when it's already running |
+| `looktap shutdown [name]` | Shuts down a simulator or emulator (name, UDID, AVD name or serial), and waits until it's gone |
 | `looktap doctor` | Checks Node, Xcode and the simulator frameworks, adb, and booted devices |
 | `looktap setup` | Starts the helper ahead of time. Android: also `adb reverse tcp:8081` for Metro |
 | `looktap teardown` | Stops the helper. Android: also removes `adb reverse` rules |

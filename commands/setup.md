@@ -22,16 +22,16 @@ Run `looktap doctor`. Each line starting with ✗ ends with a fix after `→`. F
 
 - **Xcode, the Android SDK, adb:** don't install these yourself. Tell the user what to install (Xcode from the
   App Store, then `xcode-select --install`; Android Studio or the SDK platform-tools) and wait.
-- **No booted simulator:** list them with `xcrun simctl list devices available`, suggest a recent iPhone, and
-  **ask** before running `xcrun simctl boot <udid> && open -a Simulator`.
-- **No Android device:** suggest starting an emulator (`emulator -list-avds`, then
-  `emulator -avd <name>` in the background) or connecting a phone with USB or wireless debugging. **Ask** first.
+- **No booted simulator:** list them with `looktap devices --all`, suggest a recent iPhone, and **ask** before
+  running `looktap boot "<name>"` (it waits until the simulator is ready and opens its window).
+- **No Android device:** suggest an emulator from `looktap devices --all` (`looktap boot <AVD name>`) or connecting
+  a phone with USB or wireless debugging. **Ask** first.
 
 Skip what the user didn't ask for: with `ios`, an adb ✗ doesn't matter, and the other way round.
 
 ## 3. What's connected
 
-Run `looktap devices`. It lists booted simulators, Android devices and paired iPhones.
+Run `looktap devices`. It lists booted simulators, Android devices (emulators with their AVD name) and paired iPhones.
 
 ## 4. A real iPhone (only if asked for, or one is listed)
 

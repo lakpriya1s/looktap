@@ -10,6 +10,7 @@ import { IosDevice, physicalDevices } from '../lib/iosdevice.js';
 import { clock, grepper, startOf, tail, whichApp } from '../lib/logs.js';
 import { ACTIONS as PERMISSION_ACTIONS } from '../lib/permissions.js';
 import { KINDS, capabilities, capability } from '../lib/capabilities.js';
+import { avds, boot, runningEmulators, shutdown, simulators } from '../lib/boot.js';
 import { ORIENTATIONS, coordinates, pushPayload, rotation, textSize } from '../lib/conditions.js';
 import { appGone, center, coveringAt, forgetFront, formatRow, isRef, lastFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, visibleRows, waitFor } from '../lib/screen.js';
 import { ADB, HOME, LOCKED, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
@@ -23,7 +24,10 @@ const HELP = `looktap ${pkg.version} — drive iPhone and Android devices from t
 usage: looktap [options] <command> [args]
 
 setup & info
-  devices                         booted simulators and adb devices
+  devices [--all]                 running simulators, emulators and devices; --all: also what boot can start
+  boot [name] [--headless]        boot a simulator or emulator (name, UDID or AVD; -p to choose) and wait until
+                                  it's ready. Opens its window unless --headless
+  shutdown [name]                 shut down a simulator or emulator
   doctor                          check the toolchain
   setup                           start the helper (optional: commands start it on first use)
                                   · Android: also adb reverse Metro
@@ -131,7 +135,7 @@ function parse(argv) {
     else if (a === '--since') opts.since = val();
     else if (a === '--grep') opts.grep = val();
     else if (a === '--lines') opts.lines = Number(val());
-    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config'].includes(a)) opts.flags.add(a.slice(2));
+    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless'].includes(a)) opts.flags.add(a.slice(2));
     else if (a === '--') pos.push(...argv.slice(i + 1)), (i = argv.length);
     else pos.push(a);
   }
@@ -162,7 +166,7 @@ function pickDriver(opts, config) {
     if (sims.length && !droids.length) platform = 'ios';
     else if (droids.length && !sims.length) platform = 'android';
     else if (!sims.length && lookForPhones().length) platform = 'ios';
-    else if (!sims.length) throw new UsageError('no booted simulator or adb device');
+    else if (!sims.length) throw new UsageError('no booted simulator or adb device — looktap devices --all lists what looktap boot can start');
     else throw new UsageError('both iOS and Android devices are up — pass -p ios|android');
   }
   const pool = platform === 'ios' ? (sims.length || known || device ? sims : lookForPhones()) : droids;
@@ -188,7 +192,7 @@ function doctor() {
   ok(xc, 'xcrun (iOS)', 'install Xcode + command line tools');
   if (xc) {
     const sims = bootedSimulators();
-    ok(sims.length > 0, `booted simulators: ${sims.map((s) => s.name).join(', ') || 'none'}`, 'xcrun simctl boot <udid>');
+    ok(sims.length > 0, `booted simulators: ${sims.map((s) => s.name).join(', ') || 'none'}`, 'looktap boot <name> (looktap devices --all lists them)');
     const dev = run('xcode-select', ['-p'], { allowFail: true }).trim();
     ok(existsSync('/Library/Developer/PrivateFrameworks/CoreSimulator.framework'), 'CoreSimulator.framework (iOS helper)', 'install Xcode');
     ok(dev && existsSync(join(dev, 'Library/PrivateFrameworks/SimulatorKit.framework')), `SimulatorKit in ${dev || 'no developer dir'} (iOS helper)`, 'sudo xcode-select -s /Applications/Xcode.app');
@@ -203,7 +207,7 @@ function doctor() {
   ok(adb, `adb (Android)${ADB !== 'adb' ? `: ${ADB}` : ''}`, 'install Android SDK platform-tools (or set ANDROID_HOME)');
   if (adb) {
     const d = adbDevices();
-    ok(d.length > 0, `adb devices: ${d.map((x) => x.id).join(', ') || 'none'}`, 'start an emulator');
+    ok(d.length > 0, `adb devices: ${d.map((x) => x.id).join(', ') || 'none'}`, 'looktap boot <AVD name>, or connect a phone');
   }
 }
 
@@ -238,12 +242,9 @@ async function main() {
   if (cmd === 'doctor') return doctor();
   if (cmd === 'skill') return skill(opts);
   if (cmd === 'mcp') return opts.flags.has('config') ? mcpConfig() : mcp(opts);
-  if (cmd === 'devices') {
-    for (const s of bootedSimulators()) console.log(`ios      ${s.id}  ${s.name}`);
-    for (const d of adbDevices()) console.log(`android  ${d.id}`);
-    for (const p of physicalDevices()) console.log(`ios      ${p.id}  ${p.name} (device, iOS ${p.os})`);
-    return;
-  }
+  if (cmd === 'devices') return console.log(deviceLines(opts.flags.has('all')).join('\n'));
+  if (cmd === 'boot') return console.log(booted(await boot(args.join(' ') || null, { platform: opts.platform, headless: opts.flags.has('headless') })));
+  if (cmd === 'shutdown') return console.log(shutDown(await shutdown(args.join(' ') || opts.device || null, { platform: opts.platform })));
 
   const config = loadConfig();
   const d = pickDriver(opts, config);
@@ -255,6 +256,27 @@ async function main() {
 }
 
 const deviceId = (d) => d.udid || d.serial;
+
+/** `devices`: what's running (and with --all, what `boot` can start), one per line. */
+function deviceLines(all) {
+  const avd = runningEmulators();
+  const lines = [
+    ...bootedSimulators().map((s) => `ios      ${s.id}  ${s.name}`),
+    ...adbDevices().map((d) => `android  ${d.id}${avd.get(d.id) ? `  ${avd.get(d.id)}` : ''}`),
+    ...physicalDevices().map((p) => `ios      ${p.id}  ${p.name} (device, iOS ${p.os})`),
+  ];
+  if (all) {
+    const off = [
+      ...simulators().filter((s) => !s.booted).map((s) => `ios      ${s.id}  ${s.name} (${s.os})`),
+      ...avds().filter((a) => !a.serial).map((a) => `android  ${a.name}`),
+    ];
+    if (off.length) lines.push('', 'not running (looktap boot <name>):', ...off);
+  }
+  return lines.length ? lines : ['no device running — looktap devices --all lists what looktap boot can start'];
+}
+
+const booted = (r) => `${r.already ? 'already running' : 'booted'}: ${r.platform}  ${r.id}  ${r.name}${r.os ? ` (${r.os})` : ''}`;
+const shutDown = (r) => `shut down: ${r.platform}  ${r.id}  ${r.name}`;
 const ACTIONS = new Set(['tap', 'longpress', 'zoom', 'tapxy', 'type', 'key', 'fill', 'hidekb', 'swipe', 'back', 'home', 'open', 'launch', 'bio', 'scrollto', 'rotate']);
 
 /** Print the listing (text or --json) and remember its @refs. `snap` defaults to a fresh read. */
@@ -638,11 +660,10 @@ async function mcp(outer) {
       const { opts, cmd, args } = parse(words);
       if (!cmd || cmd === 'help') capture(HELP);
       else if (cmd === 'doctor') doctor();
-      else if (cmd === 'devices') {
-        for (const s of bootedSimulators()) capture(`ios      ${s.id}  ${s.name}`);
-        for (const a of adbDevices()) capture(`android  ${a.id}`);
-        for (const p of physicalDevices()) capture(`ios      ${p.id}  ${p.name} (device, iOS ${p.os})`);
-      } else if (['mcp', 'skill'].includes(cmd)) throw new UsageError(`${cmd} isn't available over MCP`);
+      else if (cmd === 'devices') capture(deviceLines(opts.flags.has('all')).join('\n'));
+      else if (cmd === 'boot') capture(booted(await boot(args.join(' ') || null, { platform: opts.platform, headless: opts.flags.has('headless') })));
+      else if (cmd === 'shutdown') capture(shutDown(await shutdown(args.join(' ') || opts.device || null, { platform: opts.platform })));
+      else if (['mcp', 'skill'].includes(cmd)) throw new UsageError(`${cmd} isn't available over MCP`);
       else {
         const d = driverFor({ platform: opts.platform || where.platform, device: opts.device || where.device });
         await dispatch(d, cmd, args, { ...base, ...opts, wait: opts.wait ?? base.wait, flags: opts.flags });
