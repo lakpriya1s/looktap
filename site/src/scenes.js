@@ -260,8 +260,8 @@ export const SCENES = [
     kicker: '07 · Debug',
     title: 'When the app vanishes, you hear why',
     body: `<p>An app that dies is named the moment looktap notices, right in the output of the tap that killed it.</p>
-<p><code>crashes</code> reads the crash report (exception, reason, the top frames), and on Android ANRs and <strong>low-memory kills</strong> too. <code>logs</code> shows only what's new since you last looked, with <code>--errors</code> and <code>--grep</code> to narrow it. <code>app</code> says what's in front.</p>`,
-    covers: ['logs', 'crashes', 'app'],
+<p><code>crashes</code> reads the crash report (exception, reason, the top frames), and on Android ANRs and <strong>low-memory kills</strong> too. <code>logs</code> shows only what's new since you last looked, with <code>--errors</code> and <code>--grep</code> to narrow it. <code>app</code> says what's in front, and <code>capabilities</code> what this device can't do.</p>`,
+    covers: ['logs', 'crashes', 'app', 'capabilities'],
     start: (p) => p.show('home'),
     beats: [
       {
@@ -300,6 +300,25 @@ export const SCENES = [
       {
         cmd: 'looktap app',
         run: async (p, c) => [c.ios ? 'front: com.apple.springboard  pid 2310' : 'front: com.google.android.apps.nexuslauncher  pid 1877', `${APP}: not running — if it was, check: looktap crashes`],
+      },
+      {
+        cmd: 'looktap capabilities',
+        run: async (p, c) =>
+          c.ios
+            ? [
+                'iOS simulator 5C3F1A2E-8B47-4D0A-9E61-2F7C8D4B9A10',
+                dim("partly  back     iOS has no system Back: it taps the navigation bar's back button, else a top-left Back button"),
+                dim("no      network  the simulator uses the Mac's own network, so it can't go offline or slow by itself. …"),
+                'yes     setup, teardown, ls, wait, scrollto, shot, burst, record, tap, longpress, zoom, …',
+              ]
+            : [
+                'Android emulator emulator-5554',
+                dim('partly  record          at most 3 minutes, and FLAG_SECURE screens record black'),
+                dim('partly  zoom            only through the Android helper (the default): adb input has no multi-touch'),
+                dim("no      push            Android pushes come through Firebase (FCM), so adb can't inject one: …"),
+                dim('no      location clear  the emulator keeps its last location: set a new one instead'),
+                'yes     setup, teardown, ls, wait, scrollto, shot, burst, tap, longpress, tapxy, type, key, …',
+              ],
       },
     ],
   },
@@ -367,7 +386,7 @@ export const SCENES = [
       {
         cmd: `looktap push ${APP} "Your order has shipped"`,
         run: async (p, c) => {
-          if (!c.ios) return [err('looktap: Android pushes come through Firebase (FCM): send one from your backend or the Firebase console — they can\'t be injected from adb')];
+          if (!c.ios) return [err("looktap: push isn't available on the Android emulator — Android pushes come through Firebase (FCM), so adb can't inject one: send it from your backend or the Firebase console")];
           p.overlay({ kind: 'banner', text: 'Your order has shipped' });
           setTimeout(() => p.clear('banner'), 2200);
           return [`pushed to ${APP}`];
@@ -376,7 +395,7 @@ export const SCENES = [
       {
         cmd: 'looktap network offline',
         run: async (p, c) => {
-          if (c.ios) return [err("looktap: the iOS simulator uses the Mac's own network, so it can't go offline or slow by itself. Network Link Conditioner (…) throttles the whole Mac")];
+          if (c.ios) return [err("looktap: network isn't available on the iOS simulator — the simulator uses the Mac's own network, so it can't go offline or slow by itself. Network Link Conditioner (…) throttles the whole Mac")];
           p.set({ offline: true });
           p.overlay({ kind: 'offline' });
           return ['network: offline (airplane mode)'];

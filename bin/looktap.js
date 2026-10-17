@@ -9,6 +9,7 @@ import { Ios, bootedSimulators } from '../lib/ios.js';
 import { IosDevice, physicalDevices } from '../lib/iosdevice.js';
 import { clock, grepper, startOf, tail, whichApp } from '../lib/logs.js';
 import { ACTIONS as PERMISSION_ACTIONS } from '../lib/permissions.js';
+import { KINDS, capabilities } from '../lib/capabilities.js';
 import { ORIENTATIONS, coordinates, pushPayload, rotation, textSize } from '../lib/conditions.js';
 import { appGone, center, coveringAt, forgetFront, formatRow, isRef, lastFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, visibleRows, waitFor } from '../lib/screen.js';
 import { ADB, HOME, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
@@ -66,6 +67,7 @@ debug                             [app] defaults to --app / config, else the app
                                   iOS hides Apple-framework chatter unless it's an error (--all keeps it)
   crashes [app] [--since 1h]      crashes, ANRs, low-memory kills since the last \`crashes\` (first: last hour)
   app [app]                       which app is in front, and whether [app] is running (pid)
+  capabilities [--json]           what this device can't do, or can only in part, and why
 
 app state                         <app> defaults to --app / config (never the app in front)
   install <path> [--grant]        iOS: a simulator .app · Android: an .apk (keeps data; --grant: all
@@ -511,6 +513,7 @@ async function act(d, cmd, args, opts) {
       return console.log(`${{ grant: 'granted', revoke: 'revoked', reset: 'reset (it will ask again)' }[args[0]]}: ${what} for ${app}`);
     }
     case 'run': return runScript(d, args, opts);
+    case 'capabilities': return showCapabilities(d, opts);
     default: throw new UsageError(`unknown command: ${cmd} (looktap --help)`);
   }
 }
@@ -574,6 +577,18 @@ async function showCrashes(d, arg, opts) {
   const found = await d.readCrashes(app, since);
   if (!found.length) return console.log(`no crashes from ${app} since ${clock(since)}`);
   console.log(found.map((c) => c.text).join('\n\n'));
+}
+
+/** What this device can't do, or can do only in part; --json: every command with its status. */
+function showCapabilities(d, opts) {
+  const all = capabilities(d.kind);
+  if (opts.flags.has('json')) return console.log(JSON.stringify({ kind: d.kind, device: deviceId(d), commands: all }, null, 2));
+  console.log(`${KINDS[d.kind].title} ${deviceId(d)}`);
+  const limited = Object.entries(all).filter(([, c]) => c.status !== 'supported');
+  const width = Math.max(...limited.map(([name]) => name.length));
+  for (const [name, c] of limited) console.log(`${c.status === 'unsupported' ? 'no     ' : 'partly '} ${name.padEnd(width)}  ${c.why}`);
+  const rest = Object.keys(all).filter((name) => all[name].status === 'supported');
+  console.log(`yes     ${rest.join(', ')}`);
 }
 
 async function showApp(d, arg) {

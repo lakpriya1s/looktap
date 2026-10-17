@@ -10,6 +10,10 @@
 - **`looktap home`** presses the Home button on both platforms; on the iOS simulator it's the hardware Home button
   event, which the simulator had no way to send before. It prints "home screen" only once the home screen is in front,
   and names the app it left running. `key home` now works on iOS too, and `home` takes `--ls`.
+- **`looktap capabilities [--json]`** says what the device in use can't do, or can only in part, and why. One table
+  (`lib/capabilities.js`) now drives it, the errors those commands throw, and a new README section, "Platform
+  support", that compares the iOS simulator, real iPhones, the Android emulator and Android devices.
+- `bio` on an Android device now says it's emulator-only, instead of failing with a raw `adb emu` error.
 
 ## 0.2.2
 

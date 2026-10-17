@@ -149,6 +149,8 @@ looktap crashes com.example.myapp --since 1h
 # which app is in front, and whether the given one is running
 looktap app
 looktap app com.example.myapp
+# what this device can't do (or only in part) and why; --json lists every command's status
+looktap capabilities
 ```
 
 ### App state
