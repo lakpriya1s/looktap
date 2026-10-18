@@ -116,6 +116,8 @@ test('check: on screen, gone, and a value, with what is there instead on failure
   assert.ok(check(screen, 'Email', { want: 'sam@example.com' }).ok);
   assert.equal(check(screen, 'Email', { want: 'kim@example.com' }).why, '"Email" is "sam@example.com", expected "kim@example.com"');
   assert.equal(check(screen, 'Password', { want: 'x' }).why, '"Password" is empty (no value), expected "x"');
+  const flight = [el('Flight mode', 'TextView', 27, 300, 100, 23), el('Flight mode', 'Switch', 304, 290, 48, 56, { value: '0' })];
+  assert.equal(check(flight, 'Flight mode', { want: '1' }).why, '"Flight mode" is "0", expected "1"');
   saveRefs('dev-check', [screen[0]]);
   assert.ok(check(screen, '@1', { device: 'dev-check' }).ok);
   assert.ok(check(screen.slice(1), '@1', { device: 'dev-check', gone: true }).ok);
