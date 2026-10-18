@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.0
 
 ### Added
 - **`expect`** checks the screen: `expect "Welcome"` (on screen), `expect "Email" = sam@example.com` (its value),
