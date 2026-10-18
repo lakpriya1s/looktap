@@ -4,7 +4,7 @@ import { test } from 'node:test';
 
 import { formatRow as cliRow } from '../lib/screen.js';
 import { cliCommands, cliFlags, readmeCommands, sections } from '../site/build.mjs';
-import { inline, render, slug } from '../site/md.js';
+import { highlight, inline, render, slug } from '../site/md.js';
 import { formatRow as siteRow } from '../site/src/rows.js';
 import { SCENES } from '../site/src/scenes.js';
 
@@ -59,4 +59,14 @@ test('the agent skill lists every command and flag', () => {
   const used = new Set([...commands.md.matchAll(/^looktap ([a-z]+)/gm)].map((m) => m[1]));
   assert.deepEqual(cliCommands(cli).filter((c) => !used.has(c)), []);
   assert.deepEqual(cliFlags(cli).filter((f) => !new RegExp(`(^|[\\s\`\\[,])${f}\\b`).test(skill)), []);
+});
+
+test('highlight: comments, looktap and its command, strings and flags; console output; YAML keys', () => {
+  assert.equal(
+    highlight('# check\nlooktap boot "iPhone 16" --headless  # why\nopen a#b', 'bash'),
+    '<span class="t-c"># check</span>\n<span class="t-k">looktap</span> <span class="t-v">boot</span> <span class="t-s">"iPhone 16"</span> <span class="t-f">--headless</span>  <span class="t-c"># why</span>\nopen a#b',
+  );
+  assert.equal(highlight('$ looktap ls\n@1 <Button>', 'console'), '<span class="t-p">$</span> <span class="t-k">looktap</span> <span class="t-v">ls</span>\n<span class="t-o">@1 &lt;Button&gt;</span>');
+  assert.equal(highlight('  runs-on: macos-15 # mac', 'yaml'), '  <span class="t-y">runs-on</span>: macos-15 <span class="t-c"># mac</span>');
+  assert.equal(highlight('a < b', 'json'), 'a &lt; b');
 });

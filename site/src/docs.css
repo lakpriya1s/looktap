@@ -37,6 +37,14 @@
 .prose :not(pre) > code { background: color-mix(in srgb, var(--accent) 11%, transparent); padding: 1px 5px; border-radius: 5px; color: var(--ink); }
 .prose pre { position: relative; background: var(--term-bg); color: var(--term-text); border-radius: 12px; padding: 16px 18px; overflow-x: auto; font: 400 12.5px/1.65 var(--mono); margin: 16px 0 22px; border: 1px solid rgba(255, 255, 255, 0.06); }
 .prose pre code { font-size: inherit; letter-spacing: -0.02em; }
+/* Code highlighting (site/md.js): comments step back, commands stand out. */
+.prose pre .t-c { color: var(--term-dim); font-style: italic; }
+.prose pre .t-k, .prose pre .t-p { color: var(--term-prompt); }
+.prose pre .t-v { color: var(--term-prompt); font-weight: 500; }
+.prose pre .t-s { color: var(--term-ok); }
+.prose pre .t-f { color: var(--term-warn); }
+.prose pre .t-o { color: var(--term-out); }
+.prose pre .t-y { color: #c4b5fd; }
 .prose pre .copy { position: absolute; top: 8px; right: 8px; font: 500 11px var(--mono); color: #8b93a7; background: var(--term-bar); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 3px 9px; cursor: pointer; opacity: 0; transition: opacity 0.2s; }
 .prose pre:hover .copy, .prose pre .copy:focus { opacity: 1; }
 .prose .table { overflow-x: auto; margin: 16px 0 24px; border: 1px solid var(--line); border-radius: 12px; }
