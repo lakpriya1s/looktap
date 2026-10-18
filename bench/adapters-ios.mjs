@@ -1,6 +1,7 @@
-// iOS simulator adapters. Each does a step the way an agent using that tool would: when the tool can't act on a
+// iOS adapters, for a simulator or a real iPhone (C.real). Each does a step the way an agent using that tool would: when the tool can't act on a
 // label, the agent reads the screen first and acts on what it found (counted as an extra call). null = n/a.
 import { spawn } from 'node:child_process';
+import { openSync } from 'node:fs';
 import { join } from 'node:path';
 
 const center = (f) => [Math.round(f.x + f.width / 2), Math.round(f.y + f.height / 2)];
@@ -8,7 +9,8 @@ const LOOP = 8; // swipes an agent tries before giving up on scrolling to someth
 
 export default function ({ C, OUT, LOOKTAP, MAESTRO, sh, mcpServer, imageFile, setImg, sleep }) {
   const [sx1, sy1, sx2, sy2] = C.swipe;
-  const fullyOn = (y, h) => y >= 0 && y + h <= C.screenH;
+  // on screen: above iOS 26's floating search bar where there is one (an element under it is in the frame but hidden)
+  const fullyOn = (y, h) => y >= 0 && y + h <= (C.listBottom || C.screenH);
   const A = {};
 
   // ── looktap, the CLI an agent runs from its shell ──
@@ -26,9 +28,9 @@ export default function ({ C, OUT, LOOKTAP, MAESTRO, sh, mcpServer, imageFile, s
     scrollTo: (op) => lt(op, 'scrollto', C.far),
     fill: (op) => lt(op, 'fill', C.field, C.text),
     screenshot: async (op) => { await lt(op, '-o', OUT, 'shot', 'looktap'); imageFile(op, join(OUT, 'looktap.png')); },
-    home: null, // no home button command on iOS
+    home: (op) => lt(op, 'home'), // since 0.3.0
     openUrl: (op) => lt(op, 'open', C.url),
-    terminate: null, // `launch` restarts; there is no stop
+    terminate: (op) => lt(op, 'stop', C.app), // since 0.3.0
   };
 
   // ── looktap MCP ──
@@ -47,18 +49,37 @@ export default function ({ C, OUT, LOOKTAP, MAESTRO, sh, mcpServer, imageFile, s
     scrollTo: (op) => lc(op, 'scroll_to', { target: C.far }),
     fill: (op) => lc(op, 'fill', { target: C.field, text: C.text }),
     screenshot: (op) => lc(op, 'screenshot'),
-    home: null,
+    home: (op) => lc(op, 'looktap', { command: 'home' }),
     openUrl: (op) => lc(op, 'looktap', { command: `open ${C.url}` }),
-    terminate: null,
+    terminate: (op) => lc(op, 'looktap', { command: `stop ${C.app}` }),
   };
 
   // ── mobile-mcp: list elements (with @refs), act on a ref or coordinates ──
-  const mm = mcpServer('npx', ['-y', '@mobilenext/mobile-mcp@1.0.11']);
+  // A real iPhone: mobile-mcp's own agent needs a wildcard App ID (a paid team), so it goes the way its wiki gives for
+  // real devices: go-ios's tunnel, WebDriverAgent started with go-ios, port 8100 forwarded, MOBILEMCP_LEGACY_ROBOT=1.
+  // Starting those counts in its setup.
+  const GO_IOS = process.env.BENCH_GO_IOS || 'ios';
+  const mm = mcpServer('npx', ['-y', '@mobilenext/mobile-mcp@1.0.11'], C.real ? { MOBILEMCP_LEGACY_ROBOT: '1', GO_IOS_PATH: GO_IOS } : undefined);
+  const goIos = [];
+  const goStart = (args) => {
+    const log = openSync(join(OUT, `go-ios-${args[0]}.log`), 'w');
+    goIos.push(spawn(GO_IOS, args, { stdio: ['ignore', log, log] }));
+  };
+  const wdaUp = async (ms) => {
+    for (const end = Date.now() + ms; Date.now() < end; await sleep(500)) {
+      try { if ((await fetch('http://127.0.0.1:8100/status')).ok) return true; } catch {}
+    }
+    return false;
+  };
   const mc = (op, name, a = {}) => mm.call(op, name, { device: C.dev, ...a });
+  // "@ref Type label=…" on a simulator; on a real iPhone (its WebDriverAgent robot) "Type label=… at=x,y size=WxH"
+  // with no ref, so the agent taps the element's centre
   const mRef = (text, label, types) => {
     for (const line of text.split('\n')) {
-      const m = /^\s*(@?\w+)\s+(\w+)\s+label="([^"]*)"/.exec(line);
-      if (m && m[3] === label && (!types || types.includes(m[2]))) return { ref: m[1], line };
+      const m = /^\s*(?:(@\w+)\s+)?(\w+)\s+label="([^"]*)"/.exec(line);
+      if (!m || m[3] !== label || (types && !types.includes(m[2]))) continue;
+      const at = /at=(-?[\d.]+),(-?[\d.]+)\s+size=([\d.]+)x([\d.]+)/.exec(line);
+      return { ref: m[1], line, xy: at && [Math.round(+at[1] + at[3] / 2), Math.round(+at[2] + at[4] / 2)] };
     }
     return null;
   };
@@ -67,12 +88,21 @@ export default function ({ C, OUT, LOOKTAP, MAESTRO, sh, mcpServer, imageFile, s
     const r = await mList(op);
     const e = mRef(r.text, label, types);
     if (!e) throw new Error(`no "${label}" in the element list`);
-    await mc(op, 'mobile_click_on_screen_at_coordinates', { ref: e.ref });
+    await mc(op, 'mobile_click_on_screen_at_coordinates', e.ref ? { ref: e.ref } : { x: e.xy[0], y: e.xy[1] });
   };
   A['mobile-mcp'] = {
     defs: () => mm.defs, version: () => mm.version,
-    start: () => mm.open(),
-    stop: () => mm.close(),
+    start: async () => {
+      if (C.real) {
+        goStart(['tunnel', 'start', '--userspace']);
+        await sleep(3000);
+        goStart(['runwda', '--udid', C.dev, `--bundleid=${WDA_ID}.xctrunner`, `--testrunnerbundleid=${WDA_ID}.xctrunner`, '--xctestconfig=WebDriverAgentRunner.xctest']);
+        goStart(['forward', '--udid', C.dev, '8100', '8100']);
+        if (!(await wdaUp(60000))) throw new Error('WebDriverAgent did not start (go-ios runwda)');
+      }
+      await mm.open();
+    },
+    stop: async () => { await mm.close(); for (const p of goIos.splice(0)) p.kill(); },
     launch: (op) => mc(op, 'mobile_launch_app', { packageName: C.app }),
     read: mList,
     tapLabel: (op) => mTapLabel(op, C.label),
@@ -225,14 +255,18 @@ export default function ({ C, OUT, LOOKTAP, MAESTRO, sh, mcpServer, imageFile, s
   const aFind = async (op, strategy, selector) => idFrom((await am.call(op, 'appium_find_element', { strategy, selector })).text);
   // Appium's best case: a WebDriverAgent built once beforehand (BENCH_WDA_DERIVED_DATA, an xcodebuild -derivedDataPath)
   // instead of xcodebuild on every session, which on this Mac (Xcode 26.0.1) fails with code 65.
+  // A real iPhone: that WebDriverAgent signed with your team (BENCH_WDA_BUNDLE_ID, BENCH_TEAM_ID), built once with
+  //   xcodebuild build-for-testing -scheme WebDriverAgentRunner -destination id=<udid> DEVELOPMENT_TEAM=<team> PRODUCT_BUNDLE_IDENTIFIER=<id> …
   const WDA = process.env.BENCH_WDA_DERIVED_DATA ? { 'appium:usePrebuiltWDA': true, 'appium:derivedDataPath': process.env.BENCH_WDA_DERIVED_DATA } : {};
+  const WDA_ID = process.env.BENCH_WDA_BUNDLE_ID;
+  if (C.real) Object.assign(WDA, { 'appium:updatedWDABundleId': WDA_ID, 'appium:xcodeOrgId': process.env.BENCH_TEAM_ID, 'appium:xcodeSigningId': 'Apple Development' });
   const FIELD = ['-ios predicate string', `label == "${C.field}" AND type IN {"XCUIElementTypeTextField","XCUIElementTypeSearchField"}`];
   A['appium-mcp'] = {
     defs: () => am.defs, version: () => am.version,
     start: async (op) => {
       await am.open();
-      await am.call(op, 'prepare_ios_simulator', { udid: C.dev });
-      await am.call(op, 'select_device', { platform: 'ios', iosDeviceType: 'simulator', deviceUdid: C.dev });
+      if (!C.real) await am.call(op, 'prepare_ios_simulator', { udid: C.dev });
+      await am.call(op, 'select_device', { platform: 'ios', iosDeviceType: C.real ? 'real' : 'simulator', deviceUdid: C.dev });
       await am.call(op, 'appium_session_management', { action: 'create', platform: 'ios', capabilities: JSON.stringify({ 'appium:bundleId': C.app, 'appium:noReset': true, ...WDA }) });
     },
     stop: async () => { await am.call({ calls: 0, bytes: 0 }, 'appium_session_management', { action: 'delete' }).catch(() => {}); await am.close(); },
@@ -279,7 +313,10 @@ export default function ({ C, OUT, LOOKTAP, MAESTRO, sh, mcpServer, imageFile, s
       const bin = home ? ['node', [join(home, 'node_modules', 'appium', 'index.js')]] : ['npx', ['appium']];
       server = spawn(bin[0], [...bin[1], '--port', '4723', '--log-level', 'error'], { stdio: 'ignore', env: { ...process.env, ...(home ? { APPIUM_HOME: home } : {}) } });
       for (let i = 0; i < 120; i++) { try { if ((await fetch(URL_ + '/status')).ok) break; } catch {} await sleep(500); }
-      const caps = { platformName: 'iOS', 'appium:automationName': 'XCUITest', 'appium:udid': C.dev, 'appium:bundleId': C.app, 'appium:noReset': true, ...WDA };
+      // On a real iPhone the defaults wait for animations to settle (Settings' banners keep animating, ~7 s an action):
+      // the session settings appium-mcp sets for iOS, so only the MCP layer differs between the two.
+      const tuned = C.real ? { 'appium:settings[animationCoolOffTimeout]': 0.5, 'appium:settings[maxTypingFrequency]': 45, 'appium:settings[pageSourceExcludedAttributes]': 'visible,accessible' } : {};
+      const caps = { platformName: 'iOS', 'appium:automationName': 'XCUITest', 'appium:udid': C.dev, 'appium:bundleId': C.app, 'appium:noReset': true, ...WDA, ...tuned };
       S = (await http(op, 'POST', '/session', { capabilities: { alwaysMatch: caps } })).value.sessionId;
     },
     stop: async () => { await http({ calls: 0, bytes: 0 }, 'DELETE', `/session/${S}`).catch(() => {}); server?.kill(); },
@@ -289,7 +326,18 @@ export default function ({ C, OUT, LOOKTAP, MAESTRO, sh, mcpServer, imageFile, s
     back: (op) => http(op, 'POST', `/session/${S}/back`, {}),
     tapXY: (op) => pointer(op, C.xy),
     swipe: (op) => pointer(op, C.swipe),
-    scrollTo: (op) => ex(op, 'mobile: scroll', { direction: 'down', predicateString: `label == "${C.far}"` }),
+    // On a real iPhone `mobile: scroll` returns after a page or so, with the element still off screen: a script calls
+    // it again until the element's frame is on screen (every call counted).
+    scrollTo: async (op) => {
+      if (!C.real) return ex(op, 'mobile: scroll', { direction: 'down', predicateString: `label == "${C.far}"` });
+      for (let i = 0; i < LOOP; i++) {
+        const found = await http(op, 'POST', `/session/${S}/elements`, { using: '-ios predicate string', value: `label == "${C.far}"` });
+        const id = found.value[0] && Object.values(found.value[0])[0];
+        const r = id && (await http(op, 'GET', `/session/${S}/element/${id}/rect`)).value;
+        if (r && fullyOn(r.y, r.height)) return;
+        await ex(op, 'mobile: scroll', { direction: 'down' });
+      }
+    },
     fill: async (op) => http(op, 'POST', `/session/${S}/element/${await el(op, ...FIELD)}/value`, { text: C.text }),
     screenshot: async (op) => { const r = await http(op, 'GET', `/session/${S}/screenshot`); setImg(op, Buffer.from(r.value, 'base64')); op.inline = true; },
     home: (op) => ex(op, 'mobile: pressButton', { name: 'home' }),
