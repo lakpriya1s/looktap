@@ -535,8 +535,43 @@ export const SCENES = [
     ],
   },
   {
+    id: 'test',
+    kicker: '13 · Test',
+    title: 'What worked becomes a test',
+    body: `<p><code>expect</code> checks the screen: a label is there, a field holds a value, an error is gone. It waits up to 3 s for it, and when it fails it says what's there instead.</p>
+<p>Save the steps that worked as a flow file, and <code>looktap test</code> runs your flows in CI: a line per flow, a JUnit report, and for every failure the screen, a screenshot, error logs and crashes. An app that dies fails its flow.</p>`,
+    covers: ['expect', 'test'],
+    start: (p) => {
+      p.show('signin');
+      p.set({ values: { Email: 'sam@example.com' } });
+    },
+    beats: [
+      {
+        cmd: 'looktap expect Email = sam@example.com',
+        run: async (p) => [ok(`ok: "Email" = "sam@example.com" at ${p.centre(p.find('Email').e).join(',')}`)],
+      },
+      {
+        cmd: 'looktap expect Email = kim@example.com',
+        run: async () => [err('looktap: expect failed: "Email" is "sam@example.com", expected "kim@example.com" (waited 3 s)')],
+      },
+      {
+        cmd: 'looktap test flows/ --junit results/junit.xml',
+        run: async (p) => {
+          await sleep(600);
+          p.show('home');
+          return [
+            ok('✓ flows/browse.txt  9 steps · 6.1 s'),
+            ok('✓ flows/checkout.txt  12 steps · 8.7 s'),
+            ok('✓ flows/sign-in.txt  6 steps · 4.8 s'),
+            '3 flows: 3 passed, 0 failed · 19.6 s · results/junit.xml',
+          ];
+        },
+      },
+    ],
+  },
+  {
     id: 'setup',
-    kicker: '13 · Setup',
+    kicker: '14 · Setup',
     title: 'Nothing to install on simulators',
     body: `<p>No server to run and no npm dependencies. looktap's own small helpers start on first use: a macOS helper that speaks to the simulator through Apple's frameworks, and a 10 KB Android helper run with <code>app_process</code>. A real iPhone gets a small XCUITest runner, built and signed with your own Apple ID on first use.</p>
 <p><code>boot</code> starts a simulator or emulator by name and waits until it's ready; <code>shutdown</code> stops it. Ready for the first command in under a second, against 8–29 s for mobile-mcp, Maestro and Appium.</p>`,
@@ -574,7 +609,7 @@ export const SCENES = [
   },
   {
     id: 'phones',
-    kicker: '14 · Real phones',
+    kicker: '15 · Real phones',
     title: 'Your own phone, same commands',
     body: `<p>Plug in an iPhone or an Android phone and the commands are the same. <code>devices</code> says which is a simulator, an emulator or a real phone, and when a phone isn't ready yet, what to tap on it: Trust, "Allow USB debugging?", Developer Mode.</p>
 <p>What a real phone can't do, it says up front, with what to do instead: no fake GPS, no injected pushes. And a locked phone stops every command with <em>the device is locked</em>, instead of typing into the passcode screen.</p>`,

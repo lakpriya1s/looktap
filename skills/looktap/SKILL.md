@@ -62,6 +62,10 @@ looktap ls --json
 # until it's on screen (10 s by default; --wait 30 for longer), or until it's gone
 looktap wait "Welcome"
 looktap wait "Loading" --gone
+# check the screen (waits up to --wait, 3 s); fails with exit 1 and what's there instead
+looktap expect "Welcome"
+looktap expect "Email" = sam@example.com
+looktap expect "Error" --gone
 # swipe until it's fully on screen; fails at the end of the list
 looktap scrollto "Privacy & Security"
 looktap scrollto "General" --up
@@ -203,6 +207,9 @@ looktap push com.example.myapp '{"aps":{"alert":"Hi"},"orderId":7}'
 looktap run 'tap General; tap About; wait "iOS Version"; ls'
 # one step per line from stdin, # for comments
 looktap run - < steps.txt
+# flow files (run scripts) as tests: a line per flow, exit 1 if any fails. A failure saves the screen, a
+# screenshot, error logs and crashes in <out>/failures/<flow>/. --junit: a report for CI
+looktap test flows/ --junit results/junit.xml -o results
 ```
 
 ### Devices and setup
@@ -292,6 +299,22 @@ looktap shot pay__error
 
 On iOS the full crash report is written up to a minute later; run `crashes` again. On Android, `LOW_MEMORY`
 means the system killed the app, which isn't a bug in it.
+
+## Example: turn what worked into a test
+
+Once a flow works by hand, save its steps as a file the user's CI can run, with `expect` where it should check:
+
+```bash
+# flows/sign-in.txt
+launch com.example.app
+fill Email sam@example.com
+tap "Sign in"
+wait Welcome
+expect "Sign in" --gone
+```
+
+Then `looktap test flows/`. Steps are the same commands, one per line, `#` for comments. A flow that fails names
+the step, prints its output, and leaves its evidence under `<out>/failures/`. An app that dies fails the flow.
 
 ## Example: screenshots in dark mode with large text
 

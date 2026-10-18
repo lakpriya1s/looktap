@@ -2,7 +2,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 
 import { Android, RECORD_LIMIT_S, adbDevices } from '../lib/android.js';
 import { Ios, bootedSimulators } from '../lib/ios.js';
@@ -13,7 +13,8 @@ import { KINDS, capabilities, capability } from '../lib/capabilities.js';
 import { boot, shutdown } from '../lib/boot.js';
 import { formatDevice, inventory } from '../lib/devices.js';
 import { ORIENTATIONS, coordinates, pushPayload, rotation, textSize } from '../lib/conditions.js';
-import { appGone, center, coveringAt, forgetFront, formatRow, isRef, lastFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, visibleRows, waitFor } from '../lib/screen.js';
+import { appGone, center, coveringAt, expectOn, forgetFront, formatRow, isRef, lastFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, visibleRows, waitFor } from '../lib/screen.js';
+import { flowFiles, flowName, junit } from '../lib/testing.js';
 import { ADB, HOME, LOCKED, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
 
 const SKILL = new URL('../skills/looktap/SKILL.md', import.meta.url);
@@ -40,6 +41,9 @@ setup & info
 look
   ls [--all] [--json]             on-screen elements: @ref  type  x,y  WxH  label  [= value]
   wait <label|@ref> [--gone]      until it appears (or disappears); default timeout 10 s, or --wait
+  expect <label|@ref> [= value] [--gone] [--exact]
+                                  check it's on screen (with that value), or with --gone that it isn't.
+                                  Waits up to --wait (3 s) for it; fails with what's there instead (exit 1)
   scrollto <label> [--up]         swipe until it is fully on screen (default scrolls down)
   shot <name> [--plain] [--scale f]  screenshot → <out>/<name>.png; --scale 0.5 = half size, fewer
                                   image tokens (Android emulators bypass FLAG_SECURE; --plain doesn't)
@@ -103,6 +107,10 @@ batch & agents
                                   --config prints a client config with absolute paths
   run '<cmd>; <cmd> …'            several commands in one process (or: run - < script). Stops at the
                                   first failure, which it names
+  test <flow|dir> … [--junit f]   run flow files (run scripts, one step per line) as tests: a line per
+                                  flow, exit 1 if any fails. A failure saves the screen, a screenshot,
+                                  error logs and crashes in <out>/failures/<flow>/; --junit writes a report.
+                                  An app that dies during a flow fails it
   skill [--install]               print the AI-agent guide (--install: ~/.claude/skills/looktap/SKILL.md)
 
 options
@@ -139,6 +147,7 @@ function parse(argv) {
     else if (a === '--since') opts.since = val();
     else if (a === '--grep') opts.grep = val();
     else if (a === '--lines') opts.lines = Number(val());
+    else if (a === '--junit') opts.junit = val();
     else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window'].includes(a)) opts.flags.add(a.slice(2));
     else if (a === '--') pos.push(...argv.slice(i + 1)), (i = argv.length);
     else pos.push(a);
@@ -321,7 +330,7 @@ async function byRef(d, ref) {
 }
 
 /** Commands that read or act on the screen: they stop while the lock screen is up (bio can unlock it). */
-const SCREEN = new Set([...ACTIONS, 'ls', 'wait', 'scrollto'].filter((c) => c !== 'bio'));
+const SCREEN = new Set([...ACTIONS, 'ls', 'wait', 'expect', 'scrollto'].filter((c) => c !== 'bio'));
 
 /** Actions after which a vanished app is worth a warning (launch replaces the app on purpose). */
 const WATCHED = new Set([...ACTIONS].filter((c) => c !== 'launch'));
@@ -336,7 +345,14 @@ async function waitForApp(d, app, ms) {
   }
 }
 
+/** While `test` runs a flow: an app that dies fails the flow instead of only warning. `gone` names it. */
+const testing = { on: false, gone: null };
+
 function warnIfGone(app, when = '') {
+  if (app && testing.on) {
+    testing.gone = app;
+    throw new Error(`${app} is no longer running${when ? ` (${when})` : ''} — it crashed or was killed`);
+  }
   if (app) console.error(`looktap: warning: ${app} is no longer running${when ? ` (${when})` : ''} — it crashed or was killed. See: looktap crashes ${app}`);
 }
 
@@ -349,7 +365,7 @@ async function dispatch(d, cmd, args, opts) {
   const app = WATCHED.has(cmd) ? await d.frontApp().catch(() => null) : null;
   // The screen just read doubles as the first look for the action's target: one read fewer on a slow device.
   await act(d, cmd, args, before ? { ...opts, snap: before } : opts);
-  if (['launch', 'reset', 'uninstall', 'install'].includes(cmd)) forgetFront(deviceId(d));
+  if (['launch', 'stop', 'reset', 'uninstall', 'install'].includes(cmd)) forgetFront(deviceId(d));
   // A cold start can take seconds, and the old screen may still be animating: wait for the app itself.
   if (look && cmd === 'launch') await waitForApp(d, args[0] || d.app, 6000);
   const after = look ? await settle(d, { all, before, changeTimeout: cmd === 'launch' || cmd === 'open' ? 6000 : 1500 }) : null;
@@ -387,6 +403,20 @@ async function act(d, cmd, args, opts) {
       const gone = opts.flags.has('gone');
       const hit = await waitFor(d, deviceId(d), target, { gone, timeout: opts.wait != null ? Number(opts.wait) * 1000 : 10000 });
       return console.log(gone ? `gone: ${target}` : `found ${JSON.stringify(hit.label)} at ${center(hit).join(',')}`);
+    }
+    case 'expect': {
+      const usage = 'expect <label|@ref> [= value] [--gone] [--exact]';
+      const eq = args.indexOf('=');
+      const what = (eq < 0 ? args : args.slice(0, eq)).join(' ');
+      const want = eq < 0 ? null : args.slice(eq + 1).join(' ');
+      const gone = opts.flags.has('gone');
+      if (!what || (gone && want != null)) throw new UsageError(`usage: looktap ${usage}`);
+      const timeout = opts.wait != null ? Number(opts.wait) * 1000 : d.wait;
+      if (!(timeout >= 0)) throw new UsageError('--wait takes seconds, e.g. --wait 5');
+      const r = await expectOn(d, deviceId(d), what, { want, gone, exact: opts.flags.has('exact'), timeout });
+      if (!r.ok) throw new Error(`expect failed: ${r.why}${timeout ? ` (waited ${timeout / 1000} s)` : ''}`);
+      if (gone) return console.log(`ok: gone: ${what}`);
+      return console.log(`ok: ${JSON.stringify(r.hit.label || r.hit.type)}${want != null ? ` = ${JSON.stringify(want)}` : ''} at ${center(r.hit).join(',')}`);
     }
     case 'scrollto': {
       need(1, 'scrollto <label> [--up]');
@@ -552,6 +582,7 @@ async function act(d, cmd, args, opts) {
       return console.log(`${{ grant: 'granted', revoke: 'revoked', reset: 'reset (it will ask again)' }[args[0]]}: ${what} for ${app}`);
     }
     case 'run': return runScript(d, args, opts);
+    case 'test': return runTests(d, args, opts);
     case 'capabilities': return showCapabilities(d, opts);
     default: throw new UsageError(`unknown command: ${cmd} (looktap --help)`);
   }
@@ -726,11 +757,16 @@ Paste into your MCP client's config, e.g.
 /** Several commands in this one process: one helper connection, no per-command startup. */
 async function runScript(d, args, outer) {
   if (!args.length) throw new UsageError("usage: looktap run '<cmd>; <cmd> …'   or   looktap run - < script");
-  const steps = splitScript(args[0] === '-' ? readFileSync(0, 'utf8') : args.join(' '));
+  return runSteps(d, args[0] === '-' ? readFileSync(0, 'utf8') : args.join(' '), outer);
+}
+
+/** Run a script's steps in order; the first failure stops it, named by its step. Returns how many ran. */
+async function runSteps(d, text, outer) {
+  const steps = splitScript(text);
   for (const [i, words] of steps.entries()) {
     const { opts, cmd, args: stepArgs } = parse(words);
     if (opts.platform || opts.device) throw new UsageError(`run: step ${i + 1} sets -p/-d — pass those to run itself`);
-    if (cmd === 'run') throw new UsageError('run: steps cannot run scripts');
+    if (cmd === 'run' || cmd === 'test') throw new UsageError(`run: steps cannot run ${cmd === 'run' ? 'scripts' : 'tests'}`);
     console.log(`$ ${words.join(' ')}`);
     try {
       await dispatch(d, cmd, stepArgs, { ...outer, ...opts, wait: opts.wait ?? outer.wait, flags: opts.flags });
@@ -739,6 +775,100 @@ async function runScript(d, args, outer) {
       throw e;
     }
   }
+  return steps.length;
+}
+
+/** Everything console.log/error print while `fn` runs, as lines; what it throws is printed too. */
+async function quietly(fn) {
+  const lines = [];
+  const saved = [console.log, console.error];
+  console.log = console.error = (...a) => lines.push(...a.join(' ').split('\n'));
+  try {
+    await fn();
+  } catch (e) {
+    lines.push(`looktap: ${e.message}`);
+  } finally {
+    [console.log, console.error] = saved;
+  }
+  return lines;
+}
+
+/**
+ `test <flow|dir> …`: each flow file is a `run` script, run in this process one after another. Prints one line
+ per flow (a failure with its output and where its evidence went), then the totals; fails if any flow failed.
+ */
+async function runTests(d, args, opts) {
+  if (!args.length) throw new UsageError('usage: looktap test <flow|dir> … [--junit report.xml] [-o dir]');
+  const files = flowFiles(args);
+  if (!files.length) throw new UsageError(`test: no flow files in ${args.join(' ')}`);
+  const started = Date.now();
+  const results = [];
+  for (const file of files) {
+    const start = Date.now();
+    let error = null, steps = 0;
+    // Each flow answers for its own app: one that died before it started isn't its failure.
+    forgetFront(deviceId(d));
+    Object.assign(testing, { on: true, gone: null });
+    const lines = await quietly(async () => {
+      try {
+        steps = await runSteps(d, readFileSync(file, 'utf8'), opts);
+      } catch (e) {
+        error = e;
+      }
+    });
+    testing.on = false;
+    const r = { file, ms: Date.now() - start, lines, error };
+    results.push(r);
+    const took = `${(r.ms / 1000).toFixed(1)} s`;
+    if (!error) {
+      console.log(`✓ ${file}  ${steps} step${steps === 1 ? '' : 's'} · ${took}`);
+      continue;
+    }
+    r.evidence = await evidence(d, file, start, r);
+    console.log(`✗ ${file}  ${took}\n    ${error.message}`);
+    // The flow's own output, so a CI log shows how it got there.
+    for (const l of lines.slice(-15)) console.log(`    │ ${l}`);
+    if (r.evidence) console.log(`    evidence: ${r.evidence}`);
+  }
+  const ms = Date.now() - started;
+  if (opts.junit) {
+    mkdirSync(dirname(resolve(opts.junit)), { recursive: true });
+    writeFileSync(opts.junit, junit(results, { ms }));
+  }
+  const failed = results.filter((r) => r.error).length;
+  const total = `${results.length} flow${results.length === 1 ? '' : 's'}: ${results.length - failed} passed, ${failed} failed · ${(ms / 1000).toFixed(1)} s${opts.junit ? ` · ${opts.junit}` : ''}`;
+  if (failed) throw new Error(total);
+  console.log(total);
+}
+
+/**
+ What a failed flow leaves for whoever reads the CI run, in <out>/failures/<flow>/: error.txt, output.txt,
+ screen.txt (ls), screen.png, and the app's error logs and crashes since the flow started — whatever this
+ device can give. Returns the folder, or null if it couldn't be written.
+ */
+async function evidence(d, file, since, r) {
+  const dir = resolve(d.out, 'failures', flowName(file));
+  try {
+    rmSync(dir, { recursive: true, force: true });
+    mkdirSync(dir, { recursive: true });
+  } catch {
+    return null;
+  }
+  const save = (name, lines) => lines.length && writeFileSync(join(dir, name), lines.join('\n') + '\n');
+  save('error.txt', [file, r.error.message]);
+  save('output.txt', r.lines);
+  save('screen.txt', await quietly(() => list(d, { flags: new Set(), checked: true })));
+  const out = d.out;
+  d.out = dir;
+  await quietly(() => d.shot('screen', {}));
+  d.out = out;
+  const app = d.app || testing.gone || (await d.foreground().catch(() => null))?.id;
+  if (app) {
+    const print = (items) => items.length && console.log(items.map((x) => x.text).join('\n'));
+    save('logs.txt', await quietly(async () => print(await d.readLogs(app, since, { errors: true }))));
+    save('crashes.txt', await quietly(async () => print(await d.readCrashes(app, since))));
+  }
+  return relative(process.cwd(), dir) || dir;
 }
 
 function skill(opts) {

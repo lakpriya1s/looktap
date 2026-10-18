@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- **`expect`** checks the screen: `expect "Welcome"` (on screen), `expect "Email" = sam@example.com` (its value),
+  `expect "Error" --gone`. It waits up to `--wait` (3 s) for it to come true, and fails with exit 1 and what's
+  there instead: `expect failed: "Email" is "sam@example.com", expected "kim@example.com"`.
+- **`test <flow|dir> …`** runs flow files (`run` scripts, one step per line) as tests: a line per flow and the totals,
+  exit 1 if any fails. A failed flow prints its output and leaves `error.txt`, `output.txt`, `screen.txt`,
+  `screen.png`, and the app's error logs and crashes in `<out>/failures/<flow>/`. An app that dies during a flow fails
+  it. `--junit <file>` writes a JUnit XML report for CI. The README has GitHub Actions jobs for iOS and Android.
+
+### Fixed
+- `ls` after `stop` no longer warns that the stopped app is no longer running.
+
 ## 0.4.1
 
 ### Added
