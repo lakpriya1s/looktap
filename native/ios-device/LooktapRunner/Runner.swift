@@ -175,7 +175,8 @@ final class Ops {
       let a = point(num("x1", 0), num("y1", 0)), b = point(num("x2", 0), num("y2", 0))
       let dist = hypot(num("x2", 0) - num("x1", 0), num("y2", 0) - num("y1", 0))
       let secs = max(num("ms", 150), 50) / 1000
-      a.press(forDuration: 0.05, thenDragTo: b, withVelocity: XCUIGestureVelocity(max(dist / secs, 200)), thenHoldForDuration: 0)
+      // `hold`: stay still at the end before lifting, so a list stops where the finger did instead of coasting.
+      a.press(forDuration: 0.05, thenDragTo: b, withVelocity: XCUIGestureVelocity(max(dist / secs, 200)), thenHoldForDuration: num("hold", 0) / 1000)
       return (["ok": true], nil)
 
     case "pinch":

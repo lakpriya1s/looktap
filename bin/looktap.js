@@ -347,7 +347,8 @@ async function dispatch(d, cmd, args, opts) {
   const before = look ? await d.snapshot({ all }) : null;
   if (d.assertUnlocked && SCREEN.has(cmd)) await d.assertUnlocked(cmd, args);
   const app = WATCHED.has(cmd) ? await d.frontApp().catch(() => null) : null;
-  await act(d, cmd, args, opts);
+  // The screen just read doubles as the first look for the action's target: one read fewer on a slow device.
+  await act(d, cmd, args, before ? { ...opts, snap: before } : opts);
   if (['launch', 'reset', 'uninstall', 'install'].includes(cmd)) forgetFront(deviceId(d));
   // A cold start can take seconds, and the old screen may still be animating: wait for the app itself.
   if (look && cmd === 'launch') await waitForApp(d, args[0] || d.app, 6000);
@@ -361,8 +362,10 @@ async function dispatch(d, cmd, args, opts) {
  exact, unique prefix, unique substring. Waits up to --wait for it. Returns the element and the screen.
  */
 async function target(d, what, opts) {
+  let fresh = opts.snap; // a screen read a moment ago (dispatch's `before`): used for the first try only
   return retry(async () => {
-    const snap = await d.snapshot();
+    const snap = fresh || (await d.snapshot());
+    fresh = null;
     if (isRef(what)) return { e: resolveRef(deviceId(d), what, snap.elements), snap };
     const live = snap.elements.filter((e) => e.w > 0 && e.h > 0);
     return { e: live.find((e) => e.id === what) || pickMatch(live, what, { exact: opts.flags.has('exact') }), snap };

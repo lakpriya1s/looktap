@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
 import { inflateSync } from 'node:zlib';
 
@@ -89,4 +90,21 @@ test('encodePng writes a valid RGB PNG whose IDAT inflates to filtered rows', ()
 test('helperNodes converts helper px bounds to dp nodes', () => {
   const [n] = helperNodes([{ l: 'Wi‑Fi', c: 'android.widget.TextView', b: [42, 105, 168, 210], f: true }], 2.625);
   assert.deepEqual(n, { label: 'Wi‑Fi', x1: 16, y1: 40, x2: 64, y2: 80, cls: 'android.widget.TextView', focused: true });
+  const [s] = helperNodes([{ l: '', c: 'android.widget.Switch', b: [0, 0, 10, 10], v: '1' }], 1);
+  assert.equal(s.value, '1');
+});
+
+test('a helper call that times out closes its connection, so the process can exit', () => {
+  // A helper that accepts the connection and never answers (a loaded device): the command must still end.
+  const script = `
+    import { createServer } from 'node:net';
+    import { Helper } from ${JSON.stringify(new URL('../lib/helper.js', import.meta.url).href)};
+    const srv = createServer(() => {}).listen(0, async () => {
+      srv.unref();
+      const h = await Helper.open(srv.address().port);
+      await h.call('key', {}, { timeout: 100 }).catch((e) => console.log(e.message));
+    });`;
+  const r = spawnSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8', timeout: 5000 });
+  assert.equal(r.error?.code, undefined, 'the process did not exit after the timed-out call');
+  assert.match(r.stdout, /helper timed out on key/);
 });

@@ -303,7 +303,7 @@ looktap ls
 ```
 
 Each row shows a **ref** (`@1`), the element type, its **x,y** position and **width×height** (iOS points /
-Android dp, the units `tapxy` and `swipe` take), its **label**, and `= value` for fields that hold text. Unlabelled
+Android dp, the units `tapxy` and `swipe` take), its **label**, and `= value` for fields that hold text and for switches and checkboxes (`1` on, `0` off). Unlabelled
 buttons are listed too, as `(no label)`, so you can tap them by ref. The on-screen keyboard is a single row.
 
 ### Tap by label, not by coordinates
@@ -673,7 +673,7 @@ to settle unless asked (`--ls`).
 | **Look** | |
 | `looktap ls [--all] [--json]` | Visible elements with a label, plus unlabelled buttons, each with an `@ref`. `--all` includes everything. `--json` prints `{screen, elements}`. While the screen is still loading (nothing labelled yet), waits up to `--wait` |
 | `looktap wait <label\|@ref> [--gone]` | Until it's on screen (with `--gone`, until it isn't). Default up to 10 s, or `--wait`. Exits 2 on timeout |
-| `looktap scrollto <label> [--up]` | Swipes until the element is fully on screen. Fails at the end of the list, or after 15 swipes |
+| `looktap scrollto <label> [--up]` | Swipes until the element is fully on screen. Each swipe holds still before lifting, so the list stops where it was dragged instead of coasting. Fails at the end of the list, or after 15 swipes |
 | `looktap shot <name> [--plain] [--scale f]` | Saves `<out>/<name>.png` and prints its path |
 | `looktap burst <dir> <seconds>` | A frame each time the screen changes. Only distinct frames are kept |
 | `looktap record start [name]` · `record stop` | An MP4 of everything in between, saved to `<out>/<name>.mp4`; `stop` prints the path and the length. Android: at most 3 minutes, `FLAG_SECURE` screens black |
@@ -823,6 +823,7 @@ Precedence: command-line option, then environment variable, then config file, th
 | `"<label>" is ambiguous — matches N labels` | Use more of the label, a `@ref`, or `--exact` |
 | `keyboard is still up` (iOS) | Search keyboards have no Done key. Tap the screen's Cancel/close control |
 | Android `ls` fails right after boot | Wait until `adb shell getprop sys.boot_completed` prints `1` |
+| `device <serial> is not connected` | `adb devices` lists what is. A phone unplugged from USB may still be there over Wi-Fi, under another serial (`adb-…._adb-tls-connect._tcp`) |
 | Android `ls` fails after Appium was used | Appium still holds UiAutomation: `adb shell am force-stop io.appium.uiautomator2.server` |
 | Appium / `uiautomator` fail after looktap was used | looktap's helper holds UiAutomation: `looktap -p android teardown` |
 | `Android helper did not start — falling back to uiautomator dump` | Something else holds UiAutomation (see above). looktap keeps working, just slower |

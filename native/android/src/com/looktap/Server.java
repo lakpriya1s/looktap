@@ -153,7 +153,7 @@ public final class Server {
                 reply(out, ok(), null);
                 return;
             case "swipe":
-                swipe(req.getInt("x1"), req.getInt("y1"), req.getInt("x2"), req.getInt("y2"), req.optInt("ms", 300));
+                swipe(req.getInt("x1"), req.getInt("y1"), req.getInt("x2"), req.getInt("y2"), req.optInt("ms", 300), req.optInt("hold", 0));
                 reply(out, ok(), null);
                 return;
             case "text":
@@ -224,7 +224,7 @@ public final class Server {
         }
     }
 
-    /** Visible nodes, pre-order, bounds in px: {l: label, c: class, b: [x1,y1,x2,y2], f: focused}. */
+    /** Visible nodes, pre-order, bounds in px: {l: label, c: class, b: [x1,y1,x2,y2], f: focused, v: checked}. */
     static JSONArray tree(boolean allWindows) throws Exception {
         JSONArray outNodes = new JSONArray();
         if (allWindows) {
@@ -306,6 +306,8 @@ public final class Server {
         o.put("c", n.getClassName() == null ? "" : n.getClassName().toString());
         o.put("b", new JSONArray().put(tmp.left).put(tmp.top).put(tmp.right).put(tmp.bottom));
         if (n.isFocused()) o.put("f", true);
+        // A switch's or checkbox's state, as iOS reports it ("1" on, "0" off)
+        if (n.isCheckable()) o.put("v", n.isChecked() ? "1" : "0");
         out.put(o);
         for (int i = 0; i < n.getChildCount(); i++) {
             AccessibilityNodeInfo c = n.getChild(i);
@@ -488,7 +490,8 @@ public final class Server {
         touch2(MotionEvent.ACTION_UP, down, end, cx, cy, r1, 1);
     }
 
-    static void swipe(int x1, int y1, int x2, int y2, int ms) {
+    /** `hold`: stay still at the end before lifting, so a list stops where the finger did instead of flinging. */
+    static void swipe(int x1, int y1, int x2, int y2, int ms, int hold) {
         // Moves on a fixed clock from `down`, so the gesture takes `ms` however long each injection takes.
         int steps = Math.max(2, ms / 10);
         long down = SystemClock.uptimeMillis();
@@ -499,6 +502,13 @@ public final class Server {
             if (wait > 0) SystemClock.sleep(wait);
             float f = (float) i / steps;
             touch(MotionEvent.ACTION_MOVE, down, at, x1 + (x2 - x1) * f, y1 + (y2 - y1) * f);
+        }
+        if (hold > 0) {
+            // Still moves at the same point: the velocity tracker reads zero, so there is no fling.
+            for (long until = SystemClock.uptimeMillis() + hold; SystemClock.uptimeMillis() < until; ) {
+                SystemClock.sleep(Math.min(20, hold));
+                touch(MotionEvent.ACTION_MOVE, down, SystemClock.uptimeMillis(), x2, y2);
+            }
         }
         touch(MotionEvent.ACTION_UP, down, SystemClock.uptimeMillis(), x2, y2);
     }

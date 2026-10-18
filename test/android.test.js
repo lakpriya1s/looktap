@@ -32,6 +32,13 @@ test('parseNodes reads labels and scales bounds to dp', () => {
   assert.equal(b.label, 'Tom & Jerry');
   assert.equal(b.focused, true);
   assert.equal(b.x2, 160);
+  assert.equal(a.value, undefined);
+});
+
+test("parseNodes reports a switch's state as iOS does: 1 on, 0 off", () => {
+  const xml = `<node text="" class="android.widget.Switch" checkable="true" checked="true" bounds="[0,0][10,10]" />
+    <node text="" class="android.widget.CheckBox" checkable="true" checked="false" bounds="[0,0][10,10]" />`;
+  assert.deepEqual(parseNodes(xml, 1).map((n) => n.value), ['1', '0']);
 });
 
 test('parseRotation reads the display rotation from dumpsys, in quarter turns', () => {

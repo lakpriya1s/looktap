@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+### Added
+- **Android `ls` shows a switch's or checkbox's state** as `= 1` (on) or `= 0` (off), as iOS does.
+
+### Changed
+- **`scrollto` is about twice as fast:** each swipe holds still for a moment before lifting, so the list stops where
+  the finger did and one read shows it, instead of waiting for a fling to coast to a stop. Settings' Developer row on
+  a real iPhone: 13–21 s, now about 6.5 s; About phone on a Samsung Galaxy A06: 6.3 s, now 3.2 s. Android falls back
+  to waiting when its helper isn't running (`input swipe` can't hold).
+- Screen reads after an action start at least 150 ms apart rather than sleeping 150 ms after each, which on a real
+  device (~0.4 s a read) was dead time; the screen read before an action doubles as the first look for its target.
+- `fill` on iOS waits at most half a second for the keyboard to show, however slow each check is: with a keyboard
+  XCUITest can't see (a third-party one), it used to wait ~2.4 s on a real iPhone before typing.
+
+### Fixed
+- **A command could hang forever after a helper call timed out** (seen once on a busy Android phone: `back` went back
+  and never returned). The timed-out connection stayed open and kept the process alive; it is now closed.
+- **Actions with `--ls` (and every MCP action) waited the full 2.5 s on iOS 26 screens with grouped lists:** their
+  section backgrounds overhang both screen edges, which read as a screen still sliding in. On a real iPhone,
+  `tap --ls` took 4.4 s, now 2.9 s; on the simulator, 2.0–2.5 s, now 1.5 s.
+- An unplugged Android device is reported as not connected, not as a leftover Appium session.
+
 ### Benchmark
 - **Real phones:** the benchmark now also runs on a real iPhone and a real Android phone over USB, with the same steps
   and rules. `bench/results/ios-device.md` (iPhone 14 Pro, iOS 26.0) and `bench/results/android-device.md` (Samsung

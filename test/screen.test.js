@@ -97,4 +97,7 @@ test('sliding: a page-wide element off x = 0 is a transition; narrow cards are n
   assert.equal(sliding({ screen, elements: [{ x: 300, y: 54, w: 200, h: 100 }] }), false);
   assert.equal(sliding({ screen, elements: [{ x: 24, y: 684, w: 371, h: 79 }] }), false); // an inset row
   assert.equal(sliding({ screen, elements: [{ x: -300, y: 54, w: 411, h: 179 }] }), true); // sliding out left
+  // iOS 26 grouped-list backgrounds overhang both edges at rest; shifted to one side, they slide
+  assert.equal(sliding({ screen: { w: 393, h: 852 }, elements: [{ x: -16, y: -55, w: 425, h: 252 }] }), false);
+  assert.equal(sliding({ screen: { w: 393, h: 852 }, elements: [{ x: 120, y: -55, w: 425, h: 252 }] }), true);
 });
