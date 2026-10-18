@@ -18,8 +18,20 @@ export function config() {
   const wDp = Math.round(w / density);
   // mobile-mcp names an emulator by its AVD, not its adb serial
   const avd = dev.startsWith('emulator-') ? execFileSync('adb', ['-s', dev, 'shell', 'getprop', 'ro.boot.qemu.avd_name'], { encoding: 'utf8' }).trim() : dev;
+  // Samsung's One UI Settings: its own labels and search, and Samsung Internet opens links
+  const samsung = execFileSync('adb', ['-s', dev, 'shell', 'getprop', 'ro.product.manufacturer'], { encoding: 'utf8' }).trim().toLowerCase() === 'samsung';
+  const oneUi = samsung && {
+    browser: 'com.sec.android.app.sbrowser', label: 'Connections', fragment: 'ConnectionsSettings',
+    xyDp: [Math.round(wDp / 2), Number(process.env.BENCH_ANDROID_ROW_Y || 465)], // the Connections row
+    far: 'About phone', openSearch: 'Search settings', field: 'Search',
+    openSearchDesc: true, // the search button has no text, only a content description
+    list: 'new UiSelector().resourceId("com.android.settings:id/recycler_view")', // the first scrollable is the collapsing header
+    search: 'com.android.settings.intelligence', fieldClass: 'android.widget.AutoCompleteTextView',
+  };
   return {
-    dev, avd, density, dp,
+    dev, avd, density, dp, real: !dev.startsWith('emulator-'),
+    // a real phone goes into the results by its model, never its serial
+    model: dev.startsWith('emulator-') ? undefined : execFileSync('adb', ['-s', dev, 'shell', 'echo "$(getprop ro.product.manufacturer) $(getprop ro.product.model) (Android $(getprop ro.build.version.release))"'], { encoding: 'utf8' }).trim(),
     app: 'com.android.settings', activity: 'com.android.settings/.Settings', browser: 'com.android.chrome',
     label: 'Network & internet', fragment: 'NetworkDashboardFragment', home: 'TopLevelSettings',
     xyDp: [Math.round(wDp / 2), Number(process.env.BENCH_ANDROID_ROW_Y || 284)], // the Network & internet row
@@ -27,6 +39,7 @@ export function config() {
     far: 'System', openSearch: 'Search Settings', field: 'Search settings', text: 'wifi', url: 'https://example.com',
     search: 'com.google.android.settings.intelligence',
     screen: { w, h },
+    ...oneUi,
   };
 }
 
@@ -68,6 +81,7 @@ export function oracle(C) {
     // A rebooted device for every tool, as on iOS: no helper, UiAutomation client or state left from the tool before.
     // The emulator window stays open across the reboot.
     async reboot() {
+      if (C.real) return O.reset();
       await execP('adb', ['-s', C.dev, 'reboot']).catch(() => {});
       await sleep(5000);
       await execP('adb', ['-s', C.dev, 'wait-for-device']);
@@ -75,10 +89,21 @@ export function oracle(C) {
       await sleep(15000);
       await O.idle(180000); // boot-time jobs (package scans, app updates, compilation) run for a while after boot
     },
+    // A real phone isn't rebooted: it would come back at its PIN screen, and wireless debugging off. Instead the tools'
+    // on-device helpers are stopped and the phone left to calm down. Keep it charging with Developer options → Stay awake.
+    async reset() {
+      for (const p of ['io.appium.uiautomator2.server', 'io.appium.uiautomator2.server.test', 'io.appium.settings', 'dev.mobile.maestro', 'dev.mobile.maestro.test', 'com.mobilenext.devicekit']) await adb('am', 'force-stop', p).catch(() => {});
+      // Helpers that run as app_process, not as a package (each holds the one UiAutomation connection while it runs)
+      for (const p of ['com.looktap.Server', 'com.mobilenext.mobilecli.DeviceServer', 'uiautomator']) await adb('pkill', '-f', p).catch(() => {});
+      await adb('input', 'keyevent', 'KEYCODE_WAKEUP');
+      if (/isKeyguardShowing=true/.test(await adb('dumpsys', 'window'))) throw new Error('the phone is locked: unlock it and start again');
+      await O.idle(120000);
+    },
     // Wait until the device's 1-minute load is under 1.0 on two checks in a row. Returns the load it started from.
     async idle(maxMs = 60000) {
       const load = async () => Number((await adb('cat', '/proc/loadavg')).split(' ')[0]);
       const first = await load().catch(() => null);
+      if (C.real) return first; // a phone's load counts its own background work (this one idles near 27): noted, not waited on
       let calm = 0;
       const end = performance.now() + maxMs;
       while (performance.now() < end && calm < 2) {
@@ -139,7 +164,7 @@ export function adapters({ C, OUT, LOOKTAP, MAESTRO, sh, mcpServer, imageFile, s
     screenshot: async (op) => { await lt(op, '-o', OUT, 'shot', 'looktap'); imageFile(op, join(OUT, 'looktap.png')); },
     home: (op) => lt(op, 'key', 'home'),
     openUrl: (op) => lt(op, 'open', C.url),
-    terminate: null,
+    terminate: (op) => lt(op, 'stop', C.app), // since 0.3.0
   };
 
   // ── looktap MCP ──
@@ -160,7 +185,7 @@ export function adapters({ C, OUT, LOOKTAP, MAESTRO, sh, mcpServer, imageFile, s
     screenshot: (op) => lc(op, 'screenshot'),
     home: (op) => lc(op, 'key', { keys: ['home'] }),
     openUrl: (op) => lc(op, 'looktap', { command: `open ${C.url}` }),
-    terminate: null,
+    terminate: (op) => lc(op, 'looktap', { command: `stop ${C.app}` }), // since 0.3.0
   };
 
   // ── mobile-mcp ──
@@ -237,7 +262,7 @@ export function adapters({ C, OUT, LOOKTAP, MAESTRO, sh, mcpServer, imageFile, s
     if (!m) throw new Error(`no element id in: ${text.slice(0, 150)}`);
     return m[1];
   };
-  const byText = (t) => ['-android uiautomator', `new UiSelector().text("${t}")`];
+  const byText = (t) => ['-android uiautomator', t === C.openSearch && C.openSearchDesc ? `new UiSelector().description("${t}")` : `new UiSelector().text("${t}")`];
   const caps = { 'appium:appPackage': C.app, 'appium:appActivity': '.Settings', 'appium:noReset': true, 'appium:udid': C.dev };
   A['appium-mcp'] = {
     defs: () => am.defs, version: () => am.version,
@@ -261,7 +286,7 @@ export function adapters({ C, OUT, LOOKTAP, MAESTRO, sh, mcpServer, imageFile, s
       // as an agent would (each try is a call)
       let err = null;
       for (let i = 0; i < 5; i++) {
-        const f = await am.call(op, 'appium_find_element', { strategy: 'class name', selector: 'android.widget.EditText' }).then((r) => idFrom(r.text), () => null);
+        const f = await am.call(op, 'appium_find_element', { strategy: 'class name', selector: C.fieldClass || 'android.widget.EditText' }).then((r) => idFrom(r.text), () => null);
         if (!f) continue;
         try { await am.call(op, 'appium_set_value', { elementUUID: f, text: C.text }); return; } catch (e) { err = e; }
       }
@@ -310,13 +335,21 @@ export function adapters({ C, OUT, LOOKTAP, MAESTRO, sh, mcpServer, imageFile, s
     back: (op) => http(op, 'POST', `/session/${S}/back`, {}),
     tapXY: (op) => pointer(op, [px, py]),
     swipe: (op) => pointer(op, swPx),
-    scrollTo: (op) => el(op, '-android uiautomator', `new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().text("${C.far}"))`),
+    // One UI nests its list in a scrolling header, and UiScrollable stops halfway: there, find and swipe, as an agent would
+    scrollTo: async (op) => {
+      if (!C.list) return el(op, '-android uiautomator', `new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().text("${C.far}"))`);
+      for (let i = 0; i < LOOP; i++) {
+        const found = (await http(op, 'POST', `/session/${S}/elements`, { using: '-android uiautomator', value: `new UiSelector().text("${C.far}")` })).value;
+        if (found.length) return;
+        await pointer(op, swPx);
+      }
+    },
     fill: async (op) => {
       await http(op, 'POST', `/session/${S}/element/${await el(op, ...byText(C.openSearch))}/click`, {});
       await agentTurn(op);
       let err = null;
       for (let i = 0; i < 5; i++) {
-        const f = await el(op, 'class name', 'android.widget.EditText').catch(() => null);
+        const f = await el(op, 'class name', C.fieldClass || 'android.widget.EditText').catch(() => null);
         if (!f) continue;
         try { await http(op, 'POST', `/session/${S}/element/${f}/value`, { text: C.text }); return; } catch (e) { err = e; }
       }
@@ -333,7 +366,7 @@ export function adapters({ C, OUT, LOOKTAP, MAESTRO, sh, mcpServer, imageFile, s
   const dump = (op) => adb(op, 'exec-out', 'uiautomator', 'dump', '/dev/tty');
   const nodeCenter = (xml, label) => {
     const esc = label.replace(/&/g, '&amp;').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // uiautomator's XML escapes &
-    const m = new RegExp(`text="${esc}"[^>]*?bounds="\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]"`).exec(xml);
+    const m = new RegExp(`(?:text|content-desc)="${esc}"[^>]*?bounds="\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]"`).exec(xml);
     return m && [Math.round((+m[1] + +m[3]) / 2), Math.round((+m[2] + +m[4]) / 2), +m[2], +m[4]];
   };
   const dTap = async (op, label) => {

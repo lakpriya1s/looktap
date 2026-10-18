@@ -75,7 +75,8 @@ It's just as handy by hand, or in a shell script for screenshot sweeps and bug r
 
 ## How it compares
 
-Every agent mobile tool we could run on one Mac was given the same 12 steps in the Settings app, 10 runs each:
+Every agent mobile tool we could run on one Mac was given the same 12 steps in the Settings app, 10 runs each, on an
+iPhone simulator and an Android emulator:
 looktap (CLI and MCP), mobile-mcp, Maestro MCP, Appium MCP, raw Appium, ios-simulator-mcp, MobileBuildMCP, raw
 idb and raw adb. A neutral checker decided whether each step worked. These are the totals over the steps every tool
 can do:
@@ -90,12 +91,21 @@ can do:
 
 ¹ The device's reaction time plus 2 s per tool call for the model's round trip.
 
-Where looktap loses:
-- On raw device time, ios-simulator-mcp is faster in total on iOS (4.5 s against 5.2 s), with 20 calls to looktap's 8.
-- The looktap MCP waits for the screen to settle after every action, which makes it slower per action than the CLI.
-- looktap can't stop an app, and on iOS it has no home button.
+**On real phones** (iPhone 14 Pro and Samsung Galaxy A06 over USB, looktap 0.4.0, all 12 steps), the looktap CLI again
+had the lowest agent time (87 s and 38 s, against 104–114 s and 45–89 s) and returned the least text (1.7 KB and
+1.0 KB, against 8.9–191 KB). Four of the iOS tools can't drive a real iPhone at all: ios-simulator-mcp, MobileBuildMCP,
+idb and Maestro.
 
-Method, both platforms' tables and what else they show are in **[BENCHMARK.md](BENCHMARK.md)**.
+Where looktap loses:
+- On raw device time, others are faster in total: ios-simulator-mcp on the iOS simulator (4.5 s against 5.2 s, with
+  20 calls to looktap's 8), mobile-mcp and raw Appium on the real iPhone (60 s and 62 s against 63 s), and raw Appium
+  on the Samsung (11 s against 12 s).
+- The looktap MCP waits for the screen to settle after every action, which makes it slower per action than the CLI.
+  On the real iPhone that takes 6–11 s a tap and puts it last for agent time.
+- In the simulator and emulator runs, looktap 0.2.1 couldn't stop an app or press Home on iOS; 0.3.0 added `stop` and
+  `home`.
+
+Method, every device's tables and what else they show are in **[BENCHMARK.md](BENCHMARK.md)**.
 
 **Where Appium is still the better choice:** it plugs into existing WebDriver test suites and CI grids, and supports
 many more platforms. looktap isn't a test framework.

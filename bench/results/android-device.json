@@ -1,0 +1,7842 @@
+{
+  "meta": {
+    "date": "2026-10-17T19:39:51.863Z",
+    "platform": "android",
+    "device": "Samsung Galaxy A06 (Android 16)",
+    "runs": 10,
+    "host": "Apple M3 Pro, macOS 26.5.2",
+    "idleBusyPct": 9,
+    "idleFreeMb": 4927
+  },
+  "tools": {
+    "looktap": {
+      "steps": {
+        "launch app": [
+          {
+            "ms": 304,
+            "seenMs": 552,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 294,
+            "seenMs": 527,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 321,
+            "seenMs": 571,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 317,
+            "seenMs": 566,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 302,
+            "seenMs": 538,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 320,
+            "seenMs": 562,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 329,
+            "seenMs": 564,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 282,
+            "seenMs": 521,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 334,
+            "seenMs": 573,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 327,
+            "seenMs": 573,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "read screen": [
+          {
+            "ms": 227,
+            "seenMs": 227,
+            "calls": 1,
+            "bytes": 893,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 308,
+            "seenMs": 308,
+            "calls": 1,
+            "bytes": 893,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 273,
+            "seenMs": 273,
+            "calls": 1,
+            "bytes": 893,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 234,
+            "seenMs": 234,
+            "calls": 1,
+            "bytes": 893,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 249,
+            "seenMs": 249,
+            "calls": 1,
+            "bytes": 893,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 311,
+            "seenMs": 311,
+            "calls": 1,
+            "bytes": 893,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 246,
+            "seenMs": 246,
+            "calls": 1,
+            "bytes": 893,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 231,
+            "seenMs": 231,
+            "calls": 1,
+            "bytes": 893,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 277,
+            "seenMs": 277,
+            "calls": 1,
+            "bytes": 893,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 263,
+            "seenMs": 263,
+            "calls": 1,
+            "bytes": 893,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap by label": [
+          {
+            "ms": 205,
+            "seenMs": 205,
+            "calls": 1,
+            "bytes": 32,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 229,
+            "seenMs": 229,
+            "calls": 1,
+            "bytes": 32,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 212,
+            "seenMs": 212,
+            "calls": 1,
+            "bytes": 32,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 200,
+            "seenMs": 200,
+            "calls": 1,
+            "bytes": 32,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 254,
+            "seenMs": 254,
+            "calls": 1,
+            "bytes": 32,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 237,
+            "seenMs": 237,
+            "calls": 1,
+            "bytes": 32,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 219,
+            "seenMs": 219,
+            "calls": 1,
+            "bytes": 32,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 197,
+            "seenMs": 197,
+            "calls": 1,
+            "bytes": 32,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 238,
+            "seenMs": 238,
+            "calls": 1,
+            "bytes": 32,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 234,
+            "seenMs": 234,
+            "calls": 1,
+            "bytes": 32,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "back": [
+          {
+            "ms": 189,
+            "seenMs": 675,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 130,
+            "seenMs": 594,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 176,
+            "seenMs": 646,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 150,
+            "seenMs": 609,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 133,
+            "seenMs": 618,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 176,
+            "seenMs": 656,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 190,
+            "seenMs": 757,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 196,
+            "seenMs": 688,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 180,
+            "seenMs": 683,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 193,
+            "seenMs": 720,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap x,y": [
+          {
+            "ms": 238,
+            "seenMs": 238,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 255,
+            "seenMs": 255,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 253,
+            "seenMs": 253,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 254,
+            "seenMs": 254,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 231,
+            "seenMs": 231,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 266,
+            "seenMs": 266,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 241,
+            "seenMs": 241,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 242,
+            "seenMs": 242,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 263,
+            "seenMs": 263,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 277,
+            "seenMs": 277,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "swipe": [
+          {
+            "ms": 556,
+            "seenMs": 556,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 554,
+            "seenMs": 554,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 552,
+            "seenMs": 552,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 558,
+            "seenMs": 558,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 544,
+            "seenMs": 544,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 574,
+            "seenMs": 574,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 583,
+            "seenMs": 583,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 543,
+            "seenMs": 543,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 573,
+            "seenMs": 573,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 562,
+            "seenMs": 562,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "scroll to label": [
+          {
+            "ms": 5762,
+            "seenMs": 5762,
+            "calls": 1,
+            "bytes": 31,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5547,
+            "seenMs": 5547,
+            "calls": 1,
+            "bytes": 31,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5542,
+            "seenMs": 5542,
+            "calls": 1,
+            "bytes": 31,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5796,
+            "seenMs": 5796,
+            "calls": 1,
+            "bytes": 31,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5972,
+            "seenMs": 5972,
+            "calls": 1,
+            "bytes": 31,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6158,
+            "seenMs": 6158,
+            "calls": 1,
+            "bytes": 31,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5795,
+            "seenMs": 5795,
+            "calls": 1,
+            "bytes": 31,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5845,
+            "seenMs": 5845,
+            "calls": 1,
+            "bytes": 31,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5846,
+            "seenMs": 5846,
+            "calls": 1,
+            "bytes": 31,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6089,
+            "seenMs": 6089,
+            "calls": 1,
+            "bytes": 31,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "fill field": [
+          {
+            "ms": 1510,
+            "seenMs": 1510,
+            "calls": 2,
+            "bytes": 36,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1412,
+            "seenMs": 1412,
+            "calls": 2,
+            "bytes": 36,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1522,
+            "seenMs": 1522,
+            "calls": 2,
+            "bytes": 36,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1441,
+            "seenMs": 1441,
+            "calls": 2,
+            "bytes": 36,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1491,
+            "seenMs": 1491,
+            "calls": 2,
+            "bytes": 36,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1437,
+            "seenMs": 1437,
+            "calls": 2,
+            "bytes": 36,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1536,
+            "seenMs": 1536,
+            "calls": 2,
+            "bytes": 36,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1523,
+            "seenMs": 1523,
+            "calls": 2,
+            "bytes": 36,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1557,
+            "seenMs": 1557,
+            "calls": 2,
+            "bytes": 36,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1429,
+            "seenMs": 1429,
+            "calls": 2,
+            "bytes": 36,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "screenshot": [
+          {
+            "ms": 473,
+            "seenMs": 473,
+            "calls": 1,
+            "bytes": 65,
+            "image": 96683,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 256,
+            "seenMs": 256,
+            "calls": 1,
+            "bytes": 65,
+            "image": 96365,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 241,
+            "seenMs": 241,
+            "calls": 1,
+            "bytes": 65,
+            "image": 96565,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 232,
+            "seenMs": 232,
+            "calls": 1,
+            "bytes": 65,
+            "image": 96317,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 238,
+            "seenMs": 238,
+            "calls": 1,
+            "bytes": 65,
+            "image": 96456,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 239,
+            "seenMs": 239,
+            "calls": 1,
+            "bytes": 65,
+            "image": 96177,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 301,
+            "seenMs": 301,
+            "calls": 1,
+            "bytes": 65,
+            "image": 96242,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 243,
+            "seenMs": 243,
+            "calls": 1,
+            "bytes": 65,
+            "image": 96624,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 244,
+            "seenMs": 244,
+            "calls": 1,
+            "bytes": 65,
+            "image": 96780,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 250,
+            "seenMs": 250,
+            "calls": 1,
+            "bytes": 65,
+            "image": 96731,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          }
+        ],
+        "home": [
+          {
+            "ms": 193,
+            "seenMs": 193,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 189,
+            "seenMs": 189,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 192,
+            "seenMs": 192,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 204,
+            "seenMs": 204,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 196,
+            "seenMs": 196,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 212,
+            "seenMs": 212,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 157,
+            "seenMs": 157,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 222,
+            "seenMs": 222,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 206,
+            "seenMs": 206,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 207,
+            "seenMs": 207,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "open URL": [
+          {
+            "ms": 231,
+            "seenMs": 1126,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 228,
+            "seenMs": 1132,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 255,
+            "seenMs": 1170,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 233,
+            "seenMs": 1117,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 235,
+            "seenMs": 465,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 244,
+            "seenMs": 1165,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 253,
+            "seenMs": 1151,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 239,
+            "seenMs": 461,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 260,
+            "seenMs": 1164,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 228,
+            "seenMs": 456,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "terminate app": [
+          {
+            "ms": 386,
+            "seenMs": 386,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 368,
+            "seenMs": 368,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 357,
+            "seenMs": 357,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 411,
+            "seenMs": 411,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 418,
+            "seenMs": 418,
+            "calls": 1,
+            "bytes": 39,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 415,
+            "seenMs": 415,
+            "calls": 1,
+            "bytes": 40,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 357,
+            "seenMs": 357,
+            "calls": 1,
+            "bytes": 40,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 394,
+            "seenMs": 394,
+            "calls": 1,
+            "bytes": 40,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 382,
+            "seenMs": 382,
+            "calls": 1,
+            "bytes": 40,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 393,
+            "seenMs": 393,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          }
+        ]
+      },
+      "hostBefore": {
+        "busyPct": 9,
+        "freeMb": 4958,
+        "compressedMb": 4250,
+        "waitedMs": 4294
+      },
+      "setupMs": 1391,
+      "setupUsage": {
+        "samples": 6,
+        "peakRssMb": 98,
+        "meanRssMb": 88,
+        "meanCpuPct": 7,
+        "peakCpuPct": 15,
+        "sharedPeakRssMb": 12
+      },
+      "defsBytes": 0,
+      "version": "looktap CLI",
+      "runConditions": [
+        {
+          "host": 8,
+          "deviceLoad": 28.59
+        },
+        {
+          "host": 10,
+          "deviceLoad": 28.33
+        },
+        {
+          "host": 9,
+          "deviceLoad": 28.5
+        },
+        {
+          "host": 9,
+          "deviceLoad": 28.51
+        },
+        {
+          "host": 14,
+          "deviceLoad": 28.92
+        },
+        {
+          "host": 17,
+          "deviceLoad": 28.61
+        },
+        {
+          "host": 12,
+          "deviceLoad": 29.97
+        },
+        {
+          "host": 14,
+          "deviceLoad": 30.09
+        },
+        {
+          "host": 18,
+          "deviceLoad": 29.73
+        },
+        {
+          "host": 12,
+          "deviceLoad": 29.29
+        }
+      ],
+      "usage": {
+        "samples": 1605,
+        "peakRssMb": 114,
+        "meanRssMb": 62,
+        "meanCpuPct": 1,
+        "peakCpuPct": 22,
+        "sharedPeakRssMb": 13
+      },
+      "deviceUsage": {
+        "samples": 404,
+        "peakRssMb": 155,
+        "meanRssMb": 147,
+        "meanCpuPct": 6
+      },
+      "rerun": {
+        "terminate app": {
+          "date": "2026-10-18T09:38:14.085Z",
+          "why": "looktap 0.4.0 has `stop`; the adapter still marked terminate n/a"
+        }
+      }
+    },
+    "looktap-mcp": {
+      "steps": {
+        "launch app": [
+          {
+            "ms": 250,
+            "seenMs": 510,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 264,
+            "seenMs": 518,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 262,
+            "seenMs": 522,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 279,
+            "seenMs": 526,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 285,
+            "seenMs": 539,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 259,
+            "seenMs": 504,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 256,
+            "seenMs": 516,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 264,
+            "seenMs": 511,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 275,
+            "seenMs": 518,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 282,
+            "seenMs": 528,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "read screen": [
+          {
+            "ms": 102,
+            "seenMs": 102,
+            "calls": 1,
+            "bytes": 959,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 106,
+            "seenMs": 106,
+            "calls": 1,
+            "bytes": 959,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 85,
+            "seenMs": 85,
+            "calls": 1,
+            "bytes": 959,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 110,
+            "seenMs": 110,
+            "calls": 1,
+            "bytes": 959,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 124,
+            "seenMs": 124,
+            "calls": 1,
+            "bytes": 959,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 111,
+            "seenMs": 111,
+            "calls": 1,
+            "bytes": 959,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 109,
+            "seenMs": 109,
+            "calls": 1,
+            "bytes": 959,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 94,
+            "seenMs": 94,
+            "calls": 1,
+            "bytes": 959,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 116,
+            "seenMs": 116,
+            "calls": 1,
+            "bytes": 959,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 114,
+            "seenMs": 114,
+            "calls": 1,
+            "bytes": 959,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap by label": [
+          {
+            "ms": 1562,
+            "seenMs": 1562,
+            "calls": 1,
+            "bytes": 1075,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1568,
+            "seenMs": 1568,
+            "calls": 1,
+            "bytes": 1075,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1537,
+            "seenMs": 1537,
+            "calls": 1,
+            "bytes": 1075,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1551,
+            "seenMs": 1551,
+            "calls": 1,
+            "bytes": 1075,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3146,
+            "seenMs": 3146,
+            "calls": 1,
+            "bytes": 1075,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1570,
+            "seenMs": 1570,
+            "calls": 1,
+            "bytes": 1075,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1597,
+            "seenMs": 1597,
+            "calls": 1,
+            "bytes": 1075,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1552,
+            "seenMs": 1552,
+            "calls": 1,
+            "bytes": 1075,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1767,
+            "seenMs": 1767,
+            "calls": 1,
+            "bytes": 1075,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3094,
+            "seenMs": 3094,
+            "calls": 1,
+            "bytes": 1075,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "back": [
+          {
+            "ms": 997,
+            "seenMs": 997,
+            "calls": 1,
+            "bytes": 959,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1408,
+            "seenMs": 1408,
+            "calls": 1,
+            "bytes": 959,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1289,
+            "seenMs": 1289,
+            "calls": 1,
+            "bytes": 959,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1075,
+            "seenMs": 1075,
+            "calls": 1,
+            "bytes": 959,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1262,
+            "seenMs": 1262,
+            "calls": 1,
+            "bytes": 959,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1196,
+            "seenMs": 1196,
+            "calls": 1,
+            "bytes": 959,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 931,
+            "seenMs": 931,
+            "calls": 1,
+            "bytes": 959,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1256,
+            "seenMs": 1256,
+            "calls": 1,
+            "bytes": 959,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1263,
+            "seenMs": 1263,
+            "calls": 1,
+            "bytes": 959,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1483,
+            "seenMs": 1483,
+            "calls": 1,
+            "bytes": 959,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap x,y": [
+          {
+            "ms": 1439,
+            "seenMs": 1439,
+            "calls": 1,
+            "bytes": 1040,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1427,
+            "seenMs": 1427,
+            "calls": 1,
+            "bytes": 1040,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1429,
+            "seenMs": 1429,
+            "calls": 1,
+            "bytes": 1040,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1407,
+            "seenMs": 1407,
+            "calls": 1,
+            "bytes": 1040,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1465,
+            "seenMs": 1465,
+            "calls": 1,
+            "bytes": 1040,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1408,
+            "seenMs": 1408,
+            "calls": 1,
+            "bytes": 1040,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1412,
+            "seenMs": 1412,
+            "calls": 1,
+            "bytes": 1040,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3050,
+            "seenMs": 3050,
+            "calls": 1,
+            "bytes": 1040,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1392,
+            "seenMs": 1392,
+            "calls": 1,
+            "bytes": 1040,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1423,
+            "seenMs": 1423,
+            "calls": 1,
+            "bytes": 1040,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "swipe": [
+          {
+            "ms": 2632,
+            "seenMs": 2632,
+            "calls": 1,
+            "bytes": 1294,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2622,
+            "seenMs": 2622,
+            "calls": 1,
+            "bytes": 1294,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2637,
+            "seenMs": 2637,
+            "calls": 1,
+            "bytes": 1295,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2490,
+            "seenMs": 2490,
+            "calls": 1,
+            "bytes": 1295,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2588,
+            "seenMs": 2588,
+            "calls": 1,
+            "bytes": 1295,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2519,
+            "seenMs": 2519,
+            "calls": 1,
+            "bytes": 1294,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2456,
+            "seenMs": 2456,
+            "calls": 1,
+            "bytes": 1295,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2564,
+            "seenMs": 2564,
+            "calls": 1,
+            "bytes": 1294,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2498,
+            "seenMs": 2498,
+            "calls": 1,
+            "bytes": 1294,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2602,
+            "seenMs": 2602,
+            "calls": 1,
+            "bytes": 1294,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "scroll to label": [
+          {
+            "ms": 5670,
+            "seenMs": 5670,
+            "calls": 1,
+            "bytes": 71,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5733,
+            "seenMs": 5733,
+            "calls": 1,
+            "bytes": 71,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5615,
+            "seenMs": 5615,
+            "calls": 1,
+            "bytes": 71,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5600,
+            "seenMs": 5600,
+            "calls": 1,
+            "bytes": 71,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5463,
+            "seenMs": 5463,
+            "calls": 1,
+            "bytes": 71,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5486,
+            "seenMs": 5486,
+            "calls": 1,
+            "bytes": 71,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5754,
+            "seenMs": 5754,
+            "calls": 1,
+            "bytes": 71,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5357,
+            "seenMs": 5357,
+            "calls": 1,
+            "bytes": 71,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5461,
+            "seenMs": 5461,
+            "calls": 1,
+            "bytes": 71,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5437,
+            "seenMs": 5437,
+            "calls": 1,
+            "bytes": 71,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "fill field": [
+          {
+            "ms": 3948,
+            "seenMs": 3948,
+            "calls": 2,
+            "bytes": 2348,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3882,
+            "seenMs": 3882,
+            "calls": 2,
+            "bytes": 2354,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3857,
+            "seenMs": 3857,
+            "calls": 2,
+            "bytes": 2352,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3777,
+            "seenMs": 3777,
+            "calls": 2,
+            "bytes": 2339,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3702,
+            "seenMs": 3702,
+            "calls": 2,
+            "bytes": 2348,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3752,
+            "seenMs": 3752,
+            "calls": 2,
+            "bytes": 2337,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3842,
+            "seenMs": 3842,
+            "calls": 2,
+            "bytes": 2350,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3711,
+            "seenMs": 3711,
+            "calls": 2,
+            "bytes": 2345,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3832,
+            "seenMs": 3832,
+            "calls": 2,
+            "bytes": 2345,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3861,
+            "seenMs": 3861,
+            "calls": 2,
+            "bytes": 2342,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "screenshot": [
+          {
+            "ms": 388,
+            "seenMs": 388,
+            "calls": 1,
+            "bytes": 59413,
+            "image": 44443,
+            "dims": [
+              360,
+              800
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 124,
+            "seenMs": 124,
+            "calls": 1,
+            "bytes": 59521,
+            "image": 44525,
+            "dims": [
+              360,
+              800
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 127,
+            "seenMs": 127,
+            "calls": 1,
+            "bytes": 59561,
+            "image": 44555,
+            "dims": [
+              360,
+              800
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 124,
+            "seenMs": 124,
+            "calls": 1,
+            "bytes": 59757,
+            "image": 44702,
+            "dims": [
+              360,
+              800
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 116,
+            "seenMs": 116,
+            "calls": 1,
+            "bytes": 59637,
+            "image": 44611,
+            "dims": [
+              360,
+              800
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 122,
+            "seenMs": 122,
+            "calls": 1,
+            "bytes": 59473,
+            "image": 44489,
+            "dims": [
+              360,
+              800
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 105,
+            "seenMs": 105,
+            "calls": 1,
+            "bytes": 59617,
+            "image": 44596,
+            "dims": [
+              360,
+              800
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 100,
+            "seenMs": 100,
+            "calls": 1,
+            "bytes": 59661,
+            "image": 44630,
+            "dims": [
+              360,
+              800
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 101,
+            "seenMs": 101,
+            "calls": 1,
+            "bytes": 59693,
+            "image": 44653,
+            "dims": [
+              360,
+              800
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 108,
+            "seenMs": 108,
+            "calls": 1,
+            "bytes": 59693,
+            "image": 44653,
+            "dims": [
+              360,
+              800
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "home": [
+          {
+            "ms": 1073,
+            "seenMs": 1073,
+            "calls": 1,
+            "bytes": 1241,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 931,
+            "seenMs": 931,
+            "calls": 1,
+            "bytes": 1241,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1043,
+            "seenMs": 1043,
+            "calls": 1,
+            "bytes": 1241,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 934,
+            "seenMs": 934,
+            "calls": 1,
+            "bytes": 1241,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 975,
+            "seenMs": 975,
+            "calls": 1,
+            "bytes": 1241,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 939,
+            "seenMs": 939,
+            "calls": 1,
+            "bytes": 1241,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1082,
+            "seenMs": 1082,
+            "calls": 1,
+            "bytes": 1241,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 975,
+            "seenMs": 975,
+            "calls": 1,
+            "bytes": 1241,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1013,
+            "seenMs": 1013,
+            "calls": 1,
+            "bytes": 1241,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 966,
+            "seenMs": 966,
+            "calls": 1,
+            "bytes": 1241,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "open URL": [
+          {
+            "ms": 125,
+            "seenMs": 1057,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 125,
+            "seenMs": 1028,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 130,
+            "seenMs": 1062,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 130,
+            "seenMs": 1025,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 123,
+            "seenMs": 355,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 123,
+            "seenMs": 1035,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 176,
+            "seenMs": 1114,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 125,
+            "seenMs": 1052,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 136,
+            "seenMs": 365,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 128,
+            "seenMs": 1165,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "terminate app": [
+          {
+            "ms": 325,
+            "seenMs": 325,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 352,
+            "seenMs": 352,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 358,
+            "seenMs": 358,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 328,
+            "seenMs": 328,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 324,
+            "seenMs": 324,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 351,
+            "seenMs": 351,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 323,
+            "seenMs": 323,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 315,
+            "seenMs": 315,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 307,
+            "seenMs": 307,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 329,
+            "seenMs": 329,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          }
+        ]
+      },
+      "hostBefore": {
+        "busyPct": 8,
+        "freeMb": 4691,
+        "compressedMb": 4197,
+        "waitedMs": 4846
+      },
+      "setupMs": 1117,
+      "setupUsage": {
+        "samples": 5,
+        "peakRssMb": 106,
+        "meanRssMb": 95,
+        "meanCpuPct": 5,
+        "peakCpuPct": 14,
+        "sharedPeakRssMb": 11
+      },
+      "defsBytes": 10567,
+      "version": "looktap 0.4.0",
+      "runConditions": [
+        {
+          "host": 7,
+          "deviceLoad": 28.83
+        },
+        {
+          "host": 12,
+          "deviceLoad": 28.93
+        },
+        {
+          "host": 12,
+          "deviceLoad": 30.45
+        },
+        {
+          "host": 14,
+          "deviceLoad": 29.78
+        },
+        {
+          "host": 11,
+          "deviceLoad": 30.06
+        },
+        {
+          "host": 13,
+          "deviceLoad": 29.18
+        },
+        {
+          "host": 10,
+          "deviceLoad": 29.3
+        },
+        {
+          "host": 9,
+          "deviceLoad": 29.67
+        },
+        {
+          "host": 7,
+          "deviceLoad": 29.53
+        },
+        {
+          "host": 9,
+          "deviceLoad": 29.02
+        }
+      ],
+      "usage": {
+        "samples": 1900,
+        "peakRssMb": 123,
+        "meanRssMb": 105,
+        "meanCpuPct": 1,
+        "peakCpuPct": 26,
+        "sharedPeakRssMb": 12
+      },
+      "deviceUsage": {
+        "samples": 477,
+        "peakRssMb": 157,
+        "meanRssMb": 148,
+        "meanCpuPct": 8
+      },
+      "rerun": {
+        "terminate app": {
+          "date": "2026-10-18T09:45:55.151Z",
+          "why": "looktap 0.4.0 has `stop`; the adapter still marked terminate n/a"
+        }
+      }
+    },
+    "mobile-mcp": {
+      "steps": {
+        "launch app": [
+          {
+            "ms": 186,
+            "seenMs": 449,
+            "calls": 1,
+            "bytes": 72,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 196,
+            "seenMs": 451,
+            "calls": 1,
+            "bytes": 72,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 233,
+            "seenMs": 481,
+            "calls": 1,
+            "bytes": 72,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 176,
+            "seenMs": 421,
+            "calls": 1,
+            "bytes": 72,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 202,
+            "seenMs": 461,
+            "calls": 1,
+            "bytes": 72,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 189,
+            "seenMs": 433,
+            "calls": 1,
+            "bytes": 72,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 224,
+            "seenMs": 479,
+            "calls": 1,
+            "bytes": 72,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 190,
+            "seenMs": 439,
+            "calls": 1,
+            "bytes": 72,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 206,
+            "seenMs": 471,
+            "calls": 1,
+            "bytes": 72,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 199,
+            "seenMs": 447,
+            "calls": 1,
+            "bytes": 72,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "read screen": [
+          {
+            "ms": 1040,
+            "seenMs": 1040,
+            "calls": 1,
+            "bytes": 9018,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1013,
+            "seenMs": 1013,
+            "calls": 1,
+            "bytes": 9010,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1114,
+            "seenMs": 1114,
+            "calls": 1,
+            "bytes": 9010,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1298,
+            "seenMs": 1298,
+            "calls": 1,
+            "bytes": 9010,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 973,
+            "seenMs": 973,
+            "calls": 1,
+            "bytes": 9010,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 966,
+            "seenMs": 966,
+            "calls": 1,
+            "bytes": 9010,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 770,
+            "seenMs": 770,
+            "calls": 1,
+            "bytes": 9010,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 801,
+            "seenMs": 801,
+            "calls": 1,
+            "bytes": 9010,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1102,
+            "seenMs": 1102,
+            "calls": 1,
+            "bytes": 9010,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1119,
+            "seenMs": 1119,
+            "calls": 1,
+            "bytes": 9010,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap by label": [
+          {
+            "ms": 1925,
+            "seenMs": 1925,
+            "calls": 2,
+            "bytes": 9080,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1906,
+            "seenMs": 1906,
+            "calls": 2,
+            "bytes": 9072,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2167,
+            "seenMs": 2167,
+            "calls": 2,
+            "bytes": 9072,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2067,
+            "seenMs": 2067,
+            "calls": 2,
+            "bytes": 9072,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1968,
+            "seenMs": 1968,
+            "calls": 2,
+            "bytes": 9072,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2396,
+            "seenMs": 2396,
+            "calls": 2,
+            "bytes": 9072,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2476,
+            "seenMs": 2476,
+            "calls": 2,
+            "bytes": 9072,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2370,
+            "seenMs": 2370,
+            "calls": 2,
+            "bytes": 9072,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2190,
+            "seenMs": 2190,
+            "calls": 2,
+            "bytes": 9072,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1801,
+            "seenMs": 1801,
+            "calls": 2,
+            "bytes": 9072,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "back": [
+          {
+            "ms": 52,
+            "seenMs": 569,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 51,
+            "seenMs": 550,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 58,
+            "seenMs": 553,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 72,
+            "seenMs": 550,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 67,
+            "seenMs": 547,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 50,
+            "seenMs": 539,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 65,
+            "seenMs": 584,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 52,
+            "seenMs": 590,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 43,
+            "seenMs": 578,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 59,
+            "seenMs": 547,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap x,y": [
+          {
+            "ms": 57,
+            "seenMs": 57,
+            "calls": 1,
+            "bytes": 81,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 48,
+            "seenMs": 48,
+            "calls": 1,
+            "bytes": 81,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 54,
+            "seenMs": 54,
+            "calls": 1,
+            "bytes": 81,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 56,
+            "seenMs": 56,
+            "calls": 1,
+            "bytes": 81,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 58,
+            "seenMs": 58,
+            "calls": 1,
+            "bytes": 81,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 44,
+            "seenMs": 44,
+            "calls": 1,
+            "bytes": 81,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 56,
+            "seenMs": 56,
+            "calls": 1,
+            "bytes": 81,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 57,
+            "seenMs": 57,
+            "calls": 1,
+            "bytes": 81,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 68,
+            "seenMs": 68,
+            "calls": 1,
+            "bytes": 81,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 48,
+            "seenMs": 48,
+            "calls": 1,
+            "bytes": 81,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "swipe": [
+          {
+            "ms": 1045,
+            "seenMs": 1045,
+            "calls": 1,
+            "bytes": 87,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1046,
+            "seenMs": 1046,
+            "calls": 1,
+            "bytes": 87,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1044,
+            "seenMs": 1044,
+            "calls": 1,
+            "bytes": 87,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1043,
+            "seenMs": 1043,
+            "calls": 1,
+            "bytes": 87,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1041,
+            "seenMs": 1041,
+            "calls": 1,
+            "bytes": 87,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1040,
+            "seenMs": 1040,
+            "calls": 1,
+            "bytes": 87,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1043,
+            "seenMs": 1043,
+            "calls": 1,
+            "bytes": 87,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1041,
+            "seenMs": 1041,
+            "calls": 1,
+            "bytes": 87,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1041,
+            "seenMs": 1041,
+            "calls": 1,
+            "bytes": 87,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1040,
+            "seenMs": 1040,
+            "calls": 1,
+            "bytes": 87,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "scroll to label": [
+          {
+            "ms": 18594,
+            "seenMs": 18594,
+            "calls": 15,
+            "bytes": 79481,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 18474,
+            "seenMs": 18474,
+            "calls": 15,
+            "bytes": 79482,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 18539,
+            "seenMs": 18539,
+            "calls": 15,
+            "bytes": 79445,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 18690,
+            "seenMs": 18690,
+            "calls": 15,
+            "bytes": 79450,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 18526,
+            "seenMs": 18526,
+            "calls": 15,
+            "bytes": 79709,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 17840,
+            "seenMs": 17840,
+            "calls": 15,
+            "bytes": 79339,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 18087,
+            "seenMs": 18087,
+            "calls": 15,
+            "bytes": 79346,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 18163,
+            "seenMs": 18163,
+            "calls": 15,
+            "bytes": 79587,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 18155,
+            "seenMs": 18155,
+            "calls": 15,
+            "bytes": 79585,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 18265,
+            "seenMs": 18265,
+            "calls": 15,
+            "bytes": 79567,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "fill field": [
+          {
+            "ms": 3502,
+            "seenMs": 3782,
+            "calls": 4,
+            "bytes": 19656,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3631,
+            "seenMs": 3894,
+            "calls": 4,
+            "bytes": 19667,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3428,
+            "seenMs": 3686,
+            "calls": 4,
+            "bytes": 19659,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3428,
+            "seenMs": 3708,
+            "calls": 4,
+            "bytes": 19663,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3213,
+            "seenMs": 3471,
+            "calls": 4,
+            "bytes": 19658,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3222,
+            "seenMs": 3482,
+            "calls": 4,
+            "bytes": 19660,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3387,
+            "seenMs": 3658,
+            "calls": 4,
+            "bytes": 19655,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3257,
+            "seenMs": 3525,
+            "calls": 4,
+            "bytes": 19663,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3460,
+            "seenMs": 3715,
+            "calls": 4,
+            "bytes": 19662,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3392,
+            "seenMs": 3656,
+            "calls": 4,
+            "bytes": 19669,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "screenshot": [
+          {
+            "ms": 447,
+            "seenMs": 447,
+            "calls": 1,
+            "bytes": 47567,
+            "image": 35500,
+            "dims": [
+              461,
+              1024
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 212,
+            "seenMs": 212,
+            "calls": 1,
+            "bytes": 47387,
+            "image": 35366,
+            "dims": [
+              461,
+              1024
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 205,
+            "seenMs": 205,
+            "calls": 1,
+            "bytes": 47435,
+            "image": 35401,
+            "dims": [
+              461,
+              1024
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 188,
+            "seenMs": 188,
+            "calls": 1,
+            "bytes": 47411,
+            "image": 35384,
+            "dims": [
+              461,
+              1024
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 196,
+            "seenMs": 196,
+            "calls": 1,
+            "bytes": 47579,
+            "image": 35510,
+            "dims": [
+              461,
+              1024
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 215,
+            "seenMs": 215,
+            "calls": 1,
+            "bytes": 47371,
+            "image": 35353,
+            "dims": [
+              461,
+              1024
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 219,
+            "seenMs": 219,
+            "calls": 1,
+            "bytes": 47427,
+            "image": 35395,
+            "dims": [
+              461,
+              1024
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 204,
+            "seenMs": 204,
+            "calls": 1,
+            "bytes": 47567,
+            "image": 35500,
+            "dims": [
+              461,
+              1024
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 213,
+            "seenMs": 213,
+            "calls": 1,
+            "bytes": 47431,
+            "image": 35398,
+            "dims": [
+              461,
+              1024
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 196,
+            "seenMs": 196,
+            "calls": 1,
+            "bytes": 47151,
+            "image": 35190,
+            "dims": [
+              461,
+              1024
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "home": [
+          {
+            "ms": 37,
+            "seenMs": 37,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 41,
+            "seenMs": 41,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 40,
+            "seenMs": 40,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 40,
+            "seenMs": 40,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 40,
+            "seenMs": 40,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 41,
+            "seenMs": 41,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 39,
+            "seenMs": 39,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 39,
+            "seenMs": 39,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 40,
+            "seenMs": 40,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 44,
+            "seenMs": 44,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "open URL": [
+          {
+            "ms": 138,
+            "seenMs": 1050,
+            "calls": 1,
+            "bytes": 70,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 124,
+            "seenMs": 1048,
+            "calls": 1,
+            "bytes": 70,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 143,
+            "seenMs": 1067,
+            "calls": 1,
+            "bytes": 70,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 139,
+            "seenMs": 1087,
+            "calls": 1,
+            "bytes": 70,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 144,
+            "seenMs": 1078,
+            "calls": 1,
+            "bytes": 70,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 144,
+            "seenMs": 1075,
+            "calls": 1,
+            "bytes": 70,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 147,
+            "seenMs": 1080,
+            "calls": 1,
+            "bytes": 70,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 130,
+            "seenMs": 1113,
+            "calls": 1,
+            "bytes": 70,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 152,
+            "seenMs": 1108,
+            "calls": 1,
+            "bytes": 70,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 138,
+            "seenMs": 1103,
+            "calls": 1,
+            "bytes": 70,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "terminate app": [
+          {
+            "ms": 229,
+            "seenMs": 229,
+            "calls": 1,
+            "bytes": 74,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 217,
+            "seenMs": 217,
+            "calls": 1,
+            "bytes": 74,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 256,
+            "seenMs": 256,
+            "calls": 1,
+            "bytes": 74,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 216,
+            "seenMs": 216,
+            "calls": 1,
+            "bytes": 74,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 229,
+            "seenMs": 229,
+            "calls": 1,
+            "bytes": 74,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 232,
+            "seenMs": 232,
+            "calls": 1,
+            "bytes": 74,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 242,
+            "seenMs": 242,
+            "calls": 1,
+            "bytes": 74,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 227,
+            "seenMs": 227,
+            "calls": 1,
+            "bytes": 74,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 218,
+            "seenMs": 218,
+            "calls": 1,
+            "bytes": 74,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 221,
+            "seenMs": 221,
+            "calls": 1,
+            "bytes": 74,
+            "ok": true,
+            "err": null
+          }
+        ]
+      },
+      "hostBefore": {
+        "busyPct": 5,
+        "freeMb": 4855,
+        "compressedMb": 4452,
+        "waitedMs": 4936
+      },
+      "setupMs": 4744,
+      "setupUsage": {
+        "samples": 19,
+        "peakRssMb": 303,
+        "meanRssMb": 249,
+        "meanCpuPct": 28,
+        "peakCpuPct": 119,
+        "sharedPeakRssMb": 12
+      },
+      "defsBytes": 29777,
+      "version": "mobile-mcp 1.0.11",
+      "runConditions": [
+        {
+          "host": 8,
+          "deviceLoad": 30.03
+        },
+        {
+          "host": 11,
+          "deviceLoad": 29.8
+        },
+        {
+          "host": 14,
+          "deviceLoad": 28.77
+        },
+        {
+          "host": 14,
+          "deviceLoad": 28.34
+        },
+        {
+          "host": 11,
+          "deviceLoad": 28.59
+        },
+        {
+          "host": 5,
+          "deviceLoad": 31.55
+        },
+        {
+          "host": 16,
+          "deviceLoad": 29.73
+        },
+        {
+          "host": 7,
+          "deviceLoad": 29.21
+        },
+        {
+          "host": 7,
+          "deviceLoad": 29.46
+        },
+        {
+          "host": 7,
+          "deviceLoad": 29.13
+        }
+      ],
+      "usage": {
+        "samples": 2330,
+        "peakRssMb": 307,
+        "meanRssMb": 256,
+        "meanCpuPct": 1,
+        "peakCpuPct": 24,
+        "sharedPeakRssMb": 15
+      },
+      "deviceUsage": {
+        "samples": 585,
+        "peakRssMb": 0,
+        "meanRssMb": 0,
+        "meanCpuPct": 0
+      }
+    },
+    "maestro-mcp": {
+      "steps": {
+        "launch app": [
+          {
+            "ms": 4842,
+            "seenMs": 5125,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4650,
+            "seenMs": 4922,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4954,
+            "seenMs": 5560,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4942,
+            "seenMs": 5241,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4588,
+            "seenMs": 4860,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5057,
+            "seenMs": 5341,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4824,
+            "seenMs": 5119,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5170,
+            "seenMs": 5437,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5081,
+            "seenMs": 5358,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4977,
+            "seenMs": 5252,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "read screen": [
+          {
+            "ms": 445,
+            "seenMs": 445,
+            "calls": 1,
+            "bytes": 14917,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 426,
+            "seenMs": 426,
+            "calls": 1,
+            "bytes": 14934,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 168,
+            "seenMs": 168,
+            "calls": 1,
+            "bytes": 14934,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 498,
+            "seenMs": 498,
+            "calls": 1,
+            "bytes": 14934,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 416,
+            "seenMs": 416,
+            "calls": 1,
+            "bytes": 14934,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 384,
+            "seenMs": 384,
+            "calls": 1,
+            "bytes": 14934,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 341,
+            "seenMs": 341,
+            "calls": 1,
+            "bytes": 14934,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 423,
+            "seenMs": 423,
+            "calls": 1,
+            "bytes": 14934,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 390,
+            "seenMs": 390,
+            "calls": 1,
+            "bytes": 14934,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 411,
+            "seenMs": 411,
+            "calls": 1,
+            "bytes": 14934,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap by label": [
+          {
+            "ms": 4661,
+            "seenMs": 4661,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3750,
+            "seenMs": 3750,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3589,
+            "seenMs": 3589,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3692,
+            "seenMs": 3692,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4577,
+            "seenMs": 4577,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3617,
+            "seenMs": 3617,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4118,
+            "seenMs": 4118,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3536,
+            "seenMs": 3536,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3683,
+            "seenMs": 3683,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3583,
+            "seenMs": 3583,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "back": [
+          {
+            "ms": 1864,
+            "seenMs": 1864,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2931,
+            "seenMs": 2931,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1914,
+            "seenMs": 1914,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1771,
+            "seenMs": 1771,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1779,
+            "seenMs": 1779,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1735,
+            "seenMs": 1735,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1731,
+            "seenMs": 1731,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1734,
+            "seenMs": 1734,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1748,
+            "seenMs": 1748,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1717,
+            "seenMs": 1717,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap x,y": [
+          {
+            "ms": 2833,
+            "seenMs": 2833,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2801,
+            "seenMs": 2801,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2652,
+            "seenMs": 2652,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2194,
+            "seenMs": 2194,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2176,
+            "seenMs": 2176,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2190,
+            "seenMs": 2190,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2494,
+            "seenMs": 2494,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2698,
+            "seenMs": 2698,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2639,
+            "seenMs": 2639,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2489,
+            "seenMs": 2489,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "swipe": [
+          {
+            "ms": 3159,
+            "seenMs": 3159,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3165,
+            "seenMs": 3165,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3285,
+            "seenMs": 3285,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3311,
+            "seenMs": 3311,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3316,
+            "seenMs": 3316,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3296,
+            "seenMs": 3296,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3244,
+            "seenMs": 3244,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2767,
+            "seenMs": 2767,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3040,
+            "seenMs": 3040,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3122,
+            "seenMs": 3122,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "scroll to label": [
+          {
+            "ms": 14848,
+            "seenMs": 14848,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 14896,
+            "seenMs": 14896,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 14481,
+            "seenMs": 14481,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 14917,
+            "seenMs": 14917,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 14586,
+            "seenMs": 14586,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 14815,
+            "seenMs": 14815,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 14614,
+            "seenMs": 14614,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 15096,
+            "seenMs": 15096,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 14764,
+            "seenMs": 14764,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 14626,
+            "seenMs": 14626,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "fill field": [
+          {
+            "ms": 7989,
+            "seenMs": 7989,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 8277,
+            "seenMs": 8277,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 8122,
+            "seenMs": 8122,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 8782,
+            "seenMs": 8782,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 8141,
+            "seenMs": 8141,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 8163,
+            "seenMs": 8163,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 8120,
+            "seenMs": 8120,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 7950,
+            "seenMs": 7950,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 7972,
+            "seenMs": 7972,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 7667,
+            "seenMs": 7667,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "screenshot": [
+          {
+            "ms": 706,
+            "seenMs": 706,
+            "calls": 1,
+            "bytes": 135588,
+            "image": 101641,
+            "dims": [
+              720,
+              1600
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 290,
+            "seenMs": 290,
+            "calls": 1,
+            "bytes": 135232,
+            "image": 101376,
+            "dims": [
+              720,
+              1600
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 292,
+            "seenMs": 292,
+            "calls": 1,
+            "bytes": 135572,
+            "image": 101629,
+            "dims": [
+              720,
+              1600
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 275,
+            "seenMs": 275,
+            "calls": 1,
+            "bytes": 135520,
+            "image": 101590,
+            "dims": [
+              720,
+              1600
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 267,
+            "seenMs": 267,
+            "calls": 1,
+            "bytes": 135148,
+            "image": 101312,
+            "dims": [
+              720,
+              1600
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 279,
+            "seenMs": 279,
+            "calls": 1,
+            "bytes": 135436,
+            "image": 101529,
+            "dims": [
+              720,
+              1600
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 286,
+            "seenMs": 286,
+            "calls": 1,
+            "bytes": 135564,
+            "image": 101623,
+            "dims": [
+              720,
+              1600
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 280,
+            "seenMs": 280,
+            "calls": 1,
+            "bytes": 135504,
+            "image": 101580,
+            "dims": [
+              720,
+              1600
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 264,
+            "seenMs": 264,
+            "calls": 1,
+            "bytes": 135128,
+            "image": 101297,
+            "dims": [
+              720,
+              1600
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 334,
+            "seenMs": 334,
+            "calls": 1,
+            "bytes": 135484,
+            "image": 101563,
+            "dims": [
+              720,
+              1600
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "home": [
+          {
+            "ms": 1370,
+            "seenMs": 1370,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1440,
+            "seenMs": 1440,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1397,
+            "seenMs": 1397,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1317,
+            "seenMs": 1317,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1395,
+            "seenMs": 1395,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1288,
+            "seenMs": 1288,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1242,
+            "seenMs": 1242,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1358,
+            "seenMs": 1358,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1290,
+            "seenMs": 1290,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1386,
+            "seenMs": 1386,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "open URL": [
+          {
+            "ms": 534,
+            "seenMs": 534,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 504,
+            "seenMs": 504,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 768,
+            "seenMs": 768,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 497,
+            "seenMs": 497,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 522,
+            "seenMs": 522,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 526,
+            "seenMs": 526,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 537,
+            "seenMs": 537,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 461,
+            "seenMs": 461,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 456,
+            "seenMs": 456,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 498,
+            "seenMs": 498,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "terminate app": [
+          {
+            "ms": 124,
+            "seenMs": 124,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 109,
+            "seenMs": 109,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 111,
+            "seenMs": 111,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 112,
+            "seenMs": 112,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 108,
+            "seenMs": 108,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 121,
+            "seenMs": 121,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 100,
+            "seenMs": 100,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 133,
+            "seenMs": 133,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 119,
+            "seenMs": 119,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 105,
+            "seenMs": 105,
+            "calls": 1,
+            "bytes": 170,
+            "ok": true,
+            "err": null
+          }
+        ]
+      },
+      "hostBefore": {
+        "busyPct": 10,
+        "freeMb": 5069,
+        "compressedMb": 4163,
+        "waitedMs": 4906
+      },
+      "setupMs": 11311,
+      "setupUsage": {
+        "samples": 45,
+        "peakRssMb": 297,
+        "meanRssMb": 265,
+        "meanCpuPct": 34,
+        "peakCpuPct": 217,
+        "sharedPeakRssMb": 25
+      },
+      "defsBytes": 9971,
+      "version": "maestro 1.0.0",
+      "runConditions": [
+        {
+          "host": 7,
+          "deviceLoad": 32.95
+        },
+        {
+          "host": 7,
+          "deviceLoad": 31.55
+        },
+        {
+          "host": 13,
+          "deviceLoad": 30.07
+        },
+        {
+          "host": 8,
+          "deviceLoad": 29.11
+        },
+        {
+          "host": 9,
+          "deviceLoad": 30.02
+        },
+        {
+          "host": 9,
+          "deviceLoad": 29.68
+        },
+        {
+          "host": 13,
+          "deviceLoad": 30.07
+        },
+        {
+          "host": 10,
+          "deviceLoad": 29.71
+        },
+        {
+          "host": 10,
+          "deviceLoad": 30.12
+        },
+        {
+          "host": 9,
+          "deviceLoad": 31.76
+        }
+      ],
+      "usage": {
+        "samples": 2806,
+        "peakRssMb": 1466,
+        "meanRssMb": 1094,
+        "meanCpuPct": 5,
+        "peakCpuPct": 226,
+        "sharedPeakRssMb": 37
+      },
+      "deviceUsage": {
+        "samples": 705,
+        "peakRssMb": 297,
+        "meanRssMb": 282,
+        "meanCpuPct": 18
+      }
+    },
+    "appium-mcp": {
+      "steps": {
+        "launch app": [
+          {
+            "ms": 163,
+            "seenMs": 437,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 182,
+            "seenMs": 448,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 176,
+            "seenMs": 426,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 165,
+            "seenMs": 425,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 178,
+            "seenMs": 422,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 168,
+            "seenMs": 438,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 180,
+            "seenMs": 437,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 176,
+            "seenMs": 430,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 173,
+            "seenMs": 464,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 173,
+            "seenMs": 424,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "read screen": [
+          {
+            "ms": 404,
+            "seenMs": 404,
+            "calls": 1,
+            "bytes": 122087,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 405,
+            "seenMs": 405,
+            "calls": 1,
+            "bytes": 122087,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 347,
+            "seenMs": 347,
+            "calls": 1,
+            "bytes": 122087,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 393,
+            "seenMs": 393,
+            "calls": 1,
+            "bytes": 122087,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 312,
+            "seenMs": 312,
+            "calls": 1,
+            "bytes": 122087,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 315,
+            "seenMs": 315,
+            "calls": 1,
+            "bytes": 122087,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 329,
+            "seenMs": 329,
+            "calls": 1,
+            "bytes": 122087,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 313,
+            "seenMs": 313,
+            "calls": 1,
+            "bytes": 122087,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 378,
+            "seenMs": 378,
+            "calls": 1,
+            "bytes": 122087,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 368,
+            "seenMs": 368,
+            "calls": 1,
+            "bytes": 122087,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap by label": [
+          {
+            "ms": 1613,
+            "seenMs": 1613,
+            "calls": 2,
+            "bytes": 344,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 119,
+            "seenMs": 119,
+            "calls": 2,
+            "bytes": 344,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 146,
+            "seenMs": 146,
+            "calls": 2,
+            "bytes": 344,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 173,
+            "seenMs": 173,
+            "calls": 2,
+            "bytes": 344,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 141,
+            "seenMs": 141,
+            "calls": 2,
+            "bytes": 344,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 138,
+            "seenMs": 138,
+            "calls": 2,
+            "bytes": 344,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 147,
+            "seenMs": 147,
+            "calls": 2,
+            "bytes": 344,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 167,
+            "seenMs": 167,
+            "calls": 2,
+            "bytes": 344,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 105,
+            "seenMs": 105,
+            "calls": 2,
+            "bytes": 344,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 138,
+            "seenMs": 138,
+            "calls": 2,
+            "bytes": 344,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "back": [
+          {
+            "ms": 660,
+            "seenMs": 660,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1135,
+            "seenMs": 1135,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1136,
+            "seenMs": 1136,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1125,
+            "seenMs": 1125,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1105,
+            "seenMs": 1105,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1118,
+            "seenMs": 1118,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1136,
+            "seenMs": 1136,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1067,
+            "seenMs": 1067,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1108,
+            "seenMs": 1108,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1116,
+            "seenMs": 1116,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap x,y": [
+          {
+            "ms": 120,
+            "seenMs": 120,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 122,
+            "seenMs": 122,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 138,
+            "seenMs": 138,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 132,
+            "seenMs": 132,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 138,
+            "seenMs": 138,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 136,
+            "seenMs": 136,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 120,
+            "seenMs": 120,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 126,
+            "seenMs": 126,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 122,
+            "seenMs": 122,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 133,
+            "seenMs": 133,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "swipe": [
+          {
+            "ms": 552,
+            "seenMs": 552,
+            "calls": 1,
+            "bytes": 105,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 560,
+            "seenMs": 560,
+            "calls": 1,
+            "bytes": 105,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 566,
+            "seenMs": 566,
+            "calls": 1,
+            "bytes": 105,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 575,
+            "seenMs": 575,
+            "calls": 1,
+            "bytes": 105,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 560,
+            "seenMs": 560,
+            "calls": 1,
+            "bytes": 105,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 560,
+            "seenMs": 560,
+            "calls": 1,
+            "bytes": 105,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 562,
+            "seenMs": 562,
+            "calls": 1,
+            "bytes": 105,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 543,
+            "seenMs": 543,
+            "calls": 1,
+            "bytes": 105,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 563,
+            "seenMs": 563,
+            "calls": 1,
+            "bytes": 105,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 553,
+            "seenMs": 553,
+            "calls": 1,
+            "bytes": 105,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "scroll to label": [
+          {
+            "ms": 16795,
+            "seenMs": 16795,
+            "calls": 1,
+            "bytes": 129,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 16734,
+            "seenMs": 16734,
+            "calls": 1,
+            "bytes": 129,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 16457,
+            "seenMs": 16457,
+            "calls": 1,
+            "bytes": 129,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 16808,
+            "seenMs": 16808,
+            "calls": 1,
+            "bytes": 129,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 16665,
+            "seenMs": 16665,
+            "calls": 1,
+            "bytes": 129,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 16892,
+            "seenMs": 16892,
+            "calls": 1,
+            "bytes": 129,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 16311,
+            "seenMs": 16311,
+            "calls": 1,
+            "bytes": 129,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 16632,
+            "seenMs": 16632,
+            "calls": 1,
+            "bytes": 129,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 17186,
+            "seenMs": 17186,
+            "calls": 1,
+            "bytes": 129,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 16366,
+            "seenMs": 16366,
+            "calls": 1,
+            "bytes": 129,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "fill field": [
+          {
+            "ms": 1109,
+            "seenMs": 1382,
+            "calls": 4,
+            "bytes": 699,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1215,
+            "seenMs": 1474,
+            "calls": 4,
+            "bytes": 699,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2941,
+            "seenMs": 3206,
+            "calls": 4,
+            "bytes": 699,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1121,
+            "seenMs": 1386,
+            "calls": 4,
+            "bytes": 699,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1126,
+            "seenMs": 1405,
+            "calls": 4,
+            "bytes": 699,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1093,
+            "seenMs": 1392,
+            "calls": 4,
+            "bytes": 699,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1042,
+            "seenMs": 1312,
+            "calls": 4,
+            "bytes": 699,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1092,
+            "seenMs": 1364,
+            "calls": 4,
+            "bytes": 699,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1102,
+            "seenMs": 1366,
+            "calls": 4,
+            "bytes": 699,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1123,
+            "seenMs": 1389,
+            "calls": 4,
+            "bytes": 699,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "screenshot": [
+          {
+            "ms": 621,
+            "seenMs": 621,
+            "calls": 1,
+            "bytes": 173094,
+            "image": 125833,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 564,
+            "seenMs": 564,
+            "calls": 1,
+            "bytes": 173694,
+            "image": 126283,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 583,
+            "seenMs": 583,
+            "calls": 1,
+            "bytes": 173974,
+            "image": 126493,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 576,
+            "seenMs": 576,
+            "calls": 1,
+            "bytes": 173974,
+            "image": 126493,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 592,
+            "seenMs": 592,
+            "calls": 1,
+            "bytes": 173466,
+            "image": 126113,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 548,
+            "seenMs": 548,
+            "calls": 1,
+            "bytes": 173362,
+            "image": 126034,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 563,
+            "seenMs": 563,
+            "calls": 1,
+            "bytes": 173598,
+            "image": 126213,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 573,
+            "seenMs": 573,
+            "calls": 1,
+            "bytes": 173330,
+            "image": 126010,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 567,
+            "seenMs": 567,
+            "calls": 1,
+            "bytes": 173522,
+            "image": 126155,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 579,
+            "seenMs": 579,
+            "calls": 1,
+            "bytes": 173750,
+            "image": 126325,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          }
+        ],
+        "home": [
+          {
+            "ms": 65,
+            "seenMs": 65,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 68,
+            "seenMs": 68,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 79,
+            "seenMs": 79,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 64,
+            "seenMs": 64,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 55,
+            "seenMs": 55,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 59,
+            "seenMs": 59,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 70,
+            "seenMs": 70,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 68,
+            "seenMs": 68,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 66,
+            "seenMs": 66,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 68,
+            "seenMs": 68,
+            "calls": 1,
+            "bytes": 84,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "open URL": [
+          {
+            "ms": 966,
+            "seenMs": 966,
+            "calls": 1,
+            "bytes": 130,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 924,
+            "seenMs": 924,
+            "calls": 1,
+            "bytes": 130,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 908,
+            "seenMs": 908,
+            "calls": 1,
+            "bytes": 130,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 937,
+            "seenMs": 937,
+            "calls": 1,
+            "bytes": 130,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 924,
+            "seenMs": 924,
+            "calls": 1,
+            "bytes": 130,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 990,
+            "seenMs": 990,
+            "calls": 1,
+            "bytes": 130,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 904,
+            "seenMs": 904,
+            "calls": 1,
+            "bytes": 130,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 921,
+            "seenMs": 921,
+            "calls": 1,
+            "bytes": 130,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 924,
+            "seenMs": 924,
+            "calls": 1,
+            "bytes": 130,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 912,
+            "seenMs": 912,
+            "calls": 1,
+            "bytes": 130,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "terminate app": [
+          {
+            "ms": 363,
+            "seenMs": 363,
+            "calls": 1,
+            "bytes": 66,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 396,
+            "seenMs": 396,
+            "calls": 1,
+            "bytes": 66,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 395,
+            "seenMs": 395,
+            "calls": 1,
+            "bytes": 66,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 552,
+            "seenMs": 552,
+            "calls": 1,
+            "bytes": 66,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 450,
+            "seenMs": 450,
+            "calls": 1,
+            "bytes": 66,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 382,
+            "seenMs": 382,
+            "calls": 1,
+            "bytes": 66,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 389,
+            "seenMs": 389,
+            "calls": 1,
+            "bytes": 66,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 384,
+            "seenMs": 384,
+            "calls": 1,
+            "bytes": 66,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 377,
+            "seenMs": 377,
+            "calls": 1,
+            "bytes": 66,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 366,
+            "seenMs": 366,
+            "calls": 1,
+            "bytes": 66,
+            "ok": true,
+            "err": null
+          }
+        ]
+      },
+      "hostBefore": {
+        "busyPct": 6,
+        "freeMb": 5849,
+        "compressedMb": 4978,
+        "waitedMs": 4881
+      },
+      "setupMs": 8714,
+      "setupUsage": {
+        "samples": 35,
+        "peakRssMb": 521,
+        "meanRssMb": 393,
+        "meanCpuPct": 44,
+        "peakCpuPct": 153,
+        "sharedPeakRssMb": 15
+      },
+      "defsBytes": 43304,
+      "version": "MCP Appium 1.97.1",
+      "runConditions": [
+        {
+          "host": 9,
+          "deviceLoad": 31.34
+        },
+        {
+          "host": 8,
+          "deviceLoad": 31.33
+        },
+        {
+          "host": 7,
+          "deviceLoad": 33.59
+        },
+        {
+          "host": 7,
+          "deviceLoad": 31.68
+        },
+        {
+          "host": 8,
+          "deviceLoad": 33.78
+        },
+        {
+          "host": 7,
+          "deviceLoad": 31.84
+        },
+        {
+          "host": 7,
+          "deviceLoad": 30.62
+        },
+        {
+          "host": 7,
+          "deviceLoad": 29.57
+        },
+        {
+          "host": 7,
+          "deviceLoad": 30.81
+        },
+        {
+          "host": 7,
+          "deviceLoad": 31.72
+        }
+      ],
+      "usage": {
+        "samples": 2064,
+        "peakRssMb": 515,
+        "meanRssMb": 397,
+        "meanCpuPct": 2,
+        "peakCpuPct": 28,
+        "sharedPeakRssMb": 16
+      },
+      "deviceUsage": {
+        "samples": 519,
+        "peakRssMb": 280,
+        "meanRssMb": 243,
+        "meanCpuPct": 15
+      }
+    },
+    "appium": {
+      "steps": {
+        "launch app": [
+          {
+            "ms": 175,
+            "seenMs": 449,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 186,
+            "seenMs": 435,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 176,
+            "seenMs": 454,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 170,
+            "seenMs": 428,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 168,
+            "seenMs": 420,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 166,
+            "seenMs": 441,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 195,
+            "seenMs": 465,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 193,
+            "seenMs": 448,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 210,
+            "seenMs": 468,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 164,
+            "seenMs": 424,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "read screen": [
+          {
+            "ms": 388,
+            "seenMs": 388,
+            "calls": 1,
+            "bytes": 50283,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 386,
+            "seenMs": 386,
+            "calls": 1,
+            "bytes": 50283,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 382,
+            "seenMs": 382,
+            "calls": 1,
+            "bytes": 50283,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 380,
+            "seenMs": 380,
+            "calls": 1,
+            "bytes": 50283,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 411,
+            "seenMs": 411,
+            "calls": 1,
+            "bytes": 50283,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 376,
+            "seenMs": 376,
+            "calls": 1,
+            "bytes": 50283,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 344,
+            "seenMs": 344,
+            "calls": 1,
+            "bytes": 50283,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 406,
+            "seenMs": 406,
+            "calls": 1,
+            "bytes": 50283,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 317,
+            "seenMs": 317,
+            "calls": 1,
+            "bytes": 50283,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 332,
+            "seenMs": 332,
+            "calls": 1,
+            "bytes": 50283,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap by label": [
+          {
+            "ms": 153,
+            "seenMs": 153,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 125,
+            "seenMs": 125,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 114,
+            "seenMs": 114,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 132,
+            "seenMs": 132,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 161,
+            "seenMs": 161,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 118,
+            "seenMs": 118,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 137,
+            "seenMs": 137,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 136,
+            "seenMs": 136,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 114,
+            "seenMs": 114,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 143,
+            "seenMs": 143,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "back": [
+          {
+            "ms": 1108,
+            "seenMs": 1108,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1108,
+            "seenMs": 1108,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1100,
+            "seenMs": 1100,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1131,
+            "seenMs": 1131,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1108,
+            "seenMs": 1108,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1130,
+            "seenMs": 1130,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1166,
+            "seenMs": 1166,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1131,
+            "seenMs": 1131,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1134,
+            "seenMs": 1134,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1225,
+            "seenMs": 1225,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap x,y": [
+          {
+            "ms": 100,
+            "seenMs": 100,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 90,
+            "seenMs": 90,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 91,
+            "seenMs": 91,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 84,
+            "seenMs": 84,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 90,
+            "seenMs": 90,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 96,
+            "seenMs": 96,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 98,
+            "seenMs": 98,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 87,
+            "seenMs": 87,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 96,
+            "seenMs": 96,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 116,
+            "seenMs": 116,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "swipe": [
+          {
+            "ms": 470,
+            "seenMs": 470,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 464,
+            "seenMs": 464,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 475,
+            "seenMs": 475,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 471,
+            "seenMs": 471,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 479,
+            "seenMs": 479,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 472,
+            "seenMs": 472,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 466,
+            "seenMs": 466,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 452,
+            "seenMs": 452,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 476,
+            "seenMs": 476,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 448,
+            "seenMs": 448,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "scroll to label": [
+          {
+            "ms": 5511,
+            "seenMs": 5511,
+            "calls": 5,
+            "bytes": 191,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6430,
+            "seenMs": 6430,
+            "calls": 7,
+            "bytes": 217,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4412,
+            "seenMs": 4412,
+            "calls": 5,
+            "bytes": 191,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6323,
+            "seenMs": 6323,
+            "calls": 7,
+            "bytes": 217,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4551,
+            "seenMs": 4551,
+            "calls": 5,
+            "bytes": 191,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6223,
+            "seenMs": 6223,
+            "calls": 7,
+            "bytes": 217,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4672,
+            "seenMs": 4672,
+            "calls": 5,
+            "bytes": 191,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6351,
+            "seenMs": 6351,
+            "calls": 7,
+            "bytes": 217,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5282,
+            "seenMs": 5282,
+            "calls": 5,
+            "bytes": 191,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4813,
+            "seenMs": 4813,
+            "calls": 5,
+            "bytes": 191,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "fill field": [
+          {
+            "ms": 1108,
+            "seenMs": 1367,
+            "calls": 4,
+            "bytes": 302,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1069,
+            "seenMs": 1335,
+            "calls": 4,
+            "bytes": 302,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 450,
+            "seenMs": 737,
+            "calls": 4,
+            "bytes": 302,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1109,
+            "seenMs": 1378,
+            "calls": 4,
+            "bytes": 302,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1087,
+            "seenMs": 1358,
+            "calls": 4,
+            "bytes": 302,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1111,
+            "seenMs": 1368,
+            "calls": 4,
+            "bytes": 302,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1047,
+            "seenMs": 1305,
+            "calls": 4,
+            "bytes": 302,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1172,
+            "seenMs": 1448,
+            "calls": 4,
+            "bytes": 302,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1099,
+            "seenMs": 1355,
+            "calls": 4,
+            "bytes": 302,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1074,
+            "seenMs": 1335,
+            "calls": 4,
+            "bytes": 302,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "screenshot": [
+          {
+            "ms": 614,
+            "seenMs": 614,
+            "calls": 1,
+            "bytes": 167992,
+            "image": 125985,
+            "dims": [
+              720,
+              1600
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 584,
+            "seenMs": 584,
+            "calls": 1,
+            "bytes": 167992,
+            "image": 125985,
+            "dims": [
+              720,
+              1600
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 594,
+            "seenMs": 594,
+            "calls": 1,
+            "bytes": 168056,
+            "image": 126032,
+            "dims": [
+              720,
+              1600
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 580,
+            "seenMs": 580,
+            "calls": 1,
+            "bytes": 168388,
+            "image": 126280,
+            "dims": [
+              720,
+              1600
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 607,
+            "seenMs": 607,
+            "calls": 1,
+            "bytes": 168604,
+            "image": 126442,
+            "dims": [
+              720,
+              1600
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 593,
+            "seenMs": 593,
+            "calls": 1,
+            "bytes": 168128,
+            "image": 126086,
+            "dims": [
+              720,
+              1600
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 567,
+            "seenMs": 567,
+            "calls": 1,
+            "bytes": 168176,
+            "image": 126123,
+            "dims": [
+              720,
+              1600
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 630,
+            "seenMs": 630,
+            "calls": 1,
+            "bytes": 168176,
+            "image": 126123,
+            "dims": [
+              720,
+              1600
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 594,
+            "seenMs": 594,
+            "calls": 1,
+            "bytes": 168564,
+            "image": 126412,
+            "dims": [
+              720,
+              1600
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 583,
+            "seenMs": 583,
+            "calls": 1,
+            "bytes": 168836,
+            "image": 126617,
+            "dims": [
+              720,
+              1600
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "home": [
+          {
+            "ms": 75,
+            "seenMs": 75,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 72,
+            "seenMs": 72,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 77,
+            "seenMs": 77,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 73,
+            "seenMs": 73,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 66,
+            "seenMs": 66,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 72,
+            "seenMs": 72,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 84,
+            "seenMs": 84,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 65,
+            "seenMs": 65,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 72,
+            "seenMs": 72,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 60,
+            "seenMs": 60,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "open URL": [
+          {
+            "ms": 912,
+            "seenMs": 912,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 905,
+            "seenMs": 905,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 899,
+            "seenMs": 899,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 965,
+            "seenMs": 965,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 928,
+            "seenMs": 928,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 922,
+            "seenMs": 922,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 936,
+            "seenMs": 936,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 916,
+            "seenMs": 916,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 950,
+            "seenMs": 950,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 941,
+            "seenMs": 941,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "terminate app": [
+          {
+            "ms": 402,
+            "seenMs": 402,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 384,
+            "seenMs": 384,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 381,
+            "seenMs": 381,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 402,
+            "seenMs": 402,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 436,
+            "seenMs": 436,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 375,
+            "seenMs": 375,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 419,
+            "seenMs": 419,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 371,
+            "seenMs": 371,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 440,
+            "seenMs": 440,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 371,
+            "seenMs": 371,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          }
+        ]
+      },
+      "hostBefore": {
+        "busyPct": 7,
+        "freeMb": 5001,
+        "compressedMb": 4382,
+        "waitedMs": 4906
+      },
+      "setupMs": 7041,
+      "setupUsage": {
+        "samples": 28,
+        "peakRssMb": 416,
+        "meanRssMb": 311,
+        "meanCpuPct": 36,
+        "peakCpuPct": 86,
+        "sharedPeakRssMb": 16
+      },
+      "defsBytes": 0,
+      "version": "Appium server (W3C HTTP)",
+      "runConditions": [
+        {
+          "host": 7,
+          "deviceLoad": 30.04
+        },
+        {
+          "host": 10,
+          "deviceLoad": 29.53
+        },
+        {
+          "host": 7,
+          "deviceLoad": 29.25
+        },
+        {
+          "host": 10,
+          "deviceLoad": 30.83
+        },
+        {
+          "host": 8,
+          "deviceLoad": 29.88
+        },
+        {
+          "host": 12,
+          "deviceLoad": 29.94
+        },
+        {
+          "host": 9,
+          "deviceLoad": 30.43
+        },
+        {
+          "host": 7,
+          "deviceLoad": 30.67
+        },
+        {
+          "host": 7,
+          "deviceLoad": 31.01
+        },
+        {
+          "host": 7,
+          "deviceLoad": 30.24
+        }
+      ],
+      "usage": {
+        "samples": 1603,
+        "peakRssMb": 404,
+        "meanRssMb": 313,
+        "meanCpuPct": 2,
+        "peakCpuPct": 30,
+        "sharedPeakRssMb": 17
+      },
+      "deviceUsage": {
+        "samples": 403,
+        "peakRssMb": 279,
+        "meanRssMb": 241,
+        "meanCpuPct": 10
+      }
+    },
+    "adb": {
+      "steps": {
+        "launch app": [
+          {
+            "ms": 109,
+            "seenMs": 376,
+            "calls": 1,
+            "bytes": 56,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 121,
+            "seenMs": 360,
+            "calls": 1,
+            "bytes": 56,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 116,
+            "seenMs": 371,
+            "calls": 1,
+            "bytes": 56,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 104,
+            "seenMs": 347,
+            "calls": 1,
+            "bytes": 56,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 122,
+            "seenMs": 366,
+            "calls": 1,
+            "bytes": 56,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 105,
+            "seenMs": 348,
+            "calls": 1,
+            "bytes": 56,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 118,
+            "seenMs": 357,
+            "calls": 1,
+            "bytes": 56,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 118,
+            "seenMs": 371,
+            "calls": 1,
+            "bytes": 56,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 99,
+            "seenMs": 344,
+            "calls": 1,
+            "bytes": 56,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 104,
+            "seenMs": 351,
+            "calls": 1,
+            "bytes": 56,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "read screen": [
+          {
+            "ms": 2544,
+            "seenMs": 2544,
+            "calls": 1,
+            "bytes": 26000,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2602,
+            "seenMs": 2602,
+            "calls": 1,
+            "bytes": 26000,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2594,
+            "seenMs": 2594,
+            "calls": 1,
+            "bytes": 26000,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2562,
+            "seenMs": 2562,
+            "calls": 1,
+            "bytes": 26000,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2547,
+            "seenMs": 2547,
+            "calls": 1,
+            "bytes": 26000,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2577,
+            "seenMs": 2577,
+            "calls": 1,
+            "bytes": 26000,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2570,
+            "seenMs": 2570,
+            "calls": 1,
+            "bytes": 26000,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2595,
+            "seenMs": 2595,
+            "calls": 1,
+            "bytes": 26000,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2575,
+            "seenMs": 2575,
+            "calls": 1,
+            "bytes": 26000,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2560,
+            "seenMs": 2560,
+            "calls": 1,
+            "bytes": 26000,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap by label": [
+          {
+            "ms": 2702,
+            "seenMs": 2702,
+            "calls": 2,
+            "bytes": 26000,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2776,
+            "seenMs": 2776,
+            "calls": 2,
+            "bytes": 26000,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2746,
+            "seenMs": 2746,
+            "calls": 2,
+            "bytes": 26000,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2701,
+            "seenMs": 2701,
+            "calls": 2,
+            "bytes": 26000,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2755,
+            "seenMs": 2755,
+            "calls": 2,
+            "bytes": 26000,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2752,
+            "seenMs": 2752,
+            "calls": 2,
+            "bytes": 26000,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2723,
+            "seenMs": 2723,
+            "calls": 2,
+            "bytes": 26000,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2763,
+            "seenMs": 2763,
+            "calls": 2,
+            "bytes": 26000,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2791,
+            "seenMs": 2791,
+            "calls": 2,
+            "bytes": 26000,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2801,
+            "seenMs": 2801,
+            "calls": 2,
+            "bytes": 26000,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "back": [
+          {
+            "ms": 92,
+            "seenMs": 584,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 79,
+            "seenMs": 581,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 91,
+            "seenMs": 590,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 89,
+            "seenMs": 585,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 95,
+            "seenMs": 571,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 96,
+            "seenMs": 590,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 91,
+            "seenMs": 615,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 102,
+            "seenMs": 583,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 99,
+            "seenMs": 592,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 96,
+            "seenMs": 577,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap x,y": [
+          {
+            "ms": 91,
+            "seenMs": 91,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 107,
+            "seenMs": 107,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 108,
+            "seenMs": 108,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 97,
+            "seenMs": 97,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 82,
+            "seenMs": 82,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 115,
+            "seenMs": 115,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 94,
+            "seenMs": 94,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 100,
+            "seenMs": 100,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 91,
+            "seenMs": 91,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 90,
+            "seenMs": 90,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "swipe": [
+          {
+            "ms": 402,
+            "seenMs": 402,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 411,
+            "seenMs": 411,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 411,
+            "seenMs": 411,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 411,
+            "seenMs": 411,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 405,
+            "seenMs": 405,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 395,
+            "seenMs": 395,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 400,
+            "seenMs": 400,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 403,
+            "seenMs": 403,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 404,
+            "seenMs": 404,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 387,
+            "seenMs": 387,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "scroll to label": [
+          {
+            "ms": 9857,
+            "seenMs": 9857,
+            "calls": 5,
+            "bytes": 90476,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 9881,
+            "seenMs": 9881,
+            "calls": 5,
+            "bytes": 90084,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 9848,
+            "seenMs": 9848,
+            "calls": 5,
+            "bytes": 90476,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 9881,
+            "seenMs": 9881,
+            "calls": 5,
+            "bytes": 90436,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 9781,
+            "seenMs": 9781,
+            "calls": 5,
+            "bytes": 90436,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 9777,
+            "seenMs": 9777,
+            "calls": 5,
+            "bytes": 90084,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 9887,
+            "seenMs": 9887,
+            "calls": 5,
+            "bytes": 90084,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 9895,
+            "seenMs": 9895,
+            "calls": 5,
+            "bytes": 90084,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 9837,
+            "seenMs": 9837,
+            "calls": 5,
+            "bytes": 90476,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 9850,
+            "seenMs": 9850,
+            "calls": 5,
+            "bytes": 90476,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "fill field": [
+          {
+            "ms": 5689,
+            "seenMs": 5967,
+            "calls": 4,
+            "bytes": 52597,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5772,
+            "seenMs": 6031,
+            "calls": 4,
+            "bytes": 52597,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5707,
+            "seenMs": 5971,
+            "calls": 4,
+            "bytes": 52595,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5646,
+            "seenMs": 5914,
+            "calls": 4,
+            "bytes": 52589,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5645,
+            "seenMs": 5645,
+            "calls": 4,
+            "bytes": 52601,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5620,
+            "seenMs": 5902,
+            "calls": 4,
+            "bytes": 52594,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5697,
+            "seenMs": 5959,
+            "calls": 4,
+            "bytes": 52585,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5573,
+            "seenMs": 5845,
+            "calls": 4,
+            "bytes": 52595,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5657,
+            "seenMs": 5927,
+            "calls": 4,
+            "bytes": 52593,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5743,
+            "seenMs": 6020,
+            "calls": 4,
+            "bytes": 52590,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "screenshot": [
+          {
+            "ms": 523,
+            "seenMs": 523,
+            "calls": 1,
+            "bytes": 0,
+            "image": 126264,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 548,
+            "seenMs": 548,
+            "calls": 1,
+            "bytes": 0,
+            "image": 126524,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 544,
+            "seenMs": 544,
+            "calls": 1,
+            "bytes": 0,
+            "image": 126591,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 541,
+            "seenMs": 541,
+            "calls": 1,
+            "bytes": 0,
+            "image": 126591,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 540,
+            "seenMs": 540,
+            "calls": 1,
+            "bytes": 0,
+            "image": 126024,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 534,
+            "seenMs": 534,
+            "calls": 1,
+            "bytes": 0,
+            "image": 126846,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 548,
+            "seenMs": 548,
+            "calls": 1,
+            "bytes": 0,
+            "image": 126736,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 540,
+            "seenMs": 540,
+            "calls": 1,
+            "bytes": 0,
+            "image": 125948,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 544,
+            "seenMs": 544,
+            "calls": 1,
+            "bytes": 0,
+            "image": 126026,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 543,
+            "seenMs": 543,
+            "calls": 1,
+            "bytes": 0,
+            "image": 126292,
+            "dims": [
+              720,
+              1600
+            ],
+            "ok": true,
+            "err": null
+          }
+        ],
+        "home": [
+          {
+            "ms": 85,
+            "seenMs": 85,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 75,
+            "seenMs": 75,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 107,
+            "seenMs": 107,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 83,
+            "seenMs": 83,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 105,
+            "seenMs": 105,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 91,
+            "seenMs": 91,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 76,
+            "seenMs": 76,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 74,
+            "seenMs": 74,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 89,
+            "seenMs": 89,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 87,
+            "seenMs": 87,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "open URL": [
+          {
+            "ms": 124,
+            "seenMs": 1020,
+            "calls": 1,
+            "bytes": 80,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 115,
+            "seenMs": 1019,
+            "calls": 1,
+            "bytes": 80,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 112,
+            "seenMs": 1013,
+            "calls": 1,
+            "bytes": 80,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 101,
+            "seenMs": 1011,
+            "calls": 1,
+            "bytes": 80,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 111,
+            "seenMs": 1051,
+            "calls": 1,
+            "bytes": 80,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 110,
+            "seenMs": 339,
+            "calls": 1,
+            "bytes": 80,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 112,
+            "seenMs": 1059,
+            "calls": 1,
+            "bytes": 80,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 106,
+            "seenMs": 338,
+            "calls": 1,
+            "bytes": 80,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 133,
+            "seenMs": 1079,
+            "calls": 1,
+            "bytes": 80,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 99,
+            "seenMs": 1026,
+            "calls": 1,
+            "bytes": 80,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "terminate app": [
+          {
+            "ms": 117,
+            "seenMs": 117,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 119,
+            "seenMs": 119,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 126,
+            "seenMs": 126,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 108,
+            "seenMs": 108,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 95,
+            "seenMs": 95,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 109,
+            "seenMs": 109,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 104,
+            "seenMs": 104,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 139,
+            "seenMs": 139,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 100,
+            "seenMs": 100,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 125,
+            "seenMs": 125,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          }
+        ]
+      },
+      "hostBefore": {
+        "busyPct": 6,
+        "freeMb": 5044,
+        "compressedMb": 4229,
+        "waitedMs": 4950
+      },
+      "setupMs": 2608,
+      "setupUsage": {
+        "samples": 11,
+        "peakRssMb": 53,
+        "meanRssMb": 53,
+        "meanCpuPct": 0,
+        "peakCpuPct": 3,
+        "sharedPeakRssMb": 17
+      },
+      "defsBytes": 0,
+      "version": "adb + uiautomator",
+      "runConditions": [
+        {
+          "host": 9,
+          "deviceLoad": 31.26
+        },
+        {
+          "host": 14,
+          "deviceLoad": 30.67
+        },
+        {
+          "host": 8,
+          "deviceLoad": 29.38
+        },
+        {
+          "host": 6,
+          "deviceLoad": 29.25
+        },
+        {
+          "host": 7,
+          "deviceLoad": 28.9
+        },
+        {
+          "host": 7,
+          "deviceLoad": 31.15
+        },
+        {
+          "host": 6,
+          "deviceLoad": 29.69
+        },
+        {
+          "host": 10,
+          "deviceLoad": 29.75
+        },
+        {
+          "host": 8,
+          "deviceLoad": 30.45
+        },
+        {
+          "host": 6,
+          "deviceLoad": 29.79
+        }
+      ],
+      "usage": {
+        "samples": 2102,
+        "peakRssMb": 61,
+        "meanRssMb": 50,
+        "meanCpuPct": 1,
+        "peakCpuPct": 31,
+        "sharedPeakRssMb": 17
+      },
+      "deviceUsage": {
+        "samples": 529,
+        "peakRssMb": 114,
+        "meanRssMb": 37,
+        "meanCpuPct": 13
+      }
+    }
+  }
+}

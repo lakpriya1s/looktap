@@ -1,0 +1,5564 @@
+{
+  "meta": {
+    "date": "2026-10-18T02:12:52.794Z",
+    "platform": "ios",
+    "device": "iPhone 14 Pro (iOS 26.0)",
+    "runs": 10,
+    "host": "Apple M3 Pro, macOS 26.5.2",
+    "idleBusyPct": 19,
+    "idleFreeMb": 4401
+  },
+  "tools": {
+    "looktap": {
+      "steps": {
+        "launch app": [
+          {
+            "ms": 1236,
+            "seenMs": 1236,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1290,
+            "seenMs": 1290,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1851,
+            "seenMs": 1851,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2050,
+            "seenMs": 2050,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1232,
+            "seenMs": 1232,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1234,
+            "seenMs": 1234,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1217,
+            "seenMs": 1217,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1309,
+            "seenMs": 1309,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1855,
+            "seenMs": 1855,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1876,
+            "seenMs": 1876,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "read screen": [
+          {
+            "ms": 600,
+            "seenMs": 600,
+            "calls": 1,
+            "bytes": 1672,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1848,
+            "seenMs": 1848,
+            "calls": 1,
+            "bytes": 1532,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3845,
+            "seenMs": 3845,
+            "calls": 1,
+            "bytes": 1532,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3051,
+            "seenMs": 3051,
+            "calls": 1,
+            "bytes": 1532,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 584,
+            "seenMs": 584,
+            "calls": 1,
+            "bytes": 1672,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 606,
+            "seenMs": 606,
+            "calls": 1,
+            "bytes": 1672,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 552,
+            "seenMs": 552,
+            "calls": 1,
+            "bytes": 1672,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2740,
+            "seenMs": 2740,
+            "calls": 1,
+            "bytes": 1532,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3230,
+            "seenMs": 3230,
+            "calls": 1,
+            "bytes": 1533,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2293,
+            "seenMs": 2293,
+            "calls": 1,
+            "bytes": 1532,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap by label": [
+          {
+            "ms": 1447,
+            "seenMs": 3503,
+            "calls": 1,
+            "bytes": 27,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3381,
+            "seenMs": 5556,
+            "calls": 1,
+            "bytes": 27,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3311,
+            "seenMs": 4882,
+            "calls": 1,
+            "bytes": 27,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2881,
+            "seenMs": 4589,
+            "calls": 1,
+            "bytes": 27,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1290,
+            "seenMs": 2446,
+            "calls": 1,
+            "bytes": 27,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1258,
+            "seenMs": 2415,
+            "calls": 1,
+            "bytes": 27,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1207,
+            "seenMs": 2106,
+            "calls": 1,
+            "bytes": 27,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3037,
+            "seenMs": 4413,
+            "calls": 1,
+            "bytes": 27,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2661,
+            "seenMs": 4066,
+            "calls": 1,
+            "bytes": 27,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3066,
+            "seenMs": 4692,
+            "calls": 1,
+            "bytes": 27,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "back": [
+          {
+            "ms": 5436,
+            "seenMs": 5995,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2998,
+            "seenMs": 3496,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3403,
+            "seenMs": 4029,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3057,
+            "seenMs": 3658,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5552,
+            "seenMs": 6121,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4716,
+            "seenMs": 5235,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4077,
+            "seenMs": 4749,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2537,
+            "seenMs": 3021,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2725,
+            "seenMs": 3394,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2940,
+            "seenMs": 3362,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap x,y": [
+          {
+            "ms": 933,
+            "seenMs": 1761,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 930,
+            "seenMs": 1807,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 952,
+            "seenMs": 2027,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 909,
+            "seenMs": 1844,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 909,
+            "seenMs": 1769,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 917,
+            "seenMs": 1802,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1117,
+            "seenMs": 1978,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 939,
+            "seenMs": 1800,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 967,
+            "seenMs": 2031,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 925,
+            "seenMs": 1945,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "swipe": [
+          {
+            "ms": 3784,
+            "seenMs": 3995,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3161,
+            "seenMs": 3373,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3959,
+            "seenMs": 4184,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4045,
+            "seenMs": 4366,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3513,
+            "seenMs": 3711,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2872,
+            "seenMs": 3119,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2597,
+            "seenMs": 2811,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3663,
+            "seenMs": 3871,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3666,
+            "seenMs": 3897,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3951,
+            "seenMs": 4158,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "scroll to label": [
+          {
+            "ms": 24234,
+            "seenMs": 24234,
+            "calls": 1,
+            "bytes": 29,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 24979,
+            "seenMs": 24979,
+            "calls": 1,
+            "bytes": 29,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 24636,
+            "seenMs": 24636,
+            "calls": 1,
+            "bytes": 29,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 24576,
+            "seenMs": 24576,
+            "calls": 1,
+            "bytes": 29,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 24621,
+            "seenMs": 24621,
+            "calls": 1,
+            "bytes": 29,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 22446,
+            "seenMs": 22446,
+            "calls": 1,
+            "bytes": 29,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 23936,
+            "seenMs": 23936,
+            "calls": 1,
+            "bytes": 29,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 22884,
+            "seenMs": 22884,
+            "calls": 1,
+            "bytes": 29,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 24600,
+            "seenMs": 24600,
+            "calls": 1,
+            "bytes": 29,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 24240,
+            "seenMs": 24240,
+            "calls": 1,
+            "bytes": 29,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "fill field": [
+          {
+            "ms": 14316,
+            "seenMs": 14606,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 17107,
+            "seenMs": 17426,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 15180,
+            "seenMs": 15472,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 13986,
+            "seenMs": 14308,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 12546,
+            "seenMs": 12546,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 11717,
+            "seenMs": 12033,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 14459,
+            "seenMs": 14459,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 14267,
+            "seenMs": 14563,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 12717,
+            "seenMs": 13008,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 15304,
+            "seenMs": 15611,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "screenshot": [
+          {
+            "ms": 648,
+            "seenMs": 648,
+            "calls": 1,
+            "bytes": 61,
+            "image": 389990,
+            "dims": [
+              1178,
+              2556
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 688,
+            "seenMs": 688,
+            "calls": 1,
+            "bytes": 61,
+            "image": 389990,
+            "dims": [
+              1178,
+              2556
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 469,
+            "seenMs": 469,
+            "calls": 1,
+            "bytes": 61,
+            "image": 389990,
+            "dims": [
+              1178,
+              2556
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 362,
+            "seenMs": 362,
+            "calls": 1,
+            "bytes": 61,
+            "image": 444806,
+            "dims": [
+              1178,
+              2556
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 362,
+            "seenMs": 362,
+            "calls": 1,
+            "bytes": 61,
+            "image": 389990,
+            "dims": [
+              1178,
+              2556
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 312,
+            "seenMs": 312,
+            "calls": 1,
+            "bytes": 61,
+            "image": 444806,
+            "dims": [
+              1178,
+              2556
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 303,
+            "seenMs": 303,
+            "calls": 1,
+            "bytes": 61,
+            "image": 389990,
+            "dims": [
+              1178,
+              2556
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 393,
+            "seenMs": 393,
+            "calls": 1,
+            "bytes": 61,
+            "image": 389990,
+            "dims": [
+              1178,
+              2556
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 437,
+            "seenMs": 437,
+            "calls": 1,
+            "bytes": 61,
+            "image": 389990,
+            "dims": [
+              1178,
+              2556
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 456,
+            "seenMs": 456,
+            "calls": 1,
+            "bytes": 61,
+            "image": 389990,
+            "dims": [
+              1178,
+              2556
+            ],
+            "ok": true,
+            "err": null
+          }
+        ],
+        "home": [
+          {
+            "ms": 6333,
+            "seenMs": 6333,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3913,
+            "seenMs": 3913,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3359,
+            "seenMs": 3359,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3285,
+            "seenMs": 3285,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3413,
+            "seenMs": 3413,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3471,
+            "seenMs": 3471,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2964,
+            "seenMs": 2964,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3033,
+            "seenMs": 3033,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3372,
+            "seenMs": 3372,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3447,
+            "seenMs": 3447,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "open URL": [
+          {
+            "ms": 322,
+            "seenMs": 700,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 401,
+            "seenMs": 631,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 380,
+            "seenMs": 596,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 422,
+            "seenMs": 863,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 539,
+            "seenMs": 791,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 446,
+            "seenMs": 673,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 520,
+            "seenMs": 739,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 437,
+            "seenMs": 599,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 431,
+            "seenMs": 606,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 520,
+            "seenMs": 687,
+            "calls": 1,
+            "bytes": 0,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "terminate app": [
+          {
+            "ms": 2061,
+            "seenMs": 2061,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1994,
+            "seenMs": 1994,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1981,
+            "seenMs": 1981,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2063,
+            "seenMs": 2063,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2072,
+            "seenMs": 2072,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1947,
+            "seenMs": 1947,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2063,
+            "seenMs": 2063,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1923,
+            "seenMs": 1923,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2102,
+            "seenMs": 2102,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2015,
+            "seenMs": 2015,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          }
+        ]
+      },
+      "hostBefore": {
+        "busyPct": 13,
+        "freeMb": 4233,
+        "compressedMb": 4958,
+        "waitedMs": 4250
+      },
+      "setupMs": 5723,
+      "setupUsage": {
+        "samples": 23,
+        "peakRssMb": 249,
+        "meanRssMb": 199,
+        "meanCpuPct": 31,
+        "peakCpuPct": 97,
+        "sharedPeakRssMb": 27
+      },
+      "defsBytes": 0,
+      "version": "looktap CLI",
+      "runConditions": [
+        {
+          "host": 21
+        },
+        {
+          "host": 20
+        },
+        {
+          "host": 27
+        },
+        {
+          "host": 16
+        },
+        {
+          "host": 16
+        },
+        {
+          "host": 14
+        },
+        {
+          "host": 13
+        },
+        {
+          "host": 16
+        },
+        {
+          "host": 13
+        },
+        {
+          "host": 19
+        }
+      ],
+      "usage": {
+        "samples": 4068,
+        "peakRssMb": 208,
+        "meanRssMb": 106,
+        "meanCpuPct": 5,
+        "peakCpuPct": 57,
+        "sharedPeakRssMb": 23
+      }
+    },
+    "looktap-mcp": {
+      "steps": {
+        "launch app": [
+          {
+            "ms": 1228,
+            "seenMs": 1228,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2012,
+            "seenMs": 2012,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1209,
+            "seenMs": 1209,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1288,
+            "seenMs": 1288,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1292,
+            "seenMs": 1292,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1252,
+            "seenMs": 1252,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1244,
+            "seenMs": 1244,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1305,
+            "seenMs": 1305,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1191,
+            "seenMs": 1191,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1175,
+            "seenMs": 1175,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "read screen": [
+          {
+            "ms": 619,
+            "seenMs": 619,
+            "calls": 1,
+            "bytes": 1739,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3126,
+            "seenMs": 3126,
+            "calls": 1,
+            "bytes": 1596,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 836,
+            "seenMs": 836,
+            "calls": 1,
+            "bytes": 1739,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 610,
+            "seenMs": 610,
+            "calls": 1,
+            "bytes": 1739,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 746,
+            "seenMs": 746,
+            "calls": 1,
+            "bytes": 1739,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 554,
+            "seenMs": 554,
+            "calls": 1,
+            "bytes": 1739,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 595,
+            "seenMs": 595,
+            "calls": 1,
+            "bytes": 1739,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 651,
+            "seenMs": 651,
+            "calls": 1,
+            "bytes": 1739,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 561,
+            "seenMs": 561,
+            "calls": 1,
+            "bytes": 1739,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 546,
+            "seenMs": 546,
+            "calls": 1,
+            "bytes": 1739,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap by label": [
+          {
+            "ms": 12989,
+            "seenMs": 12989,
+            "calls": 1,
+            "bytes": 2064,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 11669,
+            "seenMs": 11669,
+            "calls": 1,
+            "bytes": 2064,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 11643,
+            "seenMs": 11643,
+            "calls": 1,
+            "bytes": 2064,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 10865,
+            "seenMs": 10865,
+            "calls": 1,
+            "bytes": 2064,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 10218,
+            "seenMs": 10218,
+            "calls": 1,
+            "bytes": 2064,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 10262,
+            "seenMs": 10262,
+            "calls": 1,
+            "bytes": 2064,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 9957,
+            "seenMs": 9957,
+            "calls": 1,
+            "bytes": 2064,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 10057,
+            "seenMs": 10057,
+            "calls": 1,
+            "bytes": 2064,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 10553,
+            "seenMs": 10553,
+            "calls": 1,
+            "bytes": 2064,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 10514,
+            "seenMs": 10514,
+            "calls": 1,
+            "bytes": 2064,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "back": [
+          {
+            "ms": 7914,
+            "seenMs": 7914,
+            "calls": 1,
+            "bytes": 1596,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 8255,
+            "seenMs": 8255,
+            "calls": 1,
+            "bytes": 1596,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5977,
+            "seenMs": 5977,
+            "calls": 1,
+            "bytes": 1596,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6719,
+            "seenMs": 6719,
+            "calls": 1,
+            "bytes": 1596,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6018,
+            "seenMs": 6018,
+            "calls": 1,
+            "bytes": 1596,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6079,
+            "seenMs": 6079,
+            "calls": 1,
+            "bytes": 1596,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5820,
+            "seenMs": 5820,
+            "calls": 1,
+            "bytes": 1596,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5782,
+            "seenMs": 5782,
+            "calls": 1,
+            "bytes": 1596,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6152,
+            "seenMs": 6152,
+            "calls": 1,
+            "bytes": 1596,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6447,
+            "seenMs": 6447,
+            "calls": 1,
+            "bytes": 1596,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap x,y": [
+          {
+            "ms": 8589,
+            "seenMs": 8589,
+            "calls": 1,
+            "bytes": 2034,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 9243,
+            "seenMs": 9243,
+            "calls": 1,
+            "bytes": 2034,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 8940,
+            "seenMs": 8940,
+            "calls": 1,
+            "bytes": 2034,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6703,
+            "seenMs": 6703,
+            "calls": 1,
+            "bytes": 2034,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6362,
+            "seenMs": 6362,
+            "calls": 1,
+            "bytes": 2034,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 7182,
+            "seenMs": 7182,
+            "calls": 1,
+            "bytes": 2034,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6235,
+            "seenMs": 6235,
+            "calls": 1,
+            "bytes": 2034,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 8218,
+            "seenMs": 8218,
+            "calls": 1,
+            "bytes": 2034,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 7163,
+            "seenMs": 7163,
+            "calls": 1,
+            "bytes": 2034,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 7054,
+            "seenMs": 7054,
+            "calls": 1,
+            "bytes": 2034,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "swipe": [
+          {
+            "ms": 12837,
+            "seenMs": 12837,
+            "calls": 1,
+            "bytes": 1716,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 12423,
+            "seenMs": 12423,
+            "calls": 1,
+            "bytes": 1758,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 10735,
+            "seenMs": 10735,
+            "calls": 1,
+            "bytes": 1759,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 11304,
+            "seenMs": 11304,
+            "calls": 1,
+            "bytes": 1595,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 10972,
+            "seenMs": 10972,
+            "calls": 1,
+            "bytes": 1595,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 10079,
+            "seenMs": 10079,
+            "calls": 1,
+            "bytes": 1597,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 10672,
+            "seenMs": 10672,
+            "calls": 1,
+            "bytes": 1769,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 10716,
+            "seenMs": 10716,
+            "calls": 1,
+            "bytes": 1714,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 11004,
+            "seenMs": 11004,
+            "calls": 1,
+            "bytes": 1769,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 11602,
+            "seenMs": 11602,
+            "calls": 1,
+            "bytes": 1760,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "scroll to label": [
+          {
+            "ms": 27139,
+            "seenMs": 27139,
+            "calls": 1,
+            "bytes": 69,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 27752,
+            "seenMs": 27752,
+            "calls": 1,
+            "bytes": 69,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 24124,
+            "seenMs": 24124,
+            "calls": 1,
+            "bytes": 69,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 23802,
+            "seenMs": 23802,
+            "calls": 1,
+            "bytes": 69,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 22853,
+            "seenMs": 22853,
+            "calls": 1,
+            "bytes": 69,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 23087,
+            "seenMs": 23087,
+            "calls": 1,
+            "bytes": 69,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 23426,
+            "seenMs": 23426,
+            "calls": 1,
+            "bytes": 69,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 22960,
+            "seenMs": 22960,
+            "calls": 1,
+            "bytes": 69,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 24298,
+            "seenMs": 24298,
+            "calls": 1,
+            "bytes": 69,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 23444,
+            "seenMs": 23444,
+            "calls": 1,
+            "bytes": 69,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "fill field": [
+          {
+            "ms": 27968,
+            "seenMs": 27968,
+            "calls": 1,
+            "bytes": 4948,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 29294,
+            "seenMs": 29294,
+            "calls": 1,
+            "bytes": 4948,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 22796,
+            "seenMs": 22796,
+            "calls": 1,
+            "bytes": 4948,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 21628,
+            "seenMs": 21628,
+            "calls": 1,
+            "bytes": 4948,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 25327,
+            "seenMs": 25327,
+            "calls": 1,
+            "bytes": 4948,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 21201,
+            "seenMs": 21201,
+            "calls": 1,
+            "bytes": 4948,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 21089,
+            "seenMs": 21089,
+            "calls": 1,
+            "bytes": 4948,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 23066,
+            "seenMs": 23066,
+            "calls": 1,
+            "bytes": 5001,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 23320,
+            "seenMs": 23320,
+            "calls": 1,
+            "bytes": 4948,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 22413,
+            "seenMs": 22413,
+            "calls": 1,
+            "bytes": 4948,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "screenshot": [
+          {
+            "ms": 874,
+            "seenMs": 874,
+            "calls": 1,
+            "bytes": 315701,
+            "image": 236660,
+            "dims": [
+              589,
+              1278
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 684,
+            "seenMs": 684,
+            "calls": 1,
+            "bytes": 315681,
+            "image": 236646,
+            "dims": [
+              589,
+              1278
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 620,
+            "seenMs": 620,
+            "calls": 1,
+            "bytes": 315205,
+            "image": 236289,
+            "dims": [
+              589,
+              1278
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 615,
+            "seenMs": 615,
+            "calls": 1,
+            "bytes": 315205,
+            "image": 236289,
+            "dims": [
+              589,
+              1278
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 687,
+            "seenMs": 687,
+            "calls": 1,
+            "bytes": 315205,
+            "image": 236289,
+            "dims": [
+              589,
+              1278
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 587,
+            "seenMs": 587,
+            "calls": 1,
+            "bytes": 315205,
+            "image": 236289,
+            "dims": [
+              589,
+              1278
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 488,
+            "seenMs": 488,
+            "calls": 1,
+            "bytes": 315681,
+            "image": 236646,
+            "dims": [
+              589,
+              1278
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 781,
+            "seenMs": 782,
+            "calls": 1,
+            "bytes": 315681,
+            "image": 236646,
+            "dims": [
+              589,
+              1278
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 511,
+            "seenMs": 511,
+            "calls": 1,
+            "bytes": 315205,
+            "image": 236289,
+            "dims": [
+              589,
+              1278
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 838,
+            "seenMs": 838,
+            "calls": 1,
+            "bytes": 315681,
+            "image": 236646,
+            "dims": [
+              589,
+              1278
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "home": [
+          {
+            "ms": 6851,
+            "seenMs": 6851,
+            "calls": 1,
+            "bytes": 117,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3634,
+            "seenMs": 3634,
+            "calls": 1,
+            "bytes": 117,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2997,
+            "seenMs": 2997,
+            "calls": 1,
+            "bytes": 117,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2803,
+            "seenMs": 2803,
+            "calls": 1,
+            "bytes": 117,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3856,
+            "seenMs": 3856,
+            "calls": 1,
+            "bytes": 117,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3112,
+            "seenMs": 3112,
+            "calls": 1,
+            "bytes": 117,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3059,
+            "seenMs": 3059,
+            "calls": 1,
+            "bytes": 117,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3597,
+            "seenMs": 3597,
+            "calls": 1,
+            "bytes": 117,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3609,
+            "seenMs": 3609,
+            "calls": 1,
+            "bytes": 117,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3465,
+            "seenMs": 3465,
+            "calls": 1,
+            "bytes": 117,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "open URL": [
+          {
+            "ms": 379,
+            "seenMs": 600,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 453,
+            "seenMs": 694,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 655,
+            "seenMs": 923,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 541,
+            "seenMs": 741,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 599,
+            "seenMs": 790,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 485,
+            "seenMs": 768,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 518,
+            "seenMs": 732,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 430,
+            "seenMs": 677,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 513,
+            "seenMs": 704,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 444,
+            "seenMs": 842,
+            "calls": 1,
+            "bytes": 41,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "terminate app": [
+          {
+            "ms": 1961,
+            "seenMs": 1961,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2212,
+            "seenMs": 2212,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2040,
+            "seenMs": 2040,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2140,
+            "seenMs": 2140,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2063,
+            "seenMs": 2063,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2084,
+            "seenMs": 2084,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2134,
+            "seenMs": 2134,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2094,
+            "seenMs": 2094,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2032,
+            "seenMs": 2032,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2162,
+            "seenMs": 2162,
+            "calls": 1,
+            "bytes": 79,
+            "ok": true,
+            "err": null
+          }
+        ]
+      },
+      "hostBefore": {
+        "busyPct": 11,
+        "freeMb": 4290,
+        "compressedMb": 5058,
+        "waitedMs": 4274
+      },
+      "setupMs": 8845,
+      "setupUsage": {
+        "samples": 36,
+        "peakRssMb": 264,
+        "meanRssMb": 211,
+        "meanCpuPct": 26,
+        "peakCpuPct": 112,
+        "sharedPeakRssMb": 22
+      },
+      "defsBytes": 10567,
+      "version": "looktap 0.4.0",
+      "runConditions": [
+        {
+          "host": 11
+        },
+        {
+          "host": 11
+        },
+        {
+          "host": 12
+        },
+        {
+          "host": 11
+        },
+        {
+          "host": 21
+        },
+        {
+          "host": 10
+        },
+        {
+          "host": 10
+        },
+        {
+          "host": 13
+        },
+        {
+          "host": 10
+        },
+        {
+          "host": 10
+        }
+      ],
+      "usage": {
+        "samples": 5242,
+        "peakRssMb": 280,
+        "meanRssMb": 199,
+        "meanCpuPct": 7,
+        "peakCpuPct": 49,
+        "sharedPeakRssMb": 22
+      }
+    },
+    "mobile-mcp": {
+      "steps": {
+        "launch app": [
+          {
+            "ms": 684,
+            "seenMs": 1886,
+            "calls": 1,
+            "bytes": 73,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 684,
+            "seenMs": 1212,
+            "calls": 1,
+            "bytes": 73,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 671,
+            "seenMs": 1021,
+            "calls": 1,
+            "bytes": 73,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 689,
+            "seenMs": 1064,
+            "calls": 1,
+            "bytes": 73,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 695,
+            "seenMs": 1083,
+            "calls": 1,
+            "bytes": 73,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 685,
+            "seenMs": 1045,
+            "calls": 1,
+            "bytes": 73,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 674,
+            "seenMs": 1044,
+            "calls": 1,
+            "bytes": 73,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 709,
+            "seenMs": 1096,
+            "calls": 1,
+            "bytes": 73,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 681,
+            "seenMs": 1054,
+            "calls": 1,
+            "bytes": 73,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 671,
+            "seenMs": 1026,
+            "calls": 1,
+            "bytes": 73,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "read screen": [
+          {
+            "ms": 7280,
+            "seenMs": 7280,
+            "calls": 1,
+            "bytes": 4506,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4446,
+            "seenMs": 4446,
+            "calls": 1,
+            "bytes": 4506,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2360,
+            "seenMs": 2360,
+            "calls": 1,
+            "bytes": 4506,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2183,
+            "seenMs": 2183,
+            "calls": 1,
+            "bytes": 4506,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2380,
+            "seenMs": 2380,
+            "calls": 1,
+            "bytes": 4506,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2200,
+            "seenMs": 2200,
+            "calls": 1,
+            "bytes": 4506,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2243,
+            "seenMs": 2243,
+            "calls": 1,
+            "bytes": 4506,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2370,
+            "seenMs": 2370,
+            "calls": 1,
+            "bytes": 4506,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2386,
+            "seenMs": 2386,
+            "calls": 1,
+            "bytes": 4506,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2276,
+            "seenMs": 2276,
+            "calls": 1,
+            "bytes": 4506,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap by label": [
+          {
+            "ms": 5932,
+            "seenMs": 5932,
+            "calls": 2,
+            "bytes": 4587,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6854,
+            "seenMs": 6854,
+            "calls": 2,
+            "bytes": 4587,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6627,
+            "seenMs": 6627,
+            "calls": 2,
+            "bytes": 4587,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5586,
+            "seenMs": 5586,
+            "calls": 2,
+            "bytes": 4587,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6996,
+            "seenMs": 6996,
+            "calls": 2,
+            "bytes": 4587,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5610,
+            "seenMs": 5610,
+            "calls": 2,
+            "bytes": 4587,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5791,
+            "seenMs": 5791,
+            "calls": 2,
+            "bytes": 4587,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6361,
+            "seenMs": 6361,
+            "calls": 2,
+            "bytes": 4587,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6047,
+            "seenMs": 6047,
+            "calls": 2,
+            "bytes": 4587,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6012,
+            "seenMs": 6012,
+            "calls": 2,
+            "bytes": 4587,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "back": [
+          {
+            "ms": 6375,
+            "seenMs": 6375,
+            "calls": 2,
+            "bytes": 4626,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4452,
+            "seenMs": 4452,
+            "calls": 2,
+            "bytes": 4626,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6029,
+            "seenMs": 6029,
+            "calls": 2,
+            "bytes": 4561,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5425,
+            "seenMs": 5425,
+            "calls": 2,
+            "bytes": 4561,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4618,
+            "seenMs": 4618,
+            "calls": 2,
+            "bytes": 4626,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5299,
+            "seenMs": 5299,
+            "calls": 2,
+            "bytes": 4626,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5141,
+            "seenMs": 5141,
+            "calls": 2,
+            "bytes": 4626,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4543,
+            "seenMs": 4543,
+            "calls": 2,
+            "bytes": 4626,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5005,
+            "seenMs": 5005,
+            "calls": 2,
+            "bytes": 4626,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4695,
+            "seenMs": 4695,
+            "calls": 2,
+            "bytes": 4626,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap x,y": [
+          {
+            "ms": 2625,
+            "seenMs": 2625,
+            "calls": 1,
+            "bytes": 81,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2422,
+            "seenMs": 2422,
+            "calls": 1,
+            "bytes": 81,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2285,
+            "seenMs": 2285,
+            "calls": 1,
+            "bytes": 81,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2189,
+            "seenMs": 2189,
+            "calls": 1,
+            "bytes": 81,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2277,
+            "seenMs": 2277,
+            "calls": 1,
+            "bytes": 81,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2320,
+            "seenMs": 2320,
+            "calls": 1,
+            "bytes": 81,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2186,
+            "seenMs": 2186,
+            "calls": 1,
+            "bytes": 81,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2360,
+            "seenMs": 2360,
+            "calls": 1,
+            "bytes": 81,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2295,
+            "seenMs": 2295,
+            "calls": 1,
+            "bytes": 81,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2215,
+            "seenMs": 2215,
+            "calls": 1,
+            "bytes": 81,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "swipe": [
+          {
+            "ms": 4589,
+            "seenMs": 4589,
+            "calls": 1,
+            "bytes": 86,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3800,
+            "seenMs": 3800,
+            "calls": 1,
+            "bytes": 86,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3874,
+            "seenMs": 3874,
+            "calls": 1,
+            "bytes": 86,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2746,
+            "seenMs": 2746,
+            "calls": 1,
+            "bytes": 86,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2868,
+            "seenMs": 2868,
+            "calls": 1,
+            "bytes": 86,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3019,
+            "seenMs": 3019,
+            "calls": 1,
+            "bytes": 86,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2507,
+            "seenMs": 2507,
+            "calls": 1,
+            "bytes": 86,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2611,
+            "seenMs": 2611,
+            "calls": 1,
+            "bytes": 86,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2947,
+            "seenMs": 2947,
+            "calls": 1,
+            "bytes": 86,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3546,
+            "seenMs": 3546,
+            "calls": 1,
+            "bytes": 86,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "scroll to label": [
+          {
+            "ms": 36566,
+            "seenMs": 36566,
+            "calls": 7,
+            "bytes": 17858,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 29728,
+            "seenMs": 29728,
+            "calls": 7,
+            "bytes": 17590,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 26888,
+            "seenMs": 26888,
+            "calls": 7,
+            "bytes": 17590,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 28369,
+            "seenMs": 28369,
+            "calls": 7,
+            "bytes": 17590,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 27795,
+            "seenMs": 27795,
+            "calls": 7,
+            "bytes": 17956,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 25826,
+            "seenMs": 25826,
+            "calls": 7,
+            "bytes": 17434,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 26056,
+            "seenMs": 26056,
+            "calls": 7,
+            "bytes": 17590,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 26450,
+            "seenMs": 26450,
+            "calls": 7,
+            "bytes": 17858,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 26572,
+            "seenMs": 26572,
+            "calls": 7,
+            "bytes": 17434,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 27064,
+            "seenMs": 27064,
+            "calls": 7,
+            "bytes": 17575,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "fill field": [
+          {
+            "ms": 9272,
+            "seenMs": 9562,
+            "calls": 3,
+            "bytes": 4642,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 8872,
+            "seenMs": 9196,
+            "calls": 3,
+            "bytes": 4642,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 8522,
+            "seenMs": 8522,
+            "calls": 3,
+            "bytes": 4642,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 7689,
+            "seenMs": 7689,
+            "calls": 3,
+            "bytes": 4642,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 7382,
+            "seenMs": 7382,
+            "calls": 3,
+            "bytes": 4642,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 7625,
+            "seenMs": 7625,
+            "calls": 3,
+            "bytes": 4642,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 8011,
+            "seenMs": 8011,
+            "calls": 3,
+            "bytes": 4642,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 8449,
+            "seenMs": 8449,
+            "calls": 3,
+            "bytes": 4642,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 7640,
+            "seenMs": 7640,
+            "calls": 3,
+            "bytes": 4642,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 7498,
+            "seenMs": 7498,
+            "calls": 3,
+            "bytes": 4642,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "screenshot": [
+          {
+            "ms": 3145,
+            "seenMs": 3145,
+            "calls": 1,
+            "bytes": 554158,
+            "image": 415445,
+            "dims": [
+              1178,
+              2556
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2216,
+            "seenMs": 2216,
+            "calls": 1,
+            "bytes": 554158,
+            "image": 415445,
+            "dims": [
+              1178,
+              2556
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1602,
+            "seenMs": 1602,
+            "calls": 1,
+            "bytes": 554158,
+            "image": 415445,
+            "dims": [
+              1178,
+              2556
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2098,
+            "seenMs": 2098,
+            "calls": 1,
+            "bytes": 554574,
+            "image": 415758,
+            "dims": [
+              1178,
+              2556
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1649,
+            "seenMs": 1649,
+            "calls": 1,
+            "bytes": 554574,
+            "image": 415758,
+            "dims": [
+              1178,
+              2556
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1801,
+            "seenMs": 1801,
+            "calls": 1,
+            "bytes": 554738,
+            "image": 415881,
+            "dims": [
+              1178,
+              2556
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1837,
+            "seenMs": 1837,
+            "calls": 1,
+            "bytes": 554574,
+            "image": 415758,
+            "dims": [
+              1178,
+              2556
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2003,
+            "seenMs": 2003,
+            "calls": 1,
+            "bytes": 554738,
+            "image": 415881,
+            "dims": [
+              1178,
+              2556
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1799,
+            "seenMs": 1799,
+            "calls": 1,
+            "bytes": 554738,
+            "image": 415881,
+            "dims": [
+              1178,
+              2556
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1678,
+            "seenMs": 1678,
+            "calls": 1,
+            "bytes": 554910,
+            "image": 416010,
+            "dims": [
+              1178,
+              2556
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "home": [
+          {
+            "ms": 928,
+            "seenMs": 1324,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 986,
+            "seenMs": 1559,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 979,
+            "seenMs": 1400,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 920,
+            "seenMs": 1320,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1075,
+            "seenMs": 1488,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 998,
+            "seenMs": 1407,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1049,
+            "seenMs": 1495,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1030,
+            "seenMs": 1433,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1008,
+            "seenMs": 1393,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 953,
+            "seenMs": 1519,
+            "calls": 1,
+            "bytes": 63,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "open URL": [
+          {
+            "ms": 748,
+            "seenMs": 1151,
+            "calls": 1,
+            "bytes": 70,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 559,
+            "seenMs": 930,
+            "calls": 1,
+            "bytes": 70,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 587,
+            "seenMs": 976,
+            "calls": 1,
+            "bytes": 70,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 502,
+            "seenMs": 920,
+            "calls": 1,
+            "bytes": 70,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 524,
+            "seenMs": 913,
+            "calls": 1,
+            "bytes": 70,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 510,
+            "seenMs": 910,
+            "calls": 1,
+            "bytes": 70,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 508,
+            "seenMs": 898,
+            "calls": 1,
+            "bytes": 70,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 563,
+            "seenMs": 934,
+            "calls": 1,
+            "bytes": 70,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 560,
+            "seenMs": 960,
+            "calls": 1,
+            "bytes": 70,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 582,
+            "seenMs": 988,
+            "calls": 1,
+            "bytes": 70,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "terminate app": [
+          {
+            "ms": 2353,
+            "seenMs": 2353,
+            "calls": 1,
+            "bytes": 75,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1600,
+            "seenMs": 1600,
+            "calls": 1,
+            "bytes": 75,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1537,
+            "seenMs": 1537,
+            "calls": 1,
+            "bytes": 75,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1744,
+            "seenMs": 1744,
+            "calls": 1,
+            "bytes": 75,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1543,
+            "seenMs": 1543,
+            "calls": 1,
+            "bytes": 75,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1557,
+            "seenMs": 1557,
+            "calls": 1,
+            "bytes": 75,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1626,
+            "seenMs": 1626,
+            "calls": 1,
+            "bytes": 75,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1535,
+            "seenMs": 1535,
+            "calls": 1,
+            "bytes": 75,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1611,
+            "seenMs": 1611,
+            "calls": 1,
+            "bytes": 75,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1532,
+            "seenMs": 1532,
+            "calls": 1,
+            "bytes": 75,
+            "ok": true,
+            "err": null
+          }
+        ]
+      },
+      "hostBefore": {
+        "busyPct": 12,
+        "freeMb": 4509,
+        "compressedMb": 4900,
+        "waitedMs": 4281
+      },
+      "setupMs": 12516,
+      "setupUsage": {
+        "samples": 50,
+        "peakRssMb": 384,
+        "meanRssMb": 209,
+        "meanCpuPct": 20,
+        "peakCpuPct": 126,
+        "sharedPeakRssMb": 20
+      },
+      "defsBytes": 29777,
+      "version": "mobile-mcp 1.0.11",
+      "runConditions": [
+        {
+          "host": 12
+        },
+        {
+          "host": 11
+        },
+        {
+          "host": 12
+        },
+        {
+          "host": 11
+        },
+        {
+          "host": 11
+        },
+        {
+          "host": 11
+        },
+        {
+          "host": 12
+        },
+        {
+          "host": 13
+        },
+        {
+          "host": 11
+        },
+        {
+          "host": 11
+        }
+      ],
+      "usage": {
+        "samples": 4098,
+        "peakRssMb": 372,
+        "meanRssMb": 249,
+        "meanCpuPct": 8,
+        "peakCpuPct": 67,
+        "sharedPeakRssMb": 22
+      }
+    },
+    "ios-simulator-mcp": {
+      "steps": {},
+      "hostBefore": {
+        "busyPct": 13,
+        "freeMb": 4147,
+        "compressedMb": 5243,
+        "waitedMs": 4292
+      },
+      "setupError": "ui_describe_all: Input validation error: Invalid arguments for tool ui_describe_all: udid: Invalid string: must match pattern /^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$/"
+    },
+    "mobilebuildmcp": {
+      "steps": {},
+      "hostBefore": {
+        "busyPct": 13,
+        "freeMb": 4210,
+        "compressedMb": 5254,
+        "waitedMs": 4250
+      },
+      "setupError": "snapshot_ui: \n⚙️ Error\n\n❌ Parameter validation failed: Invalid parameters:\nsimulatorId: Invalid Simulator UUID format\n  ├ Category: validation\n  └ Code: PARAMETER_VALIDATION_FAILED\n"
+    },
+    "maestro-mcp": {
+      "steps": {},
+      "hostBefore": {
+        "busyPct": 13,
+        "freeMb": 3792,
+        "compressedMb": 5854,
+        "waitedMs": 4405
+      },
+      "setupError": "inspect_screen: Failed to inspect screen: Device with id <device> is not connected",
+      "rerun": {
+        "setup": {
+          "date": "2026-10-18T03:50:32.000Z",
+          "why": "setup re-checked: the runner had stored the notice Maestro's reply opens with instead of its error"
+        }
+      }
+    },
+    "appium-mcp": {
+      "steps": {
+        "launch app": [
+          {
+            "ms": 1575,
+            "seenMs": 1575,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1651,
+            "seenMs": 1651,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1695,
+            "seenMs": 1695,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1479,
+            "seenMs": 1479,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1474,
+            "seenMs": 1474,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1582,
+            "seenMs": 1582,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1474,
+            "seenMs": 1474,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1469,
+            "seenMs": 1469,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1510,
+            "seenMs": 1510,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1593,
+            "seenMs": 1593,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "read screen": [
+          {
+            "ms": 1728,
+            "seenMs": 1728,
+            "calls": 1,
+            "bytes": 101895,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4175,
+            "seenMs": 4175,
+            "calls": 1,
+            "bytes": 101895,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5643,
+            "seenMs": 5643,
+            "calls": 1,
+            "bytes": 101895,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1910,
+            "seenMs": 1910,
+            "calls": 1,
+            "bytes": 101895,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1478,
+            "seenMs": 1478,
+            "calls": 1,
+            "bytes": 101895,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2217,
+            "seenMs": 2217,
+            "calls": 1,
+            "bytes": 101895,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2005,
+            "seenMs": 2005,
+            "calls": 1,
+            "bytes": 101895,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1510,
+            "seenMs": 1510,
+            "calls": 1,
+            "bytes": 101895,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1483,
+            "seenMs": 1483,
+            "calls": 1,
+            "bytes": 101895,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2237,
+            "seenMs": 2237,
+            "calls": 1,
+            "bytes": 101895,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap by label": [
+          {
+            "ms": 3150,
+            "seenMs": 3150,
+            "calls": 2,
+            "bytes": 308,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2277,
+            "seenMs": 3656,
+            "calls": 2,
+            "bytes": 308,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3494,
+            "seenMs": 3494,
+            "calls": 2,
+            "bytes": 308,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3364,
+            "seenMs": 3364,
+            "calls": 2,
+            "bytes": 308,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1591,
+            "seenMs": 1591,
+            "calls": 2,
+            "bytes": 308,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3345,
+            "seenMs": 3345,
+            "calls": 2,
+            "bytes": 308,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3171,
+            "seenMs": 3171,
+            "calls": 2,
+            "bytes": 308,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1664,
+            "seenMs": 1664,
+            "calls": 2,
+            "bytes": 308,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1834,
+            "seenMs": 1834,
+            "calls": 2,
+            "bytes": 308,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4233,
+            "seenMs": 4233,
+            "calls": 2,
+            "bytes": 308,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "back": [
+          {
+            "ms": 5739,
+            "seenMs": 5739,
+            "calls": 1,
+            "bytes": 74,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3239,
+            "seenMs": 3239,
+            "calls": 1,
+            "bytes": 74,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2289,
+            "seenMs": 2289,
+            "calls": 1,
+            "bytes": 74,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4498,
+            "seenMs": 4498,
+            "calls": 1,
+            "bytes": 74,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1711,
+            "seenMs": 1711,
+            "calls": 1,
+            "bytes": 74,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4243,
+            "seenMs": 4243,
+            "calls": 1,
+            "bytes": 74,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4318,
+            "seenMs": 4318,
+            "calls": 1,
+            "bytes": 74,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1930,
+            "seenMs": 1930,
+            "calls": 1,
+            "bytes": 74,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1634,
+            "seenMs": 1634,
+            "calls": 1,
+            "bytes": 74,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4104,
+            "seenMs": 4104,
+            "calls": 1,
+            "bytes": 74,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap x,y": [
+          {
+            "ms": 2225,
+            "seenMs": 2225,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2274,
+            "seenMs": 2274,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2075,
+            "seenMs": 2075,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2047,
+            "seenMs": 2047,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1812,
+            "seenMs": 1812,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2044,
+            "seenMs": 2044,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2150,
+            "seenMs": 2150,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2186,
+            "seenMs": 2186,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1747,
+            "seenMs": 1747,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2108,
+            "seenMs": 2108,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "swipe": [
+          {
+            "ms": 10012,
+            "seenMs": 10012,
+            "calls": 1,
+            "bytes": 104,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5374,
+            "seenMs": 5374,
+            "calls": 1,
+            "bytes": 104,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5464,
+            "seenMs": 5464,
+            "calls": 1,
+            "bytes": 104,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4741,
+            "seenMs": 4741,
+            "calls": 1,
+            "bytes": 104,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6020,
+            "seenMs": 6020,
+            "calls": 1,
+            "bytes": 104,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5018,
+            "seenMs": 5018,
+            "calls": 1,
+            "bytes": 104,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4733,
+            "seenMs": 4733,
+            "calls": 1,
+            "bytes": 104,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5384,
+            "seenMs": null,
+            "calls": 1,
+            "bytes": 104,
+            "ok": false,
+            "err": null
+          },
+          {
+            "ms": 6289,
+            "seenMs": 6289,
+            "calls": 1,
+            "bytes": 104,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5815,
+            "seenMs": 5815,
+            "calls": 1,
+            "bytes": 104,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "scroll to label": [
+          {
+            "ms": 69849,
+            "seenMs": 69849,
+            "calls": 1,
+            "bytes": 100,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 66974,
+            "seenMs": 66974,
+            "calls": 1,
+            "bytes": 100,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 54123,
+            "seenMs": 54123,
+            "calls": 1,
+            "bytes": 100,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 52861,
+            "seenMs": 52861,
+            "calls": 1,
+            "bytes": 100,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 57914,
+            "seenMs": 57914,
+            "calls": 1,
+            "bytes": 100,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 50767,
+            "seenMs": 50767,
+            "calls": 1,
+            "bytes": 100,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 54391,
+            "seenMs": 54391,
+            "calls": 1,
+            "bytes": 100,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 52184,
+            "seenMs": 52184,
+            "calls": 1,
+            "bytes": 100,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 54940,
+            "seenMs": 54940,
+            "calls": 1,
+            "bytes": 100,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 59640,
+            "seenMs": 59640,
+            "calls": 1,
+            "bytes": 100,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "fill field": [
+          {
+            "ms": 6959,
+            "seenMs": 7300,
+            "calls": 2,
+            "bytes": 413,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6271,
+            "seenMs": 6559,
+            "calls": 2,
+            "bytes": 413,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6622,
+            "seenMs": 6938,
+            "calls": 2,
+            "bytes": 413,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 7292,
+            "seenMs": 7292,
+            "calls": 2,
+            "bytes": 413,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6467,
+            "seenMs": 6754,
+            "calls": 2,
+            "bytes": 413,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5824,
+            "seenMs": 6104,
+            "calls": 2,
+            "bytes": 413,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6836,
+            "seenMs": 7124,
+            "calls": 2,
+            "bytes": 413,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6954,
+            "seenMs": 7242,
+            "calls": 2,
+            "bytes": 413,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6492,
+            "seenMs": 6776,
+            "calls": 2,
+            "bytes": 413,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 7816,
+            "seenMs": 8125,
+            "calls": 2,
+            "bytes": 413,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "screenshot": [
+          {
+            "ms": 596,
+            "seenMs": 596,
+            "calls": 1,
+            "bytes": 514410,
+            "image": 381821,
+            "dims": [
+              1178,
+              2556
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 496,
+            "seenMs": 496,
+            "calls": 1,
+            "bytes": 514410,
+            "image": 381821,
+            "dims": [
+              1178,
+              2556
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 398,
+            "seenMs": 398,
+            "calls": 1,
+            "bytes": 514410,
+            "image": 381821,
+            "dims": [
+              1178,
+              2556
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 392,
+            "seenMs": 392,
+            "calls": 1,
+            "bytes": 514402,
+            "image": 381815,
+            "dims": [
+              1178,
+              2556
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 559,
+            "seenMs": 559,
+            "calls": 1,
+            "bytes": 514410,
+            "image": 381821,
+            "dims": [
+              1178,
+              2556
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 763,
+            "seenMs": 763,
+            "calls": 1,
+            "bytes": 514390,
+            "image": 381806,
+            "dims": [
+              1178,
+              2556
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 371,
+            "seenMs": 371,
+            "calls": 1,
+            "bytes": 514410,
+            "image": 381821,
+            "dims": [
+              1178,
+              2556
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 462,
+            "seenMs": 462,
+            "calls": 1,
+            "bytes": 514402,
+            "image": 381815,
+            "dims": [
+              1178,
+              2556
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 540,
+            "seenMs": 540,
+            "calls": 1,
+            "bytes": 514410,
+            "image": 381821,
+            "dims": [
+              1178,
+              2556
+            ],
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 524,
+            "seenMs": 524,
+            "calls": 1,
+            "bytes": 514402,
+            "image": 381815,
+            "dims": [
+              1178,
+              2556
+            ],
+            "ok": true,
+            "err": null
+          }
+        ],
+        "home": [
+          {
+            "ms": 518,
+            "seenMs": 906,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 637,
+            "seenMs": 1021,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 472,
+            "seenMs": 884,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 473,
+            "seenMs": 872,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 497,
+            "seenMs": 921,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 488,
+            "seenMs": 855,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 493,
+            "seenMs": 889,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 579,
+            "seenMs": 964,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 475,
+            "seenMs": 845,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 507,
+            "seenMs": 906,
+            "calls": 1,
+            "bytes": 85,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "open URL": [
+          {
+            "ms": 254,
+            "seenMs": 3967,
+            "calls": 1,
+            "bytes": 124,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 251,
+            "seenMs": 2377,
+            "calls": 1,
+            "bytes": 124,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 401,
+            "seenMs": 2528,
+            "calls": 1,
+            "bytes": 124,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 261,
+            "seenMs": 2457,
+            "calls": 1,
+            "bytes": 124,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 262,
+            "seenMs": 2345,
+            "calls": 1,
+            "bytes": 124,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 324,
+            "seenMs": 2465,
+            "calls": 1,
+            "bytes": 124,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 322,
+            "seenMs": 2791,
+            "calls": 1,
+            "bytes": 124,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 209,
+            "seenMs": 2510,
+            "calls": 1,
+            "bytes": 124,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 230,
+            "seenMs": 2478,
+            "calls": 1,
+            "bytes": 124,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 237,
+            "seenMs": 2475,
+            "calls": 1,
+            "bytes": 124,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "terminate app": [
+          {
+            "ms": 1064,
+            "seenMs": 1064,
+            "calls": 1,
+            "bytes": 66,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1041,
+            "seenMs": 1041,
+            "calls": 1,
+            "bytes": 66,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1159,
+            "seenMs": 1159,
+            "calls": 1,
+            "bytes": 66,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1023,
+            "seenMs": 1023,
+            "calls": 1,
+            "bytes": 66,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1059,
+            "seenMs": 1059,
+            "calls": 1,
+            "bytes": 66,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1034,
+            "seenMs": 1034,
+            "calls": 1,
+            "bytes": 66,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1063,
+            "seenMs": 1063,
+            "calls": 1,
+            "bytes": 66,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1074,
+            "seenMs": 1074,
+            "calls": 1,
+            "bytes": 66,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1090,
+            "seenMs": 1090,
+            "calls": 1,
+            "bytes": 66,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1071,
+            "seenMs": 1071,
+            "calls": 1,
+            "bytes": 66,
+            "ok": true,
+            "err": null
+          }
+        ]
+      },
+      "hostBefore": {
+        "busyPct": 12,
+        "freeMb": 4131,
+        "compressedMb": 5361,
+        "waitedMs": 4237
+      },
+      "setupMs": 14279,
+      "setupUsage": {
+        "samples": 57,
+        "peakRssMb": 551,
+        "meanRssMb": 441,
+        "meanCpuPct": 46,
+        "peakCpuPct": 142,
+        "sharedPeakRssMb": 20
+      },
+      "defsBytes": 43304,
+      "version": "MCP Appium 1.97.1",
+      "runConditions": [
+        {
+          "host": 11
+        },
+        {
+          "host": 11
+        },
+        {
+          "host": 11
+        },
+        {
+          "host": 11
+        },
+        {
+          "host": 15
+        },
+        {
+          "host": 17
+        },
+        {
+          "host": 14
+        },
+        {
+          "host": 29
+        },
+        {
+          "host": 19
+        },
+        {
+          "host": 16
+        }
+      ],
+      "usage": {
+        "samples": 4956,
+        "peakRssMb": 552,
+        "meanRssMb": 327,
+        "meanCpuPct": 6,
+        "peakCpuPct": 62,
+        "sharedPeakRssMb": 22
+      }
+    },
+    "appium": {
+      "steps": {
+        "launch app": [
+          {
+            "ms": 1518,
+            "seenMs": 1518,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1647,
+            "seenMs": 1647,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1661,
+            "seenMs": 1661,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1650,
+            "seenMs": 1650,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1468,
+            "seenMs": 1468,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1523,
+            "seenMs": 1523,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1589,
+            "seenMs": 1589,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1523,
+            "seenMs": 1523,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1593,
+            "seenMs": 1593,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1480,
+            "seenMs": 1480,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "read screen": [
+          {
+            "ms": 268,
+            "seenMs": 268,
+            "calls": 1,
+            "bytes": 35306,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 525,
+            "seenMs": 525,
+            "calls": 1,
+            "bytes": 35306,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 524,
+            "seenMs": 524,
+            "calls": 1,
+            "bytes": 35306,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 420,
+            "seenMs": 420,
+            "calls": 1,
+            "bytes": 35306,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 303,
+            "seenMs": 303,
+            "calls": 1,
+            "bytes": 35306,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 277,
+            "seenMs": 277,
+            "calls": 1,
+            "bytes": 35306,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 297,
+            "seenMs": 297,
+            "calls": 1,
+            "bytes": 35306,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 267,
+            "seenMs": 267,
+            "calls": 1,
+            "bytes": 35306,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 376,
+            "seenMs": 376,
+            "calls": 1,
+            "bytes": 35306,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 306,
+            "seenMs": 306,
+            "calls": 1,
+            "bytes": 35306,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap by label": [
+          {
+            "ms": 1806,
+            "seenMs": 1806,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2199,
+            "seenMs": 4463,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1987,
+            "seenMs": 4176,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4441,
+            "seenMs": 4441,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2738,
+            "seenMs": 2738,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2626,
+            "seenMs": 2626,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2823,
+            "seenMs": 2823,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2787,
+            "seenMs": 2787,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 3181,
+            "seenMs": 3181,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 2833,
+            "seenMs": 2833,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "back": [
+          {
+            "ms": 2320,
+            "seenMs": 2320,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5435,
+            "seenMs": 5435,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5823,
+            "seenMs": 5823,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4361,
+            "seenMs": 4361,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4898,
+            "seenMs": 4898,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4084,
+            "seenMs": 4084,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4757,
+            "seenMs": 4757,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4589,
+            "seenMs": 4589,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5209,
+            "seenMs": 5209,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 5010,
+            "seenMs": 5010,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "tap x,y": [
+          {
+            "ms": 6854,
+            "seenMs": 6854,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6343,
+            "seenMs": 6343,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6280,
+            "seenMs": 6280,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1133,
+            "seenMs": 1133,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1141,
+            "seenMs": 1141,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1237,
+            "seenMs": 1237,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1141,
+            "seenMs": 1141,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1151,
+            "seenMs": 1151,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6466,
+            "seenMs": 6466,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1220,
+            "seenMs": 1220,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "swipe": [
+          {
+            "ms": 8240,
+            "seenMs": 8240,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 8647,
+            "seenMs": 8647,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 8404,
+            "seenMs": 8404,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 9473,
+            "seenMs": 9473,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 9019,
+            "seenMs": 9019,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 10255,
+            "seenMs": 10255,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 8903,
+            "seenMs": 8903,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 8807,
+            "seenMs": 8807,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 6723,
+            "seenMs": 6723,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 9575,
+            "seenMs": 9575,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "scroll to label": [
+          {
+            "ms": 35240,
+            "seenMs": 35240,
+            "calls": 9,
+            "bytes": 700,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 35076,
+            "seenMs": 35076,
+            "calls": 9,
+            "bytes": 700,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 34273,
+            "seenMs": 34273,
+            "calls": 9,
+            "bytes": 700,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 28706,
+            "seenMs": 28706,
+            "calls": 9,
+            "bytes": 700,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 28962,
+            "seenMs": 28962,
+            "calls": 9,
+            "bytes": 700,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 27909,
+            "seenMs": 27909,
+            "calls": 9,
+            "bytes": 700,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 28302,
+            "seenMs": 28302,
+            "calls": 9,
+            "bytes": 700,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 28634,
+            "seenMs": 28634,
+            "calls": 9,
+            "bytes": 700,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 30689,
+            "seenMs": 30689,
+            "calls": 9,
+            "bytes": 700,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 30224,
+            "seenMs": 30224,
+            "calls": 9,
+            "bytes": 700,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "fill field": [
+          {
+            "ms": 8068,
+            "seenMs": 8068,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 8405,
+            "seenMs": 8698,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 7851,
+            "seenMs": 8183,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 7110,
+            "seenMs": 7385,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 7110,
+            "seenMs": 7379,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 7034,
+            "seenMs": 7317,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 4038,
+            "seenMs": 4325,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 7333,
+            "seenMs": 7651,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 7481,
+            "seenMs": 7772,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 8509,
+            "seenMs": 8805,
+            "calls": 2,
+            "bytes": 151,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "screenshot": [
+          {
+            "ms": 577,
+            "seenMs": 577,
+            "calls": 1,
+            "bytes": 509092,
+            "image": 381808,
+            "dims": [
+              1178,
+              2556
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 555,
+            "seenMs": 555,
+            "calls": 1,
+            "bytes": 509108,
+            "image": 381821,
+            "dims": [
+              1178,
+              2556
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 523,
+            "seenMs": 523,
+            "calls": 1,
+            "bytes": 509108,
+            "image": 381821,
+            "dims": [
+              1178,
+              2556
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 393,
+            "seenMs": 393,
+            "calls": 1,
+            "bytes": 509108,
+            "image": 381821,
+            "dims": [
+              1178,
+              2556
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 375,
+            "seenMs": 375,
+            "calls": 1,
+            "bytes": 509096,
+            "image": 381813,
+            "dims": [
+              1178,
+              2556
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 375,
+            "seenMs": 375,
+            "calls": 1,
+            "bytes": 509092,
+            "image": 381808,
+            "dims": [
+              1178,
+              2556
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 735,
+            "seenMs": 735,
+            "calls": 1,
+            "bytes": 509108,
+            "image": 381821,
+            "dims": [
+              1178,
+              2556
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 386,
+            "seenMs": 386,
+            "calls": 1,
+            "bytes": 509100,
+            "image": 381815,
+            "dims": [
+              1178,
+              2556
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 371,
+            "seenMs": 371,
+            "calls": 1,
+            "bytes": 506916,
+            "image": 380176,
+            "dims": [
+              1178,
+              2556
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 442,
+            "seenMs": 442,
+            "calls": 1,
+            "bytes": 506896,
+            "image": 380161,
+            "dims": [
+              1178,
+              2556
+            ],
+            "inline": true,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "home": [
+          {
+            "ms": 492,
+            "seenMs": 1032,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 583,
+            "seenMs": 958,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 490,
+            "seenMs": 884,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 481,
+            "seenMs": 680,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 521,
+            "seenMs": 948,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 491,
+            "seenMs": 946,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 489,
+            "seenMs": 682,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 556,
+            "seenMs": 934,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 530,
+            "seenMs": 1071,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 560,
+            "seenMs": 1099,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "open URL": [
+          {
+            "ms": 249,
+            "seenMs": 2516,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 333,
+            "seenMs": 2516,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 212,
+            "seenMs": 2194,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 237,
+            "seenMs": 2400,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 216,
+            "seenMs": 2219,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 282,
+            "seenMs": 2885,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 244,
+            "seenMs": 2097,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 229,
+            "seenMs": 2398,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 272,
+            "seenMs": 3186,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 262,
+            "seenMs": 2670,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          }
+        ],
+        "terminate app": [
+          {
+            "ms": 1105,
+            "seenMs": 1105,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1040,
+            "seenMs": 1040,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1042,
+            "seenMs": 1042,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1066,
+            "seenMs": 1066,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1033,
+            "seenMs": 1033,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1049,
+            "seenMs": 1049,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1036,
+            "seenMs": 1036,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 1029,
+            "seenMs": 1029,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          },
+          {
+            "ms": 17,
+            "seenMs": null,
+            "calls": 1,
+            "bytes": 15,
+            "ok": false,
+            "err": null
+          },
+          {
+            "ms": 1174,
+            "seenMs": 1174,
+            "calls": 1,
+            "bytes": 14,
+            "ok": true,
+            "err": null
+          }
+        ]
+      },
+      "hostBefore": {
+        "busyPct": 24,
+        "freeMb": 3340,
+        "compressedMb": 6696,
+        "waitedMs": 16001
+      },
+      "setupMs": 12280,
+      "setupUsage": {
+        "samples": 49,
+        "peakRssMb": 395,
+        "meanRssMb": 298,
+        "meanCpuPct": 40,
+        "peakCpuPct": 120,
+        "sharedPeakRssMb": 20
+      },
+      "defsBytes": 0,
+      "version": "Appium server (W3C HTTP)",
+      "runConditions": [
+        {
+          "host": 22
+        },
+        {
+          "host": 26
+        },
+        {
+          "host": 11
+        },
+        {
+          "host": 25
+        },
+        {
+          "host": 22
+        },
+        {
+          "host": 16
+        },
+        {
+          "host": 13
+        },
+        {
+          "host": 13
+        },
+        {
+          "host": 15
+        },
+        {
+          "host": 16
+        }
+      ],
+      "usage": {
+        "samples": 3904,
+        "peakRssMb": 374,
+        "meanRssMb": 220,
+        "meanCpuPct": 5,
+        "peakCpuPct": 38,
+        "sharedPeakRssMb": 20
+      }
+    },
+    "idb": {
+      "steps": {},
+      "hostBefore": {
+        "busyPct": 13,
+        "freeMb": 3794,
+        "compressedMb": 5733,
+        "waitedMs": 4405
+      },
+      "setupError": "Command failed: idb ui describe-all --json --udid <device>\nTarget is not a simulator, cannot provide accessibility commands: <device> | <device name> | Booted | iPhone 14 Pro | OS 'iOS 26.0' \n"
+    }
+  }
+}

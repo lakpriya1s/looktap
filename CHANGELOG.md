@@ -2,13 +2,8 @@
 
 ## Unreleased
 
-### Fixed
-- **A command could hang forever after a helper call timed out** (seen once on a busy Android phone: `back` went back
-  and never returned). The timed-out connection stayed open and kept the process alive; it is now closed.
-- **Actions with `--ls` (and every MCP action) waited the full 2.5 s on iOS 26 screens with grouped lists:** their
-  section backgrounds overhang both screen edges, which read as a screen still sliding in. On a real iPhone,
-  `tap --ls` took 4.4 s, now 2.9 s; on the simulator, 2.0–2.5 s, now 1.5 s.
-- An unplugged Android device is reported as not connected, not as a leftover Appium session.
+### Added
+- **Android `ls` shows a switch's or checkbox's state** as `= 1` (on) or `= 0` (off), as iOS does.
 
 ### Changed
 - **`scrollto` is about twice as fast:** each swipe holds still for a moment before lifting, so the list stops where
@@ -20,8 +15,30 @@
 - `fill` on iOS waits at most half a second for the keyboard to show, however slow each check is: with a keyboard
   XCUITest can't see (a third-party one), it used to wait ~2.4 s on a real iPhone before typing.
 
-### Added
-- **Android `ls` shows a switch's or checkbox's state** as `= 1` (on) or `= 0` (off), as iOS does.
+### Fixed
+- **A command could hang forever after a helper call timed out** (seen once on a busy Android phone: `back` went back
+  and never returned). The timed-out connection stayed open and kept the process alive; it is now closed.
+- **Actions with `--ls` (and every MCP action) waited the full 2.5 s on iOS 26 screens with grouped lists:** their
+  section backgrounds overhang both screen edges, which read as a screen still sliding in. On a real iPhone,
+  `tap --ls` took 4.4 s, now 2.9 s; on the simulator, 2.0–2.5 s, now 1.5 s.
+- An unplugged Android device is reported as not connected, not as a leftover Appium session.
+
+### Benchmark
+- **Real phones:** the benchmark now also runs on a real iPhone and a real Android phone over USB, with the same steps
+  and rules. `bench/results/ios-device.md` (iPhone 14 Pro, iOS 26.0) and `bench/results/android-device.md` (Samsung
+  Galaxy A06, Android 16) hold the results; `BENCHMARK.md`, the README and the website summarise them, including
+  where looktap is slower.
+  - On a real iPhone the oracle reads the phone's screen over the USB cable (the capture device QuickTime records
+    from) with Apple's text recognition (`bench/eye/eye.swift`), and resets use `xcrun devicectl`: nothing shared with
+    the tools under test.
+  - A phone isn't rebooted between tools (it would stop at its passcode). Instead, every helper the previous tool left
+    behind is stopped, on the Mac and on the phone.
+  - Tools that can't run on a device are listed with their error: on the iPhone, ios-simulator-mcp, MobileBuildMCP,
+    idb and Maestro.
+  - A phone is named in the results by its model; its serial, UDID and name are scrubbed from tool errors.
+- The looktap adapters use `home` and `stop` (since 0.3.0) instead of marking those steps n/a.
+- Raw Appium on a real iPhone gets the session settings Appium MCP sets for iOS, so only the MCP layer differs between
+  the two.
 
 ## 0.4.0
 
