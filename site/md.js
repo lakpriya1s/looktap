@@ -6,6 +6,46 @@
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const escAttr = (s) => esc(s).replace(/"/g, '&quot;');
 
+// ── code highlighting ─────────────────────────────────────────────────
+// Just enough to tell comments from commands in shell, console and YAML blocks: comments, `looktap` and its
+// command, quoted strings, flags, a console's prompt and its output. Classes t-c, t-k, t-v, t-s, t-f, t-p, t-o, t-y.
+
+const tok = (cls, text) => `<span class="t-${cls}">${esc(text)}</span>`;
+const SHELL = /("(?:\\.|[^"\\])*"?|'[^']*'?)|((?<=^|\s)#.*$)|(--?[A-Za-z][\w-]*)|([^\s"']+)|(\s+)/g;
+
+/** One line of shell: a comment, else `looktap <command>`, strings and flags marked. */
+function shellLine(line) {
+  let html = '';
+  let after = false; // the word after `looktap` is its command
+  for (const [t, str, comment, flag, word] of line.matchAll(SHELL)) {
+    if (str) html += tok('s', t);
+    else if (comment) html += tok('c', t);
+    else if (flag) html += tok('f', t);
+    else if (word === 'looktap') (html += tok('k', t)), (after = true);
+    else if (word && after) (html += tok('v', t)), (after = false);
+    else html += esc(t);
+  }
+  return html;
+}
+
+/** A fenced block's HTML: highlighted for bash/sh/shell, console (`$ ` lines are commands, the rest output) and yaml. */
+export function highlight(code, lang) {
+  const lines = code.split('\n');
+  if (['bash', 'sh', 'shell', 'zsh'].includes(lang)) return lines.map(shellLine).join('\n');
+  if (lang === 'console') return lines.map((l) => (/^\$ /.test(l) ? `${tok('p', '$')} ${shellLine(l.slice(2))}` : l ? tok('o', l) : '')).join('\n');
+  if (lang === 'yaml' || lang === 'yml')
+    return lines
+      .map((l) => {
+        const c = /(^|\s)#.*$/.exec(l);
+        const body = c ? l.slice(0, c.index + c[1].length) : l;
+        const k = /^(\s*(?:- )?)([\w.-]+)(:)(.*)$/.exec(body);
+        const html = k ? `${esc(k[1])}${tok('y', k[2])}${esc(k[3])}${esc(k[4])}` : esc(body);
+        return html + (c ? tok('c', c[0].slice(c[1].length)) : '');
+      })
+      .join('\n');
+  return esc(code);
+}
+
 /** GitHub's heading id: lower case, punctuation and emoji dropped, spaces → hyphens. */
 export function slug(text) {
   return text
@@ -152,7 +192,7 @@ export function render(md, { link = (h) => h, shift = 0 } = {}) {
       while (i < lines.length && !new RegExp(`^\\s*${fence[2]}`).test(lines[i])) code.push(lines[i++].slice(fence[1].length));
       i++;
       const lang = fence[3] ? ` class="language-${fence[3]}"` : '';
-      out.push(`<pre><code${lang}>${esc(code.join('\n'))}</code></pre>`);
+      out.push(`<pre><code${lang}>${highlight(code.join('\n'), fence[3])}</code></pre>`);
       continue;
     }
 

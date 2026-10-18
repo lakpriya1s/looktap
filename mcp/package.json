@@ -1,6 +1,6 @@
 {
   "name": "@looktap/mcp",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "MCP server that lets AI agents drive iPhone and Android devices: read the screen as text, tap by label, type, swipe, screenshot, read logs and crashes.",
   "mcpName": "io.github.lakpriya1s/looktap",
   "keywords": [
@@ -37,7 +37,7 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@looktap/cli": ">=0.4.0"
+    "@looktap/cli": ">=0.5.0"
   },
   "publishConfig": {
     "access": "public"

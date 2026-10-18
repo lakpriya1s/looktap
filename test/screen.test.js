@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 
 process.env.LOOKTAP_HOME = mkdtempSync(join(tmpdir(), 'looktap-test-'));
-const { coveringAt, formatRow, keyboardArea, matches, onlyStatusBar, resolveRef, saveRefs, visibleRows } = await import('../lib/screen.js');
+const { check, coveringAt, formatRow, keyboardArea, matches, onlyStatusBar, resolveRef, saveRefs, visibleRows } = await import('../lib/screen.js');
 const { scaleRgb } = await import('../lib/png.js');
 
 const el = (label, type, x, y, w, h, extra = {}) => ({ label, type, x, y, w, h, ...extra });
@@ -100,4 +100,25 @@ test('sliding: a page-wide element off x = 0 is a transition; narrow cards are n
   // iOS 26 grouped-list backgrounds overhang both edges at rest; shifted to one side, they slide
   assert.equal(sliding({ screen: { w: 393, h: 852 }, elements: [{ x: -16, y: -55, w: 425, h: 252 }] }), false);
   assert.equal(sliding({ screen: { w: 393, h: 852 }, elements: [{ x: 120, y: -55, w: 425, h: 252 }] }), true);
+});
+
+test('check: on screen, gone, and a value, with what is there instead on failure', () => {
+  const screen = [
+    el('Welcome back, Sam', 'StaticText', 24, 120, 300, 30),
+    el('Email', 'TextField', 24, 236, 342, 48, { value: 'sam@example.com' }),
+    el('Password', 'SecureTextField', 24, 300, 342, 48),
+    el('Loading', 'Spinner', 0, 0, 0, 0), // zero size: not on screen
+  ];
+  assert.equal(check(screen, 'Welcome').hit.label, 'Welcome back, Sam');
+  assert.equal(check(screen, 'Welcome', { exact: true }).why, 'not on screen: Welcome');
+  assert.ok(check(screen, 'Loading', { gone: true }).ok);
+  assert.equal(check(screen, 'Email', { gone: true }).why, 'still on screen: "Email" at 195,260');
+  assert.ok(check(screen, 'Email', { want: 'sam@example.com' }).ok);
+  assert.equal(check(screen, 'Email', { want: 'kim@example.com' }).why, '"Email" is "sam@example.com", expected "kim@example.com"');
+  assert.equal(check(screen, 'Password', { want: 'x' }).why, '"Password" is empty (no value), expected "x"');
+  const flight = [el('Flight mode', 'TextView', 27, 300, 100, 23), el('Flight mode', 'Switch', 304, 290, 48, 56, { value: '0' })];
+  assert.equal(check(flight, 'Flight mode', { want: '1' }).why, '"Flight mode" is "0", expected "1"');
+  saveRefs('dev-check', [screen[0]]);
+  assert.ok(check(screen, '@1', { device: 'dev-check' }).ok);
+  assert.ok(check(screen.slice(1), '@1', { device: 'dev-check', gone: true }).ok);
 });
