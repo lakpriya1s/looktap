@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased
+
+### Benchmark
+- **Real phones:** the benchmark now also runs on a real iPhone and a real Android phone over USB, with the same steps
+  and rules. `bench/results/ios-device.md` (iPhone 14 Pro, iOS 26.0) and `bench/results/android-device.md` (Samsung
+  Galaxy A06, Android 16) hold the results; `BENCHMARK.md`, the README and the website summarise them, including
+  where looktap is slower.
+  - On a real iPhone the oracle reads the phone's screen over the USB cable (the capture device QuickTime records
+    from) with Apple's text recognition (`bench/eye/eye.swift`), and resets use `xcrun devicectl`: nothing shared with
+    the tools under test.
+  - A phone isn't rebooted between tools (it would stop at its passcode). Instead, every helper the previous tool left
+    behind is stopped, on the Mac and on the phone.
+  - Tools that can't run on a device are listed with their error: on the iPhone, ios-simulator-mcp, MobileBuildMCP,
+    idb and Maestro.
+  - A phone is named in the results by its model; its serial, UDID and name are scrubbed from tool errors.
+- The looktap adapters use `home` and `stop` (since 0.3.0) instead of marking those steps n/a.
+- Raw Appium on a real iPhone gets the session settings Appium MCP sets for iOS, so only the MCP layer differs between
+  the two.
+
 ## 0.4.0
 
 ### Added

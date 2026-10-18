@@ -102,7 +102,7 @@
     <div class="band-inner">
       <p class="kicker">Benchmark</p>
       <h2 id="bench-title">Against every other agent mobile tool</h2>
-      <p class="band-lede">Nine tools, the same 12 steps in the Settings app on an iPhone simulator and an Android emulator, 10 runs each, checked by a neutral oracle. What an agent feels is the number of calls, the size of every answer and the setup before the first one.</p>
+      <p class="band-lede">Nine tools, the same 12 steps in the Settings app on an iPhone simulator and an Android emulator, then on a real iPhone and a real Android phone, 10 runs each, checked by a neutral oracle. What an agent feels is the number of calls, the size of every answer and the setup before the first one.</p>
       <div class="bench-grid">
         <figure class="bench">
           <figcaption>Agent time on iPhone: 8 steps, plus 2 s per tool call</figcaption>
@@ -132,6 +132,19 @@
           <div class="bar" style="--v:79"><span>Appium MCP</span><b>49 s</b></div>
           <div class="bar" style="--v:96.8"><span>Maestro MCP</span><b>60 s</b></div>
           <div class="bar" style="--v:100"><span>mobile-mcp</span><b>62 s</b></div>
+        </figure>
+        <figure class="bench">
+          <figcaption>Agent time on a real iPhone 14 Pro: 12 steps, plus 2 s per tool call</figcaption>
+          <div class="bar sw" style="--v:77"><span>looktap</span><b>87 s</b></div>
+          <div class="bar" style="--v:92"><span>mobile-mcp</span><b>104 s</b></div>
+          <div class="bar" style="--v:100"><span>Appium MCP</span><b>113 s</b></div>
+        </figure>
+        <figure class="bench">
+          <figcaption>Agent time on a real Samsung Galaxy A06: 12 steps, plus 2 s per tool call</figcaption>
+          <div class="bar sw" style="--v:42.7"><span>looktap</span><b>38 s</b></div>
+          <div class="bar" style="--v:61.8"><span>Appium MCP</span><b>55 s</b></div>
+          <div class="bar" style="--v:74.2"><span>Maestro MCP</span><b>66 s</b></div>
+          <div class="bar" style="--v:100"><span>mobile-mcp</span><b>89 s</b></div>
         </figure>
       </div>
       <p class="band-foot"><a href="docs/benchmark.html">The full benchmark</a>, including where other tools are faster, what looktap can't do, and how to reproduce it.</p>

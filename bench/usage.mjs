@@ -7,7 +7,7 @@ import { promisify } from 'node:util';
 
 const execP = promisify(execFile);
 // The runner's own commands (oracle, resets, load checks, samplers): left out of every tool's numbers.
-export const ORACLE_MARK = /describe-all --udid \S+ --json|button --udid \S+ HOME|simctl (launch|terminate|spawn \S+ launchctl|list|shutdown|boot)|dumpsys|am force-stop|am start -n \S+ -f|input keyevent KEYCODE_HOME|^top -l|^vm_stat|cat \/proc\/loadavg|ps -A -o|getprop|adb -s \S+ (reboot|wait-for-device|get-state)|^pkill|^pgrep|^open -a Simulator/;
+export const ORACLE_MARK = /describe-all --udid \S+ --json|button --udid \S+ HOME|simctl (launch|terminate|spawn \S+ launchctl|list|shutdown|boot)|dumpsys|am force-stop|am start -n \S+ -f|input keyevent KEYCODE_HOME|^top -l|^vm_stat|cat \/proc\/loadavg|ps -A -o|getprop|adb -s \S+ (reboot|wait-for-device|get-state)|^pkill|^pgrep|^open -a Simulator|^xcrun devicectl|\/out\/eye /;
 const HELPERS = /WebDriverAgentRunner|maestro-driver|dev\.mobile\.maestro|looktap-sim|looktap-server|com\.looktap|io\.appium\.uiautomator2|xcodebuild/;
 // Daemons several tools (and the oracle) share, detached from whoever started them: reported apart, never per tool.
 const SHARED = /idb_companion|adb .*(fork-server|server)/;

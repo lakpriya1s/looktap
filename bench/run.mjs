@@ -2,7 +2,8 @@
 //   node bench/run.mjs ios|android [runs=10] [tool,tool,…]
 // Per step it records: ms (until the tool answered), seenMs (until the oracle saw the result on screen), tool calls an
 // agent needs, and bytes those calls put in its context. "n/a" means the tool has no way to do it.
-// Oracle and resets are neutral and untimed: iOS `idb ui describe-all` + simctl, Android `adb` (see android.mjs).
+// Oracle and resets are neutral and untimed: iOS `idb ui describe-all` + simctl, a real iPhone its screen over USB read
+// with text recognition + devicectl (BENCH_IOS_UDID=<its UDID>, see iphone.mjs), Android `adb` (see android.mjs).
 // needs: idb (fb-idb + idb-companion), Maestro, Appium 3 with xcuitest/uiautomator2, Node 20+, npx.
 import { execFile, execFileSync, spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
@@ -22,7 +23,8 @@ const DIR = import.meta.dirname;
 const OUT = join(DIR, 'out', platform);
 mkdirSync(OUT, { recursive: true });
 mkdirSync(join(DIR, 'results'), { recursive: true });
-const LOOKTAP = join(DIR, '..', 'bin', 'looktap.js');
+// BENCH_LOOKTAP: an installed looktap's bin/looktap.js (default: this checkout)
+const LOOKTAP = process.env.BENCH_LOOKTAP || join(DIR, '..', 'bin', 'looktap.js');
 const MAESTRO = `${process.env.HOME}/.maestro/bin/maestro`;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const now = () => performance.now();
@@ -34,7 +36,11 @@ function bootedSim() {
   return all[0].udid;
 }
 
-const C = IOS
+// A real iPhone over USB when BENCH_IOS_UDID names one
+const PHONE = IOS && process.env.BENCH_IOS_UDID ? (await import('./iphone.mjs')).realIphone() : null;
+const C = PHONE
+  ? (await import('./iphone.mjs')).config(PHONE)
+  : IOS
   ? {
       dev: process.env.BENCH_IOS_UDID || bootedSim(),
       app: 'com.apple.Preferences', appName: 'Settings', browser: 'com.apple.mobilesafari', browserName: 'Safari',
@@ -44,7 +50,9 @@ const C = IOS
   : (await import('./android.mjs')).config();
 
 // ── the neutral oracle ──
-const O = IOS
+const O = PHONE
+  ? (await import('./iphone.mjs')).oracle(C, { until })
+  : IOS
   ? (() => {
       const screen = async () => JSON.parse((await execP('idb', ['ui', 'describe-all', '--udid', C.dev, '--json'], { maxBuffer: 1e8 })).stdout);
       const find = (els, label, types) => els.find((e) => e.AXLabel === label && (!types || types.includes(e.type)));
@@ -152,7 +160,7 @@ function mcpServer(cmd, args, env) {
       const b64 = /(iVBORw0KGgo|\/9j\/)[A-Za-z0-9+/=]{5000,}/.exec(r.text); // a PNG or JPEG returned as text
       if (b64) { setImg(op, Buffer.from(b64[0], 'base64')); op.inline = true; }
       if (!op.image) imageFile(op); // saved to disk, and the path returned (Appium MCP's default)
-      if (!r.ok) throw new Error(`${name}: ${(r.error || r.text).slice(0, 240)}`);
+      if (!r.ok) throw new Error(`${name}: ${(r.raw.error?.message || r.content.at(-1)?.text || r.error || r.text).slice(0, 240)}`); // the last block: some servers lead with a notice
       return r;
     },
   };
@@ -210,6 +218,9 @@ async function step(tool, name, fn, check) {
     }
   }
   if (!ok) log(`  ${tool} ${name}: FAIL ${err || '(oracle did not see it)'}`);
+  // what the screen showed when a step failed (untimed: after the check)
+  if (!ok && PHONE) await O.shot(join(OUT, `fail-${tool}-${name.replace(/\W+/g, '-')}.png`)).catch(() => {});
+  if (!ok && !IOS) await execP('adb', ['-s', C.dev, 'exec-out', 'screencap', '-p'], { encoding: 'buffer', maxBuffer: 1e8 }).then((r) => writeFileSync(join(OUT, `fail-${tool}-${name.replace(/\W+/g, '-')}.png`), r.stdout), () => {});
   rows.push({ ms: Math.round(ms), seenMs: seenMs == null ? null : Math.round(Math.max(ms, seenMs)), calls: op.calls, bytes: op.bytes, image: op.image || undefined, dims: op.dims, inline: op.inline, ok, err });
 }
 
@@ -294,7 +305,7 @@ async function runs(name, t) {
 R.meta = {
   date: new Date().toISOString(),
   platform,
-  device: C.dev,
+  device: C.model || C.dev, // a real phone by its model: never its name, serial or UDID
   runs: N,
   host: `${execFileSync('sysctl', ['-n', 'machdep.cpu.brand_string'], { encoding: 'utf8' }).trim()}, macOS ${execFileSync('sw_vers', ['-productVersion'], { encoding: 'utf8' }).trim()}`,
 };
@@ -306,6 +317,8 @@ R.meta.idleBusyPct = Math.round(idle.reduce((a, h) => a + h.busyPct, 0) / idle.l
 R.meta.idleFreeMb = idle.at(-1).freeMb;
 log(`idle baseline: ${R.meta.idleBusyPct}% busy, ${R.meta.idleFreeMb} MB free`);
 const file = join(DIR, 'results', `${platform}${process.env.BENCH_TAG ? '-' + process.env.BENCH_TAG : ''}.json`);
+// A real phone's serial or UDID never goes into the results (tools quote it in their errors)
+const scrub = (json) => (C.real ? json.replaceAll(C.dev, '<device>').replaceAll(JSON.stringify(C.name || '\0').slice(1, -1), '<device name>') : json);
 const PREV = STEPS ? JSON.parse(readFileSync(file, 'utf8')) : null;
 for (const [name, t] of Object.entries(ADAPTERS)) {
   if (ONLY && !ONLY.includes(name)) continue;
@@ -319,11 +332,12 @@ for (const [name, t] of Object.entries(ADAPTERS)) {
       PREV.tools[name].steps[s] = rows;
       (PREV.tools[name].rerun ||= {})[s] = { date: new Date().toISOString(), why: process.env.BENCH_RERUN_WHY || '' };
     }
-    writeFileSync(file, JSON.stringify(PREV, null, 2));
-  } else writeFileSync(file, JSON.stringify(R, null, 2));
+    writeFileSync(file, scrub(JSON.stringify(PREV, null, 2)));
+  } else writeFileSync(file, scrub(JSON.stringify(R, null, 2)));
   await sleep(2000);
 }
 log(`wrote ${file}`);
+O.close?.();
 // summary: median ms / median seen ms / calls / KB / passes
 const med = (a) => { const s = a.filter((x) => x != null).sort((x, y) => x - y); return s.length ? s[Math.floor((s.length - 1) / 2)] : null; };
 for (const [name, t] of Object.entries(R.tools)) {
