@@ -164,7 +164,7 @@ a.version:hover { color: var(--accent); border-color: var(--accent); }
 .stats dt { font: 400 clamp(30px, 3vw, 42px)/1 var(--display); }
 .stats dd { margin: 4px 0 0; font: 400 11px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
 .hero-scene { margin-top: 12vh; padding-top: 28px; border-top: 1px solid var(--line); }
-.hero-scene h2 { font: 400 clamp(32px, 3.2vw, 44px)/1.05 var(--display); margin: 6px 0 12px; }
+.hero-scene h2 { font: 400 clamp(36px, 4vw, 56px)/1.02 var(--display); letter-spacing: -0.015em; margin: 6px 0 18px; }
 /* The scroll cue: floats at the bottom until the story starts moving, then fades away for good. */
 .scroll-cue { position: fixed; left: 50%; bottom: max(18px, env(safe-area-inset-bottom)); z-index: 30; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 6px 10px 10px; color: var(--muted); font: 500 10.5px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; transition: opacity 0.4s, transform 0.4s, visibility 0.4s; }
 .scroll-cue:hover { color: var(--accent); }
