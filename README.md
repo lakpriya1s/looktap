@@ -293,7 +293,7 @@ looktap ls
 ```
 
 Each row shows a **ref** (`@1`), the element type, its **x,y** position and **width×height** (iOS points /
-Android dp, the units `tapxy` and `swipe` take), its **label**, and `= value` for fields that hold text. Unlabelled
+Android dp, the units `tapxy` and `swipe` take), its **label**, and `= value` for fields that hold text and for switches and checkboxes (`1` on, `0` off). Unlabelled
 buttons are listed too, as `(no label)`, so you can tap them by ref. The on-screen keyboard is a single row.
 
 ### Tap by label, not by coordinates

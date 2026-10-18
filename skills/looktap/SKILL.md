@@ -39,7 +39,7 @@ Look, act, read the result. `ls` prints one row per element:
 @3   TextField        33, 773 324x38  Search  = Search
 ```
 
-The columns are: ref, type, x,y, width×height (iOS points / Android dp), label, and `= value` for fields.
+The columns are: ref, type, x,y, width×height (iOS points / Android dp), label, and `= value` for fields (a switch or checkbox: `1` on, `0` off).
 
 Add **`--ls`** to an action and it prints the screen once it has settled, so you don't need a separate `ls`.
 It works on `tap`, `longpress`, `zoom`, `tapxy`, `fill`, `type`, `key`, `hidekb`, `swipe`, `back`, `home`,
