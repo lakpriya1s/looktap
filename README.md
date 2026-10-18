@@ -1029,6 +1029,10 @@ continue. The skill tells agents exactly that. See [Safety rules](#safety-rules)
 
 - Verified Xcode 27 input (touches, keys and the Home button)
 - Rotation verified on iPad simulators
+- `codegen` on the iOS simulator, from the Mac's clicks and keys in the Simulator window (a real iPhone gives no
+  way to observe touches)
+- Android elements by `resource-id` (React Native's `testID`), as iOS ones already are by accessibility identifier, so
+  flows survive copy changes
 
 Ideas and votes welcome in [Issues](https://github.com/lakpriya1s/looktap/issues).
 

@@ -1,7 +1,7 @@
 {
   "name": "@looktap/cli",
   "version": "0.4.1",
-  "description": "Let AI agents drive iPhone and Android devices from the shell: read the screen, tap, type, swipe, screenshot, read logs and crashes. No server to start and zero dependencies.",
+  "description": "Let AI agents drive iPhone and Android devices from the shell: read the screen, tap, type, swipe, screenshot, read logs and crashes, and run flows as tests in CI. No server to start and zero dependencies.",
   "keywords": [
     "ios-simulator",
     "ios-device",
@@ -13,6 +13,8 @@
     "claude-code",
     "cli",
     "appium-alternative",
+    "e2e-testing",
+    "mobile-testing",
     "react-native",
     "simctl",
     "adb"
