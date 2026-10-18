@@ -180,6 +180,9 @@ public final class Server {
             case "keyboard":
                 reply(out, ok().put("shown", keyboardShown()), null);
                 return;
+            case "windows":
+                reply(out, ok().put("windows", windows()).put("display", display()), null);
+                return;
             case "locked":
                 reply(out, ok().put("locked", keyguardLocked()), null);
                 return;
@@ -224,7 +227,10 @@ public final class Server {
         }
     }
 
-    /** Visible nodes, pre-order, bounds in px: {l: label, c: class, b: [x1,y1,x2,y2], f: focused, v: checked}. */
+    /**
+     Visible nodes, pre-order, bounds in px: {l: label, c: class, b: [x1,y1,x2,y2], f: focused, v: checked,
+     k: clickable, e: editable, p: password, h: a field's hint}.
+     */
     static JSONArray tree(boolean allWindows) throws Exception {
         JSONArray outNodes = new JSONArray();
         if (allWindows) {
@@ -308,6 +314,11 @@ public final class Server {
         if (n.isFocused()) o.put("f", true);
         // A switch's or checkbox's state, as iOS reports it ("1" on, "0" off)
         if (n.isCheckable()) o.put("v", n.isChecked() ? "1" : "0");
+        if (n.isClickable() || n.isLongClickable()) o.put("k", true);
+        if (n.isEditable()) o.put("e", true);
+        if (n.isPassword()) o.put("p", true);
+        // An empty field reads as its hint; with text typed, this is the only way to the name it had.
+        if (android.os.Build.VERSION.SDK_INT >= 26 && n.isEditable() && n.getHintText() != null) o.put("h", n.getHintText().toString());
         out.put(o);
         for (int i = 0; i < n.getChildCount(); i++) {
             AccessibilityNodeInfo c = n.getChild(i);
@@ -369,6 +380,17 @@ public final class Server {
     static boolean keyguardLocked() throws Exception {
         Object wm = Class.forName("android.view.WindowManagerGlobal").getMethod("getWindowManagerService").invoke(null);
         return (Boolean) wm.getClass().getMethod("isKeyguardLocked").invoke(wm);
+    }
+
+    /** On-screen windows, top first: {t: type (AccessibilityWindowInfo.TYPE_*), a: active, b: [x1,y1,x2,y2] px}. */
+    static JSONArray windows() throws Exception {
+        JSONArray out = new JSONArray();
+        for (AccessibilityWindowInfo w : ua.getWindows()) {
+            w.getBoundsInScreen(tmp);
+            out.put(new JSONObject().put("t", w.getType()).put("a", w.isActive()).put("l", w.getLayer())
+                    .put("b", new JSONArray().put(tmp.left).put(tmp.top).put(tmp.right).put(tmp.bottom)));
+        }
+        return out;
     }
 
     static boolean keyboardShown() {

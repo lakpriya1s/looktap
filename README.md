@@ -36,7 +36,8 @@ use the app it's building**:
 
 It's just as handy by hand, or in a shell script for screenshot sweeps and bug repros. And the steps that worked
 can be saved as **flow files that run as tests in CI**: `expect` checks the screen, and `looktap test` runs the flows
-and reports each one ([Test flows in CI](#test-flows-in-ci)).
+and reports each one ([Test flows in CI](#test-flows-in-ci)). On Android, `looktap codegen` writes a flow while you
+use the phone ([Record a flow](#record-a-flow-codegen)).
 
 ---
 
@@ -64,7 +65,7 @@ and reports each one ([Test flows in CI](#test-flows-in-ci)).
 | ⌨️ | **Type and fill.** `type` into the focused field, `fill` to clear a field and type, `key return\|escape\|delete\|tab\|selectall\|paste\|…` (the same names on both platforms), and `hidekb`, which never reports success while the keyboard is still up |
 | 🧭 | **Navigate and gesture.** `swipe`, `scrollto <label>`, `back`, `home` (the Home button, the app keeps running), `open <deep link>`, `launch <app>`, `stop <app>`, `longpress`, and two-finger `zoom in\|out` |
 | ⏱️ | **Wait instead of sleep.** `wait "Welcome"`, `wait "Loading" --gone`. Actions already wait up to 3 s for their target |
-| 🧪 | **Tests in CI.** `expect "Welcome"`, `expect "Email" = sam@example.com`, `expect "Error" --gone` check the screen. `test flows/` runs flow files as tests, one line per flow, and a failure leaves its screen, screenshot, error logs and crashes behind. `--junit` for CI reports |
+| 🧪 | **Tests in CI.** `expect "Welcome"`, `expect "Email" = sam@example.com`, `expect "Error" --gone` check the screen. `test flows/` runs flow files as tests, one line per flow, and a failure leaves its screen, screenshot, error logs and crashes behind. `--junit` for CI reports. On Android, `codegen` records a flow while you use the phone |
 | 📸 | **Screenshots.** `shot` saves a PNG and prints its path, with `--scale 0.5` for fewer image tokens. On Android emulators it also captures `FLAG_SECURE` screens |
 | 🎞️ | **Burst capture and video.** `burst` saves a frame each time the screen changes, to catch spinners, toasts and transitions. `record start` … `record stop` saves an MP4 of everything in between |
 | 🪵 | **Logs.** `logs` shows the app's log since your last look. `--errors` and `--grep` narrow it, and on iOS Apple-framework chatter is filtered out |
@@ -546,6 +547,40 @@ for route in home search messages profile settings; do
 done
 ```
 
+### Record a flow (`codegen`)
+
+On Android you can write a flow by using the app. `codegen` restarts the app, then turns each touch into the step
+that replays it:
+
+```console
+$ looktap codegen flows/about.txt com.android.settings
++ stop com.android.settings
++ launch com.android.settings
++ wait Settings
+recording com.android.settings to flows/about.txt — use the phone. …
++ scrollto "About phone"
++ tap "About phone"
++ back
++ tap "Search settings"
++ fill Search wifi
+expect "Wi-Fi"
+ok: "Wi-Fi" at 107,148
++ expect Wi-Fi
+saved 9 steps to flows/about.txt — run it: looktap test flows/about.txt
+```
+
+- **Taps are saved by label**: a tap anywhere on a row is a tap on the row's label, when `tap` with that label finds
+  the same row again. Where no label does (an icon with no accessibility label), it's saved as `tapxy`, with a note.
+- **Typing is one `fill`**, with the field's name and its final text. Text typed into a password field isn't saved:
+  the step reads it from an environment variable instead (`fill Password "${PASSWORD}"`).
+- **Scrolling that brought a row into view becomes `scrollto`**, which replays on any screen size. Other swipes (a
+  carousel, a map) stay swipes. The navigation bar's Back and Home, and gesture navigation, become `back` and `home`.
+- **Checks:** type a command into the terminal while it records, e.g. `expect "Welcome"`. It's run, and saved if it
+  passes. `undo` drops the last step.
+
+It reads the touchscreen through `adb shell getevent`, so it records real fingers (not taps sent by looktap itself).
+It isn't available on iOS yet: write the flow by hand there, or record it on Android if the app is the same.
+
 ### Test flows in CI
 
 A flow file is a `run` script: one looktap command per line, `#` for comments. Use `wait` where the app takes
@@ -578,8 +613,9 @@ Flows run in order on one device, each from wherever the last one left the app, 
 `reset <app>` and `launch` for a fresh install). Steps wait for their targets, but
 a flow that depends on a backend can still be slow: raise `--wait` rather than adding sleeps.
 
-Flow files live in your repo, so never put real credentials in one. Sign in with a test-only account, or use a
-debug build that starts signed in.
+Flow files live in your repo, so never put real credentials in one. Sign in with a test-only account, and keep its
+password out of the file: `test` replaces `${NAME}` with that environment variable (a CI secret), e.g.
+`fill Password "${PASSWORD}"`.
 
 In GitHub Actions, iOS runs on a macOS runner and Android on a Linux runner with KVM:
 
@@ -801,6 +837,7 @@ to settle unless asked (`--ls`).
 | **Batch, setup & info** | |
 | `looktap mcp [--config]` | Serves these commands over MCP (stdio) for clients without a shell. `--config` prints a client config |
 | `looktap run '<cmd>; <cmd> …'` | Several commands in one process. `run -` reads them from stdin. Stops at the first failure and names it |
+| `looktap codegen <flow-file> [app]` | Android: restarts the app, then saves each touch on the device as the step that replays it: `tap "<label>"`, `fill <field> <text>`, `scrollto`, `longpress`, `zoom`, `back`, `home`. A command typed while it records (`expect "Welcome"`) is run and saved too; `undo` drops the last step; Enter on an empty line or Ctrl+C ends it. See [Record a flow](#record-a-flow-codegen) |
 | `looktap test <flow\|dir> … [--junit file]` | Runs flow files (`run` scripts, one step per line) as tests, folders searched, and prints a line per flow and the totals. Exits 1 if any flow fails. A failed flow prints its output and leaves `error.txt`, `output.txt`, `screen.txt`, `screen.png`, `logs.txt` and `crashes.txt` in `<out>/failures/<flow>/`. An app that dies during a flow fails it. `--junit` writes a JUnit XML report |
 | `looktap skill [--install]` | Prints the AI-agent guide, or installs it as a Claude Code skill |
 | `looktap devices [--all] [--json]` | What's running or connected, and what each is: simulator, emulator (with its AVD name) or real device (model, OS version, USB or Wi-Fi), and whether it has a window or runs headless. A phone that's connected but not ready is listed with what to do (accept the USB debugging prompt, tap Trust, turn on Developer Mode). `--all` also lists what `boot` can start; `--json` for scripts and agents |
@@ -830,6 +867,7 @@ front of you (`--json` for every command).
 | `back` | ⚠️ iOS has no system Back: it taps the navigation bar's back button, else a top-left Back button | ⚠️ iOS has no system Back: it taps the navigation bar's back button, else a top-left Back button | ✅ | ✅ |
 | `bio` | ✅ | ❌ Face ID needs a real face on a device | ✅ | ❌ fingerprints can only be simulated on an emulator |
 | `burst` | ✅ | ✅ | ✅ | ⚠️ FLAG_SECURE screens come out black (emulators bypass it) |
+| `codegen` | ❌ recording touches works on Android only, for now: write the flow by hand, or record it on an Android device | ❌ recording touches works on Android only, for now: write the flow by hand, or record it on an Android device | ✅ | ✅ |
 | `crashes` | ✅ | ❌ see Xcode → Window → Devices and Simulators → View Device Logs | ✅ | ✅ |
 | `location` | ✅ | ❌ a real device uses its own GPS; use a simulator to fake one | ✅ | ❌ a device uses its own GPS (faking it needs a mock-location app) |
 | `location clear` | ✅ | ❌ a real device uses its own GPS; use a simulator to fake one | ❌ the emulator keeps its last location: set a new one instead | ❌ a device uses its own GPS (faking it needs a mock-location app) |
@@ -866,6 +904,7 @@ front of you (`--json` for every command).
 | `LOOKTAP_EMULATOR_GRPC=0` | Don't take emulator frames over gRPC: use the emulator console |
 | `LOOKTAP_IOS_HID=indigo\|dtuhid` | Force the iOS input path. Takes effect when the helper starts |
 | `LOOKTAP_HOME` | Where sockets, logs and state live (default `~/.looktap`) |
+| `LOOKTAP_DEBUG=1` | `codegen` prints each touch it sees: where, on which window, and what was under it |
 | `LOOKTAP_HEADLESS=1` | `boot` without a window by default (`=0`: with one). Overrides `"headless"` in the config file |
 
 **Config file.** looktap uses the nearest `looktap.config.json`, walking up from the current folder. Put it at

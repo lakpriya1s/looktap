@@ -11,8 +11,20 @@
   `screen.png`, and the app's error logs and crashes in `<out>/failures/<flow>/`. An app that dies during a flow fails
   it. `--junit <file>` writes a JUnit XML report for CI. The README has GitHub Actions jobs for iOS and Android.
 
+- **`codegen <flow-file> [app]`** (Android) records a flow while you use the phone: it restarts the app, then saves
+  each touch as the step that replays it — a tap by label (or `tapxy` where no label leads back), one `fill` per field
+  with its final text, `scrollto` for a scroll that brought a row into view, `longpress`, `zoom`, and the navigation
+  bar's or gesture navigation's `back` and `home`. Commands typed while it records (`expect …`) are run and saved;
+  `undo` drops the last step. Text typed into a password field is saved as `${NAME}`, read from the environment.
+  `LOOKTAP_DEBUG=1` prints each touch it sees.
+- Flow files run by `test` can read environment variables: `${NAME}` (not inside single quotes).
+- The Android helper reports which nodes are clickable, editable or password fields, a field's hint, and the
+  on-screen windows (`codegen` uses them).
+
 ### Fixed
 - `ls` after `stop` no longer warns that the stopped app is no longer running.
+- **Android `launch` could come back on another app's screen:** a screen from another package left in the app's task
+  (Settings' search is one) came back on top after the restart. The app now starts in a fresh task.
 
 ## 0.4.1
 

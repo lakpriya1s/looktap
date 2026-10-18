@@ -210,6 +210,8 @@ looktap run - < steps.txt
 # flow files (run scripts) as tests: a line per flow, exit 1 if any fails. A failure saves the screen, a
 # screenshot, error logs and crashes in <out>/failures/<flow>/. --junit: a report for CI
 looktap test flows/ --junit results/junit.xml -o results
+# Android: the user uses the phone and each touch is saved as a step (a person drives this one, not you)
+looktap codegen flows/checkout.txt com.example.app
 ```
 
 ### Devices and setup
@@ -313,7 +315,8 @@ wait Welcome
 expect "Sign in" --gone
 ```
 
-Then `looktap test flows/`. Steps are the same commands, one per line, `#` for comments. A flow that fails names
+Then `looktap test flows/`. Steps are the same commands, one per line, `#` for comments, and `${NAME}` reads an
+environment variable (for a test account's password: never write one into the file). A flow that fails names
 the step, prints its output, and leaves its evidence under `<out>/failures/`. An app that dies fails the flow.
 
 ## Example: screenshots in dark mode with large text

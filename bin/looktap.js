@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
+import { createInterface } from 'node:readline';
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
@@ -9,7 +10,8 @@ import { Ios, bootedSimulators } from '../lib/ios.js';
 import { IosDevice, physicalDevices } from '../lib/iosdevice.js';
 import { clock, grepper, startOf, tail, whichApp } from '../lib/logs.js';
 import { ACTIONS as PERMISSION_ACTIONS } from '../lib/permissions.js';
-import { KINDS, capabilities, capability } from '../lib/capabilities.js';
+import { KINDS, capabilities, capability, unsupported } from '../lib/capabilities.js';
+import { Recorder, TouchReader, classify, mapper, quote } from '../lib/codegen.js';
 import { boot, shutdown } from '../lib/boot.js';
 import { formatDevice, inventory } from '../lib/devices.js';
 import { ORIENTATIONS, coordinates, pushPayload, rotation, textSize } from '../lib/conditions.js';
@@ -105,6 +107,9 @@ conditions
 batch & agents
   mcp [--config]                  serve these commands over MCP (stdio), for AI clients without a shell.
                                   --config prints a client config with absolute paths
+  codegen <flow-file> [app]       Android: restart the app, then save each touch on the device as a flow
+                                  step (tap by label, fill, scrollto, back …). Commands typed here (expect …)
+                                  are run and saved too; undo drops the last step; Enter or Ctrl+C ends it
   run '<cmd>; <cmd> …'            several commands in one process (or: run - < script). Stops at the
                                   first failure, which it names
   test <flow|dir> … [--junit f]   run flow files (run scripts, one step per line) as tests: a line per
@@ -330,7 +335,7 @@ async function byRef(d, ref) {
 }
 
 /** Commands that read or act on the screen: they stop while the lock screen is up (bio can unlock it). */
-const SCREEN = new Set([...ACTIONS, 'ls', 'wait', 'expect', 'scrollto'].filter((c) => c !== 'bio'));
+const SCREEN = new Set([...ACTIONS, 'ls', 'wait', 'expect', 'scrollto', 'codegen'].filter((c) => c !== 'bio'));
 
 /** Actions after which a vanished app is worth a warning (launch replaces the app on purpose). */
 const WATCHED = new Set([...ACTIONS].filter((c) => c !== 'launch'));
@@ -583,6 +588,7 @@ async function act(d, cmd, args, opts) {
     }
     case 'run': return runScript(d, args, opts);
     case 'test': return runTests(d, args, opts);
+    case 'codegen': return codegen(d, args, opts);
     case 'capabilities': return showCapabilities(d, opts);
     default: throw new UsageError(`unknown command: ${cmd} (looktap --help)`);
   }
@@ -761,8 +767,8 @@ async function runScript(d, args, outer) {
 }
 
 /** Run a script's steps in order; the first failure stops it, named by its step. Returns how many ran. */
-async function runSteps(d, text, outer) {
-  const steps = splitScript(text);
+async function runSteps(d, text, outer, { env = null } = {}) {
+  const steps = splitScript(text, { env });
   for (const [i, words] of steps.entries()) {
     const { opts, cmd, args: stepArgs } = parse(words);
     if (opts.platform || opts.device) throw new UsageError(`run: step ${i + 1} sets -p/-d — pass those to run itself`);
@@ -811,7 +817,7 @@ async function runTests(d, args, opts) {
     Object.assign(testing, { on: true, gone: null });
     const lines = await quietly(async () => {
       try {
-        steps = await runSteps(d, readFileSync(file, 'utf8'), opts);
+        steps = await runSteps(d, readFileSync(file, 'utf8'), opts, { env: process.env });
       } catch (e) {
         error = e;
       }
@@ -839,6 +845,104 @@ async function runTests(d, args, opts) {
   const total = `${results.length} flow${results.length === 1 ? '' : 's'}: ${results.length - failed} passed, ${failed} failed · ${(ms / 1000).toFixed(1)} s${opts.junit ? ` · ${opts.junit}` : ''}`;
   if (failed) throw new Error(total);
   console.log(total);
+}
+
+/**
+ `codegen <flow-file> [app]`: relaunch the app (a replay starts there too), then turn each touch on the device into a
+ step of the flow file as it happens. Lines typed here (expect …, wait …) run and are saved as steps; `undo` drops
+ the last step; an empty line, Ctrl+D or Ctrl+C ends it. The file is rewritten after every step.
+ */
+async function codegen(d, args, opts) {
+  if (!d.touches) unsupported(d.kind, 'codegen');
+  const usage = 'usage: looktap codegen <flow-file> [app]';
+  const file = args[0];
+  if (!file) throw new UsageError(usage);
+  if (existsSync(file)) throw new UsageError(`${file} already exists: name a new file, or delete that one first`);
+  const app = args[1] || d.app || (await d.foreground())?.id;
+  if (!app) throw new UsageError(`${usage} — name the app (or set --app / looktap.config.json)`);
+  const ts = d.touchscreen();
+  if (!ts) throw new UsageError(`can't read the touchscreen of ${deviceId(d)} (adb shell getevent -pl lists none)`);
+
+  // A cold start, as the replay will have: a running app would come back on whatever screen it was left.
+  await d.stop(app);
+  await d.launch(app);
+  await waitForApp(d, app, 6000);
+  const first = await settle(d, { changeTimeout: 0 });
+  // Something on the first screen to wait for, that `wait` finds again: the replay's proof the app is up.
+  const anchor = visibleRows(first.elements).find((e) => {
+    try {
+      return e.label && pickMatch(first.elements, e.label) === e;
+    } catch {
+      return false;
+    }
+  });
+  const steps = [`stop ${app}`, `launch ${app}`, ...(anchor ? [`wait ${quote(anchor.label)}`] : [])];
+  const now = new Date(), two = (n) => String(n).padStart(2, '0');
+  const when = `${now.getFullYear()}-${two(now.getMonth() + 1)}-${two(now.getDate())} ${two(now.getHours())}:${two(now.getMinutes())}`;
+  const head = `# recorded with looktap codegen on ${deviceId(d)}, ${when}\n# run it: looktap test ${file}\n`;
+  mkdirSync(dirname(resolve(file)), { recursive: true });
+  const save = () => writeFileSync(file, head + steps.map((s) => `${s}\n`).join(''));
+  save();
+  for (const s of steps) console.log(`+ ${s}`);
+  const start = steps.length; // undo never takes back the start
+
+  const rec = new Recorder(d, null, {
+    emit: (s) => (steps.push(s), save(), console.log(`+ ${s}`)),
+    dropLast: () => steps.length > start && (console.log(`- ${steps.pop()}`), save()),
+    note: (m) => console.log(`  (${m})`),
+  });
+  await rec.start();
+  const gestureNav = d.gestureNav();
+  const view = () => {
+    const { w, h, rotation } = rec.display;
+    return { map: mapper(ts, rec.display, d.scale), screen: { w: (rotation % 2 ? h : w) / d.scale, h: (rotation % 2 ? w : h) / d.scale, gestureNav } };
+  };
+  let at = null;
+  let v = view();
+  const reader = new TouchReader({
+    onDown: () => {
+      v = view();
+      at = rec.down();
+    },
+    onGesture: (g) => {
+      const dp = { ...g, pointers: g.pointers.map((p) => ({ path: p.path.map(([t, x, y]) => [t, ...v.map(x, y)]) })) };
+      rec.gesture(classify(dp, v.screen), at);
+    },
+  });
+  rec.screen = v.screen;
+  const child = d.touches((line) => reader.line(line));
+  console.log(`recording ${app} to ${file} — use the phone. Type a command to add it as a step (expect "Welcome"),
+undo to drop the last step, Enter on an empty line (or Ctrl+C) to finish.`);
+
+  const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: Boolean(process.stdin.isTTY) });
+  await new Promise((done) => {
+    rl.on('line', (line) => {
+      const text = line.trim();
+      if (!text) return rl.close();
+      rec.queue = rec.queue.then(async () => {
+        if (text === 'undo') return rec.dropLast();
+        // What the phone did before this line comes first.
+        await rec.endTyping(null);
+        rec.flushSwipes();
+        for (const words of splitScript(text)) {
+          const { opts: o, cmd, args: a } = parse(words);
+          if (['codegen', 'run', 'test'].includes(cmd)) return console.log(`  (${cmd} can't be a step)`);
+          try {
+            await rec.ask(() => dispatch(d, cmd, a, { ...opts, ...o, wait: o.wait ?? opts.wait, flags: o.flags }));
+            rec.emit(words.map(quote).join(' '));
+          } catch (e) {
+            return console.log(`looktap: ${e.message} — not saved`);
+          }
+        }
+      }).catch((e) => console.log(`looktap: ${e.message}`));
+    });
+    rl.on('SIGINT', () => rl.close());
+    rl.on('close', done);
+  });
+  child.kill();
+  await rec.finish();
+  save();
+  console.log(`saved ${steps.length} steps to ${file} — run it: looktap test ${file}`);
 }
 
 /**

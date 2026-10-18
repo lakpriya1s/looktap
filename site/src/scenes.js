@@ -539,8 +539,9 @@ export const SCENES = [
     kicker: '13 · Test',
     title: 'What worked becomes a test',
     body: `<p><code>expect</code> checks the screen: a label is there, a field holds a value, an error is gone. It waits up to 3 s for it, and when it fails it says what's there instead.</p>
-<p>Save the steps that worked as a flow file, and <code>looktap test</code> runs your flows in CI: a line per flow, a JUnit report, and for every failure the screen, a screenshot, error logs and crashes. An app that dies fails its flow.</p>`,
-    covers: ['expect', 'test'],
+<p>Save the steps that worked as a flow file, and <code>looktap test</code> runs your flows in CI: a line per flow, a JUnit report, and for every failure the screen, a screenshot, error logs and crashes. An app that dies fails its flow.</p>
+<p>On Android, <code>looktap codegen</code> writes the flow while you use the phone: each touch becomes a tap by label, a fill, a scrollto.</p>`,
+    covers: ['expect', 'test', 'codegen'],
     start: (p) => {
       p.show('signin');
       p.set({ values: { Email: 'sam@example.com' } });
@@ -553,6 +554,13 @@ export const SCENES = [
       {
         cmd: 'looktap expect Email = kim@example.com',
         run: async () => [err('looktap: expect failed: "Email" is "sam@example.com", expected "kim@example.com" (waited 3 s)')],
+      },
+      {
+        cmd: 'looktap codegen flows/sign-in.txt',
+        run: async (p) => {
+          await sleep(500);
+          return [dim(`+ launch ${APP}`), dim('+ wait "Sign in"'), '+ fill Email sam@example.com', '+ tap "Sign in"', dim('saved 5 steps to flows/sign-in.txt')];
+        },
       },
       {
         cmd: 'looktap test flows/ --junit results/junit.xml',
