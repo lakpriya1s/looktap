@@ -18,6 +18,10 @@
   front and until its first screen settled. Android adds the system's own `TotalTime`. When screen reads are slow
   (right after a launch they can take a second), it says how much sooner the screen may have settled.
 
+- **An Android phone on both USB and Wi-Fi is one phone.** adb lists it twice, so `devices` showed two rows and
+  every command without `-d` stopped with "2 android devices". Now it's one row (`USB + Wi-Fi`), commands drive it
+  over USB, and `-d` with the Wi-Fi id still picks Wi-Fi. `--json` keeps that id as `wifiId`.
+
 ### Fixed
 - **Android: a phone that was unplugged (or lost its Wi-Fi connection) read as "app is not installed"** or "not
   running", because adb's "device not found" came back as an empty answer. Every Android command now says the device

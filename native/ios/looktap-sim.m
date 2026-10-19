@@ -1233,7 +1233,9 @@ static int capture(NSString *name, NSString *logPath, NSString *askedPath) {
   FILE *log = fopen(logPath.fileSystemRepresentation, "a");
   if (!log) die(@"cannot write the frames log");
   AVCaptureDevice *device = nil;
-  for (int i = 0; i < 20 && !device; i++) { // the device shows up a moment after screen capture is allowed
+  // It shows up a moment after screen capture is allowed, and only once an earlier capture (QuickTime, or a stopped
+  // one) has let go of it, which can take several seconds.
+  for (int i = 0; i < 40 && !device; i++) {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     AVCaptureDeviceType external = AVCaptureDeviceTypeExternalUnknown; // macOS 12–13's name for it

@@ -198,7 +198,8 @@ function pickDriver(opts, config) {
     else if (!sims.length) throw new UsageError('no booted simulator or adb device — looktap devices --all lists what looktap boot can start');
     else throw new UsageError('both iOS and Android devices are up — pass -p ios|android');
   }
-  const pool = platform === 'ios' ? (sims.length || known || device ? sims : lookForPhones()) : droids;
+  // A phone adb lists over both USB and Wi-Fi is one phone: picked by its USB id (-d can still name the other).
+  const pool = platform === 'ios' ? (sims.length || known || device ? sims : lookForPhones()) : droids.filter((d) => !d.samePhoneAs);
   if (!device && !known) {
     if (pool.length !== 1)
       throw new UsageError(

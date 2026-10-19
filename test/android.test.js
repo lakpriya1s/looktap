@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { androidApps, escapeInput, gone, keycode, parseDensity, parseNodes, parseRotation } from '../lib/android.js';
+import { androidApps, escapeInput, gone, overWifi, samePhones, keycode, parseDensity, parseNodes, parseRotation } from '../lib/android.js';
 
 test('parseDensity prefers the override and converts to px per dp', () => {
   assert.equal(parseDensity('Physical density: 420\n'), 2.625);
@@ -59,4 +59,19 @@ test('androidApps reads pm list packages, with or without version codes', () => 
     { id: 'dev.looktap.testapp', version: '12' },
   ]);
   assert.deepEqual(androidApps('package:com.android.chrome\r\n'), [{ id: 'com.android.chrome', version: '' }]);
+});
+
+test('samePhones: a phone adb lists over USB and Wi-Fi is matched to its USB id', () => {
+  const asked = [];
+  const serialOf = (id) => (asked.push(id), { '192.168.1.20:5555': 'XYZ789' }[id] || '');
+  // Wireless debugging names the serial; adb connect host:port needs the phone asked; Wi-Fi alone pairs with nothing.
+  const pairs = samePhones(['ABC123DEF456', 'adb-ABC123DEF456-qiMEaN._adb-tls-connect._tcp', 'XYZ789', '192.168.1.20:5555', 'adb-OTHER1-zz._adb-tls-connect._tcp', 'emulator-5554'], serialOf);
+  assert.deepEqual([...pairs], [['adb-ABC123DEF456-qiMEaN._adb-tls-connect._tcp', 'ABC123DEF456'], ['192.168.1.20:5555', 'XYZ789']]);
+  assert.deepEqual(asked, ['192.168.1.20:5555']);
+  // No USB phone: nothing to match, and nobody is asked.
+  asked.length = 0;
+  assert.equal(samePhones(['adb-ABC123DEF456-q._adb-tls-connect._tcp', '10.0.0.2:5555'], serialOf).size, 0);
+  assert.deepEqual(asked, []);
+  assert.equal(overWifi('emulator-5554'), false);
+  assert.equal(overWifi('10.0.0.2:5555'), true);
 });

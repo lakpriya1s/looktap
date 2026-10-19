@@ -392,6 +392,7 @@ Then look at the few frames that matter, not all of them.
   memory: compare builds or screens against each other, and say so when you report them. Run `perf --for` while
   the screen does the thing being measured (a scroll, a load), and `perf --frames` just before and right after it.
 - **Start with `looktap devices`** to see which devices are real phones and which are simulators or emulators.
+  An Android phone on both USB and Wi-Fi is one row (`USB + Wi-Fi`) and is driven over USB.
   A phone marked "not ready" needs the user: tell them exactly what it says (accept the USB debugging prompt, tap
   Trust, turn on Developer Mode). One marked "still starting" needs no one: `looktap boot <name>` waits for it.
 - **Use looktap, not adb or simctl, for device and app state:** `boot` instead of polling for boot completion,
