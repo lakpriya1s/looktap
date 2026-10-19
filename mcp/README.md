@@ -41,8 +41,8 @@ with `npm install -g @looktap/cli` and paste the config that `looktap mcp --conf
 ## Tools
 
 `ls`, `tap`, `tap_xy`, `long_press`, `fill`, `type`, `key`, `hide_keyboard`, `swipe`, `scroll_to`, `back`, `home`,
-`wait`, `screenshot` (returns the image), `logs`, `crashes`, and `looktap` for any other command (`devices`, `boot`,
-`capabilities`, `stop`, `expect`, `test`, `apps`, `perf`, `launch --time` …). Actions return the settled screen unless `ls: false`.
+`wait`, `screenshot` (returns the image), `logs`, `crashes`, `perf` (CPU, memory, threads, or frames and jank), and `looktap` for any other command (`devices`, `boot`,
+`capabilities`, `stop`, `expect`, `test`, `apps`, `launch --time` …). Actions return the settled screen unless `ls: false`.
 
 Full docs: https://lakpriya1s.github.io/looktap/
 

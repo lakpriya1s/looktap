@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- **MCP: a `perf` tool.** CPU, memory and threads, or with `frames: true` the frames and jank since the last call, and
+  `for: <seconds>` to sample. It was reachable through the general `looktap` tool; as its own tool, clients show it to
+  the model by name. The server's instructions now say to measure with it rather than guess.
+
 ## 0.6.0
 
 ### Added
