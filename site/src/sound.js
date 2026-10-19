@@ -7,6 +7,10 @@ const rnd = (a, b) => a + Math.random() * (b - a);
 
 let ac = null;
 let master = null;
+// The phone's sounds go through their own bus, a little under the terminal's; `bus` is where `outlet` sends a sound.
+let phoneBus = null;
+let wet = null;
+let bus = null;
 let on = false;
 let inView = true;
 
@@ -22,9 +26,12 @@ function audio() {
   master.gain.value = 0.7;
   const room = ac.createConvolver();
   room.buffer = impulse(1.2);
-  const wet = ac.createGain();
-  wet.gain.value = 0.12;
+  wet = ac.createGain();
+  wet.gain.value = 0.01;
   master.connect(limiter);
+  phoneBus = ac.createGain();
+  phoneBus.gain.value = 0.2;
+  phoneBus.connect(master);
   master.connect(room).connect(wet).connect(limiter);
   return ac;
 }
@@ -59,7 +66,7 @@ function outlet(gain, pan = 0) {
   g.gain.value = gain;
   const p = ac.createStereoPanner();
   p.pan.value = pan;
-  g.connect(p).connect(master);
+  g.connect(p).connect(bus || master);
   return g;
 }
 
@@ -145,13 +152,27 @@ function bell(dest, t, m, n = 1.3, gain = 1) {
 // ── the effects (names and levels as in sound.py) ──
 
 const FX = {
-  key(kind = 'key') {
-    const t = ac.currentTime;
-    const f = { key: 3200, space: 1400, enter: 1100 }[kind] * rnd(0.9, 1.1);
-    const d = outlet({ key: 0.1, space: 0.12, enter: 0.18 }[kind] * rnd(0.7, 1.1), rnd(-0.15, 0.15));
-    const rate = kind === 'key' ? 260 : 110;
-    noise(d, t, 0.05, { f0: f * 1.1, q: 1.4, rate, gain: 1.6 });
-    tone(d, t, 0.05, { f0: f, rate, gain: 0.4 });
+
+  // A command running: slow, low breaths of one shimmering fifth (C#3-G#3), swelling in over about a second, so it
+  // breathes without edges. It holds until the result is in (`hush`), or a few seconds at most; the last breath rings
+  // out on its own.
+  run() {
+    hush();
+    const out = outlet(0.05);
+    const soft = ac.createBiquadFilter();
+    soft.type = 'lowpass';
+    soft.frequency.value = 6750;
+    soft.connect(out);
+    let timer;
+    const breathe = () => {
+      const t = ac.currentTime;
+      for (const m of [49, 56]) glass(soft, t, m, 1.4, { rate: 1 / 0.15, gain: 0.7, attack: 1.195, cents: 21.5 });
+      timer = setTimeout(breathe, 1050);
+    };
+    breathe();
+    const stop = () => clearTimeout(timer);
+    humming = stop;
+    setTimeout(() => humming === stop && hush(), 5000);
   },
   softkey(at = 0) {
     const t = ac.currentTime + at;
@@ -160,11 +181,13 @@ const FX = {
     tone(d, t, 0.06, { f0: 320, rate: 90, gain: 0.6 });
     noise(d, t, 0.03, { f0: 4500, q: 0.9, rate: 600, gain: 0.5 });
   },
+  // A finger on glass: a short, round knock with a little body under it.
   tap(at = 0, level = 0.4) {
     const t = ac.currentTime + 0.02 + at;
     const d = outlet(level, PHONE);
-    tone(d, t, 0.09, { f0: 1400, f1: 520, rate: 45 });
-    noise(d, t, 0.03, { f0: 4000, q: 1, rate: 200, gain: 0.45 });
+    tone(d, t, 0.06, { f0: 660, f1: 420, type: 'triangle', rate: 75 });
+    tone(d, t, 0.08, { f0: 190, f1: 120, rate: 55, gain: 0.7 });
+    noise(d, t, 0.015, { f0: 2400, q: 0.8, rate: 900, gain: 0.25 });
   },
   hold(ms = 800) {
     FX.tap(0, 0.36);
@@ -227,7 +250,6 @@ const FX = {
     const d = outlet(0.24 * 0.25, PHONE);
     for (const [f, at] of [[3520, 0.18], [4400, 0.28]]) tone(d, ac.currentTime + at - 0.04, 0.1, { f0: f, rate: 30, attack: 0.04 });
   },
-  ok: () => tone(outlet(0.1), ac.currentTime, 0.07, { f0: midi(96), rate: 40 }),
   warn: () => buzz(outlet(0.14), ac.currentTime, 67, 0.08),
   err() {
     const d = outlet(0.16);
@@ -235,6 +257,22 @@ const FX = {
     buzz(d, ac.currentTime + 0.11, 58, 0.09);
   },
 };
+
+/** A soft, glassy voice: two slightly detuned sines that shimmer against each other, swelling in over `attack`. */
+function glass(out, t, m, n, { rate = 5, gain = 1, attack = 0.04, cents = 7.8 } = {}) {
+  for (const d of [1, 2 ** (cents / 1200)]) tone(out, t, n, { f0: midi(m) * d, rate, gain: gain * 0.6, attack });
+}
+
+let humming = null;
+
+/** Stop the running-command sound, if one is playing. */
+export function hush() {
+  const stop = humming;
+  humming = null;
+  try {
+    stop?.();
+  } catch {}
+}
 
 /** Play an effect, if sound is on and the page and the demo are visible. */
 export function play(name, ...args) {
@@ -246,6 +284,14 @@ export function play(name, ...args) {
 
 /** The video's mapping from what the phone does to what you hear. */
 export function hookPhone(Phone) {
+  const onPhone = (...a) => {
+    bus = phoneBus;
+    try {
+      play(...a);
+    } finally {
+      bus = null;
+    }
+  };
   const wrap = (name, cue) => {
     const orig = Phone.prototype[name];
     Phone.prototype[name] = function (...a) {
@@ -253,53 +299,57 @@ export function hookPhone(Phone) {
       return orig.apply(this, a);
     };
   };
-  wrap('touch', (x, y, o) => (o?.hold ? play('hold', o.hold) : play('tap')));
-  wrap('swipe', () => play('swipe'));
-  wrap('scrollList', () => play('swipe'));
-  wrap('pinch', () => play('pinch'));
-  wrap('crash', () => play('crash'));
+  wrap('touch', (x, y, o) => (o?.hold ? onPhone('hold', o.hold) : onPhone('tap')));
+  wrap('swipe', () => onPhone('swipe'));
+  wrap('scrollList', () => onPhone('swipe'));
+  wrap('pinch', () => onPhone('pinch'));
+  wrap('crash', () => onPhone('crash'));
   wrap('typeInto', (label, text, perChar = 45) => {
-    for (let i = 0; i < String(text).length; i++) play('softkey', 0.15 + (i * perChar) / 1000);
+    for (let i = 0; i < String(text).length; i++) onPhone('softkey', 0.15 + (i * perChar) / 1000);
   });
   wrap('set', (patch) => {
-    if (patch.dark) play('dim');
-    if (patch.text) play('stretch');
-    if (patch.clean) play('shimmer');
-    if (patch.offline) play('error');
+    if (patch.dark) onPhone('dim');
+    if (patch.text) onPhone('stretch');
+    if (patch.clean) onPhone('shimmer');
+    if (patch.offline) onPhone('error');
   });
   wrap('overlay', (o) => {
     const k = o.kind;
-    if (k === 'banner') play('chime', [88, 83]);
-    else if (k === 'alert') play('chime', [81, 85, 88], 0.09, 0.2);
-    else if ((k === 'faceid' && o.state === 'bad') || k === 'offline') play('error');
-    else if ((k === 'faceid' && o.state === 'ok') || k === 'welcome') play('chime', [77, 81, 84], 0.07, 0.2, 1.0);
-    else if (['toast', 'card', 'pin'].includes(k)) play('pop');
-    else if (k === 'keyboard') play('whoosh', 0.22, 800, 2600, true, 0.12);
+    if (k === 'banner') onPhone('chime', [88, 83]);
+    else if (k === 'alert') onPhone('chime', [81, 85, 88], 0.09, 0.2);
+    else if ((k === 'faceid' && o.state === 'bad') || k === 'offline') onPhone('error');
+    else if ((k === 'faceid' && o.state === 'ok') || k === 'welcome') onPhone('chime', [77, 81, 84], 0.07, 0.2, 1.0);
+    else if (['toast', 'card', 'pin'].includes(k)) onPhone('pop');
+    else if (k === 'keyboard') onPhone('whoosh', 0.22, 800, 2600, true, 0.12);
   });
 }
 
-/** One sound per printed result: an error over a warning over a ✓. */
+/** A sound for a printed result that went wrong: an error over a warning. Success stays quiet. */
 export function result(lines) {
   const has = (c) => lines.some((l) => typeof l === 'object' && l.c === c);
-  for (const c of ['err', 'warn', 'ok']) if (has(c)) return play(c);
+  if (has('err')) play('err');
+  else if (has('warn')) play('warn');
 }
 
 /**
- The speaker button. Sound is on unless the reader turned it off. Browsers start audio only after a click, a tap or a
- key (not a scroll), so until then the button pulses, and that first touch starts it: `unlocked` then replays the
- scene, so its sound is heard from the start. Clicking the button mutes and unmutes.
+ The speaker button. Sound is off until the reader turns it on, and the button pulses until they choose. Turning it on
+ replays the scene, so its sound is heard from the start. Once on, the choice is remembered; browsers start audio only
+ after a click, a tap or a key (not a scroll), so on a later visit the first touch starts it and `unlocked` replays.
  */
 export function soundButton(button, { stored, store, unlocked, stage }) {
   if (typeof AudioContext === 'undefined') return void (button.hidden = true);
   // Silent while the demo is off screen: a click on a nav link must not make sounds from something you can't see.
   if (stage && 'IntersectionObserver' in window)
-    new IntersectionObserver(([e]) => (inView = e.isIntersecting), { threshold: 0.3 }).observe(stage);
-  on = stored('sw-sound') !== 'off';
+    new IntersectionObserver(([e]) => (inView = e.isIntersecting) || hush(), { threshold: 0.3 }).observe(stage);
+  // Off until the reader turns it on: a click elsewhere on the page must not start sound they didn't ask for.
+  let fresh = stored('sw-sound') == null;
+  on = stored('sw-sound') === 'on';
   const show = () => {
     button.setAttribute('aria-pressed', String(on));
     button.setAttribute('aria-label', on ? 'Mute' : 'Turn sound on');
-    button.title = on ? (ac?.state === 'running' ? 'Sound on' : 'Sound on: click anywhere to hear it') : 'Muted';
-    button.classList.toggle('waiting', on && ac?.state !== 'running');
+    button.title = on ? (ac?.state === 'running' ? 'Sound on' : 'Sound on: click anywhere to hear it') : 'Turn sound on';
+    // Pulse to invite a first-time reader, or a returning one whose sound waits for a click.
+    button.classList.toggle('waiting', on ? ac?.state !== 'running' : fresh);
   };
   const unlock = (e) => {
     for (const ev of ['pointerdown', 'keydown']) removeEventListener(ev, unlock, true);
@@ -314,8 +364,11 @@ export function soundButton(button, { stored, store, unlocked, stage }) {
   for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, unlock, true);
   button.addEventListener('click', () => {
     on = !on;
+    fresh = false;
+    if (!on) hush();
     store('sw-sound', on ? 'on' : 'off');
-    if (on) audio().resume().then(() => (show(), play('tap')));
+    // Turning sound on replays the scene, so it's heard from the start.
+    if (on) audio().resume().then(() => (show(), inView && unlocked ? unlocked() : play('tap')));
     show();
   });
   show();

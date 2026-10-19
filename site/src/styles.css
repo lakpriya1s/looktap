@@ -219,14 +219,22 @@ a.version:hover { color: var(--accent); border-color: var(--accent); }
 .tl.in { color: var(--term-text); margin-top: 6px; }
 .tl.in:first-child { margin-top: 0; }
 .tl .prompt { color: var(--term-prompt); }
-.tl.out { color: var(--term-out); animation: appear 0.25s both; }
+.tl.out { color: var(--term-out); animation: appear 0.25s both; padding-left: 3ch; position: relative; }
 .tl.ok { color: var(--term-ok); }
 .tl.warn { color: var(--term-warn); }
 .tl.err { color: var(--term-err); }
 .tl.dim { color: var(--term-dim); white-space: pre; overflow: hidden; text-overflow: ellipsis; }
 .tl.ref-row { cursor: default; white-space: pre; overflow: hidden; text-overflow: ellipsis; }
 .tl.ref-row:hover { color: var(--term-text); background: rgba(34, 211, 238, 0.1); }
-.caret { display: inline-block; width: 0.6em; height: 1.1em; vertical-align: -0.2em; background: var(--term-prompt); margin-left: 1px; animation: blink 1s steps(1) infinite; }
+/* A running command: a glow keeps passing over it, left to right, until its result is in. */
+.tl .spin { display: inline-block; width: 1ch; text-align: center; color: var(--term-prompt); }
+.tl .spin.ok { color: var(--term-ok); }
+.tl .spin.warn { color: var(--term-warn); }
+.tl .spin.err { color: var(--term-err); }
+.tl .cmd.running { color: transparent; background: linear-gradient(90deg, var(--term-dim) 0 35%, var(--term-prompt) 45%, #fff 50%, var(--term-prompt) 55%, var(--term-dim) 65% 100%) 0 0 / 200% 100%; -webkit-background-clip: text; background-clip: text; animation: shimmer 1.4s linear infinite; }
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .tl .cmd.running { animation: none; color: var(--term-prompt); background: none; } }
+.tl.out.first::before { content: '⎿'; position: absolute; left: 0.8ch; color: var(--term-dim); }
 @keyframes blink { 50% { opacity: 0; } }
 @keyframes appear { from { opacity: 0; transform: translateY(2px); } }
 
