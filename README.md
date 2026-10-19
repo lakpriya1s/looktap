@@ -450,7 +450,12 @@ looktap swipe 200 700 200 200; looktap perf --frames   # how smooth was that scr
   numbers, use a real Android device.
 - **`launch --time`** starts the clock at the start command (stopping the old copy comes first, outside it). Right
   after a launch an iOS screen read can take a second, so it says how much sooner the screen may have settled.
-- **Not available:** frames on the iOS simulator, and `perf` on a real iPhone. Both need Instruments.
+- **Real iPhone:** `perf` reads it through Instruments' Activity Monitor (`xcrun xctrace`, part of Xcode, so nothing to
+  install). Starting Instruments takes a few seconds, so a reading takes 10–25 s and `--for` gives one about every 8 s.
+  Its CPU matches Instruments' own figure to within about 10%.
+- **Not available:** frames on iOS. Instruments' Animation Hitches is the only source; it doesn't support the
+  simulator, and on a real iPhone its recordings hang when they overlap looktap's device runner. Use Instruments
+  itself (Xcode → Product → Profile → Animation Hitches) for those.
 
 ### Catch a spinner, toast, or transition (`burst`)
 
@@ -850,7 +855,7 @@ to settle unless asked (`--ls`).
 | `looktap crashes [app] [--since 1h]` | Crashes, ANRs and low-memory kills since the last `crashes` (the first call covers the last hour) |
 | `looktap app [app]` | The app in front and its pid, and whether `[app]` is running |
 | `looktap app [app] --paths` | Where the app's files are. iOS simulator: its bundle, data folder and app groups, as paths on the Mac. Android: its APKs and data folder, which `adb shell run-as` reads on debuggable builds |
-| `looktap perf [app] [--for 10s] [--json]` | The app's CPU (100% is one core), memory and threads. iOS simulator: the memory footprint Xcode's gauge shows, and its peak. Android: PSS, RSS, Java and native heap. `--for` takes a reading each second, then prints avg/max |
+| `looktap perf [app] [--for 10s] [--json]` | The app's CPU (100% is one core), memory and threads. iOS simulator: the memory footprint Xcode's gauge shows, and its peak. Android: PSS, RSS, Java and native heap. Real iPhone: CPU, footprint and threads through Instruments (`xcrun xctrace`, part of Xcode), 10–25 s a reading. `--for` takes a reading each second (a real iPhone: about every 8 s), then prints avg/max |
 | `looktap perf [app] --frames` | Android: frames drawn since the last `perf --frames`, the janky share, p50/p90/p95/p99 frame time, and why frames were late |
 | `looktap capabilities [--json]` | What this device can't do, or can only in part, and why. `--json`: every command with `supported`, `conditional` or `unsupported` |
 | **App state** (`<app>` from the argument or `--app` / config, never the app in front) | |
@@ -906,8 +911,8 @@ front of you (`--json` for every command).
 | `location clear` | ✅ | ❌ a real device uses its own GPS; use a simulator to fake one | ❌ the emulator keeps its last location: set a new one instead | ❌ a device uses its own GPS (faking it needs a mock-location app) |
 | `logs` | ✅ | ❌ use Console.app with the device selected | ✅ | ✅ |
 | `network` | ❌ the simulator uses the Mac's own network, so it can't go offline or slow by itself. Network Link Conditioner (Xcode → Open Developer Tool → More Developer Tools → Additional Tools) throttles the whole Mac | ❌ turn on Airplane Mode in Control Center | ✅ | ⚠️ airplane mode: over wireless adb, going offline also drops looktap's connection |
-| `perf` | ✅ | ❌ a device's CPU and memory are read through Instruments: Xcode → Debug Navigator while running, or Instruments' Activity Monitor | ✅ | ✅ |
-| `perf --frames` | ❌ the simulator has no frame counter outside Instruments: Xcode → Debug → View Debugging, or Instruments' Animation Hitches | ❌ a device's frames are read through Instruments' Animation Hitches | ✅ | ✅ |
+| `perf` | ✅ | ⚠️ read through Instruments (xcrun xctrace): a reading takes 10–25 s and --for gives one every ~8 s; memory is the footprint, without its peak | ✅ | ✅ |
+| `perf --frames` | ❌ Instruments' Animation Hitches, the only frame source on iOS, doesn't support the simulator: measure frames on a real iPhone in Instruments, or on Android | ❌ Instruments' Animation Hitches records frames, but its recordings hang when they overlap looktap's device runner, so looktap doesn't run it: use Instruments (Xcode → Product → Profile → Animation Hitches) | ✅ | ✅ |
 | `permission` | ⚠️ camera and notifications can't be set: simctl privacy has no such service | ❌ change it in the Settings app | ⚠️ contacts-limited, reminders and siri are iOS-only; any android.permission.* works | ⚠️ contacts-limited, reminders and siri are iOS-only; any android.permission.* works |
 | `push` | ✅ | ❌ send a real push through APNs | ❌ Android pushes come through Firebase (FCM), so adb can't inject one: send it from your backend or the Firebase console | ❌ Android pushes come through Firebase (FCM), so adb can't inject one: send it from your backend or the Firebase console |
 | `record` | ✅ | ❌ use burst for frames, or QuickTime Player for video | ⚠️ at most 3 minutes, and FLAG_SECURE screens record black | ⚠️ at most 3 minutes, and FLAG_SECURE screens record black |

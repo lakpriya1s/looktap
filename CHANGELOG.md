@@ -5,7 +5,9 @@
 ### Added
 - **`perf [app]`** reads the app's CPU (100% is one core), memory and threads. On the iOS simulator it reads the
   memory footprint Xcode's gauge shows and its peak, from the Mac's own tools; on Android PSS, RSS, Java and native
-  heap. `--for 10s` takes a reading each second, then prints the average and maximum. `--json` for scripts.
+  heap. On a real iPhone it reads CPU, footprint and threads through Instruments' Activity Monitor (`xcrun xctrace`,
+  part of Xcode): 10–25 s a reading. `--for 10s` takes a reading each second (a real iPhone: about every 8 s), then
+  prints the average and maximum. `--json` for scripts.
 - **`perf --frames`** (Android): frames drawn since the last call, the janky share, p50–p99 frame time, and why
   frames were late (slow UI thread, missed deadline, input latency).
 - **`launch --time`** times a cold start, from the start command (after the old copy is stopped) until the app is in

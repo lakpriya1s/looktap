@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { duration, formatFrames, formatReading, formatSamples, memoryJson, parseFootprint, readingJson, uptimes, parseGfxinfo, parseMeminfo, procTicks, psTime } from '../lib/perf.js';
+import { duration, formatFrames, formatReading, formatSamples, memoryJson, parseFootprint, readingJson, uptimes, xctraceRows, parseGfxinfo, parseMeminfo, procTicks, psTime } from '../lib/perf.js';
 
 test('psTime reads ps CPU time, with or without hours', () => {
   assert.equal(psTime('  0:08.54\n'), 8.54);
@@ -72,4 +72,22 @@ test('a reading and a series format as short lines', () => {
   assert.deepEqual(formatReading('a.b', r), ['a.b  pid 9', 'cpu      12%  (over 0.5 s; 100% is one core)', 'memory   footprint 75.0 MB · peak 80.0 MB', 'threads  18']);
   const samples = [{ ...r, at: 0, ms: 1000, cpu: 10 }, { ...r, at: 1500, ms: 1000, cpu: 30, memory: [['footprint', 90 * 1048576]] }];
   assert.match(formatSamples('a.b', samples).at(-1), /^over 2\.5 s \(2 readings\): cpu avg 20% · max 30% \| footprint start 75\.0 MB · max 90\.0 MB · end 90\.0 MB$/);
+});
+
+test('xctraceRows reads an exported table: ids, refs (also from inside a cell), missing values, entities', () => {
+  const xml = `<?xml version="1.0"?><trace-query-result><node><schema name="activity-monitor-process-live">
+<col><mnemonic>start</mnemonic></col><col><mnemonic>process</mnemonic></col><col><mnemonic>pid</mnemonic></col>
+<col><mnemonic>cpu-percent</mnemonic></col><col><mnemonic>cpu-total</mnemonic></col></schema>
+<row><start-time id="1" fmt="00:00.000.000">0</start-time><process id="2" fmt="Demo &amp; Co (41)"><pid id="3" fmt="41">41</pid></process><pid ref="3"/><sentinel/><duration-on-core id="4" fmt="1.00 s">1000000000</duration-on-core></row>
+<row><start-time id="5" fmt="00:00.112.291">112291625</start-time><process ref="2"/><pid ref="3"/><system-cpu-percent id="6" fmt="5.7%">5.7</system-cpu-percent><duration-on-core id="7" fmt="1.06 s">1061496583</duration-on-core></row>
+</node></trace-query-result>`;
+  const rows = xctraceRows(xml);
+  assert.equal(rows.length, 2);
+  assert.equal(rows[0].process.fmt, 'Demo & Co (41)');
+  assert.equal(rows[0].pid.text, '41');
+  assert.equal(rows[0]['cpu-percent'], null);
+  assert.equal(rows[1].process.fmt, 'Demo & Co (41)');
+  assert.equal(rows[1].pid.text, '41');
+  assert.equal(rows[1]['cpu-percent'].fmt, '5.7%');
+  assert.equal(Number(rows[1]['cpu-total'].text) - Number(rows[0]['cpu-total'].text), 61496583);
 });
