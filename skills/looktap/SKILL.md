@@ -377,7 +377,9 @@ Then look at the few frames that matter, not all of them.
   `shot` to see it. Never enter a passcode unless the user gave it to you for this device.
 - **Start with `looktap devices`** to see which devices are real phones and which are simulators or emulators.
   A phone marked "not ready" needs the user: tell them exactly what it says (accept the USB debugging prompt, tap
-  Trust, turn on Developer Mode).
+  Trust, turn on Developer Mode). One marked "still starting" needs no one: `looktap boot <name>` waits for it.
+- **Use looktap, not adb or simctl, for device and app state:** `boot` instead of polling for boot completion,
+  `apps <id>` instead of `simctl listapps` or `pm list packages` to check an app is installed.
 - **If a command says the device is locked**, ask the user to unlock it. Don't retry, and never enter a passcode
   unless they gave it to you for this device.
 - **If `hidekb` exits 2** (iOS search keyboards have no Done key), tap the screen's close or cancel control.
