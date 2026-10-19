@@ -416,9 +416,9 @@ export const SCENES = [
     id: 'state',
     kicker: '10 · App state',
     title: 'Fresh installs and permission prompts, on demand',
-    body: `<p><code>install</code> a build and get its app id back. <code>reset</code> puts an app back to a fresh install (data and permissions cleared), and <code>permission grant|revoke|reset</code> uses the same names on both platforms: camera, location, photos, notifications and more.</p>
+    body: `<p><code>install</code> a build and get its app id back, and <code>apps</code> says what's installed, with versions. <code>reset</code> puts an app back to a fresh install (data and permissions cleared), and <code>permission grant|revoke|reset</code> uses the same names on both platforms: camera, location, photos, notifications and more.</p>
 <p>These commands always need the app id. They never act on whatever happens to be on screen.</p>`,
-    covers: ['install', 'permission', 'reset', 'launch', 'stop', 'uninstall'],
+    covers: ['install', 'apps', 'permission', 'reset', 'launch', 'stop', 'uninstall'],
     start: (p) => p.show('springboardEmpty'),
     beats: [
       {
@@ -428,6 +428,7 @@ export const SCENES = [
           return [`installed ${APP}`];
         },
       },
+      { cmd: 'looktap apps demo', run: async (p, c) => [`${APP}  ${c.ios ? 'Demo Store  v1.4 (212)' : 'v212'}`] },
       { cmd: `looktap permission grant camera ${APP}`, run: async (p, c) => [`granted: ${c.ios ? 'camera' : 'CAMERA'} for ${APP}`] },
       { cmd: `looktap reset ${APP}`, run: async () => [`reset ${APP}: data and permissions cleared — launch it to start fresh`] },
       {

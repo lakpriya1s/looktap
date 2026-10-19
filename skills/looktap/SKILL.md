@@ -163,6 +163,10 @@ looktap capabilities
 ### App state
 
 ```bash
+# is it installed, and which build? A filter matches part of the id or name (system apps included); exit 1 if none
+looktap apps
+looktap apps com.example
+looktap apps --all --json
 # a simulator .app or an .apk (keeps the app's data; --grant: every runtime permission); prints the app id
 looktap install build/MyApp.app
 looktap install app-debug.apk --grant
@@ -220,7 +224,8 @@ looktap codegen flows/checkout.txt com.example.app
 # what's running or connected: simulator, emulator or real phone (model, OS, USB/Wi-Fi), window or headless,
 # and what the user must do for a phone that isn't ready. --all: also what boot can start. --json: structured
 looktap devices --all
-# boot one by name (UDID or AVD too), wait until it's ready; --window (default) or --headless
+# boot one by name (UDID or AVD too), wait until it's ready; --window (default) or --headless.
+# One that's still starting (devices says so) is waited for: use boot, not an adb/simctl polling loop
 looktap boot "iPhone 16 Pro" --window
 looktap boot Pixel_9a --headless
 looktap shutdown Pixel_9a
