@@ -821,6 +821,7 @@ looktap mcp --config      # prints a ready-to-paste client config with absolute 
     `home` and `wait`;
   - `screenshot`, which returns the image itself;
   - `logs` and `crashes`;
+  - `perf`: CPU, memory and threads, or with `frames` the frames and jank since the last call (`for`: seconds to sample);
   - `looktap`, for any other command line (`apps`, `perf`, `launch --time`, `boot` …), or several separated by `;`.
 - **Actions return the settled screen** unless `ls: false`. That saves the agent a separate `ls`, but each action
   then waits for the screen to stop moving, 0.7–1.9 s in the [benchmark](BENCHMARK.md). Pass `ls: false` when you
