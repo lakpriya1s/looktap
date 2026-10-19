@@ -4,7 +4,7 @@
 import { INVENTORY } from './inventory.js';
 import { Phone } from './phone.js';
 import { SCENES } from './scenes.js';
-import { hookPhone, play as sound, result, soundButton } from './sound.js';
+import { hookPhone, hush, play as sound, result, soundButton } from './sound.js';
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)');
 const $ = (s, el = document) => el.querySelector(s);
@@ -66,27 +66,34 @@ function line(html, cls = '') {
   return el;
 }
 
-async function typeCommand(cmd, token) {
-  const el = line('<span class="prompt">$</span> <span class="cmd"></span><span class="caret"></span>', 'in');
-  const out = el.querySelector('.cmd');
-  if (reduce.matches) out.textContent = cmd;
-  else
-    for (const ch of cmd) {
-      if (token !== run) throw new Cancelled();
-      out.textContent += ch;
-      sound('key', ch === ' ' ? 'space' : 'key');
-      body.scrollTop = body.scrollHeight;
-      await sleep(cmd.length > 50 ? 9 : 16);
-    }
-  el.querySelector('.caret').remove();
-  if (!reduce.matches) sound('key', 'enter');
+/**
+ Show a command the way an agent's tool call looks: a turning glyph and a glow passing over the command while it runs.
+ Returns `done(lines)`, which settles the glyph into a dot coloured by the result.
+ */
+function runCommand(cmd) {
+  const el = line(`<span class="spin">${SPIN[0]}</span> <span class="cmd running"></span>`, 'in');
+  el.querySelector('.cmd').textContent = cmd;
+  sound('run');
+  let i = 0;
+  const timer = reduce.matches ? 0 : setInterval(() => (el.firstChild.textContent = SPIN[++i % SPIN.length]), 110);
+  return (lines) => {
+    clearInterval(timer);
+    hush();
+    const has = (c) => lines.some((l) => typeof l === 'object' && l.c === c);
+    el.firstChild.textContent = '⏺';
+    el.firstChild.className = `spin ${has('err') ? 'err' : has('warn') ? 'warn' : 'ok'}`;
+    el.querySelector('.cmd').classList.remove('running');
+  };
 }
+
+const SPIN = '·✢✳✶✻✽✻✶✳✢';
 
 function print(lines) {
   result(lines);
   lines.forEach((l, i) => {
     const o = typeof l === 'string' ? { s: l } : l;
-    const el = line(esc(o.s), `out ${o.c || ''}${o.ref ? ' ref-row' : ''}`);
+    // Output hangs under its command, as an agent's tool result does.
+    const el = line(esc(o.s), `out ${o.c || ''}${o.ref ? ' ref-row' : ''}${i ? '' : ' first'}`);
     if (o.ref) {
       el.dataset.ref = String(i + 1);
       el.addEventListener('mouseenter', () => phone.focusRef(i + 1));
@@ -116,6 +123,7 @@ async function play(scene, { restart = false } = {}) {
   termTitle();
   for (const d of $$('[data-dot]')) d.classList.toggle('on', d.dataset.dot === scene.id);
   body.innerHTML = '';
+  hush();
   phone.reset();
   scene.start(phone);
   try {
@@ -123,15 +131,15 @@ async function play(scene, { restart = false } = {}) {
     for (const beat of scene.beats) {
       if (token !== run) throw new Cancelled();
       const cmd = typeof beat.cmd === 'function' ? beat.cmd(ctx()) : beat.cmd;
-      await typeCommand(cmd, token);
-      await sleep(180);
+      const done = runCommand(cmd);
+      // Long enough to see it working, even when the phone answers at once.
+      const [out] = await Promise.all([beat.run(phone, ctx()), sleep(700)]);
       if (token !== run) throw new Cancelled();
-      const out = await beat.run(phone, ctx());
-      if (token !== run) throw new Cancelled();
+      done(out || []);
       print(out || []);
       await sleep(900);
     }
-    if (token === run) line('<span class="prompt">$</span> <span class="caret"></span>', 'in idle');
+    if (token === run) line('<span class="prompt">></span> <span class="caret"></span>', 'in idle');
   } catch (e) {
     if (!(e instanceof Cancelled)) throw e;
   }
