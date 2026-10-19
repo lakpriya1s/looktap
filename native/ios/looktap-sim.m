@@ -20,6 +20,8 @@
 //          -framework ImageIO -framework CoreGraphics -framework UniformTypeIdentifiers looktap-sim.m
 
 #import <AppKit/AppKit.h>
+#import <AVFoundation/AVFoundation.h>
+#import <CoreMediaIO/CMIOHardware.h>
 #import <CoreGraphics/CoreGraphics.h>
 #import <Foundation/Foundation.h>
 #import <ImageIO/ImageIO.h>
@@ -1182,8 +1184,106 @@ static void setup(NSString *udid, NSString *developerDir) {
   axToken = NSUUID.UUID.UUIDString;
 }
 
+// ---- `--capture`: a real iPhone's screen over USB, for `perf --frames` -------------------------------------------
+//
+// The capture device QuickTime uses ("iOS Device"). It delivers frames at up to 60 per second whether the screen
+// changes or not, and it's lossy video, so each frame is compared with the one before: the brightness of every
+// 8th pixel each way, below the status bar; a frame where 64 or more of those moved by more than 24 levels is new
+// content (still frames move 0–1, a scroll thousands). One line per delivered frame: "<ms> <0|1>", ms on the
+// frame's presentation clock. It stops when nobody has touched `--asked` for 10 minutes, or the phone goes away.
+
+@interface FeedReader : NSObject <AVCaptureVideoDataOutputSampleBufferDelegate>
+@property(nonatomic) FILE *log;
+@end
+
+@implementation FeedReader {
+  NSMutableData *_prev;
+  double _t0;
+}
+- (void)captureOutput:(AVCaptureOutput *)output didOutputSampleBuffer:(CMSampleBufferRef)buffer fromConnection:(AVCaptureConnection *)connection {
+  double pts = CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(buffer)) * 1000;
+  if (_t0 == 0) _t0 = pts;
+  CVPixelBufferRef px = CMSampleBufferGetImageBuffer(buffer);
+  if (!px) return;
+  CVPixelBufferLockBaseAddress(px, kCVPixelBufferLock_ReadOnly);
+  // The feed's own format (4:2:0 YUV): the brightness plane, read in place. Asking for BGRA instead converts every
+  // full-size frame, and the capture then drops frames during motion.
+  size_t w = CVPixelBufferGetWidthOfPlane(px, 0), h = CVPixelBufferGetHeightOfPlane(px, 0), row = CVPixelBufferGetBytesPerRowOfPlane(px, 0);
+  const uint8_t *base = CVPixelBufferGetBaseAddressOfPlane(px, 0);
+  NSMutableData *cur = [NSMutableData dataWithCapacity:(w / 8 + 1) * (h / 8 + 1)];
+  for (size_t y = h * 6 / 100; y < h; y += 8)
+    for (size_t x = 0; x < w; x += 8) [cur appendBytes:base + y * row + x length:1];
+  CVPixelBufferUnlockBaseAddress(px, kCVPixelBufferLock_ReadOnly);
+  int moved = 0;
+  if (_prev.length == cur.length) {
+    const uint8_t *a = _prev.bytes, *b = cur.bytes;
+    for (NSUInteger i = 0; i < cur.length && moved < 64; i++) moved += abs((int)a[i] - (int)b[i]) > 24;
+  }
+  BOOL changed = _prev == nil || moved >= 64;
+  _prev = cur;
+  fprintf(self.log, "%.1f %d\n", pts - _t0, changed);
+  fflush(self.log);
+}
+@end
+
+static int capture(NSString *name, NSString *logPath, NSString *askedPath) {
+  CMIOObjectPropertyAddress prop = {kCMIOHardwarePropertyAllowScreenCaptureDevices, kCMIOObjectPropertyScopeGlobal, kCMIOObjectPropertyElementMain};
+  UInt32 allow = 1;
+  CMIOObjectSetPropertyData(kCMIOObjectSystemObject, &prop, 0, NULL, sizeof allow, &allow);
+  FILE *log = fopen(logPath.fileSystemRepresentation, "a");
+  if (!log) die(@"cannot write the frames log");
+  AVCaptureDevice *device = nil;
+  for (int i = 0; i < 20 && !device; i++) { // the device shows up a moment after screen capture is allowed
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    AVCaptureDeviceType external = AVCaptureDeviceTypeExternalUnknown; // macOS 12–13's name for it
+#pragma clang diagnostic pop
+    if (@available(macOS 14.0, *)) external = AVCaptureDeviceTypeExternal;
+    NSArray *all = [AVCaptureDeviceDiscoverySession discoverySessionWithDeviceTypes:@[ external ] mediaType:AVMediaTypeMuxed
+                                                                            position:AVCaptureDevicePositionUnspecified].devices;
+    for (AVCaptureDevice *d in all)
+      if ([d.modelID isEqualToString:@"iOS Device"] && (!name.length || [d.localizedName isEqualToString:name] || all.count == 1)) device = d;
+    if (!device) [NSRunLoop.currentRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
+  }
+  if (!device) {
+    fprintf(log, "error no screen capture device for %s: connect it with a USB cable and unlock it\n", name.UTF8String);
+    return 1;
+  }
+  NSError *error = nil;
+  AVCaptureDeviceInput *input = [AVCaptureDeviceInput deviceInputWithDevice:device error:&error];
+  AVCaptureSession *session = [AVCaptureSession new];
+  if (!input || ![session canAddInput:input]) {
+    fprintf(log, "error %s\n", (error.localizedDescription ?: @"the screen capture device is busy (QuickTime?)").UTF8String);
+    return 1;
+  }
+  [session addInput:input];
+  AVCaptureVideoDataOutput *output = [AVCaptureVideoDataOutput new];
+  output.videoSettings = @{(id)kCVPixelBufferPixelFormatTypeKey : @(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange)};
+  output.alwaysDiscardsLateVideoFrames = NO;
+  FeedReader *reader = [FeedReader new];
+  reader.log = log;
+  [output setSampleBufferDelegate:reader queue:dispatch_queue_create("looktap.feed", DISPATCH_QUEUE_SERIAL)];
+  [session addOutput:output];
+  [session startRunning];
+  fprintf(log, "started %.0f\n", NSDate.date.timeIntervalSince1970 * 1000);
+  fflush(log);
+  for (;;) {
+    [NSRunLoop.currentRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:5]];
+    NSDate *asked = [NSFileManager.defaultManager attributesOfItemAtPath:askedPath error:nil].fileModificationDate;
+    if (!session.isRunning || !device.isConnected || !asked || asked.timeIntervalSinceNow < -600) break;
+  }
+  [session stopRunning];
+  fprintf(log, "stopped\n");
+  return 0;
+}
+
 int main(int argc, char **argv) {
   @autoreleasepool {
+    if (argc > 1 && !strcmp(argv[1], "--capture")) {
+      NSString *name = argc > 2 ? @(argv[2]) : @"", *logPath = argc > 3 ? @(argv[3]) : nil, *asked = argc > 4 ? @(argv[4]) : nil;
+      if (!logPath || !asked) die(@"usage: looktap-sim --capture <device name> <log> <asked-file>");
+      return capture(name, logPath, asked);
+    }
     NSString *udid = nil, *socketPath = nil, *developerDir = @"/Applications/Xcode.app/Contents/Developer";
     for (int i = 1; i + 1 < argc; i += 2) {
       NSString *k = @(argv[i]), *v = @(argv[i + 1]);

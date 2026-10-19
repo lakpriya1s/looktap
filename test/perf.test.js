@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { duration, formatFrames, formatReading, formatSamples, memoryJson, parseFootprint, readingJson, screenFrames, uptimes, xctraceRows, parseGfxinfo, parseMeminfo, procTicks, psTime } from '../lib/perf.js';
+import { duration, formatFrames, formatReading, formatSamples, memoryJson, parseFootprint, feedFrames, feedSamples, readingJson, screenFrames, uptimes, xctraceRows, parseGfxinfo, parseMeminfo, procTicks, psTime } from '../lib/perf.js';
 
 test('psTime reads ps CPU time, with or without hours', () => {
   assert.equal(psTime('  0:08.54\n'), 8.54);
@@ -111,4 +111,27 @@ test('xctraceRows reads an exported table: ids, refs (also from inside a cell), 
   assert.equal(rows[1].pid.text, '41');
   assert.equal(rows[1]['cpu-percent'].fmt, '5.7%');
   assert.equal(Number(rows[1]['cpu-total'].text) - Number(rows[0]['cpu-total'].text), 61496583);
+});
+
+test('feedFrames: repeats are janky, slots the feed never delivered are unknown, long gaps are pauses', () => {
+  const V = 1000 / 60;
+  const f = (pairs) => feedFrames(pairs.map(([slot, changed]) => ({ t: slot * V, changed: Boolean(changed) })));
+  // 4 new frames in a row: 3 intervals of one refresh.
+  assert.deepEqual([f([[0, 1], [1, 1], [2, 1], [3, 1]]).frames, f([[0, 1], [1, 1], [2, 1], [3, 1]]).janky], [3, 0]);
+  // The same picture delivered again at slot 1: the app missed a refresh.
+  const missed = f([[0, 1], [1, 0], [2, 1]]);
+  assert.deepEqual([missed.frames, missed.janky, missed.longest, missed.skipped], [1, 1, 33, 0]);
+  // Nothing delivered at slot 1: the feed skipped it, so the interval is unknown, not jank.
+  const skipped = f([[0, 1], [2, 1], [3, 1]]);
+  assert.deepEqual([skipped.frames, skipped.janky, skipped.skipped], [1, 0, 1]);
+  // Over 100 ms between changes: a pause.
+  assert.equal(f([[0, 1], [1, 1], [20, 1], [21, 1]]).pauses, 1);
+  assert.equal(f([[0, 1], [1, 1]]).source, 'feed');
+});
+
+test('feedSamples reads the capture log, skipping its other lines', () => {
+  assert.deepEqual(feedSamples('started 1792385884470\n0.0 1\n16.7 0\n33.3 1\nstopped\n'), [
+    { t: 0, changed: true }, { t: 16.7, changed: false }, { t: 33.3, changed: true },
+  ]);
+  assert.match(formatFrames('a.b', { source: 'feed', frames: 0 })[0], /no frames on screen/);
 });

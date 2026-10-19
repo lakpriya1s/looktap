@@ -90,8 +90,8 @@ debug                             [app] defaults to --app / config, else the app
   capabilities [--json]           what this device can't do, or can only in part, and why
   perf [app] [--for 10s] [--json] the app's CPU (100% = one core), memory and threads; --for: a reading
                                   each second, then avg/max (iOS: the footprint Xcode shows; Android: PSS)
-  perf [app] --frames             frames since the last perf --frames, janky %, p50–p99 frame time (iOS
-                                  simulator: from the screen itself; the first call starts counting)
+  perf [app] --frames             frames since the last perf --frames, janky %, p50–p99 frame time (iOS: from
+                                  the screen itself, a real iPhone over its USB cable; the first call starts counting)
 
 app state                         <app> defaults to --app / config (never the app in front)
   install <path> [--grant]        iOS: a simulator .app · Android: an .apk (keeps data; --grant: all

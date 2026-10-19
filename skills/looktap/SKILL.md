@@ -154,8 +154,9 @@ looktap logs --all
 looktap crashes
 looktap crashes com.example.myapp --since 1h
 # CPU (100% = one core), memory and threads of the app (iOS: the footprint Xcode shows; Android: PSS, heaps);
-# --for samples once a second, then prints avg/max. --frames: frames and jank since the last --frames (iOS
-# simulator: counted from the screen; the first call only starts counting, so call it before the action too).
+# --for samples once a second, then prints avg/max. --frames: frames and jank since the last --frames (iOS:
+# counted from the screen, a real iPhone over its USB cable; the first call only starts counting, so call it
+# before the action too).
 # A real iPhone goes through Instruments: 10-25 s a reading, --for about every 8 s
 looktap perf
 looktap perf com.example.myapp --for 10s

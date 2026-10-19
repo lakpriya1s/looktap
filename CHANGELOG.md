@@ -11,7 +11,9 @@
 - **`perf --frames`**: frames since the last call, the janky share and p50–p99 frame time. Android reads the app's
   own render times and why frames were late (slow UI thread, missed deadline, input latency). The iOS simulator
   counts frames as its screen shows them: the helper watches the framebuffer, snapped to the 60 Hz display, and adds
-  fps while moving and the longest stall (Instruments' Animation Hitches doesn't support the simulator).
+  fps while moving and the longest stall (Instruments' Animation Hitches doesn't support the simulator). A real
+  iPhone does the same from its USB screen feed (the capture device QuickTime uses), compared frame by frame;
+  refreshes the feed itself skipped are reported as unknown.
 - **`launch --time`** times a cold start, from the start command (after the old copy is stopped) until the app is in
   front and until its first screen settled. Android adds the system's own `TotalTime`. When screen reads are slow
   (right after a launch they can take a second), it says how much sooner the screen may have settled.

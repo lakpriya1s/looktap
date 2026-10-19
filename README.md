@@ -69,7 +69,7 @@ use the phone ([Record a flow](#record-a-flow-codegen)).
 | 📸 | **Screenshots.** `shot` saves a PNG and prints its path, with `--scale 0.5` for fewer image tokens. On Android emulators it also captures `FLAG_SECURE` screens |
 | 🎞️ | **Burst capture and video.** `burst` saves a frame each time the screen changes, to catch spinners, toasts and transitions. `record start` … `record stop` saves an MP4 of everything in between |
 | 🪵 | **Logs.** `logs` shows the app's log since your last look. `--errors` and `--grep` narrow it, and on iOS Apple-framework chatter is filtered out |
-| ⏱️ | **Performance.** `perf` reads the app's CPU, memory and threads, once or each second with `--for 10s`; `perf --frames` adds frames, jank and frame-time percentiles (Android, and the iOS simulator from the screen itself). `launch --time` times a cold start until the first screen settles |
+| ⏱️ | **Performance.** `perf` reads the app's CPU, memory and threads, once or each second with `--for 10s`; `perf --frames` adds frames, jank and frame-time percentiles (on iOS, from the screen itself). `launch --time` times a cold start until the first screen settles |
 | 💥 | **Crashes.** `crashes` reads iOS crash reports (exception, reason, top frames) and Android crashes, ANRs and **low-memory kills**, so "the app vanished" always comes with a reason |
 | 🫆 | **Biometrics.** `bio match\|nomatch` simulates Face ID or a fingerprint |
 | 🌍 | **Simulated conditions.** `location <lat> <lon>`, `appearance dark`, `textsize xxl` (Dynamic Type / font scale), `statusbar clean` (9:41 for screenshots), `rotate landscape` (`ls`, taps and screenshots follow the turned screen), Android `network offline`, and iOS `push` notifications |
@@ -460,9 +460,12 @@ looktap swipe 200 700 200 200; looktap perf --frames   # how smooth was that scr
   It's the whole screen as you'd see it, not the app's own render time, which only Instruments has. A gap over
   0.1 s counts as "nothing moving", so a pause between two actions doesn't count as jank, and is reported as a
   pause. The first `perf --frames` starts counting; each one after reports what happened since the last.
-- **Not available:** frames on a real iPhone. Instruments' Animation Hitches can record them, but its recordings
-  hang when they overlap looktap's device runner. Use Instruments itself (Xcode → Product → Profile → Animation
-  Hitches).
+- **Frames on a real iPhone come from its USB screen feed**, the capture device QuickTime uses, compared frame by
+  frame in the same way. It needs a USB cable (not Wi-Fi), an unlocked phone, and QuickTime not showing the phone.
+  The feed runs at 60 Hz at most, so a 120 Hz screen is measured at half its rate, and during fast motion the phone
+  sometimes skips a frame of the feed: those refreshes are reported as unknown, never as jank. (Instruments'
+  Animation Hitches would measure the app's own frames, but its recordings hang while looktap's device runner is
+  up.)
 
 ### Catch a spinner, toast, or transition (`burst`)
 
@@ -863,7 +866,7 @@ to settle unless asked (`--ls`).
 | `looktap app [app]` | The app in front and its pid, and whether `[app]` is running |
 | `looktap app [app] --paths` | Where the app's files are. iOS simulator: its bundle, data folder and app groups, as paths on the Mac. Android: its APKs and data folder, which `adb shell run-as` reads on debuggable builds |
 | `looktap perf [app] [--for 10s] [--json]` | The app's CPU (100% is one core), memory and threads. iOS simulator: the memory footprint Xcode's gauge shows, and its peak. Android: PSS, RSS, Java and native heap. Real iPhone: CPU, footprint and threads through Instruments (`xcrun xctrace`, part of Xcode), 10–25 s a reading. `--for` takes a reading each second (a real iPhone: about every 8 s), then prints avg/max |
-| `looktap perf [app] --frames` | Frames since the last `perf --frames`, the janky share and p50/p90/p95/p99 frame time. Android: the app's own render times (`gfxinfo`) and why frames were late. iOS simulator: frames as the screen shows them, fps while moving and the longest stall; the first call starts counting |
+| `looktap perf [app] --frames` | Frames since the last `perf --frames`, the janky share and p50/p90/p95/p99 frame time. Android: the app's own render times (`gfxinfo`) and why frames were late. iOS: frames as the screen shows them (the simulator's framebuffer, a real iPhone's USB screen feed), fps while moving and the longest stall; the first call starts counting |
 | `looktap capabilities [--json]` | What this device can't do, or can only in part, and why. `--json`: every command with `supported`, `conditional` or `unsupported` |
 | **App state** (`<app>` from the argument or `--app` / config, never the app in front) | |
 | `looktap apps [filter] [--all] [--json]` | The installed apps: id, name (iOS) and version. `--all` adds the system's own apps. A filter matches part of the id or name, system apps included, and exits 1 when nothing matches, so `looktap apps com.example` answers "is it installed?" |
@@ -919,7 +922,7 @@ front of you (`--json` for every command).
 | `logs` | ✅ | ❌ use Console.app with the device selected | ✅ | ✅ |
 | `network` | ❌ the simulator uses the Mac's own network, so it can't go offline or slow by itself. Network Link Conditioner (Xcode → Open Developer Tool → More Developer Tools → Additional Tools) throttles the whole Mac | ❌ turn on Airplane Mode in Control Center | ✅ | ⚠️ airplane mode: over wireless adb, going offline also drops looktap's connection |
 | `perf` | ✅ | ⚠️ read through Instruments (xcrun xctrace): a reading takes 10–25 s and --for gives one every ~8 s; memory is the footprint, without its peak | ✅ | ✅ |
-| `perf --frames` | ⚠️ frames as the screen shows them (the simulator's framebuffer updates), not the app's own render times: the first call starts counting | ❌ Instruments' Animation Hitches records frames, but its recordings hang when they overlap looktap's device runner, so looktap doesn't run it: use Instruments (Xcode → Product → Profile → Animation Hitches) | ✅ | ✅ |
+| `perf --frames` | ⚠️ frames as the screen shows them (the simulator's framebuffer updates), not the app's own render times: the first call starts counting | ⚠️ frames as the screen shows them, from its USB screen feed (60 Hz at most, so a 120 Hz screen counts at half its rate); needs a USB cable, an unlocked phone, and QuickTime not showing it | ✅ | ✅ |
 | `permission` | ⚠️ camera and notifications can't be set: simctl privacy has no such service | ❌ change it in the Settings app | ⚠️ contacts-limited, reminders and siri are iOS-only; any android.permission.* works | ⚠️ contacts-limited, reminders and siri are iOS-only; any android.permission.* works |
 | `push` | ✅ | ❌ send a real push through APNs | ❌ Android pushes come through Firebase (FCM), so adb can't inject one: send it from your backend or the Firebase console | ❌ Android pushes come through Firebase (FCM), so adb can't inject one: send it from your backend or the Firebase console |
 | `record` | ✅ | ❌ use burst for frames, or QuickTime Player for video | ⚠️ at most 3 minutes, and FLAG_SECURE screens record black | ⚠️ at most 3 minutes, and FLAG_SECURE screens record black |
