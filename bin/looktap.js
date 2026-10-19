@@ -81,6 +81,8 @@ debug                             [app] defaults to --app / config, else the app
                                   iOS hides Apple-framework chatter unless it's an error (--all keeps it)
   crashes [app] [--since 1h]      crashes, ANRs, low-memory kills since the last \`crashes\` (first: last hour)
   app [app]                       which app is in front, and whether [app] is running (pid)
+  app [app] --paths               where its files are: iOS the bundle, data folder and app groups (on the Mac),
+                                  Android its APKs and data folder (readable with run-as on debuggable builds)
   capabilities [--json]           what this device can't do, or can only in part, and why
 
 app state                         <app> defaults to --app / config (never the app in front)
@@ -153,7 +155,7 @@ function parse(argv) {
     else if (a === '--grep') opts.grep = val();
     else if (a === '--lines') opts.lines = Number(val());
     else if (a === '--junit') opts.junit = val();
-    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window'].includes(a)) opts.flags.add(a.slice(2));
+    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window', '--paths'].includes(a)) opts.flags.add(a.slice(2));
     else if (a === '--') pos.push(...argv.slice(i + 1)), (i = argv.length);
     else pos.push(a);
   }
@@ -535,7 +537,7 @@ async function act(d, cmd, args, opts) {
     }
     case 'logs': return showLogs(d, args[0], opts);
     case 'crashes': return showCrashes(d, args[0], opts);
-    case 'app': return showApp(d, args[0]);
+    case 'app': return opts.flags.has('paths') ? showPaths(d, args[0]) : showApp(d, args[0]);
     case 'install': {
       need(1, 'install <path.app|path.apk> [--grant]');
       const id = await d.install(args[0], { grant: opts.flags.has('grant') });
@@ -676,6 +678,13 @@ async function showApp(d, arg) {
     const pid = await d.pidOf(app);
     console.log(pid ? `${app}: running in the background, pid ${pid}` : `${app}: not running — if it was, check: looktap crashes`);
   }
+}
+
+/** `app [app] --paths`: where the app's bundle and data are, one per line. */
+async function showPaths(d, arg) {
+  const app = arg || d.app;
+  if (!app) throw new UsageError('usage: looktap app <app> --paths (or set --app / the config)');
+  for (const [what, path, note] of await d.paths(app)) console.log(`${what.padEnd(6)}  ${path}${note ? `  (${note})` : ''}`);
 }
 
 /**

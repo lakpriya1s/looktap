@@ -240,12 +240,18 @@ static void scanForHiddenContent(NSMutableArray *out, CGRect screen) {
       if (CGRectContainsPoint(c.rectValue, p)) return YES;
     return NO;
   };
+  // A sparse grid, not a line down the middle: a short web page's content can all sit near the top, or to
+  // one side, and a blank point on it hits nothing at all.
   BOOL hidden = NO;
-  for (double fy = 0.3; fy < 0.8 && !hidden; fy += 0.2) {
-    CGPoint p = CGPointMake(CGRectGetMidX(screen), screen.size.height * fy);
-    if (isCovered(p)) continue;
-    NSMutableDictionary *n = probeAt(p);
-    if (n && !listed(out, n) && CGRectGetWidth(frameOf(n)) * CGRectGetHeight(frameOf(n)) < area * 0.5) hidden = YES;
+  for (double fy = 0.1; fy < 1 && !hidden; fy += 0.2) {
+    for (double fx = 1 / 6.0; fx < 1 && !hidden; fx += 1 / 3.0) {
+      CGPoint p = CGPointMake(screen.size.width * fx, screen.size.height * fy);
+      if (isCovered(p)) continue;
+      // Anything the walk didn't reach was drawn by another process, page-sized or not: a blank point on a
+      // web page can snap to its web area.
+      NSMutableDictionary *n = probeAt(p);
+      if (n && !listed(out, n)) hidden = YES;
+    }
   }
   if (!hidden) return;
   const double step = 40;

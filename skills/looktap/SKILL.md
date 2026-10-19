@@ -156,6 +156,9 @@ looktap crashes com.example.myapp --since 1h
 # which app is in front, and whether the given one is running
 looktap app
 looktap app com.example.myapp
+# where its files are: iOS the bundle, data folder and app groups (paths on the Mac, so read them directly);
+# Android its APKs and data folder (readable with adb shell run-as on debuggable builds)
+looktap app com.example.myapp --paths
 # what this device can't do (or only in part) and why; --json lists every command's status
 looktap capabilities
 ```
