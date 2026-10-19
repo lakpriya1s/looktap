@@ -49,7 +49,7 @@ use the phone ([Record a flow](#record-a-flow-codegen)).
 - [🤖 Kickstart with your AI agent](#-kickstart-with-your-ai-agent): one prompt and your agent takes it from there
 - [Requirements](#requirements)
 - [How it works](#how-it-works)
-- [Examples](#examples): tap by label, forms, waiting, scrolling, debugging, bursts and video, several devices,
+- [Examples](#examples): tap by label, forms, waiting, scrolling, debugging, performance, bursts and video, several devices,
   [tests in CI](#test-flows-in-ci)
 - [For AI agents](#for-ai-agents)
 - [Commands](#commands) · [Platform support](#platform-support) · [Options & config](#options-environment-variables-config-file)
@@ -69,6 +69,7 @@ use the phone ([Record a flow](#record-a-flow-codegen)).
 | 📸 | **Screenshots.** `shot` saves a PNG and prints its path, with `--scale 0.5` for fewer image tokens. On Android emulators it also captures `FLAG_SECURE` screens |
 | 🎞️ | **Burst capture and video.** `burst` saves a frame each time the screen changes, to catch spinners, toasts and transitions. `record start` … `record stop` saves an MP4 of everything in between |
 | 🪵 | **Logs.** `logs` shows the app's log since your last look. `--errors` and `--grep` narrow it, and on iOS Apple-framework chatter is filtered out |
+| ⏱️ | **Performance.** `perf` reads the app's CPU, memory and threads, once or each second with `--for 10s`; on Android `perf --frames` adds frames, jank and frame-time percentiles. `launch --time` times a cold start until the first screen settles |
 | 💥 | **Crashes.** `crashes` reads iOS crash reports (exception, reason, top frames) and Android crashes, ANRs and **low-memory kills**, so "the app vanished" always comes with a reason |
 | 🫆 | **Biometrics.** `bio match\|nomatch` simulates Face ID or a fingerprint |
 | 🌍 | **Simulated conditions.** `location <lat> <lon>`, `appearance dark`, `textsize xxl` (Dynamic Type / font scale), `statusbar clean` (9:41 for screenshots), `rotate landscape` (`ls`, taps and screenshots follow the turned screen), Android `network offline`, and iOS `push` notifications |
@@ -426,6 +427,31 @@ A red box is also on screen, so `ls` reads its message and call stack.
 
 **Swift:** `print()` writes to stdout, not to the log. Use `os.Logger` or `NSLog` for messages `logs` should see.
 
+### Performance: CPU, memory, frames, launch time
+
+```bash
+looktap launch com.example --time       # a cold start, timed
+# launched com.example: in front after 0.44 s, first screen settled by 0.85 s · Android TotalTime 300 ms
+looktap perf                            # the app in front: one reading
+# com.example  pid 4127
+# cpu      14%  (over 0.5 s; 100% is one core)
+# memory   pss 78.4 MB · rss 171.2 MB · java heap 12.1 MB · native heap 18.6 MB
+# threads  21
+looktap perf --for 20s                  # a reading each second while you (or a flow) use the app, then avg/max
+looktap perf --frames                   # Android: frames since the last --frames, janky %, p50–p99 frame time
+looktap swipe 200 700 200 200; looktap perf --frames   # how smooth was that scroll?
+```
+
+- **Memory:** on the iOS simulator, the footprint Xcode's memory gauge shows, and its peak. On Android, PSS (the app's
+  share of RAM) plus RSS and the Java and native heaps.
+- **CPU** is a share of one core over the reading, like `top`: a busy app on two cores reads 200%.
+- **Simulator numbers come from the Mac.** An iOS simulator app runs on the Mac's CPU and memory, so compare builds
+  and screens against each other, not against a phone. An emulator is closer, but still not a phone: for release
+  numbers, use a real Android device.
+- **`launch --time`** starts the clock at the start command (stopping the old copy comes first, outside it). Right
+  after a launch an iOS screen read can take a second, so it says how much sooner the screen may have settled.
+- **Not available:** frames on the iOS simulator, and `perf` on a real iPhone. Both need Instruments.
+
 ### Catch a spinner, toast, or transition (`burst`)
 
 Start the burst **in the background**, then trigger the action:
@@ -701,6 +727,8 @@ took 11–19 on Android.
   ```
 
 - **`logs` / `crashes`** after a step that misbehaved. Each `logs` shows only what's new since the last one.
+- **`perf` / `launch --time`** when the question is speed or memory: numbers instead of impressions. `perf --for`
+  while the screen does the thing being measured; on Android, `perf --frames` right after it.
 - **`ls --json`** for structured output: `{screen, elements: [{ref, label, type, x, y, w, h, value}]}`.
 - **`shot --scale 0.5`** costs a quarter of the image tokens when the agent needs to *see* the screen (layout,
   colours, images). Usually `ls` is enough and the PNG is never opened.
@@ -776,7 +804,7 @@ looktap mcp --config      # prints a ready-to-paste client config with absolute 
     `home` and `wait`;
   - `screenshot`, which returns the image itself;
   - `logs` and `crashes`;
-  - `looktap`, for any other command line, or several separated by `;`.
+  - `looktap`, for any other command line (`apps`, `perf`, `launch --time`, `boot` …), or several separated by `;`.
 - **Actions return the settled screen** unless `ls: false`. That saves the agent a separate `ls`, but each action
   then waits for the screen to stop moving, 0.7–1.9 s in the [benchmark](BENCHMARK.md). Pass `ls: false` when you
   don't need to see the result.
@@ -879,7 +907,7 @@ front of you (`--json` for every command).
 | `logs` | ✅ | ❌ use Console.app with the device selected | ✅ | ✅ |
 | `network` | ❌ the simulator uses the Mac's own network, so it can't go offline or slow by itself. Network Link Conditioner (Xcode → Open Developer Tool → More Developer Tools → Additional Tools) throttles the whole Mac | ❌ turn on Airplane Mode in Control Center | ✅ | ⚠️ airplane mode: over wireless adb, going offline also drops looktap's connection |
 | `perf` | ✅ | ❌ a device's CPU and memory are read through Instruments: Xcode → Debug Navigator while running, or Instruments' Activity Monitor | ✅ | ✅ |
-| `perf --frames` | ❌ the simulator has no frame counter outside Instruments: Xcode → Debug → View Debugging, or Instruments' Animation Hitches | ❌ a device's CPU and memory are read through Instruments: Xcode → Debug Navigator while running, or Instruments' Activity Monitor | ✅ | ✅ |
+| `perf --frames` | ❌ the simulator has no frame counter outside Instruments: Xcode → Debug → View Debugging, or Instruments' Animation Hitches | ❌ a device's frames are read through Instruments' Animation Hitches | ✅ | ✅ |
 | `permission` | ⚠️ camera and notifications can't be set: simctl privacy has no such service | ❌ change it in the Settings app | ⚠️ contacts-limited, reminders and siri are iOS-only; any android.permission.* works | ⚠️ contacts-limited, reminders and siri are iOS-only; any android.permission.* works |
 | `push` | ✅ | ❌ send a real push through APNs | ❌ Android pushes come through Firebase (FCM), so adb can't inject one: send it from your backend or the Firebase console | ❌ Android pushes come through Firebase (FCM), so adb can't inject one: send it from your backend or the Firebase console |
 | `record` | ✅ | ❌ use burst for frames, or QuickTime Player for video | ⚠️ at most 3 minutes, and FLAG_SECURE screens record black | ⚠️ at most 3 minutes, and FLAG_SECURE screens record black |
