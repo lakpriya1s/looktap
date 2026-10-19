@@ -14,6 +14,11 @@
   front and until its first screen settled. Android adds the system's own `TotalTime`. When screen reads are slow
   (right after a launch they can take a second), it says how much sooner the screen may have settled.
 
+### Fixed
+- **Android: a phone that was unplugged (or lost its Wi-Fi connection) read as "app is not installed"** or "not
+  running", because adb's "device not found" came back as an empty answer. Every Android command now says the device
+  isn't connected any more.
+
 ### Changed
 - iOS simulator `launch` stops the old copy first, then starts the app (it was one `simctl` call).
 

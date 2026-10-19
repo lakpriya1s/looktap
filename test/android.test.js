@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { androidApps, escapeInput, keycode, parseDensity, parseNodes, parseRotation } from '../lib/android.js';
+import { androidApps, escapeInput, gone, keycode, parseDensity, parseNodes, parseRotation } from '../lib/android.js';
 
 test('parseDensity prefers the override and converts to px per dp', () => {
   assert.equal(parseDensity('Physical density: 420\n'), 2.625);
@@ -45,6 +45,12 @@ test('parseRotation reads the display rotation from dumpsys, in quarter turns', 
   assert.equal(parseRotation('      mCurrentRotation=ROTATION_90\n'), 1);
   assert.equal(parseRotation('    mRotation=3 mDeferredRotationPauseCount=0\n'), 3);
   assert.equal(parseRotation('nothing here'), 0);
+});
+
+test('gone: adb saying the device is missing is an error, other stderr is not', () => {
+  assert.throws(() => gone('ABC123DEF456', "adb: device 'ABC123DEF456' not found\n"), /ABC123DEF456 isn't connected any more/);
+  assert.throws(() => gone('emulator-5554', 'error: device offline'), /isn't connected/);
+  assert.doesNotThrow(() => gone('ABC123DEF456', 'Warning: Activity not started, intent has been delivered'));
 });
 
 test('androidApps reads pm list packages, with or without version codes', () => {
