@@ -16,7 +16,7 @@ import { boot, shutdown } from '../lib/boot.js';
 import { formatDevice, inventory } from '../lib/devices.js';
 import { ORIENTATIONS, coordinates, pushPayload, rotation, textSize } from '../lib/conditions.js';
 import { appGone, center, coveringAt, expectOn, forgetFront, formatRow, isRef, lastFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, signature, sliding, visibleRows, waitFor } from '../lib/screen.js';
-import { duration, formatFrames, formatReading, formatSamples, memoryJson } from '../lib/perf.js';
+import { duration, formatFrames, formatReading, formatSamples, readingJson } from '../lib/perf.js';
 import { flowFiles, flowName, junit } from '../lib/testing.js';
 import { ADB, HOME, LOCKED, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
 
@@ -736,15 +736,25 @@ async function showPerf(d, arg, opts) {
   }
   if (opts.for == null) {
     const r = await d.perf(app);
-    return console.log(json ? JSON.stringify({ app, ...r, memory: memoryJson(r.memory) }) : formatReading(app, r).join('\n'));
+    return console.log(json ? JSON.stringify({ app, ...readingJson(r) }) : formatReading(app, r).join('\n'));
   }
   const span = duration(opts.for);
   if (!(span > 0)) throw new UsageError('--for takes a duration: 10s, 1m, 500ms');
+  // The app is looked up once; each later reading reuses its pid (a restarted app fails with "stopped").
   const t0 = Date.now(), samples = [];
-  do samples.push({ at: Date.now() - t0, ...(await d.perf(app, 1000)) });
-  while (Date.now() - t0 < span);
-  if (json) return console.log(JSON.stringify({ app, samples: samples.map((s) => ({ ...s, memory: memoryJson(s.memory) })) }));
-  console.log(formatSamples(app, samples).join('\n'));
+  let stopped = null;
+  do {
+    try {
+      samples.push({ at: Date.now() - t0, ...(await d.perf(app, 1000, samples[0]?.pid)) });
+    } catch (e) {
+      if (!samples.length) throw e;
+      stopped = e; // keep what was measured before the app stopped
+      break;
+    }
+  } while (Date.now() - t0 < span);
+  if (json) console.log(JSON.stringify({ app, samples: samples.map(readingJson), ...(stopped && { stopped: stopped.message }) }));
+  else console.log(formatSamples(app, samples).join('\n'));
+  if (stopped) throw stopped;
 }
 
 /** `app [app] --paths`: where the app's bundle and data are, one per line. */

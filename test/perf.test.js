@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { duration, formatFrames, formatReading, formatSamples, memoryJson, parseFootprint, parseGfxinfo, parseMeminfo, procTicks, psTime } from '../lib/perf.js';
+import { duration, formatFrames, formatReading, formatSamples, memoryJson, parseFootprint, readingJson, uptimes, parseGfxinfo, parseMeminfo, procTicks, psTime } from '../lib/perf.js';
 
 test('psTime reads ps CPU time, with or without hours', () => {
   assert.equal(psTime('  0:08.54\n'), 8.54);
@@ -40,13 +40,23 @@ test('parseGfxinfo reads frames, jank, percentiles and causes', () => {
   assert.deepEqual(parseGfxinfo(text), { frames: 49, janky: 9, p50: 17, p90: 53, p95: 80, p99: 150, slowUiThread: 3, missedDeadline: 9, highInputLatency: 2 });
 });
 
+test('uptimes reads /proc/uptime lines among other output', () => {
+  assert.deepEqual(uptimes('8081.52 30120.40\n4816 (x) S 1\n8082.03 30121.11\nThreads:\t27\n'), [8081.52, 8082.03]);
+});
+
 test('frames: no percentiles when nothing was drawn', () => {
+  assert.equal(parseGfxinfo('Total frames rendered: 0\n50th percentile: 4950ms').p50, null);
   assert.match(formatFrames('a.b', parseGfxinfo('Total frames rendered: 0\n50th percentile: 4950ms')).join('\n'), /no frames rendered/);
   assert.match(formatFrames('a.b', { frames: 50, janky: 1, p50: 16, p90: 17, p95: 17, p99: 30, slowUiThread: 0, missedDeadline: 1, highInputLatency: 0 })[0], /50 frames .* 1 janky \(2\.0%\)/);
 });
 
 test('memory as JSON uses camelCase keys', () => {
   assert.deepEqual(memoryJson([['pss', 1], ['java heap', 2], ['native heap', 3]]), { pss: 1, javaHeap: 2, nativeHeap: 3 });
+});
+
+test('a reading as JSON rounds CPU to one decimal', () => {
+  assert.deepEqual(readingJson({ pid: 1, ms: 500, cpu: 124.04580152671744, memory: [['footprint', 5]], threads: 2 }), { pid: 1, ms: 500, cpu: 124, memory: { footprint: 5 }, threads: 2 });
+  assert.equal(readingJson({ cpu: 7.25, memory: [] }).cpu, 7.3);
 });
 
 test('duration: 10s, 1m, 500ms, bare seconds', () => {
