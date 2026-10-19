@@ -648,7 +648,7 @@ export const SCENES = [
                 dim('ios      4B7D0E19-…-A3C2  iPad Pro 13-inch (M5) · simulator · iOS 26.0'),
               ]
             : [
-                'android  R58N30ABCDE  Samsung SM-S931B · device · Android 16 · USB',
+                'android  R58N30ABCDE  Samsung SM-S931B · device · Android 16 · USB + Wi-Fi',
                 'android  emulator-5554  Pixel_9a · emulator · Android 16 · window',
                 warn('android  R9TX21KLMNP  SM A065F · device · USB  ✗ not ready: accept "Allow USB debugging?" on the phone (tick "Always allow")'),
                 '',

@@ -280,6 +280,8 @@ looktap names the apps it found and you delete one.
 
 **What works on a device:** everything except `location`, `network`, `push`, `statusbar`, `textsize`, `bio`,
 `record`, `permission`, `reset`, `logs` and `crashes`, which say so; `zoom` works around the screen's centre only.
+`perf` reads CPU, memory and threads through Instruments (`xcrun xctrace`, part of Xcode), 10–25 s a reading, and
+`perf --frames` reads the screen over the USB cable, so it needs the phone plugged in rather than on Wi-Fi.
 [Platform support](#platform-support) has the reasons, and `looktap capabilities` prints them. A command takes about 1–1.5 s, slower than on a simulator, because XCUITest takes longer to read the screen.
 
 The device must be unlocked while the runner starts. It keeps running until `looktap teardown`, or until the
@@ -1002,7 +1004,10 @@ Precedence: command-line option, then environment variable, then config file, th
 | `"<label>" is ambiguous — matches N labels` | Use more of the label, a `@ref`, or `--exact` |
 | `keyboard is still up` (iOS) | Search keyboards have no Done key. Tap the screen's Cancel/close control |
 | Android `ls` fails right after boot | Wait until `adb shell getprop sys.boot_completed` prints `1` |
-| `device <serial> is not connected` | `adb devices` lists what is. A phone unplugged from USB may still be there over Wi-Fi, under another serial (`adb-…._adb-tls-connect._tcp`) |
+| `device <serial> is not connected` / `<serial> isn't connected any more` | `looktap devices` lists what is. A phone unplugged from USB may still be there over Wi-Fi, under its Wi-Fi id (`adb-…._adb-tls-connect._tcp`); a phone on both is one row, `USB + Wi-Fi` |
+| `perf --frames on a real iPhone reads its screen over the USB cable` | Plug the iPhone in with a cable and unlock it: the screen feed it reads doesn't exist over Wi-Fi |
+| `the iPhone's screen feed didn't start` | Unlock the phone, and close QuickTime (or anything else showing the phone's screen): one app at a time can read it |
+| `Instruments is busy on the device` | An earlier Instruments recording on the phone didn't end (looktap's, Xcode's or another tool's). It clears in a few minutes, or reconnect the cable; restarting the phone always clears it |
 | Android `ls` fails after Appium was used | Appium still holds UiAutomation: `adb shell am force-stop io.appium.uiautomator2.server` |
 | Appium / `uiautomator` fail after looktap was used | looktap's helper holds UiAutomation: `looktap -p android teardown` |
 | `Android helper did not start — falling back to uiautomator dump` | Something else holds UiAutomation (see above). looktap keeps working, just slower |
