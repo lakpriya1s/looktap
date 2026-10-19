@@ -861,6 +861,72 @@ static IOSurfaceRef mainSurface(void) {
   return (__bridge IOSurfaceRef)surface; // toll-free bridged; kept alive by the descriptor
 }
 
+/**
+ Screen updates, for `perf --frames`. The framebuffer's seed moves each time the simulator draws the screen, so a
+ timer on its own queue notes when it moves, every 2 ms, while other ops run. The first call starts it; each later
+ call returns the update times since the previous one, and starts over. Nobody asking for 10 minutes stops it.
+ */
+static dispatch_queue_t frameQueue;
+static dispatch_source_t frameTimer;
+static IOSurfaceRef frameSurface;
+static uint32_t frameSeed;
+static NSMutableData *frameTimes; // doubles: ms since frameStart
+static double frameStart, frameAsked;
+static uint64_t seedSteps;
+
+static double uptimeMs(void) {
+  return clock_gettime_nsec_np(CLOCK_UPTIME_RAW) / 1e6;
+}
+
+static NSDictionary *frames(void) {
+  if (!frameQueue) frameQueue = dispatch_queue_create("looktap.frames", DISPATCH_QUEUE_SERIAL);
+  IOSurfaceRef s = mainSurface();
+  if (!s) return @{@"ok" : @NO, @"error" : @"no framebuffer for the main display"};
+  __block NSDictionary *out;
+  dispatch_sync(frameQueue, ^{
+    double now = uptimeMs();
+    if (frameSurface != s) { // first call, or the display's surface was replaced
+      if (frameSurface) CFRelease(frameSurface);
+      frameSurface = (IOSurfaceRef)CFRetain(s);
+      frameSeed = IOSurfaceGetSeed(frameSurface);
+    }
+    if (!frameTimer) {
+      frameTimes = [NSMutableData data];
+      frameStart = frameAsked = now;
+      seedSteps = 0;
+      frameSeed = IOSurfaceGetSeed(frameSurface);
+      frameTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, DISPATCH_TIMER_STRICT, frameQueue);
+      dispatch_source_set_timer(frameTimer, DISPATCH_TIME_NOW, 2 * NSEC_PER_MSEC, 200 * NSEC_PER_USEC);
+      dispatch_source_set_event_handler(frameTimer, ^{
+        double t = uptimeMs();
+        if (t - frameAsked > 600000) {
+          dispatch_source_cancel(frameTimer);
+          frameTimer = nil;
+          return;
+        }
+        uint32_t seed = IOSurfaceGetSeed(frameSurface);
+        if (seed == frameSeed) return;
+        seedSteps += (uint32_t)(seed - frameSeed);
+        frameSeed = seed;
+        double at = t - frameStart;
+        if (frameTimes.length < 200000 * sizeof(double)) [frameTimes appendBytes:&at length:sizeof at];
+      });
+      dispatch_resume(frameTimer);
+      out = @{@"ok" : @YES, @"started" : @YES};
+      return;
+    }
+    NSUInteger n = frameTimes.length / sizeof(double);
+    const double *t = frameTimes.bytes;
+    NSMutableArray *times = [NSMutableArray arrayWithCapacity:n];
+    for (NSUInteger i = 0; i < n; i++) [times addObject:@(round(t[i] * 10) / 10)];
+    out = @{@"ok" : @YES, @"ms" : @(round(now - frameStart)), @"times" : times, @"seedSteps" : @(seedSteps)};
+    frameTimes = [NSMutableData data];
+    frameStart = frameAsked = now;
+    seedSteps = 0;
+  });
+  return out;
+}
+
 /** The surface as PNG, upright as the user sees it (see "orientation"), shrunk by `scale` when 0 < scale < 1. */
 static NSData *png(IOSurfaceRef s, double scale) {
   IOSurfaceLock(s, kIOSurfaceLockReadOnly, NULL);
@@ -1024,6 +1090,7 @@ static void handle(int fd, NSDictionary *r) {
     return reply(fd, @{@"ok" : @YES}, png(s, num(r, @"scale", 1)));
   }
   if ([op isEqualToString:@"burst"]) return burst(fd, num(r, @"seconds", 5));
+  if ([op isEqualToString:@"frames"]) return reply(fd, frames(), nil);
   if ([op isEqualToString:@"stop"]) {
     reply(fd, @{@"ok" : @YES}, nil);
     exit(0);

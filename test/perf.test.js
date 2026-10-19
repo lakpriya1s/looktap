@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { duration, formatFrames, formatReading, formatSamples, memoryJson, parseFootprint, readingJson, uptimes, xctraceRows, parseGfxinfo, parseMeminfo, procTicks, psTime } from '../lib/perf.js';
+import { duration, formatFrames, formatReading, formatSamples, memoryJson, parseFootprint, readingJson, screenFrames, uptimes, xctraceRows, parseGfxinfo, parseMeminfo, procTicks, psTime } from '../lib/perf.js';
 
 test('psTime reads ps CPU time, with or without hours', () => {
   assert.equal(psTime('  0:08.54\n'), 8.54);
@@ -38,6 +38,26 @@ test('parseGfxinfo reads frames, jank, percentiles and causes', () => {
     'Number High input latency: 2', 'Number Slow UI thread: 3', 'Number Frame deadline missed: 9', '50th gpu percentile: 6ms',
   ].join('\n');
   assert.deepEqual(parseGfxinfo(text), { frames: 49, janky: 9, p50: 17, p90: 53, p95: 80, p99: 150, slowUiThread: 3, missedDeadline: 9, highInputLatency: 2 });
+});
+
+test('screenFrames: paired writes are one frame, pauses split moving stretches, slow intervals are janky', () => {
+  // 10 frames 16.7 ms apart, each written twice 5 ms apart; a 1 s pause; then 3 frames with one 50 ms stall;
+  // a 150 ms pause; one more frame.
+  const times = [];
+  for (let i = 0; i < 10; i++) times.push(i * 16.7, i * 16.7 + 5);
+  times.push(1200, 1216.7, 1266.7, 1416.7);
+  const f = screenFrames(times);
+  assert.equal(f.frames, 11); // 9 intervals in the first stretch, 2 in the second: the pause isn't one
+  assert.equal(f.janky, 1);
+  assert.equal(f.longest, 50);
+  assert.equal(f.p50, 17);
+  assert.equal(f.fps, Math.round((11 / (13 * (1000 / 60))) * 1000)); // 9 slots, then 1 + 3
+  // A frame's second write (measured: mostly 4–8 ms late) and timer jitter stay in the frame's slot.
+  assert.equal(screenFrames([0, 5, 16.9, 22.8, 33.1, 38.9, 50.2, 55]).frames, 3);
+  assert.equal(f.pauses, 2);
+  assert.deepEqual(screenFrames([]), { source: 'screen', frames: 0, janky: 0, p50: null, p90: null, p95: null, p99: null, longest: null, movingMs: 0, fps: null, pauses: 0 });
+  assert.match(formatFrames('a.b', { started: true })[0], /counting frames on screen from now/);
+  assert.match(formatFrames('a.b', f)[0], /^a\.b: 11 frames on screen .* 1 janky \(9\.1%\); \d+ fps while moving \(0\.2 s\)$/);
 });
 
 test('uptimes reads /proc/uptime lines among other output', () => {

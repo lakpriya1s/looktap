@@ -90,7 +90,8 @@ debug                             [app] defaults to --app / config, else the app
   capabilities [--json]           what this device can't do, or can only in part, and why
   perf [app] [--for 10s] [--json] the app's CPU (100% = one core), memory and threads; --for: a reading
                                   each second, then avg/max (iOS: the footprint Xcode shows; Android: PSS)
-  perf [app] --frames             Android: frames since the last perf --frames, janky %, p50–p99 frame time
+  perf [app] --frames             frames since the last perf --frames, janky %, p50–p99 frame time (iOS
+                                  simulator: from the screen itself; the first call starts counting)
 
 app state                         <app> defaults to --app / config (never the app in front)
   install <path> [--grant]        iOS: a simulator .app · Android: an .apk (keeps data; --grant: all
@@ -726,7 +727,7 @@ async function timedLaunch(d, app) {
   );
 }
 
-/** `perf [app]`: one reading (or --for: one a second), or with --frames Android's frame stats since the last call. */
+/** `perf [app]`: one reading (or --for: one a second), or with --frames the frame stats since the last call. */
 async function showPerf(d, arg, opts) {
   const app = await whichApp(d, arg);
   const json = opts.flags.has('json');

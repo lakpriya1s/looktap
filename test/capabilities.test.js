@@ -31,7 +31,7 @@ test('a subcommand falls back to its command; anything unlisted is supported', (
   assert.equal(capabilities('android-device')['location clear'].status, 'unsupported');
   // Every command, plus its one subcommand limit.
   assert.deepEqual(Object.keys(capabilities('ios-simulator')).filter((c) => !COMMANDS.includes(c)), ['perf --frames']);
-  assert.equal(capabilities('ios-simulator')['perf --frames'].status, 'unsupported');
+  assert.equal(capabilities('ios-simulator')['perf --frames'].status, 'conditional');
   assert.equal(capabilities('ios-simulator').perf.status, 'supported');
 });
 

@@ -8,8 +8,10 @@
   heap. On a real iPhone it reads CPU, footprint and threads through Instruments' Activity Monitor (`xcrun xctrace`,
   part of Xcode): 10–25 s a reading. `--for 10s` takes a reading each second (a real iPhone: about every 8 s), then
   prints the average and maximum. `--json` for scripts.
-- **`perf --frames`** (Android): frames drawn since the last call, the janky share, p50–p99 frame time, and why
-  frames were late (slow UI thread, missed deadline, input latency).
+- **`perf --frames`**: frames since the last call, the janky share and p50–p99 frame time. Android reads the app's
+  own render times and why frames were late (slow UI thread, missed deadline, input latency). The iOS simulator
+  counts frames as its screen shows them: the helper watches the framebuffer, snapped to the 60 Hz display, and adds
+  fps while moving and the longest stall (Instruments' Animation Hitches doesn't support the simulator).
 - **`launch --time`** times a cold start, from the start command (after the old copy is stopped) until the app is in
   front and until its first screen settled. Android adds the system's own `TotalTime`. When screen reads are slow
   (right after a launch they can take a second), it says how much sooner the screen may have settled.

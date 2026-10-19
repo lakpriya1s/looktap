@@ -154,7 +154,8 @@ looktap logs --all
 looktap crashes
 looktap crashes com.example.myapp --since 1h
 # CPU (100% = one core), memory and threads of the app (iOS: the footprint Xcode shows; Android: PSS, heaps);
-# --for samples once a second, then prints avg/max. Android --frames: frames and jank since the last --frames.
+# --for samples once a second, then prints avg/max. --frames: frames and jank since the last --frames (iOS
+# simulator: counted from the screen; the first call only starts counting, so call it before the action too).
 # A real iPhone goes through Instruments: 10-25 s a reading, --for about every 8 s
 looktap perf
 looktap perf com.example.myapp --for 10s
@@ -388,7 +389,7 @@ Then look at the few frames that matter, not all of them.
   `shot` to see it. Never enter a passcode unless the user gave it to you for this device.
 - **Measure performance with `perf` and `launch --time`, not by eye.** Simulator numbers are the Mac's CPU and
   memory: compare builds or screens against each other, and say so when you report them. Run `perf --for` while
-  the screen does the thing being measured (a scroll, a load), and `perf --frames` (Android) right after it.
+  the screen does the thing being measured (a scroll, a load), and `perf --frames` just before and right after it.
 - **Start with `looktap devices`** to see which devices are real phones and which are simulators or emulators.
   A phone marked "not ready" needs the user: tell them exactly what it says (accept the USB debugging prompt, tap
   Trust, turn on Developer Mode). One marked "still starting" needs no one: `looktap boot <name>` waits for it.
