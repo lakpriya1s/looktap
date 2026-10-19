@@ -1,6 +1,6 @@
 {
   "name": "@looktap/cli",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Let AI agents drive iPhone and Android devices from the shell: read the screen, tap, type, swipe, screenshot, read logs and crashes, and run flows as tests in CI. No server to start and zero dependencies.",
   "keywords": [
     "ios-simulator",
@@ -21,7 +21,7 @@
   ],
   "author": "Lakpriya Senevirathna",
   "license": "AGPL-3.0-only",
-  "homepage": "https://lakpriya1s.github.io/looktap/",
+  "homepage": "https://lakpriya.com/looktap/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lakpriya1s/looktap.git"

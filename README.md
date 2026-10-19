@@ -12,7 +12,7 @@ Read the screen, tap, type, swipe, screenshot, and read logs and crashes. No ser
 [![Android](https://img.shields.io/badge/Android-emulator%20%7C%20device-3DDC84.svg?logo=android&logoColor=white)](#how-it-works)
 [![Dependencies: 0](https://img.shields.io/badge/dependencies-0-16a34a.svg)](https://github.com/lakpriya1s/looktap/blob/main/package.json)
 
-[Website](https://lakpriya1s.github.io/looktap/) · [Quick start](#quick-start) · [Commands](#commands) · [For AI agents](#for-ai-agents) · [Benchmark](BENCHMARK.md) · [Troubleshooting](#troubleshooting)
+[Website](https://lakpriya.com/looktap/) · [Quick start](#quick-start) · [Commands](#commands) · [For AI agents](#for-ai-agents) · [Benchmark](BENCHMARK.md) · [Troubleshooting](#troubleshooting)
 
 </div>
 
