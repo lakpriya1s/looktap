@@ -15,7 +15,8 @@ import { Recorder, TouchReader, classify, mapper, quote } from '../lib/codegen.j
 import { boot, shutdown } from '../lib/boot.js';
 import { formatDevice, inventory } from '../lib/devices.js';
 import { ORIENTATIONS, coordinates, pushPayload, rotation, textSize } from '../lib/conditions.js';
-import { appGone, center, coveringAt, expectOn, forgetFront, formatRow, isRef, lastFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, visibleRows, waitFor } from '../lib/screen.js';
+import { appGone, center, coveringAt, expectOn, forgetFront, formatRow, isRef, lastFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, signature, sliding, visibleRows, waitFor } from '../lib/screen.js';
+import { duration, formatFrames, formatReading, formatSamples, readingJson } from '../lib/perf.js';
 import { flowFiles, flowName, junit } from '../lib/testing.js';
 import { ADB, HOME, LOCKED, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
 
@@ -68,7 +69,8 @@ act                               add --ls to any of these to print the settled 
   back                            Android system back · iOS navigation-bar back button
   home                            the Home button: to the home screen, the app left running
   open <url>                      deep link (e.g. myapp://home)
-  launch [app]                    (re)start the app
+  launch [app] [--time]           (re)start the app. --time: how long until it's in front and its first
+                                  screen has settled (Android: also the system's own TotalTime)
   stop [app]                      terminate it, and wait until its process is gone
   bio match|nomatch               Face ID / fingerprint
   rotate [portrait|landscape|left|right|upsidedown]
@@ -86,6 +88,10 @@ debug                             [app] defaults to --app / config, else the app
   apps [filter] [--all] [--json]  installed apps: id, name, version (--all: system apps too). A filter
                                   matches part of the id or name; nothing matching → exit 1
   capabilities [--json]           what this device can't do, or can only in part, and why
+  perf [app] [--for 10s] [--json] the app's CPU (100% = one core), memory and threads; --for: a reading
+                                  each second, then avg/max (iOS: the footprint Xcode shows; Android: PSS)
+  perf [app] --frames             frames since the last perf --frames, janky %, p50–p99 frame time (iOS: from
+                                  the screen itself, a real iPhone over its USB cable; the first call starts counting)
 
 app state                         <app> defaults to --app / config (never the app in front)
   install <path> [--grant]        iOS: a simulator .app · Android: an .apk (keeps data; --grant: all
@@ -157,7 +163,8 @@ function parse(argv) {
     else if (a === '--grep') opts.grep = val();
     else if (a === '--lines') opts.lines = Number(val());
     else if (a === '--junit') opts.junit = val();
-    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window', '--paths'].includes(a)) opts.flags.add(a.slice(2));
+    else if (a === '--for') opts.for = val();
+    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window', '--paths', '--frames', '--time'].includes(a)) opts.flags.add(a.slice(2));
     else if (a === '--') pos.push(...argv.slice(i + 1)), (i = argv.length);
     else pos.push(a);
   }
@@ -191,7 +198,8 @@ function pickDriver(opts, config) {
     else if (!sims.length) throw new UsageError('no booted simulator or adb device — looktap devices --all lists what looktap boot can start');
     else throw new UsageError('both iOS and Android devices are up — pass -p ios|android');
   }
-  const pool = platform === 'ios' ? (sims.length || known || device ? sims : lookForPhones()) : droids;
+  // A phone adb lists over both USB and Wi-Fi is one phone: picked by its USB id (-d can still name the other).
+  const pool = platform === 'ios' ? (sims.length || known || device ? sims : lookForPhones()) : droids.filter((d) => !d.samePhoneAs);
   if (!device && !known) {
     if (pool.length !== 1)
       throw new UsageError(
@@ -345,13 +353,14 @@ const SCREEN = new Set([...ACTIONS, 'ls', 'wait', 'expect', 'scrollto', 'codegen
 const WATCHED = new Set([...ACTIONS].filter((c) => c !== 'launch'));
 
 /** Until `app` is the app in front (or `ms` pass). */
-async function waitForApp(d, app, ms) {
+async function waitForApp(d, app, ms, gap = 150) {
   const until = Date.now() + ms;
   while (Date.now() < until) {
     const f = await d.frontApp().catch(() => null);
-    if (f && d.appId(f) === app) return;
-    await sleep(150);
+    if (f && d.appId(f) === app) return true;
+    await sleep(gap);
   }
+  return false;
 }
 
 /** While `test` runs a flow: an app that dies fails the flow instead of only warning. `gone` names it. */
@@ -513,7 +522,7 @@ async function act(d, cmd, args, opts) {
     case 'launch': {
       const app = args[0] || d.app;
       if (!app) throw new UsageError('usage: looktap launch <app-id> (or set --app / looktap.config.json)');
-      return d.launch(app);
+      return opts.flags.has('time') ? timedLaunch(d, app) : d.launch(app);
     }
     case 'stop': {
       const app = explicitApp(d, args[0], 'stop <app>');
@@ -595,6 +604,7 @@ async function act(d, cmd, args, opts) {
     case 'test': return runTests(d, args, opts);
     case 'codegen': return codegen(d, args, opts);
     case 'capabilities': return showCapabilities(d, opts);
+    case 'perf': return showPerf(d, args[0], opts);
     default: throw new UsageError(`unknown command: ${cmd} (looktap --help)`);
   }
 }
@@ -681,6 +691,72 @@ async function showApp(d, arg) {
     const pid = await d.pidOf(app);
     console.log(pid ? `${app}: running in the background, pid ${pid}` : `${app}: not running — if it was, check: looktap crashes`);
   }
+}
+
+/**
+ `launch --time`: a cold start (the old copy is stopped first, outside the timing), timed from the start command
+ until the app is in front, and until its first screen settled: the first of two equal reads in a row (the screen
+ already looked like that then). Android adds the system's own measure (am start -W's TotalTime).
+ */
+async function timedLaunch(d, app) {
+  const t = Date.now();
+  const r = await d.launch(app);
+  const t0 = r?.startedAt || t;
+  if (!(await waitForApp(d, app, 30000, 50))) throw new Error(`${app} didn't come to the front within 30 s`);
+  const front = Date.now() - t0;
+  // A read right after a launch can take a second (the helper re-reads while the launch animation runs), so the
+  // screen settled at most that long before the first matching read returned: say so when it's that coarse.
+  let prev = null, settled = null;
+  for (const until = Date.now() + 15000; Date.now() < until; ) {
+    const start = Date.now() - t0;
+    const snap = await d.snapshot();
+    const read = { snap, start, end: Date.now() - t0 };
+    if (prev && signature(snap) === signature(prev.snap) && snap.elements.length && !sliding(snap)) {
+      settled = prev;
+      break;
+    }
+    prev = read;
+    await sleep(100);
+  }
+  const s = (ms) => `${(ms / 1000).toFixed(2)} s`;
+  const spread = settled && settled.end - settled.start;
+  console.log(
+    `launched ${app}: in front after ${s(front)}, ` +
+      (settled == null ? 'its screen was still changing after 15 s' : `first screen settled by ${s(settled.end)}`) +
+      (spread > 300 ? ` (reads took ${s(spread)} here, so it may have settled up to that much sooner)` : '') +
+      (r?.totalTime ? ` · Android TotalTime ${r.totalTime} ms` : ''),
+  );
+}
+
+/** `perf [app]`: one reading (or --for: one a second), or with --frames the frame stats since the last call. */
+async function showPerf(d, arg, opts) {
+  const app = await whichApp(d, arg);
+  const json = opts.flags.has('json');
+  if (opts.flags.has('frames')) {
+    const f = await d.frames(app);
+    return console.log(json ? JSON.stringify({ app, ...f }) : formatFrames(app, f).join('\n'));
+  }
+  if (opts.for == null) {
+    const r = await d.perf(app);
+    return console.log(json ? JSON.stringify({ app, ...readingJson(r) }) : formatReading(app, r).join('\n'));
+  }
+  const span = duration(opts.for);
+  if (!(span > 0)) throw new UsageError('--for takes a duration: 10s, 1m, 500ms');
+  // The app is looked up once; each later reading reuses its pid (a restarted app fails with "stopped").
+  const t0 = Date.now(), samples = [];
+  let stopped = null;
+  do {
+    try {
+      samples.push({ at: Date.now() - t0, ...(await d.perf(app, 1000, samples[0]?.pid)) });
+    } catch (e) {
+      if (!samples.length) throw e;
+      stopped = e; // keep what was measured before the app stopped
+      break;
+    }
+  } while (Date.now() - t0 < span);
+  if (json) console.log(JSON.stringify({ app, samples: samples.map(readingJson), ...(stopped && { stopped: stopped.message }) }));
+  else console.log(formatSamples(app, samples).join('\n'));
+  if (stopped) throw stopped;
 }
 
 /** `app [app] --paths`: where the app's bundle and data are, one per line. */

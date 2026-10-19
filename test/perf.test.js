@@ -1,0 +1,137 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+
+import { duration, formatFrames, formatReading, formatSamples, memoryJson, parseFootprint, feedFrames, feedSamples, readingJson, screenFrames, uptimes, xctraceRows, parseGfxinfo, parseMeminfo, procTicks, psTime } from '../lib/perf.js';
+
+test('psTime reads ps CPU time, with or without hours', () => {
+  assert.equal(psTime('  0:08.54\n'), 8.54);
+  assert.equal(psTime('12:01.50'), 721.5);
+  assert.equal(psTime('1:02:03.25'), 3723.25);
+  assert.equal(psTime(''), null);
+});
+
+test('parseFootprint takes the footprint and its peak in bytes', () => {
+  const text = 'Preferences [45010]: 64-bit    Footprint: 98 MB (16384 bytes per page)\n    phys_footprint: 102960032 B\n    phys_footprint_peak: 105008032 B\n';
+  assert.deepEqual(parseFootprint(text), { footprint: 102960032, peak: 105008032 });
+  assert.deepEqual(parseFootprint(''), { footprint: null, peak: null });
+});
+
+test('procTicks adds utime and stime, even when the process name has spaces', () => {
+  assert.equal(procTicks('4816 (ndroid.settings) S 436 436 0 0 -1 4194624 11725 0 815 0 55 81 0 0 10 -10 27'), 136);
+  assert.equal(procTicks('77 (a b) c) R 1 1 0 0 -1 0 0 0 0 0 7 3 0 0 20 0 1'), 10);
+});
+
+test('parseMeminfo reads the summary, in bytes', () => {
+  const text = [
+    '  Native Heap    14804    14672       64       45    15504    27296    21053     1787',
+    '           Java Heap:    10368                          31760',
+    '         Native Heap:    14672                          15504',
+    '           TOTAL PSS:    74402            TOTAL RSS:   176432       TOTAL SWAP PSS:      874',
+  ].join('\n');
+  assert.deepEqual(parseMeminfo(text), { pss: 74402 * 1024, rss: 176432 * 1024, java: 10368 * 1024, native: 14672 * 1024 });
+});
+
+test('parseGfxinfo reads frames, jank, percentiles and causes', () => {
+  const text = [
+    'Total frames rendered: 49', 'Janky frames: 9 (18.37%)', 'Janky frames (legacy): 9 (18.37%)',
+    '50th percentile: 17ms', '90th percentile: 53ms', '95th percentile: 80ms', '99th percentile: 150ms',
+    'Number High input latency: 2', 'Number Slow UI thread: 3', 'Number Frame deadline missed: 9', '50th gpu percentile: 6ms',
+  ].join('\n');
+  assert.deepEqual(parseGfxinfo(text), { frames: 49, janky: 9, p50: 17, p90: 53, p95: 80, p99: 150, slowUiThread: 3, missedDeadline: 9, highInputLatency: 2 });
+});
+
+test('screenFrames: paired writes are one frame, pauses split moving stretches, slow intervals are janky', () => {
+  // 10 frames 16.7 ms apart, each written twice 5 ms apart; a 1 s pause; then 3 frames with one 50 ms stall;
+  // a 150 ms pause; one more frame.
+  const times = [];
+  for (let i = 0; i < 10; i++) times.push(i * 16.7, i * 16.7 + 5);
+  times.push(1200, 1216.7, 1266.7, 1416.7);
+  const f = screenFrames(times);
+  assert.equal(f.frames, 11); // 9 intervals in the first stretch, 2 in the second: the pause isn't one
+  assert.equal(f.janky, 1);
+  assert.equal(f.longest, 50);
+  assert.equal(f.p50, 17);
+  assert.equal(f.fps, Math.round((11 / (13 * (1000 / 60))) * 1000)); // 9 slots, then 1 + 3
+  // A frame's second write (measured: mostly 4–8 ms late) and timer jitter stay in the frame's slot.
+  assert.equal(screenFrames([0, 5, 16.9, 22.8, 33.1, 38.9, 50.2, 55]).frames, 3);
+  assert.equal(f.pauses, 2);
+  assert.deepEqual(screenFrames([]), { source: 'screen', frames: 0, janky: 0, p50: null, p90: null, p95: null, p99: null, longest: null, movingMs: 0, fps: null, pauses: 0 });
+  assert.match(formatFrames('a.b', { started: true })[0], /counting frames on screen from now/);
+  assert.match(formatFrames('a.b', f)[0], /^a\.b: 11 frames on screen .* 1 janky \(9\.1%\); \d+ fps while moving \(0\.2 s\)$/);
+});
+
+test('uptimes reads /proc/uptime lines among other output', () => {
+  assert.deepEqual(uptimes('8081.52 30120.40\n4816 (x) S 1\n8082.03 30121.11\nThreads:\t27\n'), [8081.52, 8082.03]);
+});
+
+test('frames: no percentiles when nothing was drawn', () => {
+  assert.equal(parseGfxinfo('Total frames rendered: 0\n50th percentile: 4950ms').p50, null);
+  assert.match(formatFrames('a.b', parseGfxinfo('Total frames rendered: 0\n50th percentile: 4950ms')).join('\n'), /no frames rendered/);
+  assert.match(formatFrames('a.b', { frames: 50, janky: 1, p50: 16, p90: 17, p95: 17, p99: 30, slowUiThread: 0, missedDeadline: 1, highInputLatency: 0 })[0], /50 frames .* 1 janky \(2\.0%\)/);
+});
+
+test('memory as JSON uses camelCase keys', () => {
+  assert.deepEqual(memoryJson([['pss', 1], ['java heap', 2], ['native heap', 3]]), { pss: 1, javaHeap: 2, nativeHeap: 3 });
+});
+
+test('a reading as JSON rounds CPU to one decimal', () => {
+  assert.deepEqual(readingJson({ pid: 1, ms: 500, cpu: 124.04580152671744, memory: [['footprint', 5]], threads: 2 }), { pid: 1, ms: 500, cpu: 124, memory: { footprint: 5 }, threads: 2 });
+  assert.equal(readingJson({ cpu: 7.25, memory: [] }).cpu, 7.3);
+  assert.equal(readingJson({ ms: 1160.59, at: 8512.4, cpu: 0, memory: [] }).ms, 1161);
+});
+
+test('duration: 10s, 1m, 500ms, bare seconds', () => {
+  assert.equal(duration('10s'), 10000);
+  assert.equal(duration('1m'), 60000);
+  assert.equal(duration('500ms'), 500);
+  assert.equal(duration('3'), 3000);
+  assert.ok(Number.isNaN(duration('soon')));
+});
+
+test('a reading and a series format as short lines', () => {
+  const r = { pid: 9, ms: 500, cpu: 12.4, memory: [['footprint', 75 * 1048576], ['peak', 80 * 1048576]], threads: 18 };
+  assert.deepEqual(formatReading('a.b', r), ['a.b  pid 9', 'cpu      12%  (over 0.5 s; 100% is one core)', 'memory   footprint 75.0 MB · peak 80.0 MB', 'threads  18']);
+  const samples = [{ ...r, at: 0, ms: 1000, cpu: 10 }, { ...r, at: 1500, ms: 1000, cpu: 30, memory: [['footprint', 90 * 1048576]] }];
+  assert.match(formatSamples('a.b', samples).at(-1), /^over 2\.5 s \(2 readings\): cpu avg 20% · max 30% \| footprint start 75\.0 MB · max 90\.0 MB · end 90\.0 MB$/);
+});
+
+test('xctraceRows reads an exported table: ids, refs (also from inside a cell), missing values, entities', () => {
+  const xml = `<?xml version="1.0"?><trace-query-result><node><schema name="activity-monitor-process-live">
+<col><mnemonic>start</mnemonic></col><col><mnemonic>process</mnemonic></col><col><mnemonic>pid</mnemonic></col>
+<col><mnemonic>cpu-percent</mnemonic></col><col><mnemonic>cpu-total</mnemonic></col></schema>
+<row><start-time id="1" fmt="00:00.000.000">0</start-time><process id="2" fmt="Demo &amp; Co (41)"><pid id="3" fmt="41">41</pid></process><pid ref="3"/><sentinel/><duration-on-core id="4" fmt="1.00 s">1000000000</duration-on-core></row>
+<row><start-time id="5" fmt="00:00.112.291">112291625</start-time><process ref="2"/><pid ref="3"/><system-cpu-percent id="6" fmt="5.7%">5.7</system-cpu-percent><duration-on-core id="7" fmt="1.06 s">1061496583</duration-on-core></row>
+</node></trace-query-result>`;
+  const rows = xctraceRows(xml);
+  assert.equal(rows.length, 2);
+  assert.equal(rows[0].process.fmt, 'Demo & Co (41)');
+  assert.equal(rows[0].pid.text, '41');
+  assert.equal(rows[0]['cpu-percent'], null);
+  assert.equal(rows[1].process.fmt, 'Demo & Co (41)');
+  assert.equal(rows[1].pid.text, '41');
+  assert.equal(rows[1]['cpu-percent'].fmt, '5.7%');
+  assert.equal(Number(rows[1]['cpu-total'].text) - Number(rows[0]['cpu-total'].text), 61496583);
+});
+
+test('feedFrames: repeats are janky, slots the feed never delivered are unknown, long gaps are pauses', () => {
+  const V = 1000 / 60;
+  const f = (pairs) => feedFrames(pairs.map(([slot, changed]) => ({ t: slot * V, changed: Boolean(changed) })));
+  // 4 new frames in a row: 3 intervals of one refresh.
+  assert.deepEqual([f([[0, 1], [1, 1], [2, 1], [3, 1]]).frames, f([[0, 1], [1, 1], [2, 1], [3, 1]]).janky], [3, 0]);
+  // The same picture delivered again at slot 1: the app missed a refresh.
+  const missed = f([[0, 1], [1, 0], [2, 1]]);
+  assert.deepEqual([missed.frames, missed.janky, missed.longest, missed.skipped], [1, 1, 33, 0]);
+  // Nothing delivered at slot 1: the feed skipped it, so the interval is unknown, not jank.
+  const skipped = f([[0, 1], [2, 1], [3, 1]]);
+  assert.deepEqual([skipped.frames, skipped.janky, skipped.skipped], [1, 0, 1]);
+  // Over 100 ms between changes: a pause.
+  assert.equal(f([[0, 1], [1, 1], [20, 1], [21, 1]]).pauses, 1);
+  assert.equal(f([[0, 1], [1, 1]]).source, 'feed');
+});
+
+test('feedSamples reads the capture log, skipping its other lines', () => {
+  assert.deepEqual(feedSamples('started 1792385884470\n0.0 1\n16.7 0\n33.3 1\nstopped\n'), [
+    { t: 0, changed: true }, { t: 16.7, changed: false }, { t: 33.3, changed: true },
+  ]);
+  assert.match(formatFrames('a.b', { source: 'feed', frames: 0 })[0], /no frames on screen/);
+});

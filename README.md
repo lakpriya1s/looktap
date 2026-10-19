@@ -49,7 +49,7 @@ use the phone ([Record a flow](#record-a-flow-codegen)).
 - [🤖 Kickstart with your AI agent](#-kickstart-with-your-ai-agent): one prompt and your agent takes it from there
 - [Requirements](#requirements)
 - [How it works](#how-it-works)
-- [Examples](#examples): tap by label, forms, waiting, scrolling, debugging, bursts and video, several devices,
+- [Examples](#examples): tap by label, forms, waiting, scrolling, debugging, performance, bursts and video, several devices,
   [tests in CI](#test-flows-in-ci)
 - [For AI agents](#for-ai-agents)
 - [Commands](#commands) · [Platform support](#platform-support) · [Options & config](#options-environment-variables-config-file)
@@ -69,6 +69,7 @@ use the phone ([Record a flow](#record-a-flow-codegen)).
 | 📸 | **Screenshots.** `shot` saves a PNG and prints its path, with `--scale 0.5` for fewer image tokens. On Android emulators it also captures `FLAG_SECURE` screens |
 | 🎞️ | **Burst capture and video.** `burst` saves a frame each time the screen changes, to catch spinners, toasts and transitions. `record start` … `record stop` saves an MP4 of everything in between |
 | 🪵 | **Logs.** `logs` shows the app's log since your last look. `--errors` and `--grep` narrow it, and on iOS Apple-framework chatter is filtered out |
+| ⏱️ | **Performance.** `perf` reads the app's CPU, memory and threads, once or each second with `--for 10s`; `perf --frames` adds frames, jank and frame-time percentiles (on iOS, from the screen itself). `launch --time` times a cold start until the first screen settles |
 | 💥 | **Crashes.** `crashes` reads iOS crash reports (exception, reason, top frames) and Android crashes, ANRs and **low-memory kills**, so "the app vanished" always comes with a reason |
 | 🫆 | **Biometrics.** `bio match\|nomatch` simulates Face ID or a fingerprint |
 | 🌍 | **Simulated conditions.** `location <lat> <lon>`, `appearance dark`, `textsize xxl` (Dynamic Type / font scale), `statusbar clean` (9:41 for screenshots), `rotate landscape` (`ls`, taps and screenshots follow the turned screen), Android `network offline`, and iOS `push` notifications |
@@ -279,6 +280,8 @@ looktap names the apps it found and you delete one.
 
 **What works on a device:** everything except `location`, `network`, `push`, `statusbar`, `textsize`, `bio`,
 `record`, `permission`, `reset`, `logs` and `crashes`, which say so; `zoom` works around the screen's centre only.
+`perf` reads CPU, memory and threads through Instruments (`xcrun xctrace`, part of Xcode), 10–25 s a reading, and
+`perf --frames` reads the screen over the USB cable, so it needs the phone plugged in rather than on Wi-Fi.
 [Platform support](#platform-support) has the reasons, and `looktap capabilities` prints them. A command takes about 1–1.5 s, slower than on a simulator, because XCUITest takes longer to read the screen.
 
 The device must be unlocked while the runner starts. It keeps running until `looktap teardown`, or until the
@@ -425,6 +428,46 @@ platforms:
 A red box is also on screen, so `ls` reads its message and call stack.
 
 **Swift:** `print()` writes to stdout, not to the log. Use `os.Logger` or `NSLog` for messages `logs` should see.
+
+### Performance: CPU, memory, frames, launch time
+
+```bash
+looktap launch com.example --time       # a cold start, timed
+# launched com.example: in front after 0.44 s, first screen settled by 0.85 s · Android TotalTime 300 ms
+looktap perf                            # the app in front: one reading
+# com.example  pid 4127
+# cpu      14%  (over 0.5 s; 100% is one core)
+# memory   pss 78.4 MB · rss 171.2 MB · java heap 12.1 MB · native heap 18.6 MB
+# threads  21
+looktap perf --for 20s                  # a reading each second while you (or a flow) use the app, then avg/max
+looktap perf --frames                   # frames since the last --frames, janky %, p50–p99 frame time (iOS simulator:
+                                        # the first call starts counting)
+looktap swipe 200 700 200 200; looktap perf --frames   # how smooth was that scroll?
+```
+
+- **Memory:** on the iOS simulator, the footprint Xcode's memory gauge shows, and its peak. On Android, PSS (the app's
+  share of RAM) plus RSS and the Java and native heaps.
+- **CPU** is a share of one core over the reading, like `top`: a busy app on two cores reads 200%.
+- **Simulator numbers come from the Mac.** An iOS simulator app runs on the Mac's CPU and memory, so compare builds
+  and screens against each other, not against a phone. An emulator is closer, but still not a phone: for release
+  numbers, use a real Android device.
+- **`launch --time`** starts the clock at the start command (stopping the old copy comes first, outside it). Right
+  after a launch an iOS screen read can take a second, so it says how much sooner the screen may have settled.
+- **Real iPhone:** `perf` reads it through Instruments' Activity Monitor (`xcrun xctrace`, part of Xcode, so nothing to
+  install). Starting Instruments takes a few seconds, so a reading takes 10–25 s and `--for` gives one about every 8 s.
+  Its CPU matches Instruments' own figure to within about 10%.
+- **Frames on the iOS simulator come from the screen itself.** Instruments' Animation Hitches doesn't support the
+  simulator, so looktap counts how often the simulator's screen actually changes (its framebuffer), snapped to the
+  60 Hz display. A frame that skips a refresh (33 ms or more) is janky, and fps is measured while something moves.
+  It's the whole screen as you'd see it, not the app's own render time, which only Instruments has. A gap over
+  0.1 s counts as "nothing moving", so a pause between two actions doesn't count as jank, and is reported as a
+  pause. The first `perf --frames` starts counting; each one after reports what happened since the last.
+- **Frames on a real iPhone come from its USB screen feed**, the capture device QuickTime uses, compared frame by
+  frame in the same way. It needs a USB cable (not Wi-Fi), an unlocked phone, and QuickTime not showing the phone.
+  The feed runs at 60 Hz at most, so a 120 Hz screen is measured at half its rate, and during fast motion the phone
+  sometimes skips a frame of the feed: those refreshes are reported as unknown, never as jank. (Instruments'
+  Animation Hitches would measure the app's own frames, but its recordings hang while looktap's device runner is
+  up.)
 
 ### Catch a spinner, toast, or transition (`burst`)
 
@@ -701,6 +744,8 @@ took 11–19 on Android.
   ```
 
 - **`logs` / `crashes`** after a step that misbehaved. Each `logs` shows only what's new since the last one.
+- **`perf` / `launch --time`** when the question is speed or memory: numbers instead of impressions. `perf --for`
+  while the screen does the thing being measured, and `perf --frames` before and after it.
 - **`ls --json`** for structured output: `{screen, elements: [{ref, label, type, x, y, w, h, value}]}`.
 - **`shot --scale 0.5`** costs a quarter of the image tokens when the agent needs to *see* the screen (layout,
   colours, images). Usually `ls` is enough and the PNG is never opened.
@@ -776,7 +821,7 @@ looktap mcp --config      # prints a ready-to-paste client config with absolute 
     `home` and `wait`;
   - `screenshot`, which returns the image itself;
   - `logs` and `crashes`;
-  - `looktap`, for any other command line, or several separated by `;`.
+  - `looktap`, for any other command line (`apps`, `perf`, `launch --time`, `boot` …), or several separated by `;`.
 - **Actions return the settled screen** unless `ls: false`. That saves the agent a separate `ls`, but each action
   then waits for the screen to stop moving, 0.7–1.9 s in the [benchmark](BENCHMARK.md). Pass `ls: false` when you
   don't need to see the result.
@@ -813,7 +858,7 @@ to settle unless asked (`--ls`).
 | `looktap back` | Android system Back · iOS: the navigation bar's back button, else a top-left "Back" button |
 | `looktap home` | The Home button: goes to the home screen and checks it's in front; the app keeps running |
 | `looktap open <url>` | Opens a deep link |
-| `looktap launch [app]` | (Re)starts the app |
+| `looktap launch [app] [--time]` | (Re)starts the app. `--time` times a cold start: until the app is in front, and until its first screen settled. It says when screen reads are too slow to time the screen precisely. Android adds the system's own `TotalTime` |
 | `looktap stop [app]` | Terminates the app and waits until its process is gone |
 | `looktap bio match\|nomatch` | Face ID (iOS) or fingerprint (Android) |
 | `looktap rotate [portrait\|landscape\|left\|right\|upsidedown]` | Turns the device (`landscape` = `left`, turned counter-clockwise). `ls`, taps and screenshots follow the turned screen. Says so if the app doesn't support the orientation. Without an argument, prints the current one |
@@ -822,6 +867,8 @@ to settle unless asked (`--ls`).
 | `looktap crashes [app] [--since 1h]` | Crashes, ANRs and low-memory kills since the last `crashes` (the first call covers the last hour) |
 | `looktap app [app]` | The app in front and its pid, and whether `[app]` is running |
 | `looktap app [app] --paths` | Where the app's files are. iOS simulator: its bundle, data folder and app groups, as paths on the Mac. Android: its APKs and data folder, which `adb shell run-as` reads on debuggable builds |
+| `looktap perf [app] [--for 10s] [--json]` | The app's CPU (100% is one core), memory and threads. iOS simulator: the memory footprint Xcode's gauge shows, and its peak. Android: PSS, RSS, Java and native heap. Real iPhone: CPU, footprint and threads through Instruments (`xcrun xctrace`, part of Xcode), 10–25 s a reading. `--for` takes a reading each second (a real iPhone: about every 8 s), then prints avg/max |
+| `looktap perf [app] --frames` | Frames since the last `perf --frames`, the janky share and p50/p90/p95/p99 frame time. Android: the app's own render times (`gfxinfo`) and why frames were late. iOS: frames as the screen shows them (the simulator's framebuffer, a real iPhone's USB screen feed), fps while moving and the longest stall; the first call starts counting |
 | `looktap capabilities [--json]` | What this device can't do, or can only in part, and why. `--json`: every command with `supported`, `conditional` or `unsupported` |
 | **App state** (`<app>` from the argument or `--app` / config, never the app in front) | |
 | `looktap apps [filter] [--all] [--json]` | The installed apps: id, name (iOS) and version. `--all` adds the system's own apps. A filter matches part of the id or name, system apps included, and exits 1 when nothing matches, so `looktap apps com.example` answers "is it installed?" |
@@ -842,7 +889,7 @@ to settle unless asked (`--ls`).
 | `looktap codegen <flow-file> [app]` | Android: restarts the app, then saves each touch on the device as the step that replays it: `tap "<label>"`, `fill <field> <text>`, `scrollto`, `longpress`, `zoom`, `back`, `home`. A command typed while it records (`expect "Welcome"`) is run and saved too; `undo` drops the last step; Enter on an empty line or Ctrl+C ends it. See [Record a flow](#record-a-flow-codegen) |
 | `looktap test <flow\|dir> … [--junit file]` | Runs flow files (`run` scripts, one step per line) as tests, folders searched, and prints a line per flow and the totals. Exits 1 if any flow fails. A failed flow prints its output and leaves `error.txt`, `output.txt`, `screen.txt`, `screen.png`, `logs.txt` and `crashes.txt` in `<out>/failures/<flow>/`. An app that dies during a flow fails it. `--junit` writes a JUnit XML report |
 | `looktap skill [--install]` | Prints the AI-agent guide, or installs it as a Claude Code skill |
-| `looktap devices [--all] [--json]` | What's running or connected, and what each is: simulator, emulator (with its AVD name) or real device (model, OS version, USB or Wi-Fi), and whether it has a window or runs headless. A phone that's connected but not ready is listed with what to do (accept the USB debugging prompt, tap Trust, turn on Developer Mode). A simulator or emulator still starting is listed as such. `--all` also lists what `boot` can start; `--json` for scripts and agents |
+| `looktap devices [--all] [--json]` | What's running or connected, and what each is: simulator, emulator (with its AVD name) or real device (model, OS version, USB or Wi-Fi), and whether it has a window or runs headless. An Android phone on both USB and Wi-Fi is one row (`USB + Wi-Fi`), and commands drive it over USB; `-d` with its Wi-Fi id still picks Wi-Fi. A phone that's connected but not ready is listed with what to do (accept the USB debugging prompt, tap Trust, turn on Developer Mode). A simulator or emulator still starting is listed as such. `--all` also lists what `boot` can start; `--json` for scripts and agents |
 | `looktap boot [name] [--window\|--headless]` | Boots an iOS simulator or Android emulator by name, UDID or AVD name (exact, else a unique prefix or substring; `-p` to choose a platform) and waits until it's ready to drive. Opens its window unless `--headless` (or `LOOKTAP_HEADLESS=1`, or `"headless": true` in the config file). Already running: says so, and `--window` opens a simulator's window. One that's still starting (adb lists an emulator offline while it boots) is waited for, not started twice. A running device can't drop its window (closing the Simulator app shuts its simulators down; an emulator starts with or without one), so `--headless` then says how to restart it |
 | `looktap shutdown [name]` | Shuts down a simulator or emulator (name, UDID, AVD name or serial), and waits until it's gone |
 | `looktap doctor` | Checks Node, Xcode and the simulator frameworks, adb, and booted devices |
@@ -876,6 +923,8 @@ front of you (`--json` for every command).
 | `location clear` | ✅ | ❌ a real device uses its own GPS; use a simulator to fake one | ❌ the emulator keeps its last location: set a new one instead | ❌ a device uses its own GPS (faking it needs a mock-location app) |
 | `logs` | ✅ | ❌ use Console.app with the device selected | ✅ | ✅ |
 | `network` | ❌ the simulator uses the Mac's own network, so it can't go offline or slow by itself. Network Link Conditioner (Xcode → Open Developer Tool → More Developer Tools → Additional Tools) throttles the whole Mac | ❌ turn on Airplane Mode in Control Center | ✅ | ⚠️ airplane mode: over wireless adb, going offline also drops looktap's connection |
+| `perf` | ✅ | ⚠️ read through Instruments (xcrun xctrace): a reading takes 10–25 s and --for gives one every ~8 s; memory is the footprint, without its peak | ✅ | ✅ |
+| `perf --frames` | ⚠️ frames as the screen shows them (the simulator's framebuffer updates), not the app's own render times: the first call starts counting | ⚠️ frames as the screen shows them, from its USB screen feed (60 Hz at most, so a 120 Hz screen counts at half its rate); needs a USB cable, an unlocked phone, and QuickTime not showing it | ✅ | ✅ |
 | `permission` | ⚠️ camera and notifications can't be set: simctl privacy has no such service | ❌ change it in the Settings app | ⚠️ contacts-limited, reminders and siri are iOS-only; any android.permission.* works | ⚠️ contacts-limited, reminders and siri are iOS-only; any android.permission.* works |
 | `push` | ✅ | ❌ send a real push through APNs | ❌ Android pushes come through Firebase (FCM), so adb can't inject one: send it from your backend or the Firebase console | ❌ Android pushes come through Firebase (FCM), so adb can't inject one: send it from your backend or the Firebase console |
 | `record` | ✅ | ❌ use burst for frames, or QuickTime Player for video | ⚠️ at most 3 minutes, and FLAG_SECURE screens record black | ⚠️ at most 3 minutes, and FLAG_SECURE screens record black |
@@ -955,7 +1004,10 @@ Precedence: command-line option, then environment variable, then config file, th
 | `"<label>" is ambiguous — matches N labels` | Use more of the label, a `@ref`, or `--exact` |
 | `keyboard is still up` (iOS) | Search keyboards have no Done key. Tap the screen's Cancel/close control |
 | Android `ls` fails right after boot | Wait until `adb shell getprop sys.boot_completed` prints `1` |
-| `device <serial> is not connected` | `adb devices` lists what is. A phone unplugged from USB may still be there over Wi-Fi, under another serial (`adb-…._adb-tls-connect._tcp`) |
+| `device <serial> is not connected` / `<serial> isn't connected any more` | `looktap devices` lists what is. A phone unplugged from USB may still be there over Wi-Fi, under its Wi-Fi id (`adb-…._adb-tls-connect._tcp`); a phone on both is one row, `USB + Wi-Fi` |
+| `perf --frames on a real iPhone reads its screen over the USB cable` | Plug the iPhone in with a cable and unlock it: the screen feed it reads doesn't exist over Wi-Fi |
+| `the iPhone's screen feed didn't start` | Unlock the phone, and close QuickTime (or anything else showing the phone's screen): one app at a time can read it |
+| `Instruments is busy on the device` | An earlier Instruments recording on the phone didn't end (looktap's, Xcode's or another tool's). It clears in a few minutes, or reconnect the cable; restarting the phone always clears it |
 | Android `ls` fails after Appium was used | Appium still holds UiAutomation: `adb shell am force-stop io.appium.uiautomator2.server` |
 | Appium / `uiautomator` fail after looktap was used | looktap's helper holds UiAutomation: `looktap -p android teardown` |
 | `Android helper did not start — falling back to uiautomator dump` | Something else holds UiAutomation (see above). looktap keeps working, just slower |

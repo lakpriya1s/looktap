@@ -20,6 +20,8 @@
 //          -framework ImageIO -framework CoreGraphics -framework UniformTypeIdentifiers looktap-sim.m
 
 #import <AppKit/AppKit.h>
+#import <AVFoundation/AVFoundation.h>
+#import <CoreMediaIO/CMIOHardware.h>
 #import <CoreGraphics/CoreGraphics.h>
 #import <Foundation/Foundation.h>
 #import <ImageIO/ImageIO.h>
@@ -861,6 +863,72 @@ static IOSurfaceRef mainSurface(void) {
   return (__bridge IOSurfaceRef)surface; // toll-free bridged; kept alive by the descriptor
 }
 
+/**
+ Screen updates, for `perf --frames`. The framebuffer's seed moves each time the simulator draws the screen, so a
+ timer on its own queue notes when it moves, every 2 ms, while other ops run. The first call starts it; each later
+ call returns the update times since the previous one, and starts over. Nobody asking for 10 minutes stops it.
+ */
+static dispatch_queue_t frameQueue;
+static dispatch_source_t frameTimer;
+static IOSurfaceRef frameSurface;
+static uint32_t frameSeed;
+static NSMutableData *frameTimes; // doubles: ms since frameStart
+static double frameStart, frameAsked;
+static uint64_t seedSteps;
+
+static double uptimeMs(void) {
+  return clock_gettime_nsec_np(CLOCK_UPTIME_RAW) / 1e6;
+}
+
+static NSDictionary *frames(void) {
+  if (!frameQueue) frameQueue = dispatch_queue_create("looktap.frames", DISPATCH_QUEUE_SERIAL);
+  IOSurfaceRef s = mainSurface();
+  if (!s) return @{@"ok" : @NO, @"error" : @"no framebuffer for the main display"};
+  __block NSDictionary *out;
+  dispatch_sync(frameQueue, ^{
+    double now = uptimeMs();
+    if (frameSurface != s) { // first call, or the display's surface was replaced
+      if (frameSurface) CFRelease(frameSurface);
+      frameSurface = (IOSurfaceRef)CFRetain(s);
+      frameSeed = IOSurfaceGetSeed(frameSurface);
+    }
+    if (!frameTimer) {
+      frameTimes = [NSMutableData data];
+      frameStart = frameAsked = now;
+      seedSteps = 0;
+      frameSeed = IOSurfaceGetSeed(frameSurface);
+      frameTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, DISPATCH_TIMER_STRICT, frameQueue);
+      dispatch_source_set_timer(frameTimer, DISPATCH_TIME_NOW, 2 * NSEC_PER_MSEC, 200 * NSEC_PER_USEC);
+      dispatch_source_set_event_handler(frameTimer, ^{
+        double t = uptimeMs();
+        if (t - frameAsked > 600000) {
+          dispatch_source_cancel(frameTimer);
+          frameTimer = nil;
+          return;
+        }
+        uint32_t seed = IOSurfaceGetSeed(frameSurface);
+        if (seed == frameSeed) return;
+        seedSteps += (uint32_t)(seed - frameSeed);
+        frameSeed = seed;
+        double at = t - frameStart;
+        if (frameTimes.length < 200000 * sizeof(double)) [frameTimes appendBytes:&at length:sizeof at];
+      });
+      dispatch_resume(frameTimer);
+      out = @{@"ok" : @YES, @"started" : @YES};
+      return;
+    }
+    NSUInteger n = frameTimes.length / sizeof(double);
+    const double *t = frameTimes.bytes;
+    NSMutableArray *times = [NSMutableArray arrayWithCapacity:n];
+    for (NSUInteger i = 0; i < n; i++) [times addObject:@(round(t[i] * 10) / 10)];
+    out = @{@"ok" : @YES, @"ms" : @(round(now - frameStart)), @"times" : times, @"seedSteps" : @(seedSteps)};
+    frameTimes = [NSMutableData data];
+    frameStart = frameAsked = now;
+    seedSteps = 0;
+  });
+  return out;
+}
+
 /** The surface as PNG, upright as the user sees it (see "orientation"), shrunk by `scale` when 0 < scale < 1. */
 static NSData *png(IOSurfaceRef s, double scale) {
   IOSurfaceLock(s, kIOSurfaceLockReadOnly, NULL);
@@ -1024,6 +1092,7 @@ static void handle(int fd, NSDictionary *r) {
     return reply(fd, @{@"ok" : @YES}, png(s, num(r, @"scale", 1)));
   }
   if ([op isEqualToString:@"burst"]) return burst(fd, num(r, @"seconds", 5));
+  if ([op isEqualToString:@"frames"]) return reply(fd, frames(), nil);
   if ([op isEqualToString:@"stop"]) {
     reply(fd, @{@"ok" : @YES}, nil);
     exit(0);
@@ -1115,8 +1184,108 @@ static void setup(NSString *udid, NSString *developerDir) {
   axToken = NSUUID.UUID.UUIDString;
 }
 
+// ---- `--capture`: a real iPhone's screen over USB, for `perf --frames` -------------------------------------------
+//
+// The capture device QuickTime uses ("iOS Device"). It delivers frames at up to 60 per second whether the screen
+// changes or not, and it's lossy video, so each frame is compared with the one before: the brightness of every
+// 8th pixel each way, below the status bar; a frame where 64 or more of those moved by more than 24 levels is new
+// content (still frames move 0–1, a scroll thousands). One line per delivered frame: "<ms> <0|1>", ms on the
+// frame's presentation clock. It stops when nobody has touched `--asked` for 10 minutes, or the phone goes away.
+
+@interface FeedReader : NSObject <AVCaptureVideoDataOutputSampleBufferDelegate>
+@property(nonatomic) FILE *log;
+@end
+
+@implementation FeedReader {
+  NSMutableData *_prev;
+  double _t0;
+}
+- (void)captureOutput:(AVCaptureOutput *)output didOutputSampleBuffer:(CMSampleBufferRef)buffer fromConnection:(AVCaptureConnection *)connection {
+  double pts = CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(buffer)) * 1000;
+  if (_t0 == 0) _t0 = pts;
+  CVPixelBufferRef px = CMSampleBufferGetImageBuffer(buffer);
+  if (!px) return;
+  CVPixelBufferLockBaseAddress(px, kCVPixelBufferLock_ReadOnly);
+  // The feed's own format (4:2:0 YUV): the brightness plane, read in place. Asking for BGRA instead converts every
+  // full-size frame, and the capture then drops frames during motion.
+  size_t w = CVPixelBufferGetWidthOfPlane(px, 0), h = CVPixelBufferGetHeightOfPlane(px, 0), row = CVPixelBufferGetBytesPerRowOfPlane(px, 0);
+  const uint8_t *base = CVPixelBufferGetBaseAddressOfPlane(px, 0);
+  NSMutableData *cur = [NSMutableData dataWithCapacity:(w / 8 + 1) * (h / 8 + 1)];
+  for (size_t y = h * 6 / 100; y < h; y += 8)
+    for (size_t x = 0; x < w; x += 8) [cur appendBytes:base + y * row + x length:1];
+  CVPixelBufferUnlockBaseAddress(px, kCVPixelBufferLock_ReadOnly);
+  int moved = 0;
+  if (_prev.length == cur.length) {
+    const uint8_t *a = _prev.bytes, *b = cur.bytes;
+    for (NSUInteger i = 0; i < cur.length && moved < 64; i++) moved += abs((int)a[i] - (int)b[i]) > 24;
+  }
+  BOOL changed = _prev == nil || moved >= 64;
+  _prev = cur;
+  fprintf(self.log, "%.1f %d\n", pts - _t0, changed);
+  fflush(self.log);
+}
+@end
+
+static int capture(NSString *name, NSString *logPath, NSString *askedPath) {
+  CMIOObjectPropertyAddress prop = {kCMIOHardwarePropertyAllowScreenCaptureDevices, kCMIOObjectPropertyScopeGlobal, kCMIOObjectPropertyElementMain};
+  UInt32 allow = 1;
+  CMIOObjectSetPropertyData(kCMIOObjectSystemObject, &prop, 0, NULL, sizeof allow, &allow);
+  FILE *log = fopen(logPath.fileSystemRepresentation, "a");
+  if (!log) die(@"cannot write the frames log");
+  AVCaptureDevice *device = nil;
+  // It shows up a moment after screen capture is allowed, and only once an earlier capture (QuickTime, or a stopped
+  // one) has let go of it, which can take several seconds.
+  for (int i = 0; i < 40 && !device; i++) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    AVCaptureDeviceType external = AVCaptureDeviceTypeExternalUnknown; // macOS 12–13's name for it
+#pragma clang diagnostic pop
+    if (@available(macOS 14.0, *)) external = AVCaptureDeviceTypeExternal;
+    NSArray *all = [AVCaptureDeviceDiscoverySession discoverySessionWithDeviceTypes:@[ external ] mediaType:AVMediaTypeMuxed
+                                                                            position:AVCaptureDevicePositionUnspecified].devices;
+    for (AVCaptureDevice *d in all)
+      if ([d.modelID isEqualToString:@"iOS Device"] && (!name.length || [d.localizedName isEqualToString:name] || all.count == 1)) device = d;
+    if (!device) [NSRunLoop.currentRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
+  }
+  if (!device) {
+    fprintf(log, "error no screen capture device for %s: connect it with a USB cable and unlock it\n", name.UTF8String);
+    return 1;
+  }
+  NSError *error = nil;
+  AVCaptureDeviceInput *input = [AVCaptureDeviceInput deviceInputWithDevice:device error:&error];
+  AVCaptureSession *session = [AVCaptureSession new];
+  if (!input || ![session canAddInput:input]) {
+    fprintf(log, "error %s\n", (error.localizedDescription ?: @"the screen capture device is busy (QuickTime?)").UTF8String);
+    return 1;
+  }
+  [session addInput:input];
+  AVCaptureVideoDataOutput *output = [AVCaptureVideoDataOutput new];
+  output.videoSettings = @{(id)kCVPixelBufferPixelFormatTypeKey : @(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange)};
+  output.alwaysDiscardsLateVideoFrames = NO;
+  FeedReader *reader = [FeedReader new];
+  reader.log = log;
+  [output setSampleBufferDelegate:reader queue:dispatch_queue_create("looktap.feed", DISPATCH_QUEUE_SERIAL)];
+  [session addOutput:output];
+  [session startRunning];
+  fprintf(log, "started %.0f\n", NSDate.date.timeIntervalSince1970 * 1000);
+  fflush(log);
+  for (;;) {
+    [NSRunLoop.currentRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:5]];
+    NSDate *asked = [NSFileManager.defaultManager attributesOfItemAtPath:askedPath error:nil].fileModificationDate;
+    if (!session.isRunning || !device.isConnected || !asked || asked.timeIntervalSinceNow < -600) break;
+  }
+  [session stopRunning];
+  fprintf(log, "stopped\n");
+  return 0;
+}
+
 int main(int argc, char **argv) {
   @autoreleasepool {
+    if (argc > 1 && !strcmp(argv[1], "--capture")) {
+      NSString *name = argc > 2 ? @(argv[2]) : @"", *logPath = argc > 3 ? @(argv[3]) : nil, *asked = argc > 4 ? @(argv[4]) : nil;
+      if (!logPath || !asked) die(@"usage: looktap-sim --capture <device name> <log> <asked-file>");
+      return capture(name, logPath, asked);
+    }
     NSString *udid = nil, *socketPath = nil, *developerDir = @"/Applications/Xcode.app/Contents/Developer";
     for (int i = 1; i + 1 < argc; i += 2) {
       NSString *k = @(argv[i]), *v = @(argv[i + 1]);

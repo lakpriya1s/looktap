@@ -260,10 +260,19 @@ export const SCENES = [
     kicker: '07 · Debug',
     title: 'When the app vanishes, you hear why',
     body: `<p>An app that dies is named the moment looktap notices, right in the output of the tap that killed it.</p>
-<p><code>crashes</code> reads the crash report (exception, reason, the top frames), and on Android ANRs and <strong>low-memory kills</strong> too. <code>logs</code> shows only what's new since you last looked, with <code>--errors</code> and <code>--grep</code> to narrow it. <code>app</code> says what's in front, and <code>capabilities</code> what this device can't do.</p>`,
-    covers: ['logs', 'crashes', 'app', 'capabilities'],
+<p><code>crashes</code> reads the crash report (exception, reason, the top frames), and on Android ANRs and <strong>low-memory kills</strong> too. <code>logs</code> shows only what's new since you last looked, with <code>--errors</code> and <code>--grep</code> to narrow it. <code>app</code> says what's in front, <code>perf</code> how much CPU and memory it uses, and <code>capabilities</code> what this device can't do.</p>`,
+    covers: ['logs', 'crashes', 'app', 'capabilities', 'perf'],
     start: (p) => p.show('home'),
     beats: [
+      {
+        cmd: 'looktap perf',
+        run: async (p, c) => [
+          `${APP}  pid 4127`,
+          'cpu      14%  (over 0.5 s; 100% is one core)',
+          c.ios ? 'memory   footprint 86.2 MB · peak 91.0 MB' : 'memory   pss 78.4 MB · rss 171.2 MB · java heap 12.1 MB · native heap 18.6 MB',
+          'threads  21',
+        ],
+      },
       {
         cmd: 'looktap tap "Checkout · 2 items" --ls',
         run: async (p) => {
@@ -639,7 +648,7 @@ export const SCENES = [
                 dim('ios      4B7D0E19-…-A3C2  iPad Pro 13-inch (M5) · simulator · iOS 26.0'),
               ]
             : [
-                'android  R58N30ABCDE  Samsung SM-S931B · device · Android 16 · USB',
+                'android  R58N30ABCDE  Samsung SM-S931B · device · Android 16 · USB + Wi-Fi',
                 'android  emulator-5554  Pixel_9a · emulator · Android 16 · window',
                 warn('android  R9TX21KLMNP  SM A065F · device · USB  ✗ not ready: accept "Allow USB debugging?" on the phone (tick "Always allow")'),
                 '',

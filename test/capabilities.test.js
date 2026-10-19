@@ -29,7 +29,10 @@ test('a subcommand falls back to its command; anything unlisted is supported', (
   assert.equal(capability('android-emulator', 'location clear').status, 'unsupported');
   assert.equal(capability('ios-simulator', 'tap').status, 'supported');
   assert.equal(capabilities('android-device')['location clear'].status, 'unsupported');
-  assert.equal(Object.keys(capabilities('ios-simulator')).length, COMMANDS.length);
+  // Every command, plus its one subcommand limit.
+  assert.deepEqual(Object.keys(capabilities('ios-simulator')).filter((c) => !COMMANDS.includes(c)), ['perf --frames']);
+  assert.equal(capabilities('ios-simulator')['perf --frames'].status, 'conditional');
+  assert.equal(capabilities('ios-simulator').perf.status, 'supported');
 });
 
 test('unsupported throws a usage error naming the device and the reason', () => {

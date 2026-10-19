@@ -153,6 +153,16 @@ looktap logs --all
 # crashes, ANRs and low-memory kills since your last `crashes` (first time: the last hour)
 looktap crashes
 looktap crashes com.example.myapp --since 1h
+# CPU (100% = one core), memory and threads of the app (iOS: the footprint Xcode shows; Android: PSS, heaps);
+# --for samples once a second, then prints avg/max. --frames: frames and jank since the last --frames (iOS:
+# counted from the screen, a real iPhone over its USB cable; the first call only starts counting, so call it
+# before the action too).
+# A real iPhone goes through Instruments: 10-25 s a reading, --for about every 8 s
+looktap perf
+looktap perf com.example.myapp --for 10s
+looktap perf --frames --json
+# cold start, timed: until the app is in front and until its first screen settled (Android: also TotalTime)
+looktap launch com.example.myapp --time
 # which app is in front, and whether the given one is running
 looktap app
 looktap app com.example.myapp
@@ -378,7 +388,11 @@ Then look at the few frames that matter, not all of them.
   probably hit that: dismiss it, then tap again.
 - **If `ls` says only the status bar is readable**, a system prompt (passcode, permission, alert) is on top.
   `shot` to see it. Never enter a passcode unless the user gave it to you for this device.
+- **Measure performance with `perf` and `launch --time`, not by eye.** Simulator numbers are the Mac's CPU and
+  memory: compare builds or screens against each other, and say so when you report them. Run `perf --for` while
+  the screen does the thing being measured (a scroll, a load), and `perf --frames` just before and right after it.
 - **Start with `looktap devices`** to see which devices are real phones and which are simulators or emulators.
+  An Android phone on both USB and Wi-Fi is one row (`USB + Wi-Fi`) and is driven over USB.
   A phone marked "not ready" needs the user: tell them exactly what it says (accept the USB debugging prompt, tap
   Trust, turn on Developer Mode). One marked "still starting" needs no one: `looktap boot <name>` waits for it.
 - **Use looktap, not adb or simctl, for device and app state:** `boot` instead of polling for boot completion,
