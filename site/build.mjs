@@ -18,7 +18,7 @@ const ROOT = join(SITE, '..');
 const SRC = join(SITE, 'src');
 const DIST = join(SITE, 'dist');
 const REPO = 'https://github.com/lakpriya1s/looktap';
-const SITE_URL = 'https://lakpriya1s.github.io/looktap/';
+const SITE_URL = 'https://lakpriya.com/looktap/';
 const FONTS = 'https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Martian+Mono:wght@300;400;500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap';
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
 const problems = [];

@@ -1,11 +1,16 @@
 # Changelog
 
-## Unreleased
+## 0.6.1
 
 ### Added
 - **MCP: a `perf` tool.** CPU, memory and threads, or with `frames: true` the frames and jank since the last call, and
   `for: <seconds>` to sample. It was reachable through the general `looktap` tool; as its own tool, clients show it to
   the model by name. The server's instructions now say to measure with it rather than guess.
+- **`@looktap/mcp` 0.6.1** requires `@looktap/cli` 0.6.1, so an MCP client that cached an older pair picks up `perf`.
+
+### Changed
+- The website's address is https://lakpriya.com/looktap/ everywhere: the package pages, the MCP registry entry, the
+  Claude plugin, the README, and the site's own canonical and preview links (the old address redirects there).
 
 ## 0.6.0
 
