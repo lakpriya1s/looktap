@@ -5,7 +5,7 @@ import { formatDevice, iosEntry, parseAdbLine } from '../lib/devices.js';
 
 test('adb lines: ready, waiting for the USB debugging prompt, and noise', () => {
   assert.deepEqual(parseAdbLine('emulator-5554          device product:sdk_gphone model:sdk_gphone device:emu'), { id: 'emulator-5554', state: 'device', rest: ' product:sdk_gphone model:sdk_gphone device:emu' });
-  assert.equal(parseAdbLine('R83Y30R6V6M    unauthorized usb:1-1 transport_id:3').state, 'unauthorized');
+  assert.equal(parseAdbLine('ABC123DEF456    unauthorized usb:1-1 transport_id:3').state, 'unauthorized');
   assert.equal(parseAdbLine('List of devices attached'), null);
   assert.equal(parseAdbLine(''), null);
 });
