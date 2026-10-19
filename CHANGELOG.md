@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.6.0
 
 ### Added
 - **`perf [app]`** reads the app's CPU (100% is one core), memory and threads. On the iOS simulator it reads the
