@@ -210,10 +210,16 @@ static BOOL listed(NSArray *out, NSDictionary *n) {
   return NO;
 }
 
-/** The element at `p` (system-wide hit test, so it reaches into other processes), or nil. */
-static NSMutableDictionary *probeAt(CGPoint p) {
+/** The pid of the process an accessibility translation object belongs to, or 0. */
+static int pidOf(id translation) {
+  return [translation respondsToSelector:@selector(pid)] ? [[translation valueForKey:@"pid"] intValue] : 0;
+}
+
+/** The element at `p` (system-wide hit test, so it reaches into other processes), or nil. `pid`: its process. */
+static NSMutableDictionary *probeAt(CGPoint p, int *pid) {
   probes++;
   id o = [translator objectAtPoint:p displayId:0 bridgeDelegateToken:axToken];
+  if (pid) *pid = pidOf(o);
   if (!o) return nil;
   [o setBridgeDelegateToken:axToken];
   id el = [translator macPlatformElementFromTranslation:o];
@@ -226,9 +232,10 @@ static NSMutableDictionary *probeAt(CGPoint p) {
  Content drawn by another process — a web page in Safari or an in-app browser, a sign-in sheet — is
  not in the app's tree at all, not even as an empty container. Hit-testing does reach it. A few probes
  at uncovered points decide whether anything is hidden; only then is the uncovered screen scanned on a
- grid, skipping what each hit covers. Screens the walk fully explains cost no probes.
+ grid, skipping what each hit covers. Screens the walk fully explains cost a few probes. `appPid`: the
+ front app's process, so a hit can tell content drawn by another one.
  */
-static void scanForHiddenContent(NSMutableArray *out, CGRect screen) {
+static void scanForHiddenContent(NSMutableArray *out, CGRect screen, int appPid) {
   double area = screen.size.width * screen.size.height;
   NSMutableArray<NSValue *> *covered = [NSMutableArray array];
   for (NSDictionary *m in out) {
@@ -240,17 +247,25 @@ static void scanForHiddenContent(NSMutableArray *out, CGRect screen) {
       if (CGRectContainsPoint(c.rectValue, p)) return YES;
     return NO;
   };
-  // A sparse grid, not a line down the middle: a short web page's content can all sit near the top, or to
-  // one side, and a blank point on it hits nothing at all.
+  // Down the middle: an element the walk missed, smaller than a page (a container hides it from the walk).
   BOOL hidden = NO;
+  for (double fy = 0.3; fy < 0.8 && !hidden; fy += 0.2) {
+    CGPoint p = CGPointMake(CGRectGetMidX(screen), screen.size.height * fy);
+    if (isCovered(p)) continue;
+    NSMutableDictionary *n = probeAt(p, NULL);
+    if (n && !listed(out, n) && CGRectGetWidth(frameOf(n)) * CGRectGetHeight(frameOf(n)) < area * 0.5) hidden = YES;
+  }
+  // Then a sparse grid, for a page another process draws: a short web page's content can all sit near the top
+  // or to one side, where the line above misses it. Only another process's content counts here, so the app's
+  // own unlisted bits (map labels) don't buy every read a full scan.
   for (double fy = 0.1; fy < 1 && !hidden; fy += 0.2) {
     for (double fx = 1 / 6.0; fx < 1 && !hidden; fx += 1 / 3.0) {
       CGPoint p = CGPointMake(screen.size.width * fx, screen.size.height * fy);
       if (isCovered(p)) continue;
-      // Anything the walk didn't reach was drawn by another process, page-sized or not: a blank point on a
-      // web page can snap to its web area.
-      NSMutableDictionary *n = probeAt(p);
-      if (n && !listed(out, n)) hidden = YES;
+      int pid = 0;
+      NSMutableDictionary *n = probeAt(p, &pid);
+      BOOL small = n && CGRectGetWidth(frameOf(n)) * CGRectGetHeight(frameOf(n)) < area * 0.5; // not a page-sized surface
+      if (small && !listed(out, n) && appPid && pid && pid != appPid) hidden = YES;
     }
   }
   if (!hidden) return;
@@ -259,7 +274,7 @@ static void scanForHiddenContent(NSMutableArray *out, CGRect screen) {
     for (double x = step / 2; x < screen.size.width; x += step) {
       CGPoint p = CGPointMake(x, y);
       if (isCovered(p)) continue;
-      NSMutableDictionary *n = probeAt(p);
+      NSMutableDictionary *n = probeAt(p, NULL);
       CGRect f = n ? frameOf(n) : CGRectZero;
       // The probed cell is explained whatever comes back: hit-testing snaps a blank point to the
       // nearest element, which needn't contain it. A real element (not a page-sized container)
@@ -286,7 +301,7 @@ static NSArray *readTree(BOOL all) {
   for (NSValue *h in holes) {
     fillHole(h.rectValue, out);
   }
-  scanForHiddenContent(out, screen);
+  scanForHiddenContent(out, screen, app ? pidOf(app) : 0);
   return out;
 }
 

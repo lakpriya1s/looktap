@@ -9,8 +9,9 @@
 ### Fixed
 - **iOS: web pages could be missing from `ls`.** Web content is drawn by another process, and looktap hit-tested only
   three points down the middle of the screen to decide whether to look for it. A short page whose content sat near the
-  top or to one side wasn't seen at all, and a field on it read back empty. The check now covers the screen on a
-  sparse grid. Map screens list the map's labels as a result, at about half a second more per read.
+  top or to one side wasn't seen at all, and a field on it read back empty. The check now also probes a sparse
+  grid, counting only content another process draws, so the full scan still runs only for web pages and sheets:
+  other screens cost a few milliseconds more per read.
 - **iOS simulator: `fill` could lose text in a web field.** WebKit drops keys typed while it applies an autocorrection,
   so `sam_kim@example.com` could end up as `sam_kim`. `fill` now reads the field back and, if it doesn't hold the text,
   pastes it instead, then empties the clipboard again.
