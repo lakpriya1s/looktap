@@ -138,7 +138,7 @@ async function play(scene, { restart = false } = {}) {
 }
 
 $('[data-replay]').addEventListener('click', () => active && play(active, { restart: true }));
-soundButton($('[data-sound]'), { stored, store, unlocked: () => active && play(active, { restart: true }) });
+soundButton($('[data-sound]'), { stored, store, stage: $('.stage-inner'), unlocked: () => active && play(active, { restart: true }) });
 for (const b of $$('[data-platform-set]')) b.addEventListener('click', () => setPlatform(b.dataset.platformSet));
 
 // The section crossing the viewport's middle line is the one playing.

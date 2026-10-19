@@ -1,6 +1,6 @@
 // Sound for the landing page's story: the social video's effects (local/video/sound.py), synthesized live with Web
 // Audio, so there are no audio files. Off until the reader turns it on; the choice is remembered. Nothing plays
-// while the tab is hidden. The phone sits a little to the right, as in the video.
+// while the tab is hidden or the demo is scrolled out of view. The phone sits a little to the right, as in the video.
 const PHONE = 0.25;
 const midi = (m) => 440 * 2 ** ((m - 69) / 12);
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -8,6 +8,7 @@ const rnd = (a, b) => a + Math.random() * (b - a);
 let ac = null;
 let master = null;
 let on = false;
+let inView = true;
 
 /** The audio graph, made on first use: effects → master → (dry + a short room) → a gentle limiter. */
 function audio() {
@@ -235,9 +236,9 @@ const FX = {
   },
 };
 
-/** Play an effect, if sound is on and the page is visible. */
+/** Play an effect, if sound is on and the page and the demo are visible. */
 export function play(name, ...args) {
-  if (!on || document.hidden || !ac || ac.state !== 'running') return;
+  if (!on || !inView || document.hidden || !ac || ac.state !== 'running') return;
   try {
     FX[name](...args);
   } catch {}
@@ -288,8 +289,11 @@ export function result(lines) {
  key (not a scroll), so until then the button pulses, and that first touch starts it: `unlocked` then replays the
  scene, so its sound is heard from the start. Clicking the button mutes and unmutes.
  */
-export function soundButton(button, { stored, store, unlocked }) {
+export function soundButton(button, { stored, store, unlocked, stage }) {
   if (typeof AudioContext === 'undefined') return void (button.hidden = true);
+  // Silent while the demo is off screen: a click on a nav link must not make sounds from something you can't see.
+  if (stage && 'IntersectionObserver' in window)
+    new IntersectionObserver(([e]) => (inView = e.isIntersecting), { threshold: 0.3 }).observe(stage);
   on = stored('sw-sound') !== 'off';
   const show = () => {
     button.setAttribute('aria-pressed', String(on));
@@ -304,7 +308,7 @@ export function soundButton(button, { stored, store, unlocked }) {
       .then(() => {
         show();
         // The first touch was the mute button itself: no replay.
-        if (on && !button.contains(e.target)) unlocked?.();
+        if (on && inView && !button.contains(e.target)) unlocked?.();
       });
   };
   for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, unlock, true);
