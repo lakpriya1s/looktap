@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.1
 
 ### Added
 - **`apps [filter] [--all] [--json]`** lists the installed apps: id, name (iOS) and version, with `--all` the system's
