@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { escapeInput, keycode, parseDensity, parseNodes, parseRotation } from '../lib/android.js';
+import { androidApps, escapeInput, keycode, parseDensity, parseNodes, parseRotation } from '../lib/android.js';
 
 test('parseDensity prefers the override and converts to px per dp', () => {
   assert.equal(parseDensity('Physical density: 420\n'), 2.625);
@@ -45,4 +45,12 @@ test('parseRotation reads the display rotation from dumpsys, in quarter turns', 
   assert.equal(parseRotation('      mCurrentRotation=ROTATION_90\n'), 1);
   assert.equal(parseRotation('    mRotation=3 mDeferredRotationPauseCount=0\n'), 3);
   assert.equal(parseRotation('nothing here'), 0);
+});
+
+test('androidApps reads pm list packages, with or without version codes', () => {
+  assert.deepEqual(androidApps('package:dev.looktap.testapp versionCode:12\npackage:com.android.settings versionCode:36\n'), [
+    { id: 'com.android.settings', version: '36' },
+    { id: 'dev.looktap.testapp', version: '12' },
+  ]);
+  assert.deepEqual(androidApps('package:com.android.chrome\r\n'), [{ id: 'com.android.chrome', version: '' }]);
 });

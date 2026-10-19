@@ -83,6 +83,8 @@ debug                             [app] defaults to --app / config, else the app
   app [app]                       which app is in front, and whether [app] is running (pid)
   app [app] --paths               where its files are: iOS the bundle, data folder and app groups (on the Mac),
                                   Android its APKs and data folder (readable with run-as on debuggable builds)
+  apps [filter] [--all] [--json]  installed apps: id, name, version (--all: system apps too). A filter
+                                  matches part of the id or name; nothing matching → exit 1
   capabilities [--json]           what this device can't do, or can only in part, and why
 
 app state                         <app> defaults to --app / config (never the app in front)
@@ -538,6 +540,7 @@ async function act(d, cmd, args, opts) {
     case 'logs': return showLogs(d, args[0], opts);
     case 'crashes': return showCrashes(d, args[0], opts);
     case 'app': return opts.flags.has('paths') ? showPaths(d, args[0]) : showApp(d, args[0]);
+    case 'apps': return showApps(d, args.join(' '), opts);
     case 'install': {
       need(1, 'install <path.app|path.apk> [--grant]');
       const id = await d.install(args[0], { grant: opts.flags.has('grant') });
@@ -685,6 +688,24 @@ async function showPaths(d, arg) {
   const app = arg || d.app;
   if (!app) throw new UsageError('usage: looktap app <app> --paths (or set --app / the config)');
   for (const [what, path, note] of await d.paths(app)) console.log(`${what.padEnd(6)}  ${path}${note ? `  (${note})` : ''}`);
+}
+
+/**
+ `apps [filter]`: the installed apps, one per line (--all: system apps too). A filter matches part of the id or
+ name, and when nothing matches it fails (exit 1): `looktap apps com.example` answers "is it installed?".
+ */
+async function showApps(d, filter, opts) {
+  const q = filter.toLowerCase();
+  // A named app is looked for among system apps too: com.apple.Preferences, com.android.settings.
+  const all = opts.flags.has('all') || Boolean(q);
+  const apps = (await d.apps({ all })).filter((a) => !q || a.id.toLowerCase().includes(q) || a.name?.toLowerCase().includes(q));
+  if (opts.flags.has('json')) return console.log(JSON.stringify(apps));
+  if (!apps.length) {
+    if (q) throw new Error(`no installed app matches "${filter}"`);
+    return console.log('no apps installed besides the system ones (--all lists those)');
+  }
+  const width = Math.max(...apps.map((a) => a.id.length));
+  for (const a of apps) console.log([a.id.padEnd(width), a.name, a.version && `v${a.version}`, a.system && '(system)'].filter(Boolean).join('  ').trimEnd());
 }
 
 /**

@@ -3,10 +3,16 @@
 ## Unreleased
 
 ### Added
+- **`apps [filter] [--all] [--json]`** lists the installed apps: id, name (iOS) and version, with `--all` the system's
+  own apps too. A filter matches part of the id or name and exits 1 when nothing matches, so `looktap apps com.example`
+  answers "is it installed?" without `simctl listapps` or `pm list packages`.
 - **`app [app] --paths`** prints where the app's files are. iOS simulator: its bundle, data folder and app groups, as
   paths on the Mac. Android: its APKs and data folder, and whether `run-as` can read it (debuggable builds only).
 
 ### Fixed
+- **`boot` waits for a simulator or emulator that's still starting** instead of returning at once or starting a second
+  copy: an emulator adb still lists offline, one whose Android hasn't finished booting, a simulator still booting.
+- **`devices` lists a starting emulator as starting,** not as an offline phone to reconnect.
 - **iOS: web pages could be missing from `ls`.** Web content is drawn by another process, and looktap hit-tested only
   three points down the middle of the screen to decide whether to look for it. A short page whose content sat near the
   top or to one side wasn't seen at all, and a field on it read back empty. The check now also probes a sparse
