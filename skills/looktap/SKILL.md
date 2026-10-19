@@ -153,6 +153,13 @@ looktap logs --all
 # crashes, ANRs and low-memory kills since your last `crashes` (first time: the last hour)
 looktap crashes
 looktap crashes com.example.myapp --since 1h
+# CPU (100% = one core), memory and threads of the app (iOS: the footprint Xcode shows; Android: PSS, heaps);
+# --for samples once a second, then prints avg/max. Android --frames: frames and jank since the last --frames
+looktap perf
+looktap perf com.example.myapp --for 10s
+looktap perf --frames --json
+# cold start, timed: until the app is in front and until its first screen settled (Android: also TotalTime)
+looktap launch com.example.myapp --time
 # which app is in front, and whether the given one is running
 looktap app
 looktap app com.example.myapp

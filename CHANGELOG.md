@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- **`perf [app]`** reads the app's CPU (100% is one core), memory and threads. On the iOS simulator it reads the
+  memory footprint Xcode's gauge shows and its peak, from the Mac's own tools; on Android PSS, RSS, Java and native
+  heap. `--for 10s` takes a reading each second, then prints the average and maximum. `--json` for scripts.
+- **`perf --frames`** (Android): frames drawn since the last call, the janky share, p50–p99 frame time, and why
+  frames were late (slow UI thread, missed deadline, input latency).
+- **`launch --time`** times a cold start, from the start command (after the old copy is stopped) until the app is in
+  front and until its first screen settled. Android adds the system's own `TotalTime`. When screen reads are slow
+  (right after a launch they can take a second), it says how much sooner the screen may have settled.
+
+### Changed
+- iOS simulator `launch` stops the old copy first, then starts the app (it was one `simctl` call).
+
 ## 0.5.1
 
 ### Added

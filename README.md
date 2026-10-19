@@ -813,7 +813,7 @@ to settle unless asked (`--ls`).
 | `looktap back` | Android system Back · iOS: the navigation bar's back button, else a top-left "Back" button |
 | `looktap home` | The Home button: goes to the home screen and checks it's in front; the app keeps running |
 | `looktap open <url>` | Opens a deep link |
-| `looktap launch [app]` | (Re)starts the app |
+| `looktap launch [app] [--time]` | (Re)starts the app. `--time` times a cold start: until the app is in front, and until its first screen settled. It says when screen reads are too slow to time the screen precisely. Android adds the system's own `TotalTime` |
 | `looktap stop [app]` | Terminates the app and waits until its process is gone |
 | `looktap bio match\|nomatch` | Face ID (iOS) or fingerprint (Android) |
 | `looktap rotate [portrait\|landscape\|left\|right\|upsidedown]` | Turns the device (`landscape` = `left`, turned counter-clockwise). `ls`, taps and screenshots follow the turned screen. Says so if the app doesn't support the orientation. Without an argument, prints the current one |
@@ -822,6 +822,8 @@ to settle unless asked (`--ls`).
 | `looktap crashes [app] [--since 1h]` | Crashes, ANRs and low-memory kills since the last `crashes` (the first call covers the last hour) |
 | `looktap app [app]` | The app in front and its pid, and whether `[app]` is running |
 | `looktap app [app] --paths` | Where the app's files are. iOS simulator: its bundle, data folder and app groups, as paths on the Mac. Android: its APKs and data folder, which `adb shell run-as` reads on debuggable builds |
+| `looktap perf [app] [--for 10s] [--json]` | The app's CPU (100% is one core), memory and threads. iOS simulator: the memory footprint Xcode's gauge shows, and its peak. Android: PSS, RSS, Java and native heap. `--for` takes a reading each second, then prints avg/max |
+| `looktap perf [app] --frames` | Android: frames drawn since the last `perf --frames`, the janky share, p50/p90/p95/p99 frame time, and why frames were late |
 | `looktap capabilities [--json]` | What this device can't do, or can only in part, and why. `--json`: every command with `supported`, `conditional` or `unsupported` |
 | **App state** (`<app>` from the argument or `--app` / config, never the app in front) | |
 | `looktap apps [filter] [--all] [--json]` | The installed apps: id, name (iOS) and version. `--all` adds the system's own apps. A filter matches part of the id or name, system apps included, and exits 1 when nothing matches, so `looktap apps com.example` answers "is it installed?" |
@@ -876,6 +878,8 @@ front of you (`--json` for every command).
 | `location clear` | ✅ | ❌ a real device uses its own GPS; use a simulator to fake one | ❌ the emulator keeps its last location: set a new one instead | ❌ a device uses its own GPS (faking it needs a mock-location app) |
 | `logs` | ✅ | ❌ use Console.app with the device selected | ✅ | ✅ |
 | `network` | ❌ the simulator uses the Mac's own network, so it can't go offline or slow by itself. Network Link Conditioner (Xcode → Open Developer Tool → More Developer Tools → Additional Tools) throttles the whole Mac | ❌ turn on Airplane Mode in Control Center | ✅ | ⚠️ airplane mode: over wireless adb, going offline also drops looktap's connection |
+| `perf` | ✅ | ❌ a device's CPU and memory are read through Instruments: Xcode → Debug Navigator while running, or Instruments' Activity Monitor | ✅ | ✅ |
+| `perf --frames` | ❌ the simulator has no frame counter outside Instruments: Xcode → Debug → View Debugging, or Instruments' Animation Hitches | ❌ a device's CPU and memory are read through Instruments: Xcode → Debug Navigator while running, or Instruments' Activity Monitor | ✅ | ✅ |
 | `permission` | ⚠️ camera and notifications can't be set: simctl privacy has no such service | ❌ change it in the Settings app | ⚠️ contacts-limited, reminders and siri are iOS-only; any android.permission.* works | ⚠️ contacts-limited, reminders and siri are iOS-only; any android.permission.* works |
 | `push` | ✅ | ❌ send a real push through APNs | ❌ Android pushes come through Firebase (FCM), so adb can't inject one: send it from your backend or the Firebase console | ❌ Android pushes come through Firebase (FCM), so adb can't inject one: send it from your backend or the Firebase console |
 | `record` | ✅ | ❌ use burst for frames, or QuickTime Player for video | ⚠️ at most 3 minutes, and FLAG_SECURE screens record black | ⚠️ at most 3 minutes, and FLAG_SECURE screens record black |
