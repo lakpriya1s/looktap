@@ -57,6 +57,7 @@ test('memory as JSON uses camelCase keys', () => {
 test('a reading as JSON rounds CPU to one decimal', () => {
   assert.deepEqual(readingJson({ pid: 1, ms: 500, cpu: 124.04580152671744, memory: [['footprint', 5]], threads: 2 }), { pid: 1, ms: 500, cpu: 124, memory: { footprint: 5 }, threads: 2 });
   assert.equal(readingJson({ cpu: 7.25, memory: [] }).cpu, 7.3);
+  assert.equal(readingJson({ ms: 1160.59, at: 8512.4, cpu: 0, memory: [] }).ms, 1161);
 });
 
 test('duration: 10s, 1m, 500ms, bare seconds', () => {
