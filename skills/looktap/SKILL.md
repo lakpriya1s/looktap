@@ -163,6 +163,10 @@ looktap capabilities
 ### App state
 
 ```bash
+# is it installed, and which build? A filter matches part of the id or name (system apps included); exit 1 if none
+looktap apps
+looktap apps com.example
+looktap apps --all --json
 # a simulator .app or an .apk (keeps the app's data; --grant: every runtime permission); prints the app id
 looktap install build/MyApp.app
 looktap install app-debug.apk --grant
@@ -220,7 +224,8 @@ looktap codegen flows/checkout.txt com.example.app
 # what's running or connected: simulator, emulator or real phone (model, OS, USB/Wi-Fi), window or headless,
 # and what the user must do for a phone that isn't ready. --all: also what boot can start. --json: structured
 looktap devices --all
-# boot one by name (UDID or AVD too), wait until it's ready; --window (default) or --headless
+# boot one by name (UDID or AVD too), wait until it's ready; --window (default) or --headless.
+# One that's still starting (devices says so) is waited for: use boot, not an adb/simctl polling loop
 looktap boot "iPhone 16 Pro" --window
 looktap boot Pixel_9a --headless
 looktap shutdown Pixel_9a
@@ -372,7 +377,9 @@ Then look at the few frames that matter, not all of them.
   `shot` to see it. Never enter a passcode unless the user gave it to you for this device.
 - **Start with `looktap devices`** to see which devices are real phones and which are simulators or emulators.
   A phone marked "not ready" needs the user: tell them exactly what it says (accept the USB debugging prompt, tap
-  Trust, turn on Developer Mode).
+  Trust, turn on Developer Mode). One marked "still starting" needs no one: `looktap boot <name>` waits for it.
+- **Use looktap, not adb or simctl, for device and app state:** `boot` instead of polling for boot completion,
+  `apps <id>` instead of `simctl listapps` or `pm list packages` to check an app is installed.
 - **If a command says the device is locked**, ask the user to unlock it. Don't retry, and never enter a passcode
   unless they gave it to you for this device.
 - **If `hidekb` exits 2** (iOS search keyboards have no Done key), tap the screen's close or cancel control.

@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- **`apps [filter] [--all] [--json]`** lists the installed apps: id, name (iOS) and version, with `--all` the system's
+  own apps too. A filter matches part of the id or name and exits 1 when nothing matches, so `looktap apps com.example`
+  answers "is it installed?" without `simctl listapps` or `pm list packages`.
+
+### Fixed
+- **`boot` waits for a simulator or emulator that's still starting** instead of returning at once or starting a second
+  copy: an emulator adb still lists offline, one whose Android hasn't finished booting, a simulator still booting.
+- **`devices` lists a starting emulator as starting,** not as an offline phone to reconnect.
+
 ## 0.5.0
 
 ### Added
