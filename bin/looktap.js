@@ -12,6 +12,7 @@ import { clock, grepper, startOf, tail, whichApp } from '../lib/logs.js';
 import { ACTIONS as PERMISSION_ACTIONS } from '../lib/permissions.js';
 import { KINDS, capabilities, capability, unsupported } from '../lib/capabilities.js';
 import { Recorder, TouchReader, classify, mapper, quote } from '../lib/codegen.js';
+import { AGENTS, PROJECT_DEFAULT, claudePlugin, detectAgents, installSkill, installedVersion, pickAgents, skillsDir, uninstallSkill } from '../lib/agents.js';
 import { boot, shutdown } from '../lib/boot.js';
 import { formatDevice, inventory } from '../lib/devices.js';
 import { ORIENTATIONS, coordinates, pushPayload, rotation, textSize } from '../lib/conditions.js';
@@ -127,7 +128,11 @@ batch & agents
                                   flow, exit 1 if any fails. A failure saves the screen, a screenshot,
                                   error logs and crashes in <out>/failures/<flow>/; --junit writes a report.
                                   An app that dies during a flow fails it
-  skill [--install]               print the AI-agent guide (--install: ~/.claude/skills/looktap/SKILL.md)
+  skill [--install|--uninstall|--list] [--agents a,b|all] [--project]
+                                  print the AI-agent guide. --install: into every coding agent found here
+                                  (Claude Code, Codex, Cursor, Gemini CLI, Copilot, OpenCode, …), or --agents;
+                                  run it again after an upgrade. --project: into this repo instead of your
+                                  home folder. --list: the agents, what's installed where
 
 options
   -p, --platform ios|android      default: whichever has exactly one booted device
@@ -165,7 +170,8 @@ function parse(argv) {
     else if (a === '--lines') opts.lines = Number(val());
     else if (a === '--junit') opts.junit = val();
     else if (a === '--for') opts.for = val();
-    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window', '--paths', '--frames', '--time', '--resume'].includes(a)) opts.flags.add(a.slice(2));
+    else if (a === '--agents') opts.agents = val();
+    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window', '--paths', '--frames', '--time', '--resume', '--project', '--uninstall', '--list'].includes(a)) opts.flags.add(a.slice(2));
     else if (a === '--') pos.push(...argv.slice(i + 1)), (i = argv.length);
     else pos.push(a);
   }
@@ -234,6 +240,7 @@ function doctor() {
       console.log(`  iOS input: ${process.env.LOOKTAP_IOS_HID || (modern ? 'dtuhid' : 'indigo')} (CoreSimulator ${cs})`);
     }
   }
+  skillStatus(ok);
   const adb = ADB !== 'adb' || has('adb');
   ok(adb, `adb (Android)${ADB !== 'adb' ? `: ${ADB}` : ''}`, 'install Android SDK platform-tools (or set ANDROID_HOME)');
   if (adb) {
@@ -1152,13 +1159,84 @@ async function evidence(d, file, since, r) {
   return relative(process.cwd(), dir) || dir;
 }
 
+/** The repo the current folder is in (where .git is), else the current folder: where --project installs go. */
+function repoRoot() {
+  for (let dir = process.cwd(); ; dir = dirname(dir)) {
+    if (existsSync(join(dir, '.git'))) return dir;
+    if (dir === dirname(dir)) return process.cwd();
+  }
+}
+
+const tilde = (p) => (p.startsWith(homedir()) ? `~${p.slice(homedir().length)}` : relative(process.cwd(), p) || p);
+
+/**
+ `skill`: print the guide. --install: write it for every coding agent found on this machine (or --agents), each in
+ the folder and frontmatter that agent reads; --project: into this repo for the team. --uninstall takes it out
+ again, --list shows every supported agent and what's installed where.
+ */
 function skill(opts) {
-  const text = readFileSync(SKILL, 'utf8');
-  if (!opts.flags.has('install')) return process.stdout.write(text);
-  const dest = join(homedir(), '.claude', 'skills', 'looktap', 'SKILL.md');
-  mkdirSync(dirname(dest), { recursive: true });
-  writeFileSync(dest, text);
-  console.log(`installed ${dest}`);
+  const source = readFileSync(SKILL, 'utf8');
+  const home = homedir();
+  const actions = ['install', 'uninstall', 'list'].filter((f) => opts.flags.has(f));
+  if (actions.length > 1) throw new UsageError('skill takes one of --install, --uninstall, --list');
+  if (!actions.length) {
+    if (opts.agents || opts.flags.has('project')) throw new UsageError('--agents and --project go with skill --install, --uninstall or --list');
+    return process.stdout.write(source);
+  }
+  const root = opts.flags.has('project') ? repoRoot() : null;
+  const found = detectAgents({ home });
+  if (actions[0] === 'list') {
+    const width = Math.max(...AGENTS.map((a) => a.name.length));
+    const dirs = AGENTS.map((a) => skillsDir(a, { home, root }));
+    const dirWidth = Math.max(...dirs.map((d) => tilde(d).length));
+    console.log(`looktap ${pkg.version} · agent guide ${root ? `in ${tilde(root)}` : 'in your home folder'}\n`);
+    AGENTS.forEach((a, i) => {
+      const v = installedVersion(join(dirs[i], 'looktap', 'SKILL.md'));
+      const plugin = a.id === 'claude' && !root && claudePlugin({ home }) ? 'the looktap plugin' : '';
+      const state = v == null ? plugin : v === pkg.version ? `installed (${v})` : `installed (${v}) — outdated: looktap skill --install`;
+      console.log(`${a.id.padEnd(12)} ${a.name.padEnd(width)}  ${found.includes(a) ? 'found' : '     '}  ${tilde(dirs[i]).padEnd(dirWidth)}  ${state}`.trimEnd());
+    });
+    return;
+  }
+  // Which agents: named, else the ones found here (for a repo: the two folders most agents read).
+  let agents = opts.agents ? pickAgents(opts.agents) : root ? AGENTS.filter((a) => PROJECT_DEFAULT.includes(a.id)) : found;
+  if (actions[0] === 'uninstall') {
+    const removed = uninstallSkill(opts.agents ? agents : AGENTS, { home, root });
+    if (!removed.length) return console.log('the looktap skill is not installed for any agent here');
+    for (const r of removed) console.log(`removed  ${r.agent.name.padEnd(16)} ${tilde(r.dir)}`);
+    return;
+  }
+  let note = '';
+  // Claude Code with the looktap plugin already has the skill: a second copy would show it twice.
+  const plugin = !root && claudePlugin({ home });
+  if (plugin && !opts.agents && agents.some((a) => a.id === 'claude')) {
+    agents = agents.filter((a) => a.id !== 'claude');
+    note += 'Claude Code: skipped, it has the looktap plugin, which carries the skill and updates with it.\n';
+  } else if (plugin && agents.some((a) => a.id === 'claude'))
+    console.error('looktap: warning: Claude Code also has the looktap plugin, so it will see the skill twice (looktap skill --uninstall --agents claude undoes this copy)');
+  if (!agents.length && note) return console.log(note.trim());
+  if (!agents.length) {
+    agents = AGENTS.filter((a) => PROJECT_DEFAULT.includes(a.id));
+    note += 'No coding agent found on this machine, so it went to the two folders most agents read.\n';
+  }
+  const written = installSkill(agents, { source, version: pkg.version, home, root });
+  console.log(`installed the looktap skill (${pkg.version}) for:`);
+  for (const w of written) console.log(`  ${w.agents.map((a) => a.name).join(', ').padEnd(16)} ${tilde(w.file)}`);
+  const missing = AGENTS.filter((a) => !agents.includes(a) && !(a.id === 'claude' && plugin)).map((a) => a.id);
+  console.log(
+    `${note}Restart an agent that's already running to load it.${missing.length ? ` Others: looktap skill --install --agents <${missing.slice(0, 4).join('|')}|…> (looktap skill --list shows them all)` : ''}`,
+  );
+}
+
+/** doctor's line about the agent guide: which agents have it, and whether a copy is older than this looktap. */
+function skillStatus(ok) {
+  const home = homedir();
+  const have = AGENTS.map((a) => ({ a, v: installedVersion(join(skillsDir(a, { home }), 'looktap', 'SKILL.md')) })).filter((x) => x.v != null);
+  const stale = have.filter((x) => x.v !== pkg.version);
+  if (claudePlugin({ home }) && !have.some((x) => x.a.id === 'claude')) have.unshift({ a: { name: 'Claude Code (plugin)' }, v: pkg.version });
+  const names = have.map((x) => x.a.name).join(', ');
+  if (!have.length) return ok(false, 'agent skill: not installed for any agent', 'looktap skill --install');
+  ok(!stale.length, `agent skill: ${names}${stale.length ? ` (outdated for ${stale.map((x) => `${x.a.name} ${x.v}`).join(', ')})` : ''}`, 'looktap skill --install');
 }
 
 main().catch((e) => {
