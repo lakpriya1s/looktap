@@ -49,6 +49,36 @@ It works on `tap`, `longpress`, `zoom`, `tapxy`, `fill`, `type`, `key`, `hidekb`
 **`--ls` stops at a loading skeleton too.** If it shows a heading but none of the content, run
 `looktap wait "<text you expect>"` rather than acting on the placeholder.
 
+## Navigating an app
+
+Most runs that go wrong do so because the agent no longer knows which screen it is on, not because a command
+failed. Keep track of that at every step:
+
+1. **Check that each screen change landed.** After a `tap --ls` that should open a screen, check for something only
+   that screen has before you act on it: `looktap expect "Order details"`. If it fails, don't press on: `shot`
+   and look.
+2. **A tap that changed nothing is a failure, not a pause.** Find out why before tapping again, in this order:
+   something drawn on top (a toast, a sheet, React Native's LogBox: `tap` names it), the keyboard covering the
+   target, the element disabled or still loading, or the wrong one of two same-named elements.
+3. **Development builds: dismiss LogBox at the start.** `ls` notes when React Native's warning toast is up. It
+   blocks taps across the bottom of the screen, a tab bar included: tap its × (`tap` prints the exact `tapxy`).
+   For long sessions ask the developer for `LogBox.ignoreAllLogs()` in test builds.
+4. **Mind the keyboard.** Hide it (`hidekb`) before tapping anything in the lower half of the screen. `scrollto`
+   swipes above it on its own and stops with a message if it leaves no room. `hidekb` also takes focus from the
+   field, which runs validation and can close a search: do it on purpose, not as a reflex.
+5. **Tab bars: tap by `@ref`.** A tab often has the same name as a heading on the screen.
+6. **Count your way back.** One `back` too many leaves the app. Prefer the screen's own back control, and after
+   each one check that you landed where you expected.
+7. **When everything is "not found", check the app before the label.** looktap reports a system "isn't
+   responding" / "keeps stopping" dialog; a crash or a lock screen looks like an empty screen. Run `looktap app`
+   and `looktap crashes`, and only then try again.
+8. **Don't hammer a debug build.** Leave a second or two between repeated actions (searches, fills, refreshes) on a
+   React Native debug build, especially on a small emulator: a burst of them can make the app stop responding.
+9. **The app can come back somewhere else.** A low-memory kill, `textsize`, `appearance` or a crash can restart it
+   on its first screen or lock screen. After any of them, read the screen again and expect the entry point.
+10. **Get back to the app without restarting it:** `looktap launch <app> --resume`. Plain `launch` restarts it
+    from its first screen (and its lock screen), losing where you were.
+
 ## Commands
 
 ### Look
@@ -119,6 +149,8 @@ looktap open "myapp://orders/42"
 # (re)start the app
 looktap launch
 looktap launch com.example.myapp
+# bring it back to the front as it was (simulator, emulator, Android phone): no restart, no lost screen
+looktap launch com.example.myapp --resume
 looktap stop com.example.myapp   # terminate it; waits until the process is gone
 # Face ID / fingerprint
 looktap bio match
@@ -288,7 +320,12 @@ On exit 2, read the message, run `ls`, adjust. Don't retry the same command blin
 - **`@N` refs** come from the most recent `ls`/`--ls` on that device. Use them for unlabelled buttons and
   duplicate labels. A ref whose element moved or vanished is an error, never a wrong tap: run `ls` again.
 - **Labels** match exactly first, then a unique prefix or substring. An ambiguous label is an error that lists
-  the matches: use more of the label, `--exact`, or a ref.
+  the matches: use more of the label, `--exact`, or a ref. The same label in two separate places (a section
+  heading and a tab, both "Library") is ambiguous too, even with `--exact`: tap the one you mean by `@ref`.
+- **Android text fields** are named by their label or hint, as on iOS, with what's typed as their value
+  (`EditText … Search contacts… = pizza`): `fill "Search contacts…"` and `expect "Search contacts…" = pizza` work
+  once the field holds text. `fill` reads the field back, types again key by key if a character went missing,
+  and exits 1 naming what the field holds if it still doesn't match.
 - **`tapxy x y`** is the last resort, for things `ls` doesn't list.
 - **After `rotate`, read the screen again.** Old refs and coordinates are stale.
 
@@ -384,8 +421,13 @@ Then look at the few frames that matter, not all of them.
 - **Let a screen settle before typing into it.** Add `--ls` to the tap that opens it: some screens (search
   screens especially) clear their field just after they open, taking the first letters with them.
 - **App-state and condition commands need the app id.** They never act on whatever happens to be on screen.
-- **If `tap` warns that another element covers the point** (a toast, a banner, a floating bar), the tap
-  probably hit that: dismiss it, then tap again.
+- **`tap` aims at a part of the target nothing covers.** When a toast or bar hides its middle, it taps the
+  uncovered part and says `off-centre`. If it warns that another element covers the point, nothing of the target
+  was left clear and the tap probably hit that: dismiss it (React Native's LogBox toast: its ×), then tap again.
+- **`hidekb` also takes focus from the field** (Android too), so validate-on-blur errors appear after it.
+- **After `textsize` or `appearance` on Android**, a note that the app restarted means every ref is stale: `ls`.
+- **`shot` says how the image maps to the screen** (on stderr): `216x384 px = 360x640 dp: tapxy x y = image x y ×
+  1.667`. Multiply a point read off the image by that factor for `tapxy`.
 - **If `ls` says only the status bar is readable**, a system prompt (passcode, permission, alert) is on top.
   `shot` to see it. Never enter a passcode unless the user gave it to you for this device.
 - **Measure performance with `perf` and `launch --time`, not by eye.** Simulator numbers are the Mac's CPU and
