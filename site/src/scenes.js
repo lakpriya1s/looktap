@@ -507,7 +507,7 @@ export const SCENES = [
     id: 'agents',
     kicker: '12 · For agents',
     title: 'Built for the agent loop',
-    body: `<p>Turns cost more than milliseconds. <code>--ls</code> on any action returns the settled screen, so look-then-act is one call. <code>run</code> batches known steps in one process, <code>ls --json</code> gives structure, and the Claude Code plugin teaches Claude the loop in about 150 tokens per session.</p>
+    body: `<p>Turns cost more than milliseconds. <code>--ls</code> on any action returns the settled screen, so look-then-act is one call. <code>run</code> batches known steps in one process, <code>ls --json</code> gives structure, and the skill teaches the loop in about 150 tokens per session: the Claude Code plugin, or <code>looktap skill --install</code> for Codex, Cursor, Gemini CLI, Copilot and a dozen more.</p>
 <p>For chat apps without a shell, <code>npx -y @looktap/mcp</code> serves the same commands over MCP. It's in the official MCP Registry.</p>
 <div class="tools" data-tools aria-label="MCP tools"></div>`,
     covers: ['run', 'mcp', 'skill'],
