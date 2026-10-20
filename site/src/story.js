@@ -115,10 +115,14 @@ function termTitle() {
   $('[data-term-title]').textContent = `agent ➜ ${active?.device?.(ios) || (ios ? 'iPhone 18 Pro simulator' : 'Pixel 11 emulator')}`;
 }
 
-async function play(scene, { restart = false } = {}) {
+/**
+ Play a scene. `restart` replays the one showing; `auto` is the demo moving on by itself, which leaves the page's
+ text where the reader has it.
+ */
+async function play(scene, { restart = false, auto = false } = {}) {
   const token = ++run;
   active = scene;
-  if (!restart) for (const s of $$('.scene')) s.classList.toggle('is-active', s.dataset.scene === scene.id);
+  if (!restart && !auto) for (const s of $$('.scene')) s.classList.toggle('is-active', s.dataset.scene === scene.id);
   $('[data-scene-label]').textContent = scene.kicker;
   termTitle();
   for (const d of $$('[data-dot]')) d.classList.toggle('on', d.dataset.dot === scene.id);
@@ -139,7 +143,12 @@ async function play(scene, { restart = false } = {}) {
       print(out || []);
       await sleep(900);
     }
-    if (token === run) line('<span class="prompt">></span> <span class="caret"></span>', 'in idle');
+    // No waiting prompt: after a moment the demo moves on to the next scene, so readers see there's more. Not with
+    // reduced motion, where the pauses are skipped and it would race through every scene.
+    if (reduce.matches) return;
+    await sleep(1500);
+    if (token !== run) throw new Cancelled();
+    play(SCENES[(SCENES.indexOf(scene) + 1) % SCENES.length], { auto: true });
   } catch (e) {
     if (!(e instanceof Cancelled)) throw e;
   }
