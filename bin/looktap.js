@@ -15,10 +15,10 @@ import { Recorder, TouchReader, classify, mapper, quote } from '../lib/codegen.j
 import { boot, shutdown } from '../lib/boot.js';
 import { formatDevice, inventory } from '../lib/devices.js';
 import { ORIENTATIONS, coordinates, pushPayload, rotation, textSize } from '../lib/conditions.js';
-import { appGone, center, coveringAt, expectOn, forgetFront, formatRow, isRef, lastFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, signature, sliding, visibleRows, waitFor } from '../lib/screen.js';
+import { LOGBOX, appGone, center, expectOn, poller, tapPoint, forgetFront, formatRow, isRef, lastFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, signature, sliding, visibleRows, waitFor } from '../lib/screen.js';
 import { duration, formatFrames, formatReading, formatSamples, readingJson } from '../lib/perf.js';
 import { flowFiles, flowName, junit } from '../lib/testing.js';
-import { ADB, HOME, LOCKED, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
+import { ADB, HOME, LOCKED, NotFound, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
 
 const SKILL = new URL('../skills/looktap/SKILL.md', import.meta.url);
 
@@ -47,7 +47,7 @@ look
   expect <label|@ref> [= value] [--gone] [--exact]
                                   check it's on screen (with that value), or with --gone that it isn't.
                                   Waits up to --wait (3 s) for it; fails with what's there instead (exit 1)
-  scrollto <label> [--up]         swipe until it is fully on screen (default scrolls down)
+  scrollto <label> [--up]         swipe until it is fully on screen (default scrolls down; above the keyboard)
   shot <name> [--plain] [--scale f]  screenshot → <out>/<name>.png; --scale 0.5 = half size, fewer
                                   image tokens (Android emulators bypass FLAG_SECURE; --plain doesn't)
   burst <dir> <seconds>           a frame whenever the screen changes; duplicates removed
@@ -63,14 +63,15 @@ act                               add --ls to any of these to print the settled 
   type <text>                     into the focused field
   key <name> …                    return, escape, delete, tab, space, selectall, paste, home
                                   (Android: also back, or any KEYCODE_*)
-  fill <label|@ref> <text>        clear the field, type, leave it
-  hidekb                          dismiss the keyboard
+  fill <label|@ref> <text>        clear the field, type, check it holds the text (Android), leave it
+  hidekb                          dismiss the keyboard and take focus from the field
   swipe <x1> <y1> <x2> <y2> [ms]
   back                            Android system back · iOS navigation-bar back button
   home                            the Home button: to the home screen, the app left running
   open <url>                      deep link (e.g. myapp://home)
-  launch [app] [--time]           (re)start the app. --time: how long until it's in front and its first
-                                  screen has settled (Android: also the system's own TotalTime)
+  launch [app] [--time|--resume]  (re)start the app. --time: how long until it's in front and its first
+                                  screen has settled (Android: also the system's own TotalTime). --resume:
+                                  bring it forward as it was, without restarting it
   stop [app]                      terminate it, and wait until its process is gone
   bio match|nomatch               Face ID / fingerprint
   rotate [portrait|landscape|left|right|upsidedown]
@@ -164,7 +165,7 @@ function parse(argv) {
     else if (a === '--lines') opts.lines = Number(val());
     else if (a === '--junit') opts.junit = val();
     else if (a === '--for') opts.for = val();
-    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window', '--paths', '--frames', '--time'].includes(a)) opts.flags.add(a.slice(2));
+    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window', '--paths', '--frames', '--time', '--resume'].includes(a)) opts.flags.add(a.slice(2));
     else if (a === '--') pos.push(...argv.slice(i + 1)), (i = argv.length);
     else pos.push(a);
   }
@@ -337,6 +338,11 @@ async function list(d, opts, snap) {
     return console.log(JSON.stringify({ screen: snap.screen, elements: rows.map((e, i) => ({ ref: `@${i + 1}`, ...e })) }));
   if (!rows.length) console.error('looktap: no labelled elements on screen (still loading, or the app sets no accessibility labels)');
   else console.log(rows.map((e, i) => formatRow(e, i + 1)).join('\n'));
+  // The system's own dialogs belong to package "android": only then is it worth asking what it is.
+  const stuck = front?.id === 'android' ? await d.stuck?.().catch(() => null) : null;
+  if (stuck) console.error(`looktap: ${stuck.app} ${stuck.why}: the system's dialog about it is on screen, and the app can't be driven until it closes. See: looktap crashes ${stuck.app}`);
+  else if (snap.elements.some((e) => LOGBOX.test(e.label || '')))
+    console.error("looktap: React Native's LogBox toast is up: it blocks taps around it (a bottom tab bar). tap reports its × when it gets in the way");
   if (onlyStatusBar(snap.elements))
     console.error('looktap: only the status bar is readable — a system prompt (passcode, permission, alert) may be covering the app. `looktap shot` shows it');
 }
@@ -397,13 +403,62 @@ async function dispatch(d, cmd, args, opts) {
  */
 async function target(d, what, opts) {
   let fresh = opts.snap; // a screen read a moment ago (dispatch's `before`): used for the first try only
+  const look = poller(d);
   return retry(async () => {
-    const snap = fresh || (await d.snapshot());
+    const snap = fresh || (await look());
     fresh = null;
     if (isRef(what)) return { e: resolveRef(deviceId(d), what, snap.elements), snap };
     const live = snap.elements.filter((e) => e.w > 0 && e.h > 0);
-    return { e: live.find((e) => e.id === what) || pickMatch(live, what, { exact: opts.flags.has('exact') }), snap };
-  }, isRef(what) ? 0 : d.wait);
+    try {
+      return { e: live.find((e) => e.id === what) || pickMatch(live, what, { exact: opts.flags.has('exact') }), snap };
+    } catch (e) {
+      if (e instanceof NotFound) e.snap = snap;
+      throw e;
+    }
+  }, isRef(what) ? 0 : d.wait).catch(async (e) => {
+    // Not found because the app is under a "not responding" dialog: say that, not that the label is missing.
+    const stuck = e instanceof NotFound ? await d.stuck?.().catch(() => null) : null;
+    if (stuck) e.message += ` — ${stuck.app} ${stuck.why}, and the system's dialog about it is on screen (looktap crashes ${stuck.app})`;
+    throw e;
+  });
+}
+
+/**
+ After a setting the system applies as a configuration change: Android may restart the app in front for it. Say so,
+ since every ref is then stale. Looks for a second at most, and only when it knows the app's process.
+ */
+async function noteRestart(d, before) {
+  if (!before?.pid) return;
+  for (const until = Date.now() + 1000; Date.now() < until; await sleep(250)) {
+    const pid = await d.pidOf(before.id);
+    if (pid && pid !== before.pid) return console.error(`looktap: note: ${before.id} restarted (configuration change, pid ${before.pid} → ${pid}): refs are stale, run looktap ls`);
+  }
+}
+
+/** After `shot`: the image's size against the screen's, so a point in the picture converts to tapxy's units. */
+async function shotSize(d, path, scale) {
+  let png;
+  try {
+    png = readFileSync(path);
+  } catch {
+    return;
+  }
+  if (png.length < 24 || png.toString('latin1', 12, 16) !== 'IHDR') return;
+  const w = png.readUInt32BE(16), h = png.readUInt32BE(20);
+  // Only what the driver already knows, no extra screen read: Android's density, the iOS helper's screen size.
+  const per = d.serial ? 1 / (d.scale * scale) : d.screen?.w / w;
+  if (!(per > 0)) return;
+  const screen = { w: Math.round(w * per), h: Math.round(h * per) };
+  const unit = d.serial ? 'dp' : 'pt';
+  console.error(`looktap: ${w}x${h} px = ${screen.w}x${screen.h} ${unit}: tapxy x y = image x y × ${+per.toFixed(3)}`);
+}
+
+/** Say so when something else covers the point a tap went to; name React Native's dev toast, the usual culprit. */
+function warnCovered(covers) {
+  for (const c of covers) {
+    console.error(`looktap: warning: ${JSON.stringify(c.label || c.type)} at ${c.x},${c.y} ${c.w}x${c.h} covers that point and may have taken the tap`);
+    if (c.close) console.error(`looktap: that's React Native's LogBox toast (dev builds), which blocks taps around it: dismiss it with looktap tapxy ${c.close.join(' ')} (its ×), then tap again`);
+  }
 }
 
 async function act(d, cmd, args, opts) {
@@ -444,19 +499,20 @@ async function act(d, cmd, args, opts) {
     case 'shot': {
       need(1, 'shot <name> [--scale f]');
       if (opts.scale != null && !(opts.scale > 0 && opts.scale <= 1)) throw new UsageError('--scale takes a factor between 0 and 1, e.g. --scale 0.5');
-      return d.shot(args[0], { plain: opts.flags.has('plain'), scale: opts.scale ?? 1 });
+      await d.shot(args[0], { plain: opts.flags.has('plain'), scale: opts.scale ?? 1 });
+      return shotSize(d, shotPath(d.out, args[0]), opts.scale ?? 1);
     }
     case 'burst': return burst(d, args[0], args[1]);
     case 'record': return record(d, args);
     case 'tap': {
       need(1, 'tap <label|@ref>');
       const { e, snap } = await target(d, isRef(args[0]) ? args[0] : args.join(' '), opts);
-      const at = center(e);
+      // Aimed at a part of it nothing covers: the tap lands on whatever is on top.
+      const { at, covers, avoided } = tapPoint(snap.elements, e);
       await d.tapxy(...at);
-      console.log(`tapped ${JSON.stringify(e.label || e.type)} at ${at.join(',')}`);
-      // The tap lands on whatever is on top: say so when something else covers the point.
-      for (const c of coveringAt(snap.elements, e, at))
-        console.error(`looktap: warning: ${JSON.stringify(c.label || c.type)} at ${c.x},${c.y} ${c.w}x${c.h} covers that point and may have taken the tap`);
+      const name = (c) => JSON.stringify((c.label || c.type).slice(0, 40));
+      console.log(`tapped ${JSON.stringify(e.label || e.type)} at ${at.join(',')}${avoided.length ? ` (off-centre: ${avoided.map(name).join(', ')} covers its middle)` : ''}`);
+      warnCovered(covers);
       return;
     }
     case 'longpress': {
@@ -470,8 +526,10 @@ async function act(d, cmd, args, opts) {
       if (xy) (at = [Number(args[0]), Number(args[1])]), (what = `${at.join(',')}`);
       else {
         const words = timed ? args.slice(0, -1) : args;
-        const { e } = await target(d, isRef(words[0]) ? words[0] : words.join(' '), opts);
-        (at = center(e)), (what = `${JSON.stringify(e.label || e.type)} at ${at.join(',')}`);
+        const { e, snap } = await target(d, isRef(words[0]) ? words[0] : words.join(' '), opts);
+        const p = tapPoint(snap.elements, e);
+        warnCovered(p.covers);
+        (at = p.at), (what = `${JSON.stringify(e.label || e.type)} at ${at.join(',')}`);
       }
       await d.longpress(...at, ms);
       return console.log(`long-pressed ${what} for ${ms} ms`);
@@ -522,6 +580,13 @@ async function act(d, cmd, args, opts) {
     case 'launch': {
       const app = args[0] || d.app;
       if (!app) throw new UsageError('usage: looktap launch <app-id> (or set --app / looktap.config.json)');
+      if (opts.flags.has('resume')) {
+        if (opts.flags.has('time')) throw new UsageError('launch takes --time or --resume, not both');
+        await d.launch(app, { resume: true });
+        // Done means it's in front, not that the start was sent.
+        if (!(await waitForApp(d, app, 6000))) throw new Error(`${app} didn't come to the front`);
+        return console.log(`resumed ${app}`);
+      }
       return opts.flags.has('time') ? timedLaunch(d, app) : d.launch(app);
     }
     case 'stop': {
@@ -574,9 +639,15 @@ async function act(d, cmd, args, opts) {
     }
     case 'appearance': {
       if (args[0] && !['dark', 'light'].includes(args[0])) throw new UsageError('usage: looktap appearance [dark|light]');
-      return console.log(await d.appearance(args[0]));
+      const front = args[0] && (await d.frontApp().catch(() => null));
+      console.log(await d.appearance(args[0]));
+      return noteRestart(d, front);
     }
-    case 'textsize': return console.log(await d.textSize(args[0] && textSize(args[0])));
+    case 'textsize': {
+      const front = args[0] && (await d.frontApp().catch(() => null));
+      console.log(await d.textSize(args[0] && textSize(args[0])));
+      return noteRestart(d, front);
+    }
     case 'statusbar': {
       if (!['clean', 'live'].includes(args[0])) throw new UsageError('usage: looktap statusbar clean|live');
       await d.statusBar(args[0] === 'clean');
@@ -844,7 +915,7 @@ async function mcp(outer) {
   const shot = async (scale, where) => {
     const r = await exec(['shot', `mcp_${Date.now()}`, '--scale', String(scale)], where);
     if (r.error) return { error: r.text };
-    const path = r.text.trim().split('\n').pop();
+    const path = r.text.trim().split('\n').find((l) => l.endsWith('.png'));
     return { path, png: readFileSync(path) };
   };
 

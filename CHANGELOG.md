@@ -1,5 +1,50 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- **Android: `--ls` (and `wait`, `tap`, `scrollto`) could read the screen an app had just left.** The helper's node
+  cache can lag behind an app (seen after a React Navigation screen change in a React Native app). A screen that
+  still looks as it did before the action is now confirmed with a read from the app itself (only then, since that
+  read costs ~0.2 s), and polling loops (`wait`, `expect`, a `tap` lookup) read fresh at most once a second after a
+  miss.
+- **`tap` aims at a part of the target nothing covers.** A toast over part of a button took the tap with no warning:
+  the toast's labelled row is smaller than the card that's drawn and takes touches. The tap now goes to the middle of
+  the largest uncovered part, counting the whole card, and warns when nothing is left clear. React Native's LogBox
+  toast blocks taps across the bottom of the screen (a whole tab bar), so there `tap` warns and prints the `tapxy`
+  for its ×.
+- **One label in two separate places is ambiguous**, with or without `--exact` (a heading and a tab, both "Library"),
+  instead of tapping the first. The error lists both, to choose by `@ref`. Label matching ignores whitespace
+  differences (no-break spaces).
+- **Android text fields are named by their label or hint, with what's typed as their value**, as on iOS: `ls` lists
+  the field rather than a container with the same label, and `fill`, `expect` and `tap` find a field by its hint once
+  it holds text.
+- **Android `fill` reads the field back.** It waits for the field to hold still before typing (a React Native field
+  echoing its clear could wipe the first keys), types again key by key on a mismatch, and exits 1 naming what the field
+  holds if a character is still missing. Formatting the field adds (spaces, currency, capitals) still passes.
+- **Android `hidekb` takes focus from the field**, so validate-on-blur forms show their errors, as on iOS.
+
+- **`scrollto` swipes above the keyboard.** With the keyboard up its swipes started on the keys, which glide-typed
+  into the focused field instead of scrolling. It now swipes in the part of the screen the keyboard leaves, counts
+  only what's above the keyboard as found, and stops with a message when the keyboard leaves no room.
+
+- **The crash warning after an action no longer misses a crash caught mid-way.** When the system's "keeps stopping"
+  / "isn't responding" dialog about the app is already up but its process hasn't ended yet, the action still warns
+  that the app is no longer running (and `test` fails the flow).
+
+### Added
+
+- `launch --resume` brings a running app back to the front as it was, without restarting it (simulators and
+  Android).
+- `ls`, and a `tap` that can't find its target, say when a system "isn't responding" / "keeps stopping"
+  dialog is on screen. `ls` also notes React Native's LogBox toast, which blocks taps around it.
+- The skill has a "Navigating an app" section: check each screen change, what a tap that changed nothing means,
+  the keyboard, tab bars, getting back, frozen apps.
+- `ls --all` folds a react-native-svg drawing into one row: `SvgView … (svg, 9 shapes)`.
+- `textsize` and `appearance` note when Android restarted the app in front for the change (refs are stale).
+- `shot` prints how the image maps to the screen on stderr: `216x384 px = 360x640 dp: tapxy x y = image x y × 1.667`.
+
 ## 0.6.1
 
 ### Added

@@ -139,6 +139,9 @@ public final class Server {
                 reply(out, ok().put("version", version).put("pid", android.os.Process.myPid()), null);
                 return;
             case "tree":
+                // fresh: drop the node cache first. An app whose events don't reach the cache (or arrive late) can
+                // otherwise be read as the screen it showed before a navigation.
+                if (req.optBoolean("fresh")) clearCache();
                 reply(out, ok().put("nodes", tree(req.optBoolean("all"))).put("display", display()), null);
                 return;
             case "display":
@@ -168,6 +171,12 @@ public final class Server {
             }
             case "clear":
                 reply(out, ok().put("cleared", clear(req.optInt("wait", 1000))), null);
+                return;
+            case "field":
+                reply(out, field(), null);
+                return;
+            case "blur":
+                reply(out, ok().put("blurred", blur()), null);
                 return;
             case "front": {
                 // The active window's package: the app the user is looking at.
@@ -229,7 +238,7 @@ public final class Server {
 
     /**
      Visible nodes, pre-order, bounds in px: {l: label, c: class, b: [x1,y1,x2,y2], f: focused, v: checked,
-     k: clickable, e: editable, p: password, h: a field's hint}.
+     k: clickable, e: editable, p: password, h: a field's hint, t: a field's text (absent while it shows its hint)}.
      */
     static JSONArray tree(boolean allWindows) throws Exception {
         JSONArray outNodes = new JSONArray();
@@ -318,7 +327,10 @@ public final class Server {
         if (n.isEditable()) o.put("e", true);
         if (n.isPassword()) o.put("p", true);
         // An empty field reads as its hint; with text typed, this is the only way to the name it had.
-        if (android.os.Build.VERSION.SDK_INT >= 26 && n.isEditable() && n.getHintText() != null) o.put("h", n.getHintText().toString());
+        if (android.os.Build.VERSION.SDK_INT >= 26 && n.isEditable()) {
+            if (n.getHintText() != null) o.put("h", n.getHintText().toString());
+            if (!n.isShowingHintText() && txt != null) o.put("t", txt.toString());
+        }
         out.put(o);
         for (int i = 0; i < n.getChildCount(); i++) {
             AccessibilityNodeInfo c = n.getChild(i);
@@ -374,6 +386,31 @@ public final class Server {
             if (SystemClock.uptimeMillis() >= until) return false;
             SystemClock.sleep(50);
         }
+    }
+
+    /**
+     The focused input field, even where the keyboard hides it (hidden nodes are left out of the tree):
+     {ok, field: false} when none, else {field: true, text, password} (text "" while it shows its hint).
+     */
+    static JSONObject field() throws Exception {
+        AccessibilityNodeInfo r = ua.getRootInActiveWindow();
+        AccessibilityNodeInfo f = r == null ? null : r.findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
+        if (f == null || !f.isEditable()) return ok().put("field", false);
+        f.refresh();
+        CharSequence t = f.getText();
+        boolean hint = android.os.Build.VERSION.SDK_INT >= 26 && f.isShowingHintText();
+        return ok().put("field", true).put("password", f.isPassword()).put("text", hint || t == null ? "" : t.toString());
+    }
+
+    /**
+     Take focus away from the focused input field (ACTION_CLEAR_FOCUS), as a tap outside it would: the field's
+     blur handlers run (React Native's onBlur) and it gives up the keyboard. False when no field had focus or kept it.
+     */
+    static boolean blur() {
+        AccessibilityNodeInfo r = ua.getRootInActiveWindow();
+        AccessibilityNodeInfo f = r == null ? null : r.findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
+        if (f == null || !f.isEditable()) return false;
+        return f.performAction(AccessibilityNodeInfo.ACTION_CLEAR_FOCUS);
     }
 
     /** The lock screen is up: the window manager's own answer (IWindowManager.isKeyguardLocked, hidden). */

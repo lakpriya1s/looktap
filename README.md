@@ -357,15 +357,17 @@ looktap shot profile__validation
 ```
 
 `fill` finds the field by its label (on iOS also its identifier), or else the first field at or below a matching
-label. It clears the field and types. On Android it also presses Enter, because React Native fields only show
-validation on blur.
+label. It clears the field and types. On Android it then reads the field back: a field that was still clearing can
+swallow the first letters, so it retypes key by key on a miss, and fails rather than report a value the field doesn't
+hold. It also presses Enter, because React Native fields only show validation on blur.
 
-`hidekb` tries, in order:
+On iOS, `hidekb` tries, in order:
 1. the keyboard's Done/Return key;
-2. on iOS, the ✓ on a web form's Previous/Next bar;
+2. the ✓ on a web form's Previous/Next bar;
 3. a tap on plain text above the keyboard.
 
-It checks after each. If the keyboard is still up, it **exits 2** rather than reporting success.
+On Android it takes focus from the field, as a tap outside it would (so a form that validates on blur shows its
+errors), and presses Back only if the keyboard is still up. It checks after each. If the keyboard is still up, it **exits 2** rather than reporting success.
 
 ### Wait instead of sleeping, and scroll
 
@@ -839,27 +841,27 @@ to settle unless asked (`--ls`).
 | Command | What it does |
 |---|---|
 | **Look** | |
-| `looktap ls [--all] [--json]` | Visible elements with a label, plus unlabelled buttons, each with an `@ref`. `--all` includes everything. `--json` prints `{screen, elements}`. While the screen is still loading (nothing labelled yet), waits up to `--wait` |
+| `looktap ls [--all] [--json]` | Visible elements with a label, plus unlabelled buttons, each with an `@ref`. `--all` includes everything. `--json` prints `{screen, elements}`. While the screen is still loading (nothing labelled yet), waits up to `--wait`. An Android text field shows its label or hint, with what's typed as `= value`, as on iOS. `--all` folds a react-native-svg drawing into one row (`(svg, 9 shapes)`). Notes on stderr when React Native's LogBox toast is up (it blocks taps around it) or the system's "isn't responding" / "keeps stopping" dialog is |
 | `looktap wait <label\|@ref> [--gone]` | Until it's on screen (with `--gone`, until it isn't). Default up to 10 s, or `--wait`. Exits 2 on timeout |
 | `looktap expect <label\|@ref> [= value] [--gone] [--exact]` | Checks it's on screen, with `= value` that its value is exactly that, or with `--gone` that it isn't. Matches like `wait` (`--exact`: the whole label only). Waits up to `--wait` (3 s) for it to come true. Exits 1 with what's there instead: `expect failed: "Email" is "sam@example.com", expected "kim@example.com"` |
-| `looktap scrollto <label> [--up]` | Swipes until the element is fully on screen. Each swipe holds still before lifting, so the list stops where it was dragged instead of coasting. Fails at the end of the list, or after 15 swipes |
-| `looktap shot <name> [--plain] [--scale f]` | Saves `<out>/<name>.png` and prints its path |
+| `looktap scrollto <label> [--up]` | Swipes until the element is fully on screen. Each swipe holds still before lifting, so the list stops where it was dragged instead of coasting. With the keyboard up it swipes above it, and stops with a message if the keyboard leaves no room. Fails at the end of the list, or after 15 swipes |
+| `looktap shot <name> [--plain] [--scale f]` | Saves `<out>/<name>.png` and prints its path. On stderr, how the image maps to the screen: `216x384 px = 360x640 dp: tapxy x y = image x y × 1.667` |
 | `looktap burst <dir> <seconds>` | A frame each time the screen changes. Only distinct frames are kept |
 | `looktap record start [name]` · `record stop` | An MP4 of everything in between, saved to `<out>/<name>.mp4`; `stop` prints the path and the length. Android: at most 3 minutes, `FLAG_SECURE` screens black |
 | **Act** (add `--ls` to print the settled screen afterwards) | |
-| `looktap tap <label\|@ref> [--exact]` | `@ref` from the last `ls`, or a label: exact, else a prefix/contains match that names a single label (ambiguous → exit 2). Prints what it tapped |
+| `looktap tap <label\|@ref> [--exact]` | `@ref` from the last `ls`, or a label: exact, else a prefix/contains match that names a single label (ambiguous → exit 2, as is one label in two separate places). Aims at a part of the element nothing covers (a toast over half a button), and warns when nothing is left clear. Prints what it tapped |
 | `looktap longpress <label\|@ref\|x y> [ms]` | Holds the touch for `ms` (default 800). Same targets as `tap`, or a point |
 | `looktap zoom in\|out [x y] [--scale f]` | Two-finger pinch around a point (default: the screen centre). `--scale` sets how far apart the fingers end up (default 2.5) |
 | `looktap tapxy <x> <y>` | Taps a point (iOS points / Android dp) |
 | `looktap type <text>` | Types into the focused field. Text the keyboard can't type (accents, emoji, CJK) is pasted, which replaces the clipboard |
 | `looktap key <name> …` | `return`, `escape`, `delete`, `tab`, `space`, `selectall`, `paste`, `home`. Android also `back`, any `KEYCODE_*` |
-| `looktap fill <label\|@ref> <text> [--exact]` | Focuses the field, clears it, types. Empty text just clears. iOS simulator: if the field doesn't read back the text afterwards (a web field drops keys while WebKit autocorrects), it pastes the text instead and empties the clipboard again |
-| `looktap hidekb` | Dismisses the keyboard, checking after each method. Exits 2 if it's still up |
+| `looktap fill <label\|@ref> <text> [--exact]` | Focuses the field, clears it, types. Empty text just clears. iOS simulator: if the field doesn't read back the text afterwards (a web field drops keys while WebKit autocorrects), it pastes the text instead and empties the clipboard again. Android: reads the field back, retypes key by key if a character went missing, and exits 1 naming what the field holds if it still doesn't match (formatting a field adds, such as spaces or a currency sign, passes) |
+| `looktap hidekb` | Dismisses the keyboard and takes focus from the field (blur handlers run), checking after each method. Exits 2 if it's still up |
 | `looktap swipe <x1> <y1> <x2> <y2> [ms]` | Default 150 ms on iOS, 300 ms on Android |
 | `looktap back` | Android system Back · iOS: the navigation bar's back button, else a top-left "Back" button |
 | `looktap home` | The Home button: goes to the home screen and checks it's in front; the app keeps running |
 | `looktap open <url>` | Opens a deep link |
-| `looktap launch [app] [--time]` | (Re)starts the app. `--time` times a cold start: until the app is in front, and until its first screen settled. It says when screen reads are too slow to time the screen precisely. Android adds the system's own `TotalTime` |
+| `looktap launch [app] [--time\|--resume]` | (Re)starts the app. `--time` times a cold start: until the app is in front, and until its first screen settled. It says when screen reads are too slow to time the screen precisely. Android adds the system's own `TotalTime`. `--resume` brings a running app back to the front as it was, without restarting it (simulators and Android) |
 | `looktap stop [app]` | Terminates the app and waits until its process is gone |
 | `looktap bio match\|nomatch` | Face ID (iOS) or fingerprint (Android) |
 | `looktap rotate [portrait\|landscape\|left\|right\|upsidedown]` | Turns the device (`landscape` = `left`, turned counter-clockwise). `ls`, taps and screenshots follow the turned screen. Says so if the app doesn't support the orientation. Without an argument, prints the current one |
@@ -879,8 +881,8 @@ to settle unless asked (`--ls`).
 | `looktap permission grant\|revoke\|reset <name> [app]` | `camera`, `microphone`, `location`, `location-always`, `photos`, `contacts`, `calendar`, `notifications`, `motion`, `all`, … Android also takes `android.permission.*` |
 | **Conditions** | |
 | `looktap location <lat> <lon>` · `location clear` | Simulated GPS. Android: emulators only, and the emulator keeps its last fix (no `clear`) |
-| `looktap appearance [dark\|light]` | Dark mode. Without an argument, prints the current mode |
-| `looktap textsize [size]` | Dynamic Type (iOS) / font scale (Android): `xs s m l xl xxl xxxl ax1…ax5`, or iOS names such as `accessibility-large`. Without an argument, prints the current size |
+| `looktap appearance [dark\|light]` | Dark mode. Without an argument, prints the current mode. Android: says when the app in front restarted for the change (refs are then stale) |
+| `looktap textsize [size]` | Dynamic Type (iOS) / font scale (Android): `xs s m l xl xxl xxxl ax1…ax5`, or iOS names such as `accessibility-large`. Without an argument, prints the current size. Android: says when the app in front restarted for the change (refs are then stale) |
 | `looktap statusbar clean\|live` | A screenshot-clean status bar (9:41, full battery and Wi-Fi), or back to live values |
 | `looktap network [offline\|online]` | Android only: airplane mode on or off, waiting until the device has lost (or regained) its connection. Without an argument, prints the current state |
 | `looktap push <app> <payload>` | iOS: a remote notification. The payload can be a `.json` file, inline JSON, or plain text for an alert |
@@ -1003,6 +1005,11 @@ Precedence: command-line option, then environment variable, then config file, th
 | `both iOS and Android devices are up — pass -p ios\|android` | Add `-p`, or `export LOOKTAP_PLATFORM=…` |
 | `not found: <label>` | Run `looktap ls` and copy the label. If the screen is slow to load, raise `--wait` |
 | `"<label>" is ambiguous — matches N labels` | Use more of the label, a `@ref`, or `--exact` |
+| `"<label>" is ambiguous — "<label>" is in N places` | The same label twice on screen (a heading and a tab, say). `looktap ls`, then tap the one you mean by `@ref` |
+| `that's React Native's LogBox toast … dismiss it with looktap tapxy …` | A dev build's warning toast blocks taps across the bottom of the screen. Run the `tapxy` it prints, then tap again. For long sessions, `LogBox.ignoreAllLogs()` in test builds |
+| `the keyboard leaves no room to scroll` | `looktap hidekb`, then `scrollto` again |
+| `fill: typed "…", but the field holds "…"` | The field limits or reshapes input (a maximum length, a mask), or keeps clearing itself. Check it with `looktap ls`; type into it with `type` after a `tap` |
+| `<app> isn't responding` / `<app> crashed (keeps stopping)` | The system's dialog is over the app. `looktap crashes <app>`, then tap "Wait" or "Close app" and `launch` it again |
 | `keyboard is still up` (iOS) | Search keyboards have no Done key. Tap the screen's Cancel/close control |
 | Android `ls` fails right after boot | Wait until `adb shell getprop sys.boot_completed` prints `1` |
 | `device <serial> is not connected` / `<serial> isn't connected any more` | `looktap devices` lists what is. A phone unplugged from USB may still be there over Wi-Fi, under its Wi-Fi id (`adb-…._adb-tls-connect._tcp`); a phone on both is one row, `USB + Wi-Fi` |
