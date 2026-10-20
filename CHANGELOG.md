@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.7.0
 
 ### Fixed
 
@@ -51,6 +51,11 @@
 - `ls --all` folds a react-native-svg drawing into one row: `SvgView … (svg, 9 shapes)`.
 - `textsize` and `appearance` note when Android restarted the app in front for the change (refs are stale).
 - `shot` prints how the image maps to the screen on stderr: `216x384 px = 360x640 dp: tapxy x y = image x y × 1.667`.
+
+### Changed
+
+- **@looktap/mcp 0.7.0** requires `@looktap/cli` 0.7.0, so MCP clients holding a cached older pair get the new
+  `fill`, `hide_keyboard` and `scroll_to` behaviour. `server.json` is updated to match.
 
 ## 0.6.1
 
