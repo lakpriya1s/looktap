@@ -478,11 +478,25 @@ export class Phone {
       this.root.style.setProperty('--turn', landscape ? '-90deg' : '90deg');
       await sleep(520);
     }
+    // Swap to the new shape and drop the turn in the same frame, with no transition: the turned portrait frame and
+    // the landscape one look the same, so the swap doesn't show. Animated, it would turn back the other way.
+    const before = this.device.getBoundingClientRect();
     this.landscape = landscape;
+    this.root.classList.add('settle');
     this.root.classList.remove('turning');
     this.root.classList.toggle('landscape', landscape);
     this.state.screen = landscape ? 'homeLandscape' : 'home';
     this.render();
-    requestAnimationFrame(() => this.fit());
+    this.fit();
+    void this.root.offsetWidth;
+    this.root.classList.remove('settle');
+    // The new shape sits at its own size and place; ease it there from where the turned frame was.
+    if (!reduce) {
+      const after = this.root.getBoundingClientRect();
+      const dx = before.left + before.width / 2 - (after.left + after.width / 2);
+      const dy = before.top + before.height / 2 - (after.top + after.height / 2);
+      const k = before.width / after.width;
+      this.root.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${k})` }, { transform: 'none' }], { duration: 450, easing: 'cubic-bezier(0.3, 0, 0.2, 1)' });
+    }
   }
 }
