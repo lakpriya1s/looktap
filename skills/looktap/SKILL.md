@@ -281,8 +281,15 @@ looktap setup
 looktap teardown
 # serve the same commands over MCP, for clients without a shell; --config prints a client config
 looktap mcp --config
-# print this guide, or install it to ~/.claude/skills/looktap/SKILL.md
+# print this guide, or install it for every coding agent on this machine (Claude Code, Codex, Cursor, Gemini CLI,
+# Copilot, OpenCode, …); run it again after upgrading looktap, and doctor says when a copy is out of date
 looktap skill --install
+# only some agents; or into this repo (.claude/skills and .agents/skills by default) to share it with the team
+looktap skill --install --agents claude,cursor
+looktap skill --install --project
+# which agents looktap knows, which are on this machine, what's installed where; and taking it out again
+looktap skill --list
+looktap skill --uninstall
 ```
 
 ## Options and config

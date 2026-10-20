@@ -145,10 +145,13 @@ To teach Claude Code how to use looktap, install the plugin. In Claude Code:
 ```
 
 It adds the looktap skill. Then run `/looktap:setup`: it installs the CLI, checks your
-toolchain and gets a device ready. Or copy the skill in by hand:
+toolchain and gets a device ready.
+
+**Any other coding agent** (Codex, Cursor, Gemini CLI, GitHub Copilot, OpenCode, Kiro, …): install the skill for
+every agent on your machine in one go ([which agents](#every-coding-agent)):
 
 ```bash
-looktap skill --install      # → ~/.claude/skills/looktap/SKILL.md
+looktap skill --install      # or, without installing looktap: npx -y @looktap/cli skill --install
 ```
 
 <details>
@@ -721,8 +724,46 @@ Pick the route that fits your agent:
 | Your agent | Use | Set up |
 |---|---|---|
 | **Claude Code** | The plugin: the CLI plus a skill that teaches the loop | `/plugin install looktap --marketplace lakpriya1s/looktap`, then `/looktap:setup` ([details](#claude-code-plugin)) |
-| **Other agents with a shell** (Codex, Cursor's agent, opencode, …) | The CLI plus the skill file | `looktap skill --install` (or `looktap skill` prints it) |
+| **Other agents with a shell** (Codex, Cursor, Gemini CLI, Copilot, OpenCode, …) | The CLI plus the skill, in each agent's own skills folder | `looktap skill --install` ([details](#every-coding-agent)) |
 | **Chat apps without a shell** (Claude Desktop, …) | The MCP server | `npx -y @looktap/mcp` ([details](#mcp-server-for-clients-without-a-shell)) |
+
+### Every coding agent
+
+`looktap skill --install` finds the coding agents on your machine (by their config folder or command) and writes
+the skill into the folder each one reads, with the frontmatter that agent accepts: Codex, for one, rejects fields
+it doesn't know. Each copy carries looktap's version: run it again after upgrading, and `looktap doctor` says when
+a copy is out of date.
+
+```bash
+looktap skill --install                          # every agent found here, user-wide
+looktap skill --install --agents codex,gemini    # just these (or --agents all)
+looktap skill --install --project                # into this repo, to commit for the team
+looktap skill --list                             # what's supported, found and installed where
+looktap skill --uninstall
+```
+
+| Agent | `--agents` | User-wide | In a repo (`--project`) |
+|---|---|---|---|
+| Claude Code | `claude` | `~/.claude/skills` | `.claude/skills` |
+| Codex CLI | `codex` | `~/.agents/skills` | `.agents/skills` |
+| Cursor | `cursor` | `~/.cursor/skills` | `.cursor/skills` |
+| Gemini CLI | `gemini` | `~/.gemini/skills` | `.gemini/skills` |
+| GitHub Copilot | `copilot` | `~/.copilot/skills` | `.github/skills` |
+| OpenCode | `opencode` | `~/.config/opencode/skills` | `.opencode/skills` |
+| Antigravity | `antigravity` | `~/.gemini/config/skills` | `.agent/skills` |
+| Kiro | `kiro` | `~/.kiro/skills` | `.kiro/skills` |
+| Grok Build | `grok` | `~/.grok/skills` | `.grok/skills` |
+| Hermes Agent | `hermes` | `~/.hermes/skills` | `.hermes/skills` |
+| Pi | `pi` | `~/.pi/agent/skills` | `.pi/skills` |
+| Mistral Vibe | `vibe` | `~/.vibe/skills` | `.vibe/skills` |
+| Qoder | `qoder` | `~/.qoder/skills` | `.qoder/skills` |
+| Rovo Dev | `rovo-dev` | `~/.rovodev/skills` | `.rovodev/skills` |
+| Trae / Trae CN | `trae`, `trae-cn` | `~/.trae/skills`, `~/.trae-cn/skills` | `.trae/skills`, `.trae-cn/skills` |
+
+`--project` writes `.claude/skills` and `.agents/skills` unless you name agents: between them, Claude Code, Codex,
+Cursor, Gemini CLI, Copilot, OpenCode, Pi, Mistral Vibe, Antigravity and Grok Build all find it. Some agents need
+skills switched on first (Cursor, Gemini CLI); Hermes asks you to trust a repo's skills once (`hermes skills trust`).
+An agent without skills can read the guide from `looktap skill`, which prints it.
 
 An agent spends seconds per turn, so **turns** matter more than milliseconds. looktap is built to save them: in the
 [benchmark](BENCHMARK.md) the CLI needed 8 calls for a scenario that took other tools 9–27 on iOS, and 12 where they
@@ -891,7 +932,7 @@ to settle unless asked (`--ls`).
 | `looktap run '<cmd>; <cmd> …'` | Several commands in one process. `run -` reads them from stdin. Stops at the first failure and names it |
 | `looktap codegen <flow-file> [app]` | Android: restarts the app, then saves each touch on the device as the step that replays it: `tap "<label>"`, `fill <field> <text>`, `scrollto`, `longpress`, `zoom`, `back`, `home`. A command typed while it records (`expect "Welcome"`) is run and saved too; `undo` drops the last step; Enter on an empty line or Ctrl+C ends it. See [Record a flow](#record-a-flow-codegen) |
 | `looktap test <flow\|dir> … [--junit file]` | Runs flow files (`run` scripts, one step per line) as tests, folders searched, and prints a line per flow and the totals. Exits 1 if any flow fails. A failed flow prints its output and leaves `error.txt`, `output.txt`, `screen.txt`, `screen.png`, `logs.txt` and `crashes.txt` in `<out>/failures/<flow>/`. An app that dies during a flow fails it. `--junit` writes a JUnit XML report |
-| `looktap skill [--install]` | Prints the AI-agent guide, or installs it as a Claude Code skill |
+| `looktap skill [--install\|--uninstall\|--list] [--agents a,b\|all] [--project]` | Prints the AI-agent guide. `--install` writes it for every coding agent on the machine (or `--agents`), each in its own skills folder, or into the repo with `--project`. `--list` shows the agents and what's installed where ([details](#every-coding-agent)) |
 | `looktap devices [--all] [--json]` | What's running or connected, and what each is: simulator, emulator (with its AVD name) or real device (model, OS version, USB or Wi-Fi), and whether it has a window or runs headless. An Android phone on both USB and Wi-Fi is one row (`USB + Wi-Fi`), and commands drive it over USB; `-d` with its Wi-Fi id still picks Wi-Fi. A phone that's connected but not ready is listed with what to do (accept the USB debugging prompt, tap Trust, turn on Developer Mode). A simulator or emulator still starting is listed as such. `--all` also lists what `boot` can start; `--json` for scripts and agents |
 | `looktap boot [name] [--window\|--headless]` | Boots an iOS simulator or Android emulator by name, UDID or AVD name (exact, else a unique prefix or substring; `-p` to choose a platform) and waits until it's ready to drive. Opens its window unless `--headless` (or `LOOKTAP_HEADLESS=1`, or `"headless": true` in the config file). Already running: says so, and `--window` opens a simulator's window. One that's still starting (adb lists an emulator offline while it boots) is waited for, not started twice. A running device can't drop its window (closing the Simulator app shuts its simulators down; an emulator starts with or without one), so `--headless` then says how to restart it |
 | `looktap shutdown [name]` | Shuts down a simulator or emulator (name, UDID, AVD name or serial), and waits until it's gone |

@@ -35,6 +35,12 @@
 
 ### Added
 
+- **The skill installs for every coding agent, not just Claude Code.** `looktap skill --install` finds the agents on
+  the machine (Claude Code, Codex, Cursor, Gemini CLI, GitHub Copilot, OpenCode, Antigravity, Kiro, Grok Build,
+  Hermes, Pi, Mistral Vibe, Qoder, Rovo Dev, Trae) and writes the skill into each one's skills folder, with the
+  frontmatter that agent accepts. `--agents` picks them, `--project` writes into the repo for the team,
+  `--list` shows what's installed where, `--uninstall` takes it out. Each copy carries looktap's version, and
+  `doctor` says when one is out of date.
 - `launch --resume` brings a running app back to the front as it was, without restarting it (simulators and
   Android).
 - `ls`, and a `tap` that can't find its target, say when a system "isn't responding" / "keeps stopping"
