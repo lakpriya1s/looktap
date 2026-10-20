@@ -45,8 +45,10 @@
 .prose pre .t-f { color: var(--term-warn); }
 .prose pre .t-o { color: var(--term-out); }
 .prose pre .t-y { color: #c4b5fd; }
-.prose pre .copy { position: absolute; top: 8px; right: 8px; font: 500 11px var(--mono); color: #8b93a7; background: var(--term-bar); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 3px 9px; cursor: pointer; opacity: 0; transition: opacity 0.2s; }
-.prose pre:hover .copy, .prose pre .copy:focus { opacity: 1; }
+.prose .code { position: relative; margin: 16px 0 22px; }
+.prose .code > pre { margin: 0; }
+.prose .code > .copy { position: absolute; top: 8px; right: 8px; font: 500 11px var(--mono); color: #8b93a7; background: var(--term-bar); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 3px 9px; cursor: pointer; opacity: 0; transition: opacity 0.2s; }
+.prose .code:hover > .copy, .prose .code > .copy:focus { opacity: 1; }
 .prose .table { overflow-x: auto; margin: 16px 0 24px; border: 1px solid var(--line); border-radius: 12px; }
 .prose table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
 .prose th, .prose td { text-align: left; vertical-align: top; padding: 10px 14px; border-bottom: 1px solid var(--line); }

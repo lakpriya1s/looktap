@@ -17,7 +17,13 @@ menu?.addEventListener('click', () => {
   menu.setAttribute('aria-expanded', String(open));
 });
 
+// The button goes on a wrapper around the block, not in it: a block wider than the page scrolls sideways, and a
+// button inside it would scroll away with the code.
 for (const pre of document.querySelectorAll('.prose pre')) {
+  const wrap = document.createElement('div');
+  wrap.className = 'code';
+  pre.replaceWith(wrap);
+  wrap.appendChild(pre);
   const b = document.createElement('button');
   b.type = 'button';
   b.className = 'copy';
@@ -31,7 +37,7 @@ for (const pre of document.querySelectorAll('.prose pre')) {
     }
     setTimeout(() => (b.textContent = 'Copy'), 1500);
   });
-  pre.appendChild(b);
+  wrap.appendChild(b);
 }
 
 // Highlight the section being read in the "on this page" list.
