@@ -768,6 +768,10 @@ Cursor, Gemini CLI, Copilot, OpenCode, Pi, Mistral Vibe, Antigravity and Grok Bu
 skills switched on first (Cursor, Gemini CLI); Hermes asks you to trust a repo's skills once (`hermes skills trust`).
 An agent without skills can read the guide from `looktap skill`, which prints it.
 
+Already manage skills with [`npx skills`](https://github.com/vercel-labs/skills)? `npx skills add lakpriya1s/looktap`
+finds the skill in this repo and installs it too. It copies the guide as it is, without the per-agent frontmatter or
+the version that `doctor` checks, so `looktap skill --install` is the one to rerun after upgrading looktap.
+
 An agent spends seconds per turn, so **turns** matter more than milliseconds. looktap is built to save them: in the
 [benchmark](BENCHMARK.md) the CLI needed 8 calls for a scenario that took other tools 9–27 on iOS, and 12 where they
 took 11–19 on Android.
