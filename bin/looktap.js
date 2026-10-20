@@ -12,7 +12,7 @@ import { clock, grepper, startOf, tail, whichApp } from '../lib/logs.js';
 import { ACTIONS as PERMISSION_ACTIONS } from '../lib/permissions.js';
 import { KINDS, capabilities, capability, unsupported } from '../lib/capabilities.js';
 import { Recorder, TouchReader, classify, mapper, quote } from '../lib/codegen.js';
-import { AGENTS, PROJECT_DEFAULT, detectAgents, installSkill, installedVersion, pickAgents, skillsDir, uninstallSkill } from '../lib/agents.js';
+import { AGENTS, PROJECT_DEFAULT, claudePlugin, detectAgents, installSkill, installedVersion, pickAgents, skillsDir, uninstallSkill } from '../lib/agents.js';
 import { boot, shutdown } from '../lib/boot.js';
 import { formatDevice, inventory } from '../lib/devices.js';
 import { ORIENTATIONS, coordinates, pushPayload, rotation, textSize } from '../lib/conditions.js';
@@ -1192,7 +1192,8 @@ function skill(opts) {
     console.log(`looktap ${pkg.version} · agent guide ${root ? `in ${tilde(root)}` : 'in your home folder'}\n`);
     AGENTS.forEach((a, i) => {
       const v = installedVersion(join(dirs[i], 'looktap', 'SKILL.md'));
-      const state = v == null ? '' : v === pkg.version ? `installed (${v})` : `installed (${v}) — outdated: looktap skill --install`;
+      const plugin = a.id === 'claude' && !root && claudePlugin({ home }) ? 'the looktap plugin' : '';
+      const state = v == null ? plugin : v === pkg.version ? `installed (${v})` : `installed (${v}) — outdated: looktap skill --install`;
       console.log(`${a.id.padEnd(12)} ${a.name.padEnd(width)}  ${found.includes(a) ? 'found' : '     '}  ${tilde(dirs[i]).padEnd(dirWidth)}  ${state}`.trimEnd());
     });
     return;
@@ -1206,14 +1207,22 @@ function skill(opts) {
     return;
   }
   let note = '';
+  // Claude Code with the looktap plugin already has the skill: a second copy would show it twice.
+  const plugin = !root && claudePlugin({ home });
+  if (plugin && !opts.agents && agents.some((a) => a.id === 'claude')) {
+    agents = agents.filter((a) => a.id !== 'claude');
+    note += 'Claude Code: skipped, it has the looktap plugin, which carries the skill and updates with it.\n';
+  } else if (plugin && agents.some((a) => a.id === 'claude'))
+    console.error('looktap: warning: Claude Code also has the looktap plugin, so it will see the skill twice (looktap skill --uninstall --agents claude undoes this copy)');
+  if (!agents.length && note) return console.log(note.trim());
   if (!agents.length) {
     agents = AGENTS.filter((a) => PROJECT_DEFAULT.includes(a.id));
-    note = 'No coding agent found on this machine, so it went to the two folders most agents read.\n';
+    note += 'No coding agent found on this machine, so it went to the two folders most agents read.\n';
   }
   const written = installSkill(agents, { source, version: pkg.version, home, root });
   console.log(`installed the looktap skill (${pkg.version}) for:`);
   for (const w of written) console.log(`  ${w.agents.map((a) => a.name).join(', ').padEnd(16)} ${tilde(w.file)}`);
-  const missing = AGENTS.filter((a) => !agents.includes(a)).map((a) => a.id);
+  const missing = AGENTS.filter((a) => !agents.includes(a) && !(a.id === 'claude' && plugin)).map((a) => a.id);
   console.log(
     `${note}Restart an agent that's already running to load it.${missing.length ? ` Others: looktap skill --install --agents <${missing.slice(0, 4).join('|')}|…> (looktap skill --list shows them all)` : ''}`,
   );
@@ -1224,6 +1233,7 @@ function skillStatus(ok) {
   const home = homedir();
   const have = AGENTS.map((a) => ({ a, v: installedVersion(join(skillsDir(a, { home }), 'looktap', 'SKILL.md')) })).filter((x) => x.v != null);
   const stale = have.filter((x) => x.v !== pkg.version);
+  if (claudePlugin({ home }) && !have.some((x) => x.a.id === 'claude')) have.unshift({ a: { name: 'Claude Code (plugin)' }, v: pkg.version });
   const names = have.map((x) => x.a.name).join(', ');
   if (!have.length) return ok(false, 'agent skill: not installed for any agent', 'looktap skill --install');
   ok(!stale.length, `agent skill: ${names}${stale.length ? ` (outdated for ${stale.map((x) => `${x.a.name} ${x.v}`).join(', ')})` : ''}`, 'looktap skill --install');

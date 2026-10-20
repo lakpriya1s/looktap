@@ -760,6 +760,9 @@ looktap skill --uninstall
 | Rovo Dev | `rovo-dev` | `~/.rovodev/skills` | `.rovodev/skills` |
 | Trae / Trae CN | `trae`, `trae-cn` | `~/.trae/skills`, `~/.trae-cn/skills` | `.trae/skills`, `.trae-cn/skills` |
 
+Claude Code's folder follows `CLAUDE_CONFIG_DIR` when it's set. If Claude Code already has the looktap plugin, it's
+skipped: the plugin carries the skill and updates with it, and a second copy would show Claude the skill twice.
+
 `--project` writes `.claude/skills` and `.agents/skills` unless you name agents: between them, Claude Code, Codex,
 Cursor, Gemini CLI, Copilot, OpenCode, Pi, Mistral Vibe, Antigravity and Grok Build all find it. Some agents need
 skills switched on first (Cursor, Gemini CLI); Hermes asks you to trust a repo's skills once (`hermes skills trust`).

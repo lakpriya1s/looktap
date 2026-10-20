@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 
-import { AGENTS, detectAgents, installSkill, installedVersion, pickAgents, skillFor, skillsDir, uninstallSkill } from '../lib/agents.js';
+import { AGENTS, claudePlugin, detectAgents, installSkill, installedVersion, pickAgents, skillFor, skillsDir, uninstallSkill } from '../lib/agents.js';
 
 const SOURCE = readFileSync(new URL('../skills/looktap/SKILL.md', import.meta.url), 'utf8');
 const agent = (id) => AGENTS.find((a) => a.id === id);
@@ -71,6 +71,24 @@ test('a copy written before copies were versioned reads as unversioned (doctor c
     const f = join(home, 'SKILL.md');
     writeFileSync(f, SOURCE);
     assert.equal(installedVersion(f), 'unversioned');
+  } finally {
+    rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('Claude Code follows CLAUDE_CONFIG_DIR, and a looktap plugin for every project counts as having the skill', () => {
+  const home = mkdtempSync(join(tmpdir(), 'looktap-home-'));
+  try {
+    const env = { CLAUDE_CONFIG_DIR: join(home, '.claude-work') };
+    assert.equal(skillsDir(agent('claude'), { home, env }), join(home, '.claude-work', 'skills'));
+    assert.equal(skillsDir(agent('claude'), { home, env: {} }), join(home, '.claude', 'skills'));
+    const file = join(home, '.claude-work', 'plugins', 'installed_plugins.json');
+    mkdirSync(join(home, '.claude-work', 'plugins'), { recursive: true });
+    writeFileSync(file, JSON.stringify({ plugins: { 'looktap@looktap': [{ scope: 'local', projectPath: '/tmp/x' }] } }));
+    assert.equal(claudePlugin({ home, env }), false); // one project only
+    writeFileSync(file, JSON.stringify({ plugins: { 'looktap@looktap': [{ scope: 'user' }] } }));
+    assert.equal(claudePlugin({ home, env }), true);
+    assert.equal(claudePlugin({ home, env: {} }), false); // another account
   } finally {
     rmSync(home, { recursive: true, force: true });
   }
