@@ -115,8 +115,23 @@ function termTitle() {
   $('[data-term-title]').textContent = `agent ➜ ${active?.device?.(ios) || (ios ? 'iPhone 18 Pro simulator' : 'Pixel 11 emulator')}`;
 }
 
-/** Whether the reader is at the top: the hero still reaches the middle line that picks the scene. */
-const atTop = () => $('#look').getBoundingClientRect().bottom > innerHeight / 2;
+// On narrower screens the stage pins under the header and the story scrolls beneath it, so the line that picks
+// the scene sits a third of the way down the space left below the stage, not at the viewport's middle (which the
+// stage covers). CSS sizes each scene to that space from --stage-h.
+const pinned = matchMedia('(max-width: 1080px)');
+const stage = $('.stage');
+const HEADER = 60;
+const pickLine = () => {
+  if (!pinned.matches) return innerHeight / 2;
+  const top = HEADER + stage.offsetHeight;
+  return Math.round(top + (innerHeight - top) / 3);
+};
+
+/** Whether the reader is at the top: the intro or 01 · Look still reaches the line that picks the scene. */
+const atTop = () => $('#look').getBoundingClientRect().bottom > pickLine();
+
+/** While the agent drives the phone, it glows. */
+const driving = (on) => phone.root.classList.toggle('driving', on);
 
 /**
  Play a scene. `restart` replays the one showing; `auto` is the demo moving on by itself, which leaves the page's
@@ -135,11 +150,13 @@ async function play(scene, { restart = false, auto = false } = {}) {
   termTitle();
   for (const d of $$('[data-dot]')) d.classList.toggle('on', d.dataset.dot === scene.id);
   body.innerHTML = '';
+  driving(false);
   hush();
   phone.reset();
   scene.start(phone);
   try {
     await sleep(350);
+    driving(true);
     for (const beat of scene.beats) {
       if (token !== run) throw new Cancelled();
       const cmd = typeof beat.cmd === 'function' ? beat.cmd(ctx()) : beat.cmd;
@@ -151,6 +168,7 @@ async function play(scene, { restart = false, auto = false } = {}) {
       print(out || []);
       await sleep(900);
     }
+    driving(false);
     // At the top of the page the demo moves on to the next scene after a moment, so a reader who stays put sees
     // there's more. In the sections below, each scene stays with its text. Not with reduced motion, where the pauses
     // are skipped and it would race through every scene.
@@ -167,20 +185,28 @@ $('[data-replay]').addEventListener('click', () => active && play(active, { rest
 soundButton($('[data-sound]'), { stored, store, stage: $('.stage-inner'), unlocked: () => active && play(active, { restart: true }) });
 for (const b of $$('[data-platform-set]')) b.addEventListener('click', () => setPlatform(b.dataset.platformSet));
 
-// The section crossing the viewport's middle line is the one playing. One the tour at the top already moved on to
-// (played without touching the page's text) is only lit, not restarted.
+// The section crossing the line that picks the scene is the one playing. One the tour at the top already moved on
+// to (played without touching the page's text) is only lit, not restarted. The line moves with the stage's height,
+// so the observer is rebuilt when the stage or the viewport resizes.
 const byId = new Map(SCENES.map((s) => [s.id, s]));
-const io = new IntersectionObserver(
-  (entries) => {
-    for (const e of entries) {
-      if (!e.isIntersecting) continue;
-      const scene = byId.get(e.target.dataset.scene);
-      if (scene === active) highlight(scene);
-      else play(scene);
-    }
-  },
-  { rootMargin: '-50% 0px -50% 0px' },
-);
+let io = null;
+const watch = () => {
+  const line = pickLine();
+  root.style.setProperty('--stage-h', `${stage.offsetHeight}px`);
+  io?.disconnect();
+  io = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        const scene = byId.get(e.target.dataset.scene);
+        if (scene === active) highlight(scene);
+        else play(scene);
+      }
+    },
+    { rootMargin: `-${line}px 0px -${Math.max(0, innerHeight - line - 1)}px 0px` },
+  );
+  for (const el of $$('[data-scene]')) io.observe(el);
+};
 
 // ── page content from data ──
 
@@ -200,17 +226,26 @@ for (const s of SCENES.slice(1)) {
 // the first paint.
 const startStory = () => {
   const go = () => {
-    // The first scene plays from the start: on a phone the hero sits below the pinned stage, short of the
-    // middle line that picks the scene. Scrolling takes over from there.
+    // The first scene plays from the start, while the reader is still on the intro. Scrolling takes over from there.
     if (!active) play(SCENES[0]);
-    for (const el of $$('[data-scene]')) io.observe(el);
+    watch();
+    let timer = 0;
+    const later = () => {
+      clearTimeout(timer);
+      timer = setTimeout(watch, 150);
+    };
+    new ResizeObserver(later).observe(stage);
+    addEventListener('resize', later);
   };
   'requestIdleCallback' in window ? requestIdleCallback(go, { timeout: 600 }) : setTimeout(go, 200);
 };
 document.readyState === 'complete' ? startStory() : addEventListener('load', startStory, { once: true });
 
+// Links to a scene. The first one is the top of the page: its text closes the hero, which it plays beside.
+const href = (s) => (s === SCENES[0] ? '#top' : `#${s.id}`);
+
 // Progress dots beside the phone.
-$('[data-dots]').innerHTML = SCENES.map((s) => `<a href="#${s.id}" data-dot="${s.id}" aria-label="${esc(s.kicker)}"></a>`).join('');
+$('[data-dots]').innerHTML = SCENES.map((s) => `<a href="${href(s)}" data-dot="${s.id}" aria-label="${esc(s.kicker)}"></a>`).join('');
 
 // MCP tools and every command, from the code (inventory.js is generated by site/build.mjs).
 for (const el of $$('[data-tools]')) el.innerHTML = INVENTORY.tools.map((t) => `<span title="${esc(t.description)}"><code>${t.name}</code></span>`).join('');
@@ -222,7 +257,7 @@ if (grid)
   grid.innerHTML = ordered
     .map((c) => {
       const s = sceneOf.get(c);
-      return `<a href="#${s.id}"><code>${c}</code><span>${esc(s.kicker.replace(/^\d+ · /, ''))}</span></a>`;
+      return `<a href="${href(s)}"><code>${c}</code><span>${esc(s.kicker.replace(/^\d+ · /, ''))}</span></a>`;
     })
     .join('');
 for (const el of $$('[data-version]')) el.textContent = `v${INVENTORY.version}`;

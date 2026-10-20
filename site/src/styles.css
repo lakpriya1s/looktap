@@ -32,6 +32,11 @@
   --term-ok: #86efac;
   --term-warn: #fcd34d;
   --term-err: #fda4af;
+  /* The headline's "phone." and the glow round the demo phone while the agent drives it: the brand blue and a pale
+     cyan. */
+  --glow-colors: #3fb6dc, #a5f3fc, #3fb6dc;
+  /* The headline's copy of them: deeper on the light page, so the word stays readable. */
+  --glow-text: #0a7ea4, #1fb3d6, #0a7ea4;
   color-scheme: light;
 }
 
@@ -52,7 +57,9 @@
     --ok: #86efac;
     --grid: rgba(232, 237, 246, 0.05);
     --shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.7);
-    color-scheme: dark;
+    --glow-text: var(--glow-colors);
+    --glow-text: var(--glow-colors);
+  color-scheme: dark;
   }
 }
 :root[data-theme='dark'] {
@@ -133,8 +140,8 @@ a.version:hover { color: var(--accent); border-color: var(--accent); }
 .scene { min-height: 88vh; display: flex; flex-direction: column; justify-content: center; max-width: 34rem; padding: 12vh 0; opacity: 0.38; transition: opacity 0.5s; }
 .scene.is-active { opacity: 1; }
 .scene h2 { font: 400 clamp(36px, 4vw, 56px)/1.02 var(--display); letter-spacing: -0.015em; margin: 6px 0 18px; }
-.scene p { color: var(--ink-2); margin: 0 0 14px; }
-.scene code { background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--ink); padding: 1px 5px; border-radius: 5px; }
+.scene p, .hero p { color: var(--ink-2); margin: 0 0 14px; }
+.scene code, .hero code { background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--ink); padding: 1px 5px; border-radius: 5px; }
 .kicker { font: 400 11.5px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin: 0; }
 .covers { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px !important; }
 .covers a { text-decoration: none; }
@@ -144,10 +151,16 @@ a.version:hover { color: var(--accent); border-color: var(--accent); }
 .tools code { display: inline-block; font-size: 11.5px; padding: 3px 8px !important; border-radius: 6px; }
 .covers a:hover code { background: color-mix(in srgb, var(--accent) 12%, transparent) !important; }
 
-.hero { min-height: calc(100vh - 60px); max-width: 38rem; opacity: 1; padding-top: 8vh; }
+.hero { display: flex; flex-direction: column; max-width: 38rem; padding-top: 8vh; }
 .eyebrow { font: 400 12px var(--mono); color: var(--muted); letter-spacing: 0.04em; margin: 0 0 22px; }
 .hero h1 { font: 400 clamp(60px, 7.4vw, 112px)/0.92 var(--display); letter-spacing: -0.03em; margin: 0 0 26px; }
-.hero h1 em { font-style: italic; color: var(--brand); padding-right: 0.06em; }
+/* "phone." flows slowly between the brand blue and a pale cyan, the colours of the demo phone's glow. */
+.hero h1 em {
+  font-style: italic; padding: 0 0.06em 0 0.1em; margin-left: -0.1em; /* room for the italic's overhang */
+  color: var(--brand); background: linear-gradient(90deg, var(--glow-text)) 0 0 / 200% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  animation: glow-flow 6s linear infinite;
+}
+@keyframes glow-flow { to { background-position: -200% 0; } }
 .lede { font-size: clamp(18px, 1.5vw, 21px); line-height: 1.5; color: var(--ink-2); max-width: 32rem; margin: 0 0 28px; }
 .install { display: flex; align-items: center; gap: 0; max-width: min(31rem, 100%); border: 1px solid var(--line-2); border-radius: 12px; background: var(--panel); overflow: hidden; }
 .install code { flex: 1; min-width: 0; padding: 13px 16px; font-size: 13px; white-space: nowrap; overflow-x: auto; scrollbar-width: none; }
@@ -166,7 +179,8 @@ a.version:hover { color: var(--accent); border-color: var(--accent); }
 .stats div { margin: 0; }
 .stats dt { font: 400 clamp(30px, 3vw, 42px)/1 var(--display); }
 .stats dd { margin: 4px 0 0; font: 400 11px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
-.hero-scene { margin-top: 12vh; padding-top: 28px; border-top: 1px solid var(--line); }
+/* 01 · Look closes the hero on wide screens: under the stats, always lit, as part of the first screen. */
+.scene.hero-scene { min-height: 0; max-width: 38rem; justify-content: flex-start; opacity: 1; margin-top: 12vh; padding: 28px 0 12vh; border-top: 1px solid var(--line); }
 .hero-scene h2 { font: 400 clamp(36px, 4vw, 56px)/1.02 var(--display); letter-spacing: -0.015em; margin: 6px 0 18px; }
 /* The scroll cue: floats at the bottom until the story starts moving, then fades away for good. */
 .scroll-cue { position: fixed; left: 50%; bottom: max(18px, env(safe-area-inset-bottom)); z-index: 30; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 6px 10px 10px; color: var(--muted); font: 500 10.5px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; transition: opacity 0.4s, transform 0.4s, visibility 0.4s; }
@@ -308,10 +322,14 @@ a.version:hover { color: var(--accent); border-color: var(--accent); }
   .rig [data-phone].landscape { height: auto; width: 58%; align-self: center; }
   .term { order: 0; margin: 0; flex: 1 1 0; width: 0; min-width: 0; height: min(46vh, 420px); display: flex; flex-direction: column; }
   .term-body { height: auto; flex: 1; font-size: 9.5px; padding: 8px 10px; }
-  .story-text { padding: 0 16px; }
-  .scene { min-height: 70vh; padding: 8vh 0; max-width: 40rem; }
-  .hero { min-height: auto; padding-top: 6vh; }
-  .hero-scene { margin-top: 8vh; }
+  /* The intro comes first on its own; the stage pins under the header once it's scrolled up to it, and each scene
+     below it fills the space the stage leaves, easing into place there so the reader goes one scene at a time. */
+  html { scroll-snap-type: y proximity; }
+  .story-text { display: contents; }
+  .hero { order: -2; padding: 6vh 16px 5vh; }
+  .scene { min-height: calc(100vh - 72px - var(--stage-h, 45vh)); min-height: calc(100svh - 72px - var(--stage-h, 45vh)); justify-content: flex-start; padding: 4vh 16px 6vh; max-width: 40rem; scroll-snap-align: start; scroll-margin-top: var(--stage-h, 45vh); }
+  .scene.hero-scene { margin-top: 0; padding: 4vh 16px 6vh; border-top: 0; opacity: 0.38; }
+  .scene.hero-scene.is-active { opacity: 1; }
   .start { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
@@ -327,11 +345,19 @@ a.version:hover { color: var(--accent); border-color: var(--accent); }
   .version { display: none; }
   .topbar { gap: 10px; }
   .rig [data-phone], .term { height: 40vh; }
+  .scene h2 { font-size: 32px; margin-bottom: 12px; }
   .term-bar span { display: none; }
   .stats { gap: 18px; }
   .bar { grid-template-columns: 84px 1fr; font-size: 13px; }
   .band { padding: 72px 16px; }
   .footer { padding: 48px 16px; }
+}
+
+/* Short phones: a smaller stage leaves room for the scene's text. */
+@media (max-width: 640px) and (max-height: 700px) {
+  .rig [data-phone], .term { height: 32vh; }
+  .stage-inner { padding: 6px 16px 8px; }
+  .scene-label { margin-bottom: 4px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
