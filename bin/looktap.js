@@ -47,7 +47,7 @@ look
   expect <label|@ref> [= value] [--gone] [--exact]
                                   check it's on screen (with that value), or with --gone that it isn't.
                                   Waits up to --wait (3 s) for it; fails with what's there instead (exit 1)
-  scrollto <label> [--up]         swipe until it is fully on screen (default scrolls down)
+  scrollto <label> [--up]         swipe until it is fully on screen (default scrolls down; above the keyboard)
   shot <name> [--plain] [--scale f]  screenshot → <out>/<name>.png; --scale 0.5 = half size, fewer
                                   image tokens (Android emulators bypass FLAG_SECURE; --plain doesn't)
   burst <dir> <seconds>           a frame whenever the screen changes; duplicates removed
@@ -63,8 +63,8 @@ act                               add --ls to any of these to print the settled 
   type <text>                     into the focused field
   key <name> …                    return, escape, delete, tab, space, selectall, paste, home
                                   (Android: also back, or any KEYCODE_*)
-  fill <label|@ref> <text>        clear the field, type, leave it
-  hidekb                          dismiss the keyboard
+  fill <label|@ref> <text>        clear the field, type, check it holds the text (Android), leave it
+  hidekb                          dismiss the keyboard and take focus from the field
   swipe <x1> <y1> <x2> <y2> [ms]
   back                            Android system back · iOS navigation-bar back button
   home                            the Home button: to the home screen, the app left running

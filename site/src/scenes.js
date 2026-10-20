@@ -73,8 +73,8 @@ export const SCENES = [
     id: 'type',
     kicker: '03 · Type',
     title: 'Fill forms the way a person does',
-    body: `<p><code>fill</code> focuses a field, clears it and types. <code>type</code> adds to the focused field, and <code>key</code> presses return, tab, delete and friends. On iOS, characters a US keyboard can't type are pasted.</p>
-<p><code>hidekb</code> checks after every method it tries, and it never reports success while the keyboard is still up.</p>`,
+    body: `<p><code>fill</code> focuses a field, clears it and types. <code>type</code> adds to the focused field, and <code>key</code> presses return, tab, delete and friends. On iOS, characters a US keyboard can't type are pasted. On Android, <code>fill</code> reads the field back and retypes it when a letter went missing.</p>
+<p><code>hidekb</code> checks after every method it tries, and it never reports success while the keyboard is still up. It also takes focus from the field, so a form that validates on blur shows its errors.</p>`,
     covers: ['fill', 'type', 'key', 'hidekb'],
     start: (p) => p.show('signin'),
     beats: [
@@ -117,7 +117,7 @@ export const SCENES = [
     id: 'gestures',
     kicker: '04 · Move',
     title: 'Swipe, scroll, hold, pinch',
-    body: `<p><code>swipe</code> drags, <code>scrollto</code> swipes until a row is fully on screen, <code>longpress</code> holds, and <code>zoom</code> is a real two-finger pinch on both platforms.</p>
+    body: `<p><code>swipe</code> drags, <code>scrollto</code> swipes until a row is fully on screen (above the keyboard, when it's up), <code>longpress</code> holds, and <code>zoom</code> is a real two-finger pinch on both platforms.</p>
 <p><code>open</code> follows a deep link, <code>back</code> goes back (Android's system Back, or the iOS navigation bar's), <code>home</code> presses the Home button, and <code>location</code> moves the GPS.</p>`,
     covers: ['swipe', 'scrollto', 'longpress', 'zoom', 'open', 'back', 'home', 'location'],
     start: (p) => p.show('home'),
@@ -470,7 +470,7 @@ export const SCENES = [
     id: 'honest',
     kicker: '11 · Honest failures',
     title: 'It tells you when something is off',
-    body: `<p>A tap that lands on a toast instead of the button prints a warning. A stale <code>@ref</code> is an error, not a tap on whatever moved into its place. When a system prompt covers the app, <code>ls</code> says so instead of returning an empty screen, and on a locked phone every command that needs the screen stops with <em>the device is locked</em> instead of typing into the lock screen.</p>
+    body: `<p>A tap aims at the part of its target nothing covers, and warns when a toast covers it all (React Native's LogBox toast included, with the tap that dismisses it). A stale <code>@ref</code> is an error, not a tap on whatever moved into its place. When a system prompt covers the app, <code>ls</code> says so instead of returning an empty screen, and on a locked phone every command that needs the screen stops with <em>the device is locked</em> instead of typing into the lock screen.</p>
 <p>Exit code 2 means usage: bad arguments, element not found, no device. A script can <code>set -e</code> and stop at the first surprise.</p>`,
     covers: [],
     start: (p) => {

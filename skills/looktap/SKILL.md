@@ -96,7 +96,7 @@ looktap wait "Loading" --gone
 looktap expect "Welcome"
 looktap expect "Email" = sam@example.com
 looktap expect "Error" --gone
-# swipe until it's fully on screen; fails at the end of the list
+# swipe until it's fully on screen (above the keyboard, when it's up); fails at the end of the list
 looktap scrollto "Privacy & Security"
 looktap scrollto "General" --up
 ```
@@ -419,7 +419,8 @@ Then look at the few frames that matter, not all of them.
 - **Not sure a command works on this device?** `looktap capabilities` says what it can't do, and why. A command
   that can't run exits 2 with the reason, so don't retry it.
 - **Let a screen settle before typing into it.** Add `--ls` to the tap that opens it: some screens (search
-  screens especially) clear their field just after they open, taking the first letters with them.
+  screens especially) clear their field just after they open, taking the first letters with them. `fill` reads
+  an Android field back and retypes it, but `type` doesn't check: after `type`, confirm with `expect "<field>" = …`.
 - **App-state and condition commands need the app id.** They never act on whatever happens to be on screen.
 - **`tap` aims at a part of the target nothing covers.** When a toast or bar hides its middle, it taps the
   uncovered part and says `off-centre`. If it warns that another element covers the point, nothing of the target
