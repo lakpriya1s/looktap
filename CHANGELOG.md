@@ -5,12 +5,15 @@
 ### Fixed
 
 - **Android: `--ls` (and `wait`, `tap`, `scrollto`) could read the screen an app had just left.** The helper's node
-  cache can lag behind an app (seen after a React Navigation screen change in a React Native app). A settled screen
-  is now confirmed against the app itself, unchanged-looking reads alternate with fresh ones, and polling loops read
-  fresh at least once a second.
-- **`tap` aims at a part of the target nothing covers.** A toast over the top half of a button (React Native's LogBox)
-  took the tap with no warning, because the centre sat a point outside the toast's reported box. The tap now goes to
-  the middle of the largest uncovered part; the warning (with a LogBox hint) is left for a target covered all over.
+  cache can lag behind an app (seen after a React Navigation screen change in a React Native app). A screen that
+  still looks as it did before the action is now confirmed with a read from the app itself (only then, since that
+  read costs ~0.2 s), and polling loops (`wait`, `expect`, a `tap` lookup) read fresh at most once a second after a
+  miss.
+- **`tap` aims at a part of the target nothing covers.** A toast over part of a button took the tap with no warning:
+  the toast's labelled row is smaller than the card that's drawn and takes touches. The tap now goes to the middle of
+  the largest uncovered part, counting the whole card, and warns when nothing is left clear. React Native's LogBox
+  toast blocks taps across the bottom of the screen (a whole tab bar), so there `tap` warns and prints the `tapxy`
+  for its ×.
 - **One label in two separate places is ambiguous**, with or without `--exact` (a heading and a tab, both "Library"),
   instead of tapping the first. The error lists both, to choose by `@ref`. Label matching ignores whitespace
   differences (no-break spaces).
