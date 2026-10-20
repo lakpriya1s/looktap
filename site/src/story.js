@@ -115,10 +115,17 @@ function termTitle() {
   $('[data-term-title]').textContent = `agent ➜ ${active?.device?.(ios) || (ios ? 'iPhone 18 Pro simulator' : 'Pixel 11 emulator')}`;
 }
 
-async function play(scene, { restart = false } = {}) {
+/** Whether the reader is at the top: the hero still reaches the middle line that picks the scene. */
+const atTop = () => $('#look').getBoundingClientRect().bottom > innerHeight / 2;
+
+/**
+ Play a scene. `restart` replays the one showing; `auto` is the demo moving on by itself, which leaves the page's
+ text where the reader has it.
+ */
+async function play(scene, { restart = false, auto = false } = {}) {
   const token = ++run;
   active = scene;
-  if (!restart) for (const s of $$('.scene')) s.classList.toggle('is-active', s.dataset.scene === scene.id);
+  if (!restart && !auto) for (const s of $$('.scene')) s.classList.toggle('is-active', s.dataset.scene === scene.id);
   $('[data-scene-label]').textContent = scene.kicker;
   termTitle();
   for (const d of $$('[data-dot]')) d.classList.toggle('on', d.dataset.dot === scene.id);
@@ -139,7 +146,13 @@ async function play(scene, { restart = false } = {}) {
       print(out || []);
       await sleep(900);
     }
-    if (token === run) line('<span class="prompt">></span> <span class="caret"></span>', 'in idle');
+    // At the top of the page the demo moves on to the next scene after a moment, so a reader who stays put sees
+    // there's more. In the sections below, each scene stays with its text. Not with reduced motion, where the pauses
+    // are skipped and it would race through every scene.
+    if (reduce.matches || !atTop()) return;
+    await sleep(1500);
+    if (token !== run || !atTop()) throw new Cancelled();
+    play(SCENES[(SCENES.indexOf(scene) + 1) % SCENES.length], { auto: true });
   } catch (e) {
     if (!(e instanceof Cancelled)) throw e;
   }
