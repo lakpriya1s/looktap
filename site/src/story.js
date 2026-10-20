@@ -122,10 +122,15 @@ const atTop = () => $('#look').getBoundingClientRect().bottom > innerHeight / 2;
  Play a scene. `restart` replays the one showing; `auto` is the demo moving on by itself, which leaves the page's
  text where the reader has it.
  */
+/** Light the section whose text goes with `scene`; the others fade. */
+const highlight = (scene) => {
+  for (const s of $$('.scene')) s.classList.toggle('is-active', s.dataset.scene === scene.id);
+};
+
 async function play(scene, { restart = false, auto = false } = {}) {
   const token = ++run;
   active = scene;
-  if (!restart && !auto) for (const s of $$('.scene')) s.classList.toggle('is-active', s.dataset.scene === scene.id);
+  if (!restart && !auto) highlight(scene);
   $('[data-scene-label]').textContent = scene.kicker;
   termTitle();
   for (const d of $$('[data-dot]')) d.classList.toggle('on', d.dataset.dot === scene.id);
@@ -162,11 +167,17 @@ $('[data-replay]').addEventListener('click', () => active && play(active, { rest
 soundButton($('[data-sound]'), { stored, store, stage: $('.stage-inner'), unlocked: () => active && play(active, { restart: true }) });
 for (const b of $$('[data-platform-set]')) b.addEventListener('click', () => setPlatform(b.dataset.platformSet));
 
-// The section crossing the viewport's middle line is the one playing.
+// The section crossing the viewport's middle line is the one playing. One the tour at the top already moved on to
+// (played without touching the page's text) is only lit, not restarted.
 const byId = new Map(SCENES.map((s) => [s.id, s]));
 const io = new IntersectionObserver(
   (entries) => {
-    for (const e of entries) if (e.isIntersecting && byId.get(e.target.dataset.scene) !== active) play(byId.get(e.target.dataset.scene));
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      const scene = byId.get(e.target.dataset.scene);
+      if (scene === active) highlight(scene);
+      else play(scene);
+    }
   },
   { rootMargin: '-50% 0px -50% 0px' },
 );
