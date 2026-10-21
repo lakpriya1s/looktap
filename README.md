@@ -1058,7 +1058,7 @@ Precedence: command-line option, then environment variable, then config file, th
 |---|---|
 | iOS: `SimulatorKit not found …` / `… has no Indigo HID builders` | On Xcode 27.1, update looktap (0.7.1 finds SimulatorKit where 27.1 moved it). Otherwise run `looktap doctor` and point `xcode-select` at a full Xcode: `sudo xcode-select -s /Applications/Xcode.app` |
 | iOS, Xcode 27.1: `boot --window` shows no simulator | Xcode 27.1 shows simulators in Device Hub, not the Simulator app, one at a time: pick the simulator in Device Hub's sidebar |
-| iPhone Duo: screenshots are black, or `ls` misses half the screen | Update looktap: before `fold` support it only knew the outer screen, which is off while the Duo is open |
+| iPhone Duo: screenshots are black, or `ls` misses half the screen | Update looktap to 0.7.2 or later: earlier versions only knew the outer screen, which is off while the Duo is open |
 | `<app> is not installed on this simulator` for Maps, Photos… | That runtime ships without it (the iPhone Duo's iOS 27.1 has Safari and Settings). `looktap apps --all` lists what's there |
 | `this simulator doesn't fold` | `fold` needs a foldable simulator: the iPhone Duo, which comes with Xcode 27.1's iOS 27.1 runtime |
 | iOS: `input unavailable (dtuhid): dtuhidd did not answer` | The simulator is still booting, or its input service is restarting. Retry in a few seconds |
