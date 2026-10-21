@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- **iOS simulator: Xcode 27.1 works.** It moved SimulatorKit from `Developer/Library/PrivateFrameworks` to
+  `Contents/SharedFrameworks`, and the helper stopped at start with *SimulatorKit not found*, so no command that
+  reads or touches the screen ran. The helper looks in both places, and only the indigo input of Xcode 26 and older
+  needs SimulatorKit at all. `doctor` checks both places, and skips the check where input goes through dtuhidd.
+
 ## 0.7.0
 
 ### Fixed

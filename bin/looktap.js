@@ -232,11 +232,14 @@ function doctor() {
     ok(sims.length > 0, `booted simulators: ${sims.map((s) => s.name).join(', ') || 'none'}`, 'looktap boot <name> (looktap devices --all lists them)');
     const dev = run('xcode-select', ['-p'], { allowFail: true }).trim();
     ok(existsSync('/Library/Developer/PrivateFrameworks/CoreSimulator.framework'), 'CoreSimulator.framework (iOS helper)', 'install Xcode');
-    ok(dev && existsSync(join(dev, 'Library/PrivateFrameworks/SimulatorKit.framework')), `SimulatorKit in ${dev || 'no developer dir'} (iOS helper)`, 'sudo xcode-select -s /Applications/Xcode.app');
     // Same rule as the helper: CoreSimulator 1155.4+ (Xcode 27) takes input through dtuhidd.
     const cs = run('defaults', ['read', '/Library/Developer/PrivateFrameworks/CoreSimulator.framework/Resources/Info', 'CFBundleVersion'], { allowFail: true }).trim();
+    const modern = cs && cs.localeCompare('1155.4', undefined, { numeric: true }) >= 0;
+    // Up to Xcode 26 in Developer/Library/PrivateFrameworks, from 27.1 in Contents/SharedFrameworks. Only indigo input uses it.
+    const simKit = dev && ['Library/PrivateFrameworks', '../SharedFrameworks'].some((d) => existsSync(join(dev, d, 'SimulatorKit.framework')));
+    const indigo = (process.env.LOOKTAP_IOS_HID || (modern ? 'dtuhid' : 'indigo')) === 'indigo';
+    if (simKit || indigo) ok(simKit, `SimulatorKit in ${dev || 'no developer dir'} (iOS input)`, 'sudo xcode-select -s /Applications/Xcode.app');
     if (cs) {
-      const modern = cs.localeCompare('1155.4', undefined, { numeric: true }) >= 0;
       console.log(`  iOS input: ${process.env.LOOKTAP_IOS_HID || (modern ? 'dtuhid' : 'indigo')} (CoreSimulator ${cs})`);
     }
   }
