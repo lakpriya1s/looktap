@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/lakpriya1s/looktap/main/assets/looktap-logo.svg" alt="looktap — hands on the phone, for AI agents" width="560">
+<img src="https://raw.githubusercontent.com/lakpriya1s/looktap/main/assets/looktap-logo.svg" alt="looktap — hands on the phone, for AI agents" width="355">
 
 **Let AI agents drive iPhone and Android devices from the shell**<br>
 Read the screen, tap, type, swipe, screenshot, and read logs and crashes. No server to start and no dependencies.
