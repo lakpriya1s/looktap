@@ -80,7 +80,7 @@ function runCommand(cmd) {
     clearInterval(timer);
     hush();
     const has = (c) => lines.some((l) => typeof l === 'object' && l.c === c);
-    el.firstChild.textContent = '⏺';
+    el.firstChild.textContent = '●'; // not ⏺, which iOS draws as an emoji: a grey square
     el.firstChild.className = `spin ${has('err') ? 'err' : has('warn') ? 'warn' : 'ok'}`;
     el.querySelector('.cmd').classList.remove('running');
   };
