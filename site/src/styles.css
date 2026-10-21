@@ -318,7 +318,8 @@ a.version:hover { color: var(--accent); border-color: var(--accent); }
   .scene-label { margin-bottom: 8px; }
   .dots { display: none; }
   .rig { flex: none; height: auto; align-items: center; justify-content: flex-start; gap: 12px; }
-  .rig [data-phone] { margin: 0; height: min(46vh, 420px); }
+  /* The phone is drawn smaller here, so its glow is narrower too. */
+  .rig [data-phone] { margin: 0; height: min(46vh, 420px); --glow-blur: 10px; }
   .rig [data-phone].landscape { height: auto; width: 58%; align-self: center; }
   .rig [data-phone].duo { --duo-w: 58%; height: auto; align-self: center; }
   .term { order: 0; margin: 0; flex: 1 1 0; width: 0; min-width: 0; height: min(46vh, 420px); display: flex; flex-direction: column; }
