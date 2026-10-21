@@ -232,6 +232,11 @@ final class Ops {
 
     case "home":
       XCUIDevice.shared.press(.home)
+      // Some phones ignore the Home press (an iPhone 14 Pro on iOS 26.0 did, from one day to the next, with no
+      // error): bring the home screen forward instead.
+      let until = Date().addingTimeInterval(1)
+      while front() != nil && Date() < until { Thread.sleep(forTimeInterval: 0.1) }
+      if front() != nil { springboard.activate() }
       return (["ok": true], nil)
 
     case "appearance":

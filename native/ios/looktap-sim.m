@@ -1142,6 +1142,10 @@ static void chooseTransport(void *simKit) {
     inputError = [NSString stringWithFormat:@"unknown LOOKTAP_IOS_HID: %@", transport];
     return;
   }
+  if (!simKit) {
+    inputError = @"SimulatorKit not found in this Xcode (indigo input needs it)";
+    return;
+  }
   indigoMouse = (MouseEventFn)dlsym(simKit, "IndigoHIDMessageForMouseNSEvent");
   indigoKeyboard = (KeyboardFn)dlsym(simKit, "IndigoHIDMessageForKeyboardArbitrary");
   indigoButton = (ButtonFn)dlsym(simKit, "IndigoHIDMessageForButton");
@@ -1157,9 +1161,13 @@ static void chooseTransport(void *simKit) {
 static void setup(NSString *udid, NSString *developerDir) {
   if (!dlopen("/Library/Developer/PrivateFrameworks/CoreSimulator.framework/CoreSimulator", RTLD_NOW))
     die(@"CoreSimulator.framework not found — install Xcode");
-  NSString *simKit = [developerDir stringByAppendingPathComponent:@"Library/PrivateFrameworks/SimulatorKit.framework/SimulatorKit"];
-  void *sk = dlopen(simKit.fileSystemRepresentation, RTLD_NOW);
-  if (!sk) die([NSString stringWithFormat:@"SimulatorKit not found in %@", developerDir]);
+  // SimulatorKit is in Developer/Library/PrivateFrameworks up to Xcode 26, and in Contents/SharedFrameworks from
+  // Xcode 27.1. Only the indigo transport needs it, so a missing one is an input error there, not a failed start.
+  void *sk = NULL;
+  for (NSString *dir in @[@"Library/PrivateFrameworks", @"../SharedFrameworks"]) {
+    NSString *path = [[developerDir stringByAppendingPathComponent:dir] stringByAppendingPathComponent:@"SimulatorKit.framework/SimulatorKit"];
+    if ((sk = dlopen(path.stringByStandardizingPath.fileSystemRepresentation, RTLD_NOW))) break;
+  }
   if (!dlopen("/System/Library/PrivateFrameworks/AccessibilityPlatformTranslation.framework/AccessibilityPlatformTranslation", RTLD_NOW))
     die(@"AccessibilityPlatformTranslation.framework not found");
 

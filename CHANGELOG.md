@@ -1,5 +1,26 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- **iOS simulator: Xcode 27.1 works.** It moved SimulatorKit from `Developer/Library/PrivateFrameworks` to
+  `Contents/SharedFrameworks`, and the helper stopped at start with *SimulatorKit not found*, so no command that
+  reads or touches the screen ran. The helper looks in both places, and only the indigo input of Xcode 26 and older
+  needs SimulatorKit at all. `doctor` checks both places, and skips the check where input goes through dtuhidd.
+- **`boot --window` on Xcode 27.1 opens Device Hub**, which replaces the Simulator app there, and `devices` and `boot`
+  report a simulator's window while Device Hub is open. Device Hub shows one device at a time and can't be told which
+  from outside, so `boot` says to pick it there.
+- **Real iPhone: `scrollto` stops at its target and at the end of the list.** A list can still be moving when it's
+  read after a swipe: the target was missing from that read and the next swipe carried it off the top, and a bounce
+  at the end looked like more list, so it swiped 15 times. A second read now checks the list has stopped, and waits
+  for it if it hasn't.
+- **Real iPhone: `home` reaches the home screen when iOS ignores the Home press.** XCTest's Home press stopped
+  working on an iPhone 14 Pro (iOS 26.0) with no error, over USB and Wi-Fi alike; the runner now brings the home screen
+  forward itself when an app is still in front a second later.
+- **`push` explains iOS 27's refusal.** iOS 27 won't deliver a push to an app that hasn't been allowed notifications
+  (iOS 26 delivered it anyway); `push` now says so instead of printing simctl's error.
+
 ## 0.7.0
 
 ### Fixed
