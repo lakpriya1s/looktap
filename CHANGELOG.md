@@ -11,6 +11,10 @@
 - **`boot --window` on Xcode 27.1 opens Device Hub**, which replaces the Simulator app there, and `devices` and `boot`
   report a simulator's window while Device Hub is open. Device Hub shows one device at a time and can't be told which
   from outside, so `boot` says to pick it there.
+- **Real iPhone: `scrollto` stops at its target and at the end of the list.** A list can still be moving when it's
+  read after a swipe: the target was missing from that read and the next swipe carried it off the top, and a bounce
+  at the end looked like more list, so it swiped 15 times. A second read now checks the list has stopped, and waits
+  for it if it hasn't.
 - **`push` explains iOS 27's refusal.** iOS 27 won't deliver a push to an app that hasn't been allowed notifications
   (iOS 26 delivered it anyway); `push` now says so instead of printing simctl's error.
 
