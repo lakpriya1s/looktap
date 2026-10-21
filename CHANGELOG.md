@@ -8,6 +8,11 @@
   `Contents/SharedFrameworks`, and the helper stopped at start with *SimulatorKit not found*, so no command that
   reads or touches the screen ran. The helper looks in both places, and only the indigo input of Xcode 26 and older
   needs SimulatorKit at all. `doctor` checks both places, and skips the check where input goes through dtuhidd.
+- **`boot --window` on Xcode 27.1 opens Device Hub**, which replaces the Simulator app there, and `devices` and `boot`
+  report a simulator's window while Device Hub is open. Device Hub shows one device at a time and can't be told which
+  from outside, so `boot` says to pick it there.
+- **`push` explains iOS 27's refusal.** iOS 27 won't deliver a push to an app that hasn't been allowed notifications
+  (iOS 26 delivered it anyway); `push` now says so instead of printing simctl's error.
 
 ## 0.7.0
 
