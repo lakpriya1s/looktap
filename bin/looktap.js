@@ -15,7 +15,7 @@ import { Recorder, TouchReader, classify, mapper, quote } from '../lib/codegen.j
 import { AGENTS, PROJECT_DEFAULT, claudePlugin, detectAgents, installSkill, installedVersion, pickAgents, skillsDir, uninstallSkill } from '../lib/agents.js';
 import { boot, shutdown } from '../lib/boot.js';
 import { formatDevice, inventory } from '../lib/devices.js';
-import { ORIENTATIONS, coordinates, pushPayload, rotation, textSize } from '../lib/conditions.js';
+import { ORIENTATIONS, coordinates, foldPosition, pushPayload, rotation, textSize } from '../lib/conditions.js';
 import { LOGBOX, appGone, center, expectOn, poller, tapPoint, forgetFront, formatRow, isRef, lastFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, signature, sliding, visibleRows, waitFor } from '../lib/screen.js';
 import { duration, formatFrames, formatReading, formatSamples, readingJson } from '../lib/perf.js';
 import { flowFiles, flowName, junit } from '../lib/testing.js';
@@ -78,6 +78,8 @@ act                               add --ls to any of these to print the settled 
   rotate [portrait|landscape|left|right|upsidedown]
                                   turn the device (landscape = left: turned counter-clockwise); no
                                   argument prints the current orientation. ls, taps and shots follow it
+  fold [closed|half|open]         fold or open a foldable simulator (iPhone Duo); ls, taps and shots follow
+                                  the screen it then shows. No argument prints which one that is
 
 debug                             [app] defaults to --app / config, else the app in front
   logs [app] [--errors] [--grep re] [--since 5m] [--lines n] [--all]
@@ -320,7 +322,7 @@ function display(opts, config) {
   return { display: headless ? 'headless' : 'window', explicit: false };
 }
 const shutDown = (r) => `shut down: ${r.platform}  ${r.id}  ${r.name}`;
-const ACTIONS = new Set(['tap', 'longpress', 'zoom', 'tapxy', 'type', 'key', 'fill', 'hidekb', 'swipe', 'back', 'home', 'open', 'launch', 'bio', 'scrollto', 'rotate']);
+const ACTIONS = new Set(['tap', 'longpress', 'zoom', 'tapxy', 'type', 'key', 'fill', 'hidekb', 'swipe', 'back', 'home', 'open', 'launch', 'bio', 'scrollto', 'rotate', 'fold']);
 
 /** Print the listing (text or --json) and remember its @refs. `snap` defaults to a fresh read. */
 async function list(d, opts, snap) {
@@ -620,6 +622,14 @@ async function act(d, cmd, args, opts) {
       if (limit.why && d.homeScreen && (await d.foreground())?.id === (await d.homeScreen())) console.error(`looktap: warning: ${limit.why}`);
       if (r.turns === want) return console.log(`rotated: ${now}`);
       return console.log(`turned the device to ${ORIENTATIONS[want]}, but the screen stays ${now}: the app in front doesn't support that orientation`);
+    }
+    case 'fold': {
+      const want = args[0] ? foldPosition(args[0]) : null;
+      if (!d.fold) unsupported(d.kind, 'fold');
+      const r = await d.fold(want);
+      if (!r.position) throw new UsageError(`this simulator doesn't fold — ${capability(d.kind, 'fold').why}`);
+      const { w, h } = await d.rotate();
+      return console.log(`${r.position}: the ${r.screen?.id === 1 ? 'outer' : 'inner'} screen (${w}x${h})`);
     }
     case 'logs': return showLogs(d, args[0], opts);
     case 'crashes': return showCrashes(d, args[0], opts);

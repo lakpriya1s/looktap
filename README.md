@@ -72,7 +72,7 @@ use the phone ([Record a flow](#record-a-flow-codegen)).
 | ⏱️ | **Performance.** `perf` reads the app's CPU, memory and threads, once or each second with `--for 10s`; `perf --frames` adds frames, jank and frame-time percentiles (on iOS, from the screen itself). `launch --time` times a cold start until the first screen settles |
 | 💥 | **Crashes.** `crashes` reads iOS crash reports (exception, reason, top frames) and Android crashes, ANRs and **low-memory kills**, so "the app vanished" always comes with a reason |
 | 🫆 | **Biometrics.** `bio match\|nomatch` simulates Face ID or a fingerprint |
-| 🌍 | **Simulated conditions.** `location <lat> <lon>`, `appearance dark`, `textsize xxl` (Dynamic Type / font scale), `statusbar clean` (9:41 for screenshots), `rotate landscape` (`ls`, taps and screenshots follow the turned screen), Android `network offline`, and iOS `push` notifications |
+| 🌍 | **Simulated conditions.** `location <lat> <lon>`, `appearance dark`, `textsize xxl` (Dynamic Type / font scale), `statusbar clean` (9:41 for screenshots), `rotate landscape` (`ls`, taps and screenshots follow the turned screen), `fold open` (the iPhone Duo simulator), Android `network offline`, and iOS `push` notifications |
 | 🧹 | **App state for repros.** `install` a build, `apps` to see what is installed (and which version), `reset` an app to a fresh install, `uninstall`, and `permission grant\|revoke\|reset camera\|location\|photos\|…`, with the same names on both platforms |
 | 📱 | **Devices on demand.** `boot "iPhone 16 Pro"` or `boot Pixel_9a` starts a simulator or emulator by name and waits until it's ready, with a window or `--headless`; `shutdown` stops it. `devices` tells real phones from simulators and emulators (model, OS, USB or Wi-Fi), and says what to do for a phone that isn't ready yet |
 | 🤖 | **Built for agents.** `--ls` on any action, `run` to batch steps, `--json`, `capabilities` to check what the device in use can and can't do, and a [Claude Code skill](#for-ai-agents) you install with one command |
@@ -211,7 +211,8 @@ sign-in, stop and let me do it, then continue from there.
 | Android | **Android SDK platform-tools** (`adb` on your `PATH`), and an emulator (AVD) or a USB-debugging device. `looktap boot` starts an emulator (it needs the SDK's Emulator package) |
 | A real iPhone or iPad | The iOS row, plus an **Apple ID signed in to Xcode** (a free one works) and the device paired with the Mac, with Developer Mode on. See [Using a real iPhone](#using-a-real-iphone) |
 
-Tested with Xcode 26 / iOS 26 (iPhone 14 simulator) and Android 16 / API 36 (Pixel 9a emulator).
+Tested with Xcode 26 and 27.1 / iOS 26, 27 and 27.1 (iPhone 14, iPhone 18 Pro and the foldable iPhone Duo
+simulators), a real iPhone 14 Pro on iOS 26, and Android 16 / API 36 (Pixel 9a emulator).
 
 ## How it works
 
@@ -224,7 +225,8 @@ devices.** A real iPhone or iPad is the exception: it gets a small test runner (
 | Tap, type, swipe, keys | The same helper, as touch and keyboard events through SimulatorKit | The same helper, as input events through UiAutomation |
 | Screenshots, `burst` | The simulator display's framebuffer, read in-process | Emulators: the emulator's gRPC API, which also gets past `FLAG_SECURE`. Devices: the helper |
 | Video (`record`) | `simctl io recordVideo` | `screenrecord` on the device |
-| Orientation (`rotate`) | The orientation event Simulator.app sends to the guest. Coordinates and frames are converted, so everything looktap prints and takes is as the user sees the screen | `settings` (user rotation, auto-rotate off). The helper reports the turned display size |
+| Folding (`fold`) | What Device Hub's fold buttons send: a vendor-defined HID report with the hinge angle, through `dtuhidd`. `devicectl` says which screen is lit, and the helper reads, touches and captures that one | — |
+| Orientation (`rotate`) | The orientation event Simulator.app sends to the guest (the iPhone Duo: Device Hub's orientation report). Coordinates and frames are converted, so everything looktap prints and takes is as the user sees the screen | `settings` (user rotation, auto-rotate off). The helper reports the turned display size |
 | Logs, crashes | `log show` inside the simulator, and its `.ips` crash reports | `logcat` (by app uid), the crash buffer, and `dumpsys activity exit-info` |
 | Home button, `stop` | The helper sends the hardware Home button; `simctl terminate` | `KEYCODE_HOME`; `am force-stop` |
 | Deep links, launch, biometrics | `xcrun simctl` | `adb` and the emulator console |
@@ -533,6 +535,7 @@ looktap appearance dark                 # or light; no argument prints the curre
 looktap textsize ax2                    # Dynamic Type / font scale: xs s m l xl xxl xxxl ax1…ax5
 looktap statusbar clean                 # 9:41, full battery and Wi-Fi, for screenshots · `statusbar live`
 looktap rotate landscape --ls           # or left, right, upsidedown, portrait; no argument prints it
+looktap fold open --ls                  # a foldable (iPhone Duo): closed, half or open; no argument prints it
 looktap network offline                 # Android: airplane mode · `network online`
 looktap push com.example.myapp "Your order has shipped"          # iOS: an alert
 looktap push com.example.myapp '{"aps":{"alert":"Hi"},"orderId":7}'   # or any payload / a .json file
@@ -545,6 +548,10 @@ looktap push com.example.myapp '{"aps":{"alert":"Hi"},"orderId":7}'   # or any p
   `landscape` is `left`: the device turned counter-clockwise. `ls` coordinates, taps and screenshots follow
   the turned screen, so read the screen again afterwards. An app that doesn't support the orientation stays
   as it is, and `rotate` says so. On Android it leaves auto-rotate off.
+- **`fold`** folds or opens a foldable simulator, the iPhone Duo (Xcode 27.1), the way Device Hub's fold buttons
+  do: `closed` (0°) shows the outer screen, `half` (130°) and `open` (180°) the inner one. `ls`, taps,
+  screenshots and recordings follow whichever screen it shows, so read the screen again afterwards. Closing
+  takes the simulator a few seconds.
 - **`network offline`** turns on Android's airplane mode and waits until the device has no route out. The iOS
   simulator shares the Mac's network, so it can't go offline or slow by itself.
 - **`push`** delivers a remote notification the way APNs would. The app needs notification permission, as on a
@@ -914,6 +921,7 @@ to settle unless asked (`--ls`).
 | `looktap stop [app]` | Terminates the app and waits until its process is gone |
 | `looktap bio match\|nomatch` | Face ID (iOS) or fingerprint (Android) |
 | `looktap rotate [portrait\|landscape\|left\|right\|upsidedown]` | Turns the device (`landscape` = `left`, turned counter-clockwise). `ls`, taps and screenshots follow the turned screen. Says so if the app doesn't support the orientation. Without an argument, prints the current one |
+| `looktap fold [closed\|half\|open]` | Folds or opens a foldable simulator (the iPhone Duo). `ls`, taps and screenshots follow the screen it then shows. Without an argument, prints which screen that is |
 | **Debug** (`[app]` defaults to `--app` / config, else the app in front) | |
 | `looktap logs [app] [--errors] [--grep re] [--since 5m] [--lines n] [--all]` | The app's log since the last `logs` (the first call covers the last minute). At most 80 lines, newest kept |
 | `looktap crashes [app] [--since 1h]` | Crashes, ANRs and low-memory kills since the last `crashes` (the first call covers the last hour) |
@@ -949,7 +957,7 @@ to settle unless asked (`--ls`).
 | `looktap teardown` | Stops the helper. Android: also removes `adb reverse` rules |
 
 **`--ls`** works on `tap`, `longpress`, `zoom`, `tapxy`, `fill`, `type`, `key`, `hidekb`, `swipe`, `back`, `home`, `open`, `launch`, `bio`,
-`rotate` and `scrollto`. After the action it waits for the screen to change (up to 1.5 s, or 6 s for `launch`/`open`), then for
+`rotate`, `fold` and `scrollto`. After the action it waits for the screen to change (up to 1.5 s, or 6 s for `launch`/`open`), then for
 it to stop changing, then prints it like `ls`.
 
 **Exit codes:** `0` means OK. `2` means a usage problem: bad arguments, element not found, no device, or the
@@ -971,6 +979,7 @@ front of you (`--json` for every command).
 | `burst` | ✅ | ✅ | ✅ | ⚠️ FLAG_SECURE screens come out black (emulators bypass it) |
 | `codegen` | ❌ recording touches works on Android only, for now: write the flow by hand, or record it on an Android device | ❌ recording touches works on Android only, for now: write the flow by hand, or record it on an Android device | ✅ | ✅ |
 | `crashes` | ✅ | ❌ see Xcode → Window → Devices and Simulators → View Device Logs | ✅ | ✅ |
+| `fold` | ⚠️ a foldable simulator only: the iPhone Duo (Xcode 27.1 or later) | ❌ only the iPhone Duo simulator folds, for now | ❌ only the iPhone Duo simulator folds, for now | ❌ only the iPhone Duo simulator folds, for now |
 | `location` | ✅ | ❌ a real device uses its own GPS; use a simulator to fake one | ✅ | ❌ a device uses its own GPS (faking it needs a mock-location app) |
 | `location clear` | ✅ | ❌ a real device uses its own GPS; use a simulator to fake one | ❌ the emulator keeps its last location: set a new one instead | ❌ a device uses its own GPS (faking it needs a mock-location app) |
 | `logs` | ✅ | ❌ use Console.app with the device selected | ✅ | ✅ |
@@ -1049,6 +1058,9 @@ Precedence: command-line option, then environment variable, then config file, th
 |---|---|
 | iOS: `SimulatorKit not found …` / `… has no Indigo HID builders` | On Xcode 27.1, update looktap (0.7.1 finds SimulatorKit where 27.1 moved it). Otherwise run `looktap doctor` and point `xcode-select` at a full Xcode: `sudo xcode-select -s /Applications/Xcode.app` |
 | iOS, Xcode 27.1: `boot --window` shows no simulator | Xcode 27.1 shows simulators in Device Hub, not the Simulator app, one at a time: pick the simulator in Device Hub's sidebar |
+| iPhone Duo: screenshots are black, or `ls` misses half the screen | Update looktap to 0.7.2 or later: earlier versions only knew the outer screen, which is off while the Duo is open |
+| `<app> is not installed on this simulator` for Maps, Photos… | That runtime ships without it (the iPhone Duo's iOS 27.1 has Safari and Settings). `looktap apps --all` lists what's there |
+| `this simulator doesn't fold` | `fold` needs a foldable simulator: the iPhone Duo, which comes with Xcode 27.1's iOS 27.1 runtime |
 | iOS: `input unavailable (dtuhid): dtuhidd did not answer` | The simulator is still booting, or its input service is restarting. Retry in a few seconds |
 | iOS: an element you can see is missing from `ls` | Some containers hide their children from accessibility. looktap probes for them, but `tapxy` is the fallback |
 | `only the status bar is readable — a system prompt … may be covering the app` | A passcode, permission or alert prompt drawn by iOS. `looktap shot` to see it |
@@ -1132,6 +1144,14 @@ moved a framework and replaced the Simulator app with Device Hub: looktap 0.7.1 
 </details>
 
 <details>
+<summary><strong>Does it handle foldables?</strong></summary>
+
+The iPhone Duo simulator (Xcode 27.1), yes: `looktap fold closed|half|open` folds it the way Device Hub's buttons
+do, and `ls`, taps, screenshots, recordings and `rotate` follow whichever screen it shows, the outer one closed and
+the inner one open. Android foldable emulators aren't supported yet (see the [Roadmap](#roadmap)).
+</details>
+
+<details>
 <summary><strong>Can my agent sign in to my app with it?</strong></summary>
 
 It can type, but it **shouldn't type real credentials**. Have a person sign in (and enter OTPs), then let the agent
@@ -1141,6 +1161,7 @@ continue. The skill tells agents exactly that. See [Safety rules](#safety-rules)
 ## Roadmap
 
 - Rotation verified on iPad simulators
+- `fold` on Android foldable emulators (the emulator's own fold and unfold)
 - `codegen` on the iOS simulator, from the Mac's clicks and keys in the Simulator window (a real iPhone gives no
   way to observe touches)
 - Android elements by `resource-id` (React Native's `testID`), as iOS ones already are by accessibility identifier, so

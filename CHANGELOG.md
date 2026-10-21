@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.7.2
+
+### Added
+
+- **`fold closed|half|open`: the iPhone Duo simulator folds.** Xcode 27.1's iPhone Duo has two screens, an outer one
+  shown closed and an inner one shown open. `fold` sends what Device Hub's fold buttons do (the hinge angle, as a
+  vendor-defined HID report through dtuhidd), and waits until the device shows the screen it lights. Without an
+  argument it prints which screen is in use. `--ls` works on it.
+
+### Fixed
+
+- **iOS simulator: `ls`, taps, screenshots and recordings on the iPhone Duo.** They all went to the outer screen
+  (screenshots were black, as it's off while the device is open), and the inner screen's elements were cut off at
+  the outer one's size. looktap asks `devicectl` which screen is lit (CoreSimulator doesn't say) and the helper
+  reads, touches and captures that one, turned as the user sees it: the inner screen is mounted sideways.
+- **iOS simulator: `rotate` turns the iPhone Duo.** It ignores the orientation event other simulators take; it now
+  gets the one Device Hub's rotate button sends, and `rotate` waits for its turn through `devicectl`.
+- **iOS simulator: `launch` of an app that isn't installed says so**, instead of printing simctl's error. Some
+  runtimes ship without Maps, Photos and the like (the iPhone Duo's iOS 27.1 has Safari and Settings).
+
 ## 0.7.1
 
 ### Fixed

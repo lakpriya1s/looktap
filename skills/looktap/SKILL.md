@@ -43,7 +43,7 @@ The columns are: ref, type, x,y, width×height (iOS points / Android dp), label,
 
 Add **`--ls`** to an action and it prints the screen once it has settled, so you don't need a separate `ls`.
 It works on `tap`, `longpress`, `zoom`, `tapxy`, `fill`, `type`, `key`, `hidekb`, `swipe`, `back`, `home`,
-`open`, `launch`, `bio`, `rotate` and `scrollto`. It waits for the screen to change (up to 1.5 s, 6 s for
+`open`, `launch`, `bio`, `rotate`, `fold` and `scrollto`. It waits for the screen to change (up to 1.5 s, 6 s for
 `launch`/`open`), then for it to stop changing.
 
 **`--ls` stops at a loading skeleton too.** If it shows a heading but none of the content, run
@@ -78,6 +78,9 @@ failed. Keep track of that at every step:
    on its first screen or lock screen. After any of them, read the screen again and expect the entry point.
 10. **Get back to the app without restarting it:** `looktap launch <app> --resume`. Plain `launch` restarts it
     from its first screen (and its lock screen), losing where you were.
+11. **The same app can have two layouts.** A big screen (an iPad, an unfolded iPhone Duo, landscape) often shows a
+    sidebar beside the detail pane, so a label can be in both ("General" as a sidebar row and as the pane's heading):
+    tap the row by `@ref`, and check the pane changed. After `rotate` or `fold`, read the screen before acting.
 
 ## Commands
 
@@ -241,6 +244,10 @@ looktap statusbar clean
 looktap statusbar live
 # portrait landscape left right upsidedown; ls, taps and shots follow the turned screen
 looktap rotate landscape --ls
+# a foldable simulator (iPhone Duo): closed (the outer screen), half or open (the inner one); ls, taps, shots
+# and recordings follow the screen it shows. No argument prints which screen is in use
+looktap fold open --ls
+looktap fold
 # Android only: airplane mode
 looktap network offline
 looktap network online
@@ -335,7 +342,7 @@ On exit 2, read the message, run `ls`, adjust. Don't retry the same command blin
   once the field holds text. `fill` reads the field back, types again key by key if a character went missing,
   and exits 1 naming what the field holds if it still doesn't match.
 - **`tapxy x y`** is the last resort, for things `ls` doesn't list.
-- **After `rotate`, read the screen again.** Old refs and coordinates are stale.
+- **After `rotate` or `fold`, read the screen again.** Old refs and coordinates are stale.
 
 ## Example: sign in and check the home screen
 
@@ -396,6 +403,21 @@ looktap appearance light
 looktap statusbar live
 ```
 
+## Example: check a layout on a foldable
+
+```bash
+# the iPhone Duo simulator (Xcode 27.1): the outer screen, then the inner one, unfolded
+looktap fold closed
+looktap launch com.example.myapp --ls
+looktap shot home__closed --scale 0.5
+looktap fold open --ls
+looktap shot home__open --scale 0.5
+# set it back as you found it
+looktap fold closed
+```
+
+Closing takes the simulator a few seconds; `fold` waits for it. Refs from before a fold are stale: `ls` again.
+
 ## Example: start from a clean install
 
 ```bash
@@ -421,14 +443,20 @@ Then look at the few frames that matter, not all of them.
 - **Never `burst` or `record` a sign-in or passcode screen.** The frames capture what's typed.
 - **Against a live backend every tap is real.** Use the smallest amounts, and undo what you create.
 - **`reset` signs the user out** of most apps: ask before resetting an app someone else signed in to.
-- **Set back what you change.** Appearance, text size, the status bar, the orientation and the network stay as
-  you leave them, for the next person and for other apps. On Android, turn the orientation back with the app in
+- **Set back what you change.** Appearance, text size, the status bar, the orientation, a foldable's fold and the
+  network stay as you leave them, for the next person and for other apps. On Android, turn the orientation back with the app in
   front: a turn made from the home screen doesn't last.
 - **Not sure a command works on this device?** `looktap capabilities` says what it can't do, and why. A command
   that can't run exits 2 with the reason, so don't retry it.
 - **Let a screen settle before typing into it.** Add `--ls` to the tap that opens it: some screens (search
   screens especially) clear their field just after they open, taking the first letters with them. `fill` reads
   an Android field back and retypes it, but `type` doesn't check: after `type`, confirm with `expect "<field>" = …`.
+- **A field that moves when tapped** (a search bar that opens into a sheet) is typed into where it lands: `tap` it
+  with `--ls`, then `type`, then `expect "<field>" = …`. `fill` aims at where it was.
+- **`launch` says an app isn't installed?** Some simulator runtimes ship without Maps, Photos and the like (the
+  iPhone Duo's iOS 27.1 has Safari and Settings). `looktap apps --all` lists what's there; don't install system apps.
+- **Some simulators are slow** (the iPhone Duo, any just after boot): `launch --ls` can come back before the app is
+  in front. Follow it with `wait "<text you expect>"` instead of acting on the home screen.
 - **App-state and condition commands need the app id.** They never act on whatever happens to be on screen.
 - **`tap` aims at a part of the target nothing covers.** When a toast or bar hides its middle, it taps the
   uncovered part and says `off-centre`. If it warns that another element covers the point, nothing of the target
