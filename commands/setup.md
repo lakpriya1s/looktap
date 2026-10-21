@@ -23,7 +23,9 @@ Run `looktap doctor`. Each line starting with ✗ ends with a fix after `→`. F
 - **Xcode, the Android SDK, adb:** don't install these yourself. Tell the user what to install (Xcode from the
   App Store, then `xcode-select --install`; Android Studio or the SDK platform-tools) and wait.
 - **No booted simulator:** list them with `looktap devices --all`, suggest a recent iPhone, and **ask** before
-  running `looktap boot "<name>"` (it waits until the simulator is ready and opens its window).
+  running `looktap boot "<name>"` (it waits until the simulator is ready and opens its window). From Xcode 27.1
+  the window is Device Hub, which shows one device at a time: tell the user to pick the simulator in its sidebar.
+  For testing a foldable, Xcode 27.1's iPhone Duo folds with `looktap fold closed|half|open`.
 - **No Android device:** suggest an emulator from `looktap devices --all` (`looktap boot <AVD name>`) or connecting
   a phone with USB or wireless debugging. **Ask** first.
 

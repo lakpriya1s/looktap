@@ -211,7 +211,8 @@ sign-in, stop and let me do it, then continue from there.
 | Android | **Android SDK platform-tools** (`adb` on your `PATH`), and an emulator (AVD) or a USB-debugging device. `looktap boot` starts an emulator (it needs the SDK's Emulator package) |
 | A real iPhone or iPad | The iOS row, plus an **Apple ID signed in to Xcode** (a free one works) and the device paired with the Mac, with Developer Mode on. See [Using a real iPhone](#using-a-real-iphone) |
 
-Tested with Xcode 26 / iOS 26 (iPhone 14 simulator) and Android 16 / API 36 (Pixel 9a emulator).
+Tested with Xcode 26 and 27.1 / iOS 26, 27 and 27.1 (iPhone 14, iPhone 18 Pro and the foldable iPhone Duo
+simulators), a real iPhone 14 Pro on iOS 26, and Android 16 / API 36 (Pixel 9a emulator).
 
 ## How it works
 
@@ -1057,6 +1058,9 @@ Precedence: command-line option, then environment variable, then config file, th
 |---|---|
 | iOS: `SimulatorKit not found …` / `… has no Indigo HID builders` | On Xcode 27.1, update looktap (0.7.1 finds SimulatorKit where 27.1 moved it). Otherwise run `looktap doctor` and point `xcode-select` at a full Xcode: `sudo xcode-select -s /Applications/Xcode.app` |
 | iOS, Xcode 27.1: `boot --window` shows no simulator | Xcode 27.1 shows simulators in Device Hub, not the Simulator app, one at a time: pick the simulator in Device Hub's sidebar |
+| iPhone Duo: screenshots are black, or `ls` misses half the screen | Update looktap: before `fold` support it only knew the outer screen, which is off while the Duo is open |
+| `<app> is not installed on this simulator` for Maps, Photos… | That runtime ships without it (the iPhone Duo's iOS 27.1 has Safari and Settings). `looktap apps --all` lists what's there |
+| `this simulator doesn't fold` | `fold` needs a foldable simulator: the iPhone Duo, which comes with Xcode 27.1's iOS 27.1 runtime |
 | iOS: `input unavailable (dtuhid): dtuhidd did not answer` | The simulator is still booting, or its input service is restarting. Retry in a few seconds |
 | iOS: an element you can see is missing from `ls` | Some containers hide their children from accessibility. looktap probes for them, but `tapxy` is the fallback |
 | `only the status bar is readable — a system prompt … may be covering the app` | A passcode, permission or alert prompt drawn by iOS. `looktap shot` to see it |
@@ -1140,6 +1144,14 @@ moved a framework and replaced the Simulator app with Device Hub: looktap 0.7.1 
 </details>
 
 <details>
+<summary><strong>Does it handle foldables?</strong></summary>
+
+The iPhone Duo simulator (Xcode 27.1), yes: `looktap fold closed|half|open` folds it the way Device Hub's buttons
+do, and `ls`, taps, screenshots, recordings and `rotate` follow whichever screen it shows, the outer one closed and
+the inner one open. Android foldable emulators aren't supported yet (see the [Roadmap](#roadmap)).
+</details>
+
+<details>
 <summary><strong>Can my agent sign in to my app with it?</strong></summary>
 
 It can type, but it **shouldn't type real credentials**. Have a person sign in (and enter OTPs), then let the agent
@@ -1149,6 +1161,7 @@ continue. The skill tells agents exactly that. See [Safety rules](#safety-rules)
 ## Roadmap
 
 - Rotation verified on iPad simulators
+- `fold` on Android foldable emulators (the emulator's own fold and unfold)
 - `codegen` on the iOS simulator, from the Mac's clicks and keys in the Simulator window (a real iPhone gives no
   way to observe touches)
 - Android elements by `resource-id` (React Native's `testID`), as iOS ones already are by accessibility identifier, so
