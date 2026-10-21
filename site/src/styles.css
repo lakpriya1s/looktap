@@ -323,11 +323,10 @@ a.version:hover { color: var(--accent); border-color: var(--accent); }
   .term { order: 0; margin: 0; flex: 1 1 0; width: 0; min-width: 0; height: min(46vh, 420px); display: flex; flex-direction: column; }
   .term-body { height: auto; flex: 1; font-size: 9.5px; padding: 8px 10px; }
   /* The intro comes first on its own; the stage pins under the header once it's scrolled up to it, and each scene
-     below it fills the space the stage leaves, easing into place there so the reader goes one scene at a time. */
-  html { scroll-snap-type: y proximity; }
+     below it fills the space the stage leaves. No scroll snap: it pulled the page back while the reader scrolled. */
   .story-text { display: contents; }
   .hero { order: -2; padding: 6vh 16px 5vh; }
-  .scene { min-height: calc(100vh - 72px - var(--stage-h, 45vh)); min-height: calc(100svh - 72px - var(--stage-h, 45vh)); justify-content: flex-start; padding: 4vh 16px 6vh; max-width: 40rem; scroll-snap-align: start; scroll-margin-top: var(--stage-h, 45vh); }
+  .scene { min-height: calc(100vh - 72px - var(--stage-h, 45vh)); min-height: calc(100svh - 72px - var(--stage-h, 45vh)); justify-content: flex-start; padding: 4vh 16px 6vh; max-width: 40rem; scroll-margin-top: var(--stage-h, 45vh); }
   .scene.hero-scene { margin-top: 0; padding: 4vh 16px 6vh; border-top: 0; opacity: 0.38; }
   .scene.hero-scene.is-active { opacity: 1; }
   .start { grid-template-columns: 1fr; }
