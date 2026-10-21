@@ -242,8 +242,9 @@ releases. `looktap doctor` checks they're present and shows which input path app
 - **Xcode 26 and earlier** (CoreSimulator below 1155.4): touches, keys and the Home button go through SimulatorKit's HID client
   ("indigo"). Tested.
 - **Xcode 27** (CoreSimulator 1155.4 and later): touches, keys and the Home button go as XPC messages to the simulator's
-  `dtuhidd` service ("dtuhid"), the same way idb does it. **Implemented, not yet tested against Xcode 27.**
-  Reading the screen and screenshots don't depend on it.
+  `dtuhidd` service ("dtuhid"), the same way idb does it. Tested on Xcode 27.1 with iOS 26 and iOS 27 simulators.
+  Reading the screen and screenshots don't depend on it. Xcode 27.1 moved SimulatorKit to `Contents/SharedFrameworks`,
+  which looktap 0.7.1 and later finds; it also replaced the Simulator app with Device Hub (see `boot`).
 
 `LOOKTAP_IOS_HID=indigo|dtuhid` overrides the choice. It applies when the helper starts, so run
 `looktap teardown` first.
@@ -547,7 +548,7 @@ looktap push com.example.myapp '{"aps":{"alert":"Hi"},"orderId":7}'   # or any p
 - **`network offline`** turns on Android's airplane mode and waits until the device has no route out. The iOS
   simulator shares the Mac's network, so it can't go offline or slow by itself.
 - **`push`** delivers a remote notification the way APNs would. The app needs notification permission, as on a
-  device.
+  device: iOS 27 refuses the push outright without it (iOS 26 delivered it anyway), and `push` says so.
   - A payload without `"aps"` is sent as a silent (background) push carrying that data.
   - **Android pushes can't be simulated locally.** They come through Firebase (FCM), so send them from your
     backend or the Firebase console.
@@ -1046,7 +1047,8 @@ Precedence: command-line option, then environment variable, then config file, th
 
 | Symptom | Fix |
 |---|---|
-| iOS: `SimulatorKit not found …` / `… has no Indigo HID builders` | Run `looktap doctor`. Point `xcode-select` at a full Xcode: `sudo xcode-select -s /Applications/Xcode.app` |
+| iOS: `SimulatorKit not found …` / `… has no Indigo HID builders` | On Xcode 27.1, update looktap (0.7.1 finds SimulatorKit where 27.1 moved it). Otherwise run `looktap doctor` and point `xcode-select` at a full Xcode: `sudo xcode-select -s /Applications/Xcode.app` |
+| iOS, Xcode 27.1: `boot --window` shows no simulator | Xcode 27.1 shows simulators in Device Hub, not the Simulator app, one at a time: pick the simulator in Device Hub's sidebar |
 | iOS: `input unavailable (dtuhid): dtuhidd did not answer` | The simulator is still booting, or its input service is restarting. Retry in a few seconds |
 | iOS: an element you can see is missing from `ls` | Some containers hide their children from accessibility. looktap probes for them, but `tapxy` is the fallback |
 | `only the status bar is readable — a system prompt … may be covering the app` | A passcode, permission or alert prompt drawn by iOS. `looktap shot` to see it |
@@ -1125,8 +1127,8 @@ on macOS.
 <summary><strong>Will an Xcode update break it?</strong></summary>
 
 It can. The iOS helper uses private simulator frameworks, like `idb` does. `looktap doctor` tells you if something
-it needs has moved. Reading the screen and screenshots have held steady. Input changed in Xcode 27, and looktap
-already has a path for that, though it isn't tested yet.
+it needs has moved. Reading the screen and screenshots have held steady. Input changed in Xcode 27, and Xcode 27.1
+moved a framework and replaced the Simulator app with Device Hub: looktap 0.7.1 handles both, tested on Xcode 27.1.
 </details>
 
 <details>
@@ -1138,7 +1140,6 @@ continue. The skill tells agents exactly that. See [Safety rules](#safety-rules)
 
 ## Roadmap
 
-- Verified Xcode 27 input (touches, keys and the Home button)
 - Rotation verified on iPad simulators
 - `codegen` on the iOS simulator, from the Mac's clicks and keys in the Simulator window (a real iPhone gives no
   way to observe touches)

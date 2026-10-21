@@ -270,6 +270,7 @@ looktap codegen flows/checkout.txt com.example.app
 # and what the user must do for a phone that isn't ready. --all: also what boot can start. --json: structured
 looktap devices --all
 # boot one by name (UDID or AVD too), wait until it's ready; --window (default) or --headless.
+# (Xcode 27.1 shows simulators in Device Hub, one at a time: the user picks it there to watch)
 # One that's still starting (devices says so) is waited for: use boot, not an adb/simctl polling loop
 looktap boot "iPhone 16 Pro" --window
 looktap boot Pixel_9a --headless
