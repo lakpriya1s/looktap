@@ -15,6 +15,9 @@
   read after a swipe: the target was missing from that read and the next swipe carried it off the top, and a bounce
   at the end looked like more list, so it swiped 15 times. A second read now checks the list has stopped, and waits
   for it if it hasn't.
+- **Real iPhone: `home` reaches the home screen when iOS ignores the Home press.** XCTest's Home press stopped
+  working on an iPhone 14 Pro (iOS 26.0) with no error, over USB and Wi-Fi alike; the runner now brings the home screen
+  forward itself when an app is still in front a second later.
 - **`push` explains iOS 27's refusal.** iOS 27 won't deliver a push to an app that hasn't been allowed notifications
   (iOS 26 delivered it anyway); `push` now says so instead of printing simctl's error.
 
