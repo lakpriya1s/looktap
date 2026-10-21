@@ -419,6 +419,17 @@ export const SCENES = [
           return [`rotated: landscape left (${w}x${h})`, ...listed(p, 5)];
         },
       },
+      {
+        // A foldable is another device: the iPhone Duo simulator, named with -d.
+        cmd: (c) => (c.ios ? 'looktap -d "iPhone Duo" fold open --ls' : 'looktap fold open'),
+        device: (ios) => (ios ? 'iPhone Duo simulator' : null),
+        run: async (p, c) => {
+          if (!c.ios) return [err("looktap: fold isn't available on the Android emulator — only the iPhone Duo simulator folds, for now")];
+          await p.unfold();
+          const { w, h } = p.screenSize();
+          return [`open: the inner screen (${w}x${h})`, ...listed(p, 6)];
+        },
+      },
     ],
   },
   {

@@ -109,10 +109,10 @@ const phone = new Phone($('[data-phone]'));
 let run = 0;
 let active = null;
 
-/** The terminal's title: the device the scene drives (a scene can name its own, e.g. a real phone). */
-function termTitle() {
+/** The terminal's title: the device the scene drives (a scene, or one beat, can name its own, e.g. a real phone). */
+function termTitle(beat) {
   const { ios } = ctx();
-  $('[data-term-title]').textContent = `agent ➜ ${active?.device?.(ios) || (ios ? 'iPhone 18 Pro simulator' : 'Pixel 11 emulator')}`;
+  $('[data-term-title]').textContent = `agent ➜ ${beat?.device?.(ios) || active?.device?.(ios) || (ios ? 'iPhone 18 Pro simulator' : 'Pixel 11 emulator')}`;
 }
 
 // On narrower screens the stage pins under the header and the story scrolls beneath it, so the line that picks
@@ -160,6 +160,7 @@ async function play(scene, { restart = false, auto = false } = {}) {
     for (const beat of scene.beats) {
       if (token !== run) throw new Cancelled();
       const cmd = typeof beat.cmd === 'function' ? beat.cmd(ctx()) : beat.cmd;
+      if (beat.device) termTitle(beat);
       const done = runCommand(cmd);
       // Long enough to see it working, even when the phone answers at once.
       const [out] = await Promise.all([beat.run(phone, ctx()), sleep(700)]);

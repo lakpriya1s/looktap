@@ -74,6 +74,59 @@ function homeLandscape(state = {}) {
   return els;
 }
 
+// The iPhone Duo, in its own points: closed, the outer screen (466×678); open, the inner one (951×669), which
+// fits a list beside the item it shows.
+const DUO = { closed: { w: 466, h: 678 }, open: { w: 951, h: 669 } };
+
+function duoCover(state = {}) {
+  const cart = state.cart ?? 2;
+  const els = [
+    { type: 'Heading', label: 'Demo Store', x: 20, y: 58, w: 190, h: 41, kind: 'title' },
+    { type: 'Button', label: 'Cart', value: String(cart), x: 402, y: 60, w: 44, h: 38, kind: 'iconbtn', icon: 'cart' },
+    { type: 'SearchField', label: 'Search products', x: 20, y: 108, w: 426, h: 38, kind: 'search' },
+  ];
+  PRODUCTS.slice(0, 6).forEach(([name, price, color], i) => {
+    const y = 158 + i * 70;
+    els.push(
+      { type: 'Image', label: '', x: 20, y: y + 9, w: 52, h: 52, kind: 'thumb', color },
+      { type: 'StaticText', label: name, x: 88, y: y + 13, w: 200, h: 22, kind: 'name' },
+      { type: 'StaticText', label: price, x: 88, y: y + 39, w: 48, h: 18, kind: 'price' },
+      { type: 'Button', label: 'Add', x: 390, y: y + 17, w: 56, h: 36, kind: 'add' },
+    );
+  });
+  els.push({ type: 'Button', label: `Checkout · ${cart} items`, x: 20, y: 604, w: 426, h: 48, kind: 'primary' });
+  return els;
+}
+
+function duoOpen(state = {}) {
+  const cart = state.cart ?? 2;
+  const [name, price, color] = PRODUCTS[0];
+  const els = [
+    { type: 'Other', label: '', x: 340, y: 0, w: 611, h: 669, kind: 'pane' },
+    { type: 'Heading', label: 'Demo Store', x: 24, y: 34, w: 190, h: 41, kind: 'title' },
+    { type: 'SearchField', label: 'Search products', x: 24, y: 86, w: 292, h: 38, kind: 'search' },
+    { type: 'Other', label: '', x: 12, y: 136, w: 316, h: 66, kind: 'sel' },
+  ];
+  PRODUCTS.slice(0, 7).forEach(([n, pr, c], i) => {
+    const y = 136 + i * 66;
+    els.push(
+      { type: 'Image', label: '', x: 24, y: y + 9, w: 48, h: 48, kind: 'thumb', color: c },
+      { type: 'StaticText', label: n, x: 86, y: y + 12, w: 200, h: 22, kind: 'name' },
+      { type: 'StaticText', label: pr, x: 86, y: y + 36, w: 48, h: 18, kind: 'price' },
+    );
+  });
+  els.push(
+    { type: 'Button', label: 'Cart', value: String(cart), x: 879, y: 34, w: 44, h: 38, kind: 'iconbtn', icon: 'cart' },
+    { type: 'Image', label: name, x: 380, y: 92, w: 230, h: 230, kind: 'thumb', color },
+    { type: 'Heading', label: name, x: 640, y: 112, w: 280, h: 34, kind: 'detail' },
+    { type: 'StaticText', label: price, x: 640, y: 156, w: 60, h: 22, kind: 'price' },
+    { type: 'StaticText', label: 'Medium roast, 1 kg', x: 640, y: 190, w: 260, h: 22, kind: 'sub' },
+    { type: 'Button', label: 'Add to bag', x: 640, y: 262, w: 280, h: 52, kind: 'primary' },
+    { type: 'Button', label: `Checkout · ${cart} items`, x: 380, y: 590, w: 540, h: 48, kind: 'secondary' },
+  );
+  return els;
+}
+
 function map() {
   return [
     { type: 'Image', label: 'Map', x: 0, y: 0, w: 390, h: 844, kind: 'map' },
@@ -93,7 +146,7 @@ function springboard(installed = true) {
   return apps.map(([label, color], i) => ({ type: 'Button', label, x: 26 + (i % 4) * 90, y: 76 + Math.floor(i / 4) * 102, w: 68, h: 91, kind: 'app', color, fresh: label === 'Demo Store' }));
 }
 
-const SCREENS = { signin, home, homeLandscape, map, springboard: () => springboard(true), springboardEmpty: () => springboard(false) };
+const SCREENS = { signin, home, homeLandscape, duoCover, duoOpen, map, springboard: () => springboard(true), springboardEmpty: () => springboard(false) };
 
 // ── the phone ─────────────────────────────────────────────────────────────
 
@@ -141,6 +194,7 @@ export class Phone {
   }
 
   get size() {
+    if (this.duo) return DUO[this.duo];
     return this.landscape ? { w: H, h: W } : { w: W, h: H };
   }
 
@@ -156,7 +210,8 @@ export class Phone {
   reset() {
     this.state = { screen: 'signin', scroll: 0, values: {}, overlays: [], dark: false, text: 1, clean: false, offline: false, zoom: 1, cart: 2, focus: null, freshIcon: false };
     this.landscape = false;
-    this.root.classList.remove('landscape', 'turning', 'gone');
+    this.duo = null;
+    this.root.classList.remove('landscape', 'turning', 'gone', 'duo', 'duo-closed', 'duo-open');
     this.refsEl.innerHTML = '';
     this.root.querySelector('.rec').hidden = true;
     this.render();
@@ -261,6 +316,7 @@ export class Phone {
 
   /** The screen size as looktap reports it (points / dp). */
   screenSize() {
+    if (this.duo) return DUO[this.duo];
     const s = this.platform === 'ios' ? { w: W, h: H } : ANDROID;
     return this.landscape ? { w: s.h, h: s.w } : s;
   }
@@ -334,7 +390,8 @@ export class Phone {
     const pos = `style="left:${e.x}px;top:${top}px;width:${e.w}px;height:${e.h}px"${e.scroll ? ' data-scroll' : ''}`;
     const k = `el k-${e.kind}`;
     switch (e.kind) {
-      case 'title': return `<div class="${k}" ${pos}>${esc(e.label)}</div>`;
+      case 'title': case 'detail': return `<div class="${k}" ${pos}>${esc(e.label)}</div>`;
+      case 'pane': case 'sel': return `<div class="${k}" ${pos}></div>`;
       case 'sub': case 'label': case 'fine': case 'name': case 'price': return `<div class="${k}" ${pos}>${esc(e.label)}</div>`;
       case 'field': {
         const v = e.placeholder ? e.value : e.type === 'SecureTextField' ? '•'.repeat(e.value.length) : e.value;
@@ -467,6 +524,51 @@ export class Phone {
     await sleep(450);
     this.root.classList.remove('gone');
     this.show('springboard');
+  }
+
+  /** Become the iPhone Duo, `closed` or `open`, in one frame (the caller animates it). */
+  setDuo(form) {
+    this.duo = form;
+    this.landscape = false;
+    this.root.classList.remove('landscape', 'duo-closed', 'duo-open');
+    this.root.classList.add('duo', `duo-${form}`);
+    this.state.screen = form === 'open' ? 'duoOpen' : 'duoCover';
+    this.render();
+    this.fit();
+  }
+
+  /**
+   `fold open` on the iPhone Duo: the phone becomes the Duo, closed (its outer screen), then opens like a book. The
+   left half stays where the closed device was and the right half swings out from the hinge.
+   */
+  async unfold() {
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const ease = { easing: 'cubic-bezier(0.3, 0, 0.2, 1)' };
+    let before = this.root.getBoundingClientRect();
+    this.setDuo('closed');
+    if (!reduce) {
+      const after = this.root.getBoundingClientRect();
+      const dx = before.left + before.width / 2 - (after.left + after.width / 2);
+      const dy = before.top + before.height / 2 - (after.top + after.height / 2);
+      this.root.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${before.height / after.height})` }, { transform: 'none' }], { duration: 420, ...ease });
+      await sleep(900);
+    }
+    before = this.root.getBoundingClientRect();
+    this.setDuo('open');
+    if (reduce) return;
+    // Start with only the left half showing, over the closed device; the right half opens out to the full width.
+    const after = this.root.getBoundingClientRect();
+    const k = before.height / after.height;
+    // Scaled about its centre, the open device's left half (centred a quarter in) lands on the closed one.
+    const dx = before.left + before.width / 2 - (after.left + after.width / 2) + (after.width / 4) * k;
+    const dy = before.top + before.height / 2 - (after.top + after.height / 2);
+    this.root.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${k})` }, { transform: 'none' }], { duration: 760, ...ease });
+    this.device.animate([{ clipPath: 'inset(0 50% 0 0 round 3%)' }, { clipPath: 'inset(0 0 0 0 round 3%)' }], { duration: 760, ...ease });
+    const shade = document.createElement('i');
+    shade.className = 'fold-shade';
+    this.device.appendChild(shade);
+    await shade.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 760, ...ease }).finished;
+    shade.remove();
   }
 
   /** Turn the device: a quarter turn, then the app lays itself out again for the new shape. */
