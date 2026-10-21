@@ -72,7 +72,7 @@ use the phone ([Record a flow](#record-a-flow-codegen)).
 | ⏱️ | **Performance.** `perf` reads the app's CPU, memory and threads, once or each second with `--for 10s`; `perf --frames` adds frames, jank and frame-time percentiles (on iOS, from the screen itself). `launch --time` times a cold start until the first screen settles |
 | 💥 | **Crashes.** `crashes` reads iOS crash reports (exception, reason, top frames) and Android crashes, ANRs and **low-memory kills**, so "the app vanished" always comes with a reason |
 | 🫆 | **Biometrics.** `bio match\|nomatch` simulates Face ID or a fingerprint |
-| 🌍 | **Simulated conditions.** `location <lat> <lon>`, `appearance dark`, `textsize xxl` (Dynamic Type / font scale), `statusbar clean` (9:41 for screenshots), `rotate landscape` (`ls`, taps and screenshots follow the turned screen), Android `network offline`, and iOS `push` notifications |
+| 🌍 | **Simulated conditions.** `location <lat> <lon>`, `appearance dark`, `textsize xxl` (Dynamic Type / font scale), `statusbar clean` (9:41 for screenshots), `rotate landscape` (`ls`, taps and screenshots follow the turned screen), `fold open` (the iPhone Duo simulator), Android `network offline`, and iOS `push` notifications |
 | 🧹 | **App state for repros.** `install` a build, `apps` to see what is installed (and which version), `reset` an app to a fresh install, `uninstall`, and `permission grant\|revoke\|reset camera\|location\|photos\|…`, with the same names on both platforms |
 | 📱 | **Devices on demand.** `boot "iPhone 16 Pro"` or `boot Pixel_9a` starts a simulator or emulator by name and waits until it's ready, with a window or `--headless`; `shutdown` stops it. `devices` tells real phones from simulators and emulators (model, OS, USB or Wi-Fi), and says what to do for a phone that isn't ready yet |
 | 🤖 | **Built for agents.** `--ls` on any action, `run` to batch steps, `--json`, `capabilities` to check what the device in use can and can't do, and a [Claude Code skill](#for-ai-agents) you install with one command |
@@ -224,7 +224,8 @@ devices.** A real iPhone or iPad is the exception: it gets a small test runner (
 | Tap, type, swipe, keys | The same helper, as touch and keyboard events through SimulatorKit | The same helper, as input events through UiAutomation |
 | Screenshots, `burst` | The simulator display's framebuffer, read in-process | Emulators: the emulator's gRPC API, which also gets past `FLAG_SECURE`. Devices: the helper |
 | Video (`record`) | `simctl io recordVideo` | `screenrecord` on the device |
-| Orientation (`rotate`) | The orientation event Simulator.app sends to the guest. Coordinates and frames are converted, so everything looktap prints and takes is as the user sees the screen | `settings` (user rotation, auto-rotate off). The helper reports the turned display size |
+| Folding (`fold`) | What Device Hub's fold buttons send: a vendor-defined HID report with the hinge angle, through `dtuhidd`. `devicectl` says which screen is lit, and the helper reads, touches and captures that one | — |
+| Orientation (`rotate`) | The orientation event Simulator.app sends to the guest (the iPhone Duo: Device Hub's orientation report). Coordinates and frames are converted, so everything looktap prints and takes is as the user sees the screen | `settings` (user rotation, auto-rotate off). The helper reports the turned display size |
 | Logs, crashes | `log show` inside the simulator, and its `.ips` crash reports | `logcat` (by app uid), the crash buffer, and `dumpsys activity exit-info` |
 | Home button, `stop` | The helper sends the hardware Home button; `simctl terminate` | `KEYCODE_HOME`; `am force-stop` |
 | Deep links, launch, biometrics | `xcrun simctl` | `adb` and the emulator console |
@@ -533,6 +534,7 @@ looktap appearance dark                 # or light; no argument prints the curre
 looktap textsize ax2                    # Dynamic Type / font scale: xs s m l xl xxl xxxl ax1…ax5
 looktap statusbar clean                 # 9:41, full battery and Wi-Fi, for screenshots · `statusbar live`
 looktap rotate landscape --ls           # or left, right, upsidedown, portrait; no argument prints it
+looktap fold open --ls                  # a foldable (iPhone Duo): closed, half or open; no argument prints it
 looktap network offline                 # Android: airplane mode · `network online`
 looktap push com.example.myapp "Your order has shipped"          # iOS: an alert
 looktap push com.example.myapp '{"aps":{"alert":"Hi"},"orderId":7}'   # or any payload / a .json file
@@ -545,6 +547,10 @@ looktap push com.example.myapp '{"aps":{"alert":"Hi"},"orderId":7}'   # or any p
   `landscape` is `left`: the device turned counter-clockwise. `ls` coordinates, taps and screenshots follow
   the turned screen, so read the screen again afterwards. An app that doesn't support the orientation stays
   as it is, and `rotate` says so. On Android it leaves auto-rotate off.
+- **`fold`** folds or opens a foldable simulator, the iPhone Duo (Xcode 27.1), the way Device Hub's fold buttons
+  do: `closed` (0°) shows the outer screen, `half` (130°) and `open` (180°) the inner one. `ls`, taps,
+  screenshots and recordings follow whichever screen it shows, so read the screen again afterwards. Closing
+  takes the simulator a few seconds.
 - **`network offline`** turns on Android's airplane mode and waits until the device has no route out. The iOS
   simulator shares the Mac's network, so it can't go offline or slow by itself.
 - **`push`** delivers a remote notification the way APNs would. The app needs notification permission, as on a
@@ -914,6 +920,7 @@ to settle unless asked (`--ls`).
 | `looktap stop [app]` | Terminates the app and waits until its process is gone |
 | `looktap bio match\|nomatch` | Face ID (iOS) or fingerprint (Android) |
 | `looktap rotate [portrait\|landscape\|left\|right\|upsidedown]` | Turns the device (`landscape` = `left`, turned counter-clockwise). `ls`, taps and screenshots follow the turned screen. Says so if the app doesn't support the orientation. Without an argument, prints the current one |
+| `looktap fold [closed\|half\|open]` | Folds or opens a foldable simulator (the iPhone Duo). `ls`, taps and screenshots follow the screen it then shows. Without an argument, prints which screen that is |
 | **Debug** (`[app]` defaults to `--app` / config, else the app in front) | |
 | `looktap logs [app] [--errors] [--grep re] [--since 5m] [--lines n] [--all]` | The app's log since the last `logs` (the first call covers the last minute). At most 80 lines, newest kept |
 | `looktap crashes [app] [--since 1h]` | Crashes, ANRs and low-memory kills since the last `crashes` (the first call covers the last hour) |
@@ -949,7 +956,7 @@ to settle unless asked (`--ls`).
 | `looktap teardown` | Stops the helper. Android: also removes `adb reverse` rules |
 
 **`--ls`** works on `tap`, `longpress`, `zoom`, `tapxy`, `fill`, `type`, `key`, `hidekb`, `swipe`, `back`, `home`, `open`, `launch`, `bio`,
-`rotate` and `scrollto`. After the action it waits for the screen to change (up to 1.5 s, or 6 s for `launch`/`open`), then for
+`rotate`, `fold` and `scrollto`. After the action it waits for the screen to change (up to 1.5 s, or 6 s for `launch`/`open`), then for
 it to stop changing, then prints it like `ls`.
 
 **Exit codes:** `0` means OK. `2` means a usage problem: bad arguments, element not found, no device, or the
@@ -971,6 +978,7 @@ front of you (`--json` for every command).
 | `burst` | ✅ | ✅ | ✅ | ⚠️ FLAG_SECURE screens come out black (emulators bypass it) |
 | `codegen` | ❌ recording touches works on Android only, for now: write the flow by hand, or record it on an Android device | ❌ recording touches works on Android only, for now: write the flow by hand, or record it on an Android device | ✅ | ✅ |
 | `crashes` | ✅ | ❌ see Xcode → Window → Devices and Simulators → View Device Logs | ✅ | ✅ |
+| `fold` | ⚠️ a foldable simulator only: the iPhone Duo (Xcode 27.1 or later) | ❌ only the iPhone Duo simulator folds, for now | ❌ only the iPhone Duo simulator folds, for now | ❌ only the iPhone Duo simulator folds, for now |
 | `location` | ✅ | ❌ a real device uses its own GPS; use a simulator to fake one | ✅ | ❌ a device uses its own GPS (faking it needs a mock-location app) |
 | `location clear` | ✅ | ❌ a real device uses its own GPS; use a simulator to fake one | ❌ the emulator keeps its last location: set a new one instead | ❌ a device uses its own GPS (faking it needs a mock-location app) |
 | `logs` | ✅ | ❌ use Console.app with the device selected | ✅ | ✅ |

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 
-import { ORIENTATIONS, coordinates, pushPayload, rotation, sizeForScale, textSize } from '../lib/conditions.js';
+import { ORIENTATIONS, coordinates, foldPosition, pushPayload, rotation, sizeForScale, textSize } from '../lib/conditions.js';
 
 test('coordinates: "lat lon", "lat,lon", negatives, range checked', () => {
   assert.deepEqual(coordinates(['51.5072', '-0.1276']), [51.5072, -0.1276]);
@@ -40,4 +40,11 @@ test('rotation: names → quarter turns counter-clockwise; landscape is left', (
   assert.equal(rotation('right'), 3);
   assert.equal(ORIENTATIONS[3], 'landscape right');
   assert.throws(() => rotation('sideways'), /usage/);
+});
+
+test('fold positions: closed, half, open, and a few spellings', () => {
+  assert.equal(foldPosition('closed'), 'closed');
+  assert.equal(foldPosition('Half-open'), 'half');
+  assert.equal(foldPosition('flat'), 'open');
+  assert.throws(() => foldPosition('sideways'), /usage: looktap fold/);
 });

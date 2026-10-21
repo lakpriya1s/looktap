@@ -43,7 +43,7 @@ The columns are: ref, type, x,y, width×height (iOS points / Android dp), label,
 
 Add **`--ls`** to an action and it prints the screen once it has settled, so you don't need a separate `ls`.
 It works on `tap`, `longpress`, `zoom`, `tapxy`, `fill`, `type`, `key`, `hidekb`, `swipe`, `back`, `home`,
-`open`, `launch`, `bio`, `rotate` and `scrollto`. It waits for the screen to change (up to 1.5 s, 6 s for
+`open`, `launch`, `bio`, `rotate`, `fold` and `scrollto`. It waits for the screen to change (up to 1.5 s, 6 s for
 `launch`/`open`), then for it to stop changing.
 
 **`--ls` stops at a loading skeleton too.** If it shows a heading but none of the content, run
@@ -241,6 +241,8 @@ looktap statusbar clean
 looktap statusbar live
 # portrait landscape left right upsidedown; ls, taps and shots follow the turned screen
 looktap rotate landscape --ls
+# a foldable simulator (iPhone Duo): closed, half, open; ls, taps and shots follow the screen it shows
+looktap fold open --ls
 # Android only: airplane mode
 looktap network offline
 looktap network online
@@ -335,7 +337,7 @@ On exit 2, read the message, run `ls`, adjust. Don't retry the same command blin
   once the field holds text. `fill` reads the field back, types again key by key if a character went missing,
   and exits 1 naming what the field holds if it still doesn't match.
 - **`tapxy x y`** is the last resort, for things `ls` doesn't list.
-- **After `rotate`, read the screen again.** Old refs and coordinates are stale.
+- **After `rotate` or `fold`, read the screen again.** Old refs and coordinates are stale.
 
 ## Example: sign in and check the home screen
 

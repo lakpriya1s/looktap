@@ -51,6 +51,8 @@
 - (id)descriptor;
 - (unsigned short)displayClass;
 - (id)framebufferSurface;
+- (id)screenProperties;
+- (unsigned int)screenID;
 - (id)initWithDevice:(id)device error:(NSError **)error;
 - (void)sendWithMessage:(void *)message freeWhenDone:(BOOL)free completionQueue:(dispatch_queue_t)queue completion:(void (^)(NSError *))completion;
 - (unsigned int)lookup:(NSString *)service error:(NSError **)error;
@@ -71,7 +73,11 @@ static id device;           // SimDevice
 static id translator;       // AXPTranslator
 static NSString *axToken;   // routes translator requests to this device
 static id hidClient;        // SimDeviceLegacyHIDClient
-static CGSize screenPx;     // main screen, pixels
+static CGSize screenPx;     // the active screen, pixels
+static unsigned activeDisplay; // the active screen's ID when the CLI named one (see "display"), else 0
+static int displayTurn;        // how that screen's interface is turned, as a UIDeviceOrientation (0: not named)
+/** The display accessibility hit-tests: 0 is the main one; a second built-in screen goes by its screen ID. */
+static unsigned axDisplay(void) { return activeDisplay > 1 ? activeDisplay : 0; }
 static float screenScale;   // pixels per point
 static NSString *version = @"dev";
 static int probes; // hit-tests made by the last tree read
@@ -186,7 +192,7 @@ static void fillHole(CGRect hole, NSMutableArray *out) {
         if (CGRectContainsPoint(c.rectValue, p)) skip = YES;
       if (skip) continue;
       probes++;
-      id o = [translator objectAtPoint:p displayId:0 bridgeDelegateToken:axToken];
+      id o = [translator objectAtPoint:p displayId:axDisplay() bridgeDelegateToken:axToken];
       if (!o) continue;
       [o setBridgeDelegateToken:axToken];
       id el = [translator macPlatformElementFromTranslation:o];
@@ -220,7 +226,7 @@ static int pidOf(id translation) {
 /** The element at `p` (system-wide hit test, so it reaches into other processes), or nil. `pid`: its process. */
 static NSMutableDictionary *probeAt(CGPoint p, int *pid) {
   probes++;
-  id o = [translator objectAtPoint:p displayId:0 bridgeDelegateToken:axToken];
+  id o = [translator objectAtPoint:p displayId:axDisplay() bridgeDelegateToken:axToken];
   if (pid) *pid = pidOf(o);
   if (!o) return nil;
   [o setBridgeDelegateToken:axToken];
@@ -406,6 +412,13 @@ static int deviceOrientation(void) {
  upside down. Face up/down (5, 6) keep the last one.
  */
 static void updateOrientation(id root) {
+  // A foldable's turn comes from the CLI, which reads it from devicectl: the guest doesn't publish its orientation
+  // where deviceOrientation() looks, and the inner screen is mounted sideways (framebuffer and digitizer portrait,
+  // interface landscape when the device is upright).
+  if (displayTurn) {
+    uiOrientation = displayTurn;
+    return;
+  }
   int device = deviceOrientation();
   if (device == 5 || device == 6) return;
   NSRect f = root ? [root accessibilityFrame] : NSZeroRect;
@@ -600,7 +613,8 @@ static xpc_object_t dtuTouchMessage(TouchPhase phase, double x, double y, double
   if (x2 >= 0) xpc_dictionary_set_value(p, "pointTwo", dtuPoint(x2, y2));
   xpc_dictionary_set_uint64(p, "eventType", (uint64_t)phase);
   xpc_dictionary_set_uint64(p, "edge", 0);
-  xpc_dictionary_set_uint64(p, "target", 0);
+  // The touchscreen: 0 is the main one; a second built-in screen's is its screen ID (dtuhidd's touchscreen(0x103)).
+  xpc_dictionary_set_uint64(p, "target", activeDisplay > 1 ? activeDisplay : 0);
   return dtuMessage("IndigoDigitizerEvent", p, NO);
 }
 
@@ -693,6 +707,72 @@ static void homeEvent(BOOL down) {
   if (dtuConnection) xpc_connection_send_message(dtuConnection, dtuButtonMessage(0x0C, 0x40, down));
   else if (indigoButton) indigoSend(indigoButton(BUTTON_HOME, down ? 1 : 2, BUTTON_TARGET_HARDWARE));
   else [NSException raise:@"hid" format:@"this Xcode's SimulatorKit has no IndigoHIDMessageForButton"];
+}
+
+/**
+ Device Hub's controls for the iPhone Duo — its hinge and its orientation — are vendor-defined HID reports (page
+ 0xFF61, usage 0x5B) that dtuhidd hands to the guest's AVP service, where locationd reads them. Each report is a
+ small serialized dictionary {source: <control>, type: "range"|"enum", value, provider}: a magic word, a header
+ (24-bit count, kind 0x81), then per entry a key (24-bit length with its NUL, kind 0x08, padded to 4 bytes) and a
+ value — a string (24-bit length, kind 0x09) or a double (0x3f 0 0, kind 0x04, 8 bytes). The last value's kind
+ has 0x80 set.
+ */
+static NSData *avpReport(NSString *source, NSString *type, id value) {
+  NSMutableData *d = [NSMutableData data];
+  void (^word)(uint32_t, uint8_t) = ^(uint32_t n, uint8_t kind) {
+    uint8_t w[4] = {n & 0xFF, (n >> 8) & 0xFF, (n >> 16) & 0xFF, kind};
+    [d appendBytes:w length:4];
+  };
+  void (^padded)(NSData *) = ^(NSData *b) {
+    [d appendData:b];
+    [d increaseLengthBy:(4 - b.length % 4) % 4];
+  };
+  NSArray *entries = @[ @[ @"value", value ], @[ @"source", source ], @[ @"provider", @"com.apple.Virtualization.VirtualMachines" ], @[ @"type", type ] ];
+  word(0xD3, 0);
+  word((uint32_t)entries.count, 0x81);
+  for (NSUInteger i = 0; i < entries.count; i++) {
+    uint8_t last = i == entries.count - 1 ? 0x80 : 0;
+    NSData *k = [entries[i][0] dataUsingEncoding:NSUTF8StringEncoding];
+    word((uint32_t)k.length + 1, 0x08);
+    NSMutableData *kz = [k mutableCopy];
+    [kz increaseLengthBy:1];
+    padded(kz);
+    id v = entries[i][1];
+    if ([v isKindOfClass:NSNumber.class]) {
+      double x = [v doubleValue]; // little-endian, as the guest reads it
+      word(0x3F, 0x04 | last);
+      [d appendBytes:&x length:sizeof x];
+    } else {
+      NSData *b = [v dataUsingEncoding:NSUTF8StringEncoding];
+      word((uint32_t)b.length, 0x09 | last);
+      padded(b);
+    }
+  }
+  return d;
+}
+
+static void avpSend(NSData *report) {
+  requireInput();
+  if (!dtuConnection) [NSException raise:@"hid" format:@"this needs Xcode 27.1's dtuhid input"];
+  xpc_object_t p = xpc_dictionary_create(NULL, NULL, 0);
+  xpc_dictionary_set_uint64(p, "usagePage", 0xFF61);
+  xpc_dictionary_set_uint64(p, "usage", 0x5B);
+  xpc_dictionary_set_uint64(p, "version", 0);
+  xpc_dictionary_set_data(p, "data", report.bytes, report.length);
+  xpc_object_t m = dtuMessage("IndigoVendorDefinedEvent", p, NO);
+  xpc_dictionary_set_string(m, "featureIdentifier", "com.apple.coredevice.feature.remote.hid.vendordefined");
+  xpc_connection_send_message(dtuConnection, m);
+}
+
+/** The hinge angle: 0° closed, 180° open flat. */
+static void hinge(double angle) {
+  avpSend(avpReport(@"hinge-slider-control", @"range", @(angle)));
+}
+
+/** Turn a device whose orientation is Device Hub's picker (the iPhone Duo), to a UIDeviceOrientation 1–4. */
+static void avpOrientation(int orientation) {
+  NSArray *names = @[ @"portrait", @"upsidedown", @"landscape-left", @"landscape-right" ];
+  avpSend(avpReport(@"orientation-picker-control", @"enum", names[orientation - 1]));
 }
 
 /** Wait until everything sent so far has been taken by the simulator, so the next read sees its effect. */
@@ -845,22 +925,39 @@ static void sendOrientation(uint32_t orientation) {
 
 // ── frames ───────────────────────────────────────────────────────────────
 
-/** The main display's IOSurface: the port whose descriptor reports displayClass 0. */
-static IOSurfaceRef mainSurface(void) {
-  id fallback = nil;
+/** A display port's screen ID (1 for the main screen), or 0 when CoreSimulator doesn't say. */
+static unsigned screenIdOf(id descriptor) {
+  id props = [descriptor respondsToSelector:@selector(screenProperties)] ? [descriptor screenProperties] : nil;
+  return [props respondsToSelector:@selector(screenID)] ? [props screenID] : 0;
+}
+
+/** The built-in screens' display ports: those whose descriptor reports displayClass 0. */
+static NSArray *builtInDisplays(void) {
+  NSMutableArray *out = [NSMutableArray array];
   for (id port in [[device io] ioPorts]) {
     id d = [port descriptor];
     if (![d respondsToSelector:@selector(framebufferSurface)]) continue;
     // The descriptor's `state` is an object (SimDisplayDescriptorState), unlike SimDevice's.
     id state = [d respondsToSelector:@selector(state)] ? ((id(*)(id, SEL))objc_msgSend)(d, @selector(state)) : nil;
-    if (state && [state respondsToSelector:@selector(displayClass)] && [state displayClass] == 0) {
-      fallback = d;
-      break;
-    }
-    if (!fallback) fallback = d;
+    if (state && [state respondsToSelector:@selector(displayClass)] && [state displayClass] == 0) [out addObject:d];
   }
-  id surface = [fallback framebufferSurface];
-  return (__bridge IOSurfaceRef)surface; // toll-free bridged; kept alive by the descriptor
+  return out;
+}
+
+/**
+ The active screen's IOSurface: `activeDisplay` when the CLI named one (a device with two built-in screens,
+ the iPhone Duo, shows one or the other as it folds), else the main one (screen 1), else the first built-in.
+ */
+static IOSurfaceRef mainSurface(void) {
+  NSArray *builtIn = builtInDisplays();
+  id pick = nil;
+  for (id d in builtIn)
+    if (screenIdOf(d) == (activeDisplay ?: 1)) pick = d;
+  if (!pick) pick = builtIn.firstObject;
+  if (!pick)
+    for (id port in [[device io] ioPorts])
+      if (!pick && [[port descriptor] respondsToSelector:@selector(framebufferSurface)]) pick = [port descriptor];
+  return (__bridge IOSurfaceRef)[pick framebufferSurface]; // toll-free bridged; kept alive by the descriptor
 }
 
 /**
@@ -1018,7 +1115,8 @@ static void handle(int fd, NSDictionary *r) {
   NSString *op = r[@"op"];
   if ([op isEqualToString:@"hello"]) return reply(fd, @{
     @"ok" : @YES, @"version" : version, @"pid" : @(getpid()), @"input" : transport ?: @"",
-    @"coreSimulator" : coreSimulatorVersion() ?: @"", @"inputError" : inputError ?: @""
+    @"coreSimulator" : coreSimulatorVersion() ?: @"", @"inputError" : inputError ?: @"",
+    @"screens" : @(builtInDisplays().count)
   }, nil);
   if ([op isEqualToString:@"tree"]) {
     NSArray *nodes = tree([r[@"all"] boolValue], ![r[@"settle"] isEqual:@NO]);
@@ -1066,9 +1164,30 @@ static void handle(int fd, NSDictionary *r) {
     if (pid > 0) proc_pidpath(pid, path, sizeof path);
     return reply(fd, @{@"ok" : @YES, @"pid" : @(pid), @"path" : @(path)}, nil);
   }
+  if ([op isEqualToString:@"display"]) {
+    // The screen the device shows now, which the CLI reads from devicectl: CoreSimulator doesn't say which one is lit.
+    activeDisplay = (unsigned)num(r, @"id", 0);
+    displayTurn = (int)num(r, @"turn", 0);
+    CGSize px = CGSizeMake(num(r, @"w", 0), num(r, @"h", 0));
+    screenPx = px.width > 0 && px.height > 0 ? px : [[device deviceType] mainScreenSize];
+    lookAtOrientation();
+    return reply(fd, @{@"ok" : @YES, @"screen" : screenInfo()}, nil);
+  }
+  if ([op isEqualToString:@"hinge"]) {
+    hinge(num(r, @"angle", 180));
+    hidSync();
+    return reply(fd, @{@"ok" : @YES}, nil);
+  }
   if ([op isEqualToString:@"rotate"]) {
     int want = (int)num(r, @"orientation", 0);
     if (want >= 1 && want <= 4) {
+      // A foldable ignores the orientation event: it turns the way Device Hub's picker does, and the CLI waits
+      // for the turn (it alone can see it, through devicectl).
+      if (builtInDisplays().count > 1) {
+        avpOrientation(want);
+        hidSync();
+        return reply(fd, @{@"ok" : @YES, @"sent" : @YES}, nil);
+      }
       sendOrientation((uint32_t)want);
       // backboardd publishes the new orientation at once; the interface turns over ~0.4 s after it.
       for (int i = 0; i < 20 && deviceOrientation() != want; i++) usleep(50000);
