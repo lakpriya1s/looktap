@@ -1,6 +1,6 @@
 {
   "name": "@looktap/cli",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "description": "Let your AI agent see, use and control the apps on your phone: it reads the screen as text and taps by label, on iPhone and Android devices. Then what worked becomes a script or a test your CI runs. No server to start and zero dependencies.",
   "keywords": [
     "ios-simulator",
