@@ -1,6 +1,6 @@
 {
   "name": "looktap",
-  "description": "Lets Claude see and use the iPhone or Android app it is building: reads the screen as text, taps by label, types, swipes, takes screenshots, reads logs and crashes, and turns what worked into flow tests for CI. Works with simulators, emulators and real phones.",
+  "description": "Lets Claude see, use and control the apps on your iPhone or Android phone, the one it is building or any other: reads the screen as text, taps by label, types, swipes, takes screenshots, reads logs and crashes, and turns what worked into scripts and flow tests for CI. Works with simulators, emulators and real phones.",
   "author": {
     "name": "Lakpriya Senevirathna",
     "url": "https://github.com/lakpriya1s"

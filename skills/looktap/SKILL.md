@@ -1,13 +1,15 @@
 ---
 name: looktap
-description: Drive iPhone and Android devices (simulators, emulators or real phones) from the shell with looktap — read the screen, tap, type, swipe, deep-link, screenshot, record, read logs and crashes, and set permissions, location, dark mode and text size. Use when asked to open, navigate, test (or write e2e flow tests for), reproduce a bug in, or take screenshots of a mobile app running in a simulator, emulator or on a real device.
+description: Drive iPhone and Android devices (simulators, emulators or real phones) from the shell with looktap — read the screen, tap, type, swipe, deep-link, screenshot, record, read logs and crashes, and set permissions, location, dark mode and text size. Use when asked to open, navigate, test (or write e2e flow tests for), reproduce a bug in, or take screenshots of a mobile app (the user's own, a system app or any other installed app) running in a simulator, emulator or on a real device.
 allowed-tools: Bash(looktap:*) Bash(npx @looktap/cli:*) Bash(npx -y @looktap/cli:*)
 ---
 
-# Mobile app automation with looktap
+# See, use and control the apps on a phone with looktap
 
-`looktap` drives iPhone and Android devices: simulators, emulators and real phones. Every command is one short shell call that
-prints a few lines of plain text. Nothing is installed on simulators, emulators or Android devices; a real iPhone gets a small test runner. The helper starts on first use.
+`looktap` lets you see, use and control the apps on an iPhone or Android device (simulator, emulator or real phone):
+the app the user is building, a system app or any other installed app. It reads the screen as text and taps by
+label. Every command is one short shell call that prints a few lines of plain text, so what worked can then become a
+script or a flow test the user's CI runs. Nothing is installed on simulators, emulators or Android devices; a real iPhone gets a small test runner. The helper starts on first use.
 
 ## Quick start
 

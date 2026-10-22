@@ -1,9 +1,10 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/lakpriya1s/looktap/main/assets/looktap-logo.svg" alt="looktap — hands on the phone, for AI agents" width="355">
+<img src="https://raw.githubusercontent.com/lakpriya1s/looktap/main/assets/looktap-logo.svg" alt="looktap — hands on the phone: let your AI agent see, use and control the apps on your phone" width="355">
 
-**Let AI agents drive iPhone and Android devices from the shell**<br>
-Read the screen, tap, type, swipe, screenshot, and read logs and crashes. No server to start and no dependencies.
+**Let your AI agent see, use and control the apps on your phone**<br>
+It reads the screen as text and taps by label, on iPhone and Android devices. Then what worked becomes a script or a
+test your CI runs. No server to start and no dependencies.
 
 [![npm](https://img.shields.io/npm/v/@looktap/cli.svg?color=cb3837&logo=npm)](https://www.npmjs.com/package/@looktap/cli)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://github.com/lakpriya1s/looktap/blob/main/LICENSE)
@@ -18,15 +19,17 @@ Read the screen, tap, type, swipe, screenshot, and read logs and crashes. No ser
 
 ---
 
-`looktap` is a small command-line tool for driving a mobile app on an iPhone or Android device, real or simulated.
-Each command does one thing and prints a few lines of plain text:
+`looktap` lets your AI agent see, use and control the apps on your phone: an iPhone or Android device, real or
+simulated. It reads the screen as text and taps by label. Each command does one thing and prints a few lines of plain
+text:
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/lakpriya1s/looktap/main/assets/looktap-demo.gif" alt="An agent drives a demo app with looktap: it reads the sign-in screen as a list of labelled elements, taps, fills in an email address, and scrolls and zooms a map, while the phone beside the terminal reacts to each command" width="760">
 </p>
 
-That makes it a good fit for an AI coding agent (Claude Code, Cursor, Codex, opencode, …) that needs to **see and
-use the app it's building**:
+**Your agent sees and uses the phone.** It's made for AI coding agents (Claude Code, Cursor, Codex, opencode, …)
+that need to **see and use the app they're building**, and it controls any app on the device, not only yours: system
+apps, apps you didn't build, and web pages, with nothing added to the app.
 - **Small output.** A screen read is about 1 KB of text, where other agent tools return 4–125 KB. A screenshot is a
   file path, where most MCP servers put 40–270 KB of image into the context.
 - **One call per step.** Add `--ls` to an action and its result comes back in the same call.
@@ -34,10 +37,15 @@ use the app it's building**:
   under a second, with no session to set up. Against eight other agent tools on the same devices, it had the lowest
   agent time on both iPhone and Android ([How it compares](#how-it-compares)).
 
-It's just as handy by hand, or in a shell script for screenshot sweeps and bug repros. And the steps that worked
-can be saved as **flow files that run as tests in CI**: `expect` checks the screen, and `looktap test` runs the flows
-and reports each one ([Test flows in CI](#test-flows-in-ci)). On Android, `looktap codegen` writes a flow while you
-use the phone ([Record a flow](#record-a-flow-codegen)).
+**Then what worked becomes a script or a test your CI runs.** Every command is a plain shell call with an exit
+code, so the steps that worked with the agent run on their own afterwards:
+- **Tests in CI.** Save the steps as flow files: `expect` checks the screen, and `looktap test` runs the flows and
+  reports each one, with a JUnit report ([Test flows in CI](#test-flows-in-ci)). On Android, `looktap codegen`
+  writes a flow while you use the phone ([Record a flow](#record-a-flow-codegen)).
+- **Screenshot sweeps**, on one device or several ([A repeatable screenshot sweep](#a-repeatable-screenshot-sweep),
+  [Same screen on several devices](#same-screen-on-several-devices)).
+- **Bug repros** that collect their own logs and crash reports
+  ([Debug](#debug-logs-crashes-where-did-my-app-go)).
 
 ---
 
@@ -49,8 +57,8 @@ use the phone ([Record a flow](#record-a-flow-codegen)).
 - [🤖 Kickstart with your AI agent](#-kickstart-with-your-ai-agent): one prompt and your agent takes it from there
 - [Requirements](#requirements)
 - [How it works](#how-it-works)
-- [Examples](#examples): tap by label, forms, waiting, scrolling, debugging, performance, bursts and video, several devices,
-  [tests in CI](#test-flows-in-ci)
+- [Examples](#examples): tap by label, forms, waiting, scrolling, debugging, performance, bursts and video
+- [Tests and automation](#tests-and-automation): flow tests in CI, recording a flow, screenshot sweeps, several devices
 - [For AI agents](#for-ai-agents)
 - [Commands](#commands) · [Platform support](#platform-support) · [Options & config](#options-environment-variables-config-file)
 - [Troubleshooting](#troubleshooting) · [FAQ](#faq) · [Roadmap](#roadmap)
@@ -60,7 +68,7 @@ use the phone ([Record a flow](#record-a-flow-codegen)).
 
 | | What you get |
 |---|---|
-| 👀 | **Read the screen as text.** `ls` lists what's visible, one row per element: `@ref  type  x,y  w×h  label  = value`. It reads native screens, React Native screens and web content (Safari, in-app browsers, web views) |
+| 👀 | **Read the screen as text.** `ls` lists what's visible, one row per element: `@ref  type  x,y  w×h  label  = value`. It reads any app on the phone, yours or not: native screens, React Native screens and web content (Safari, in-app browsers, web views) |
 | 👆 | **Tap by label.** Exact match first, then a prefix or substring that names exactly one label. An ambiguous match is an error, never a guess. Also by `@ref` from the last `ls`, or by `x y` coordinates |
 | ⌨️ | **Type and fill.** `type` into the focused field, `fill` to clear a field, type and check it holds the text (a password field: its length), `paste` text through a clipboard it checks first, `code 540390` into a row of one-time-code boxes, `key return\|escape\|delete\|tab\|selectall\|paste\|…` (the same names on both platforms), and `hidekb`, which never reports success while the keyboard is still up |
 | 🧭 | **Navigate and gesture.** `swipe`, `scrollto <label>`, `back`, `home` (the Home button, the app keeps running), `open <deep link>`, `launch <app>`, `stop <app>`, `longpress`, and two-finger `zoom in\|out` |
@@ -305,6 +313,9 @@ forces that path.
 </details>
 
 ## Examples
+
+Tests in CI, recording a flow, screenshot sweeps and running on several devices are in
+[Tests and automation](#tests-and-automation).
 
 ### Look, then act
 
@@ -585,72 +596,16 @@ looktap bio nomatch     # iOS: Face ID failure · Android: unknown finger
 On Android, enrol a fingerprint once first: Settings → Security → Fingerprint, using a screen-lock PIN, and touch
 with `looktap bio match` when it asks.
 
-### Same screen on several devices
+### Android screenshots of secure screens
 
-```bash
-looktap boot "iPhone 14" --headless && looktap boot "iPhone 16 Pro" --headless
-looktap devices
-# ios      42E41FA7-…  iPhone 14 · simulator · iOS 26.0 · headless
-# ios      F9213EDC-…  iPhone 16 Pro · simulator · iOS 26.0 · headless
-# android  emulator-5554  Pixel_9a · emulator · Android 16 · window
+Apps that set `FLAG_SECURE` (common in banking and payment apps) make normal Android screenshots come out black. On
+emulators, `looktap shot` takes the frame from the emulator itself, which gets past that. `--plain` takes a normal
+on-device screenshot, for example to check that a screen *is* secure.
 
-for d in 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 F9213EDC-180D-412B-B24C-2FD69A37D3AC; do
-  looktap -d $d open myapp://home
-  looktap -d $d wait "Home"
-  looktap -d $d shot -o shots/$d home
-done
-```
+## Tests and automation
 
-Passing **both** `-p` and `-d` (or exporting `LOOKTAP_PLATFORM` and `LOOKTAP_DEVICE`) makes every command about
-0.2 s faster, because looktap then skips listing devices.
-
-### A repeatable screenshot sweep
-
-```bash
-#!/bin/sh
-set -e
-looktap launch
-for route in home search messages profile settings; do
-  looktap open "myapp://$route" --ls > /dev/null
-  looktap shot "$route"
-  looktap swipe 200 700 200 250
-  looktap shot "${route}__scrolled"
-done
-```
-
-### Record a flow (`codegen`)
-
-On Android you can write a flow by using the app. `codegen` restarts the app, then turns each touch into the step
-that replays it:
-
-```console
-$ looktap codegen flows/about.txt com.android.settings
-+ stop com.android.settings
-+ launch com.android.settings
-+ wait Settings
-recording com.android.settings to flows/about.txt — use the phone. …
-+ scrollto "About phone"
-+ tap "About phone"
-+ back
-+ tap "Search settings"
-+ fill Search wifi
-expect "Wi-Fi"
-ok: "Wi-Fi" at 107,148
-+ expect Wi-Fi
-saved 9 steps to flows/about.txt — run it: looktap test flows/about.txt
-```
-
-- **Taps are saved by label**: a tap anywhere on a row is a tap on the row's label, when `tap` with that label finds
-  the same row again. Where no label does (an icon with no accessibility label), it's saved as `tapxy`, with a note.
-- **Typing is one `fill`**, with the field's name and its final text. Text typed into a password field isn't saved:
-  the step reads it from an environment variable instead (`fill Password "${PASSWORD}"`).
-- **Scrolling that brought a row into view becomes `scrollto`**, which replays on any screen size. Other swipes (a
-  carousel, a map) stay swipes. The navigation bar's Back and Home, and gesture navigation, become `back` and `home`.
-- **Checks:** type a command into the terminal while it records, e.g. `expect "Welcome"`. It's run, and saved if it
-  passes. `undo` drops the last step.
-
-It reads the touchscreen through `adb shell getevent`, so it records real fingers (not taps sent by looktap itself).
-It isn't available on iOS yet: write the flow by hand there, or record it on Android if the app is the same.
+What worked with your agent runs on its own afterwards. Every command is a plain shell call with an exit code, so a
+shell script or a CI job can run the same steps: as flow files that `looktap test` checks, or as plain scripts.
 
 ### Test flows in CI
 
@@ -734,11 +689,72 @@ jobs:
 
 Upload `results/` even when the job fails: that's where the failed flows' screenshots and logs are.
 
-### Android screenshots of secure screens
+### Record a flow (`codegen`)
 
-Apps that set `FLAG_SECURE` (common in banking and payment apps) make normal Android screenshots come out black. On
-emulators, `looktap shot` takes the frame from the emulator itself, which gets past that. `--plain` takes a normal
-on-device screenshot, for example to check that a screen *is* secure.
+On Android you can write a flow by using the app. `codegen` restarts the app, then turns each touch into the step
+that replays it:
+
+```console
+$ looktap codegen flows/about.txt com.android.settings
++ stop com.android.settings
++ launch com.android.settings
++ wait Settings
+recording com.android.settings to flows/about.txt — use the phone. …
++ scrollto "About phone"
++ tap "About phone"
++ back
++ tap "Search settings"
++ fill Search wifi
+expect "Wi-Fi"
+ok: "Wi-Fi" at 107,148
++ expect Wi-Fi
+saved 9 steps to flows/about.txt — run it: looktap test flows/about.txt
+```
+
+- **Taps are saved by label**: a tap anywhere on a row is a tap on the row's label, when `tap` with that label finds
+  the same row again. Where no label does (an icon with no accessibility label), it's saved as `tapxy`, with a note.
+- **Typing is one `fill`**, with the field's name and its final text. Text typed into a password field isn't saved:
+  the step reads it from an environment variable instead (`fill Password "${PASSWORD}"`).
+- **Scrolling that brought a row into view becomes `scrollto`**, which replays on any screen size. Other swipes (a
+  carousel, a map) stay swipes. The navigation bar's Back and Home, and gesture navigation, become `back` and `home`.
+- **Checks:** type a command into the terminal while it records, e.g. `expect "Welcome"`. It's run, and saved if it
+  passes. `undo` drops the last step.
+
+It reads the touchscreen through `adb shell getevent`, so it records real fingers (not taps sent by looktap itself).
+It isn't available on iOS yet: write the flow by hand there, or record it on Android if the app is the same.
+
+### A repeatable screenshot sweep
+
+```bash
+#!/bin/sh
+set -e
+looktap launch
+for route in home search messages profile settings; do
+  looktap open "myapp://$route" --ls > /dev/null
+  looktap shot "$route"
+  looktap swipe 200 700 200 250
+  looktap shot "${route}__scrolled"
+done
+```
+
+### Same screen on several devices
+
+```bash
+looktap boot "iPhone 14" --headless && looktap boot "iPhone 16 Pro" --headless
+looktap devices
+# ios      42E41FA7-…  iPhone 14 · simulator · iOS 26.0 · headless
+# ios      F9213EDC-…  iPhone 16 Pro · simulator · iOS 26.0 · headless
+# android  emulator-5554  Pixel_9a · emulator · Android 16 · window
+
+for d in 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 F9213EDC-180D-412B-B24C-2FD69A37D3AC; do
+  looktap -d $d open myapp://home
+  looktap -d $d wait "Home"
+  looktap -d $d shot -o shots/$d home
+done
+```
+
+Passing **both** `-p` and `-d` (or exporting `LOOKTAP_PLATFORM` and `LOOKTAP_DEVICE`) makes every command about
+0.2 s faster, because looktap then skips listing devices.
 
 ## For AI agents
 
