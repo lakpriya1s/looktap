@@ -73,9 +73,9 @@ export const SCENES = [
     id: 'type',
     kicker: '03 · Type',
     title: 'Fill forms the way a person does',
-    body: `<p><code>fill</code> focuses a field, clears it and types. <code>type</code> adds to the focused field, and <code>key</code> presses return, tab, delete and friends. On iOS, characters a US keyboard can't type are pasted. On Android, <code>fill</code> reads the field back and retypes it when a letter went missing.</p>
+    body: `<p><code>fill</code> focuses a field, clears it and types, then reads it back: a letter that went missing is typed again, and if the field still doesn't hold the text, it says so (a password field, by its length). <code>type</code> adds to the focused field, and <code>key</code> presses return, tab, delete and friends. <code>paste</code> checks the clipboard holds the text before it pastes, and <code>code</code> fills a row of one-time-code boxes and checks each one.</p>
 <p><code>hidekb</code> checks after every method it tries, and it never reports success while the keyboard is still up. It also takes focus from the field, so a form that validates on blur shows its errors.</p>`,
-    covers: ['fill', 'type', 'key', 'hidekb'],
+    covers: ['fill', 'type', 'key', 'paste', 'code', 'hidekb'],
     start: (p) => p.show('signin'),
     beats: [
       {
