@@ -16,7 +16,7 @@ import { AGENTS, PROJECT_DEFAULT, claudePlugin, detectAgents, installSkill, inst
 import { boot, shutdown } from '../lib/boot.js';
 import { formatDevice, inventory } from '../lib/devices.js';
 import { ORIENTATIONS, coordinates, foldPosition, pushPayload, rotation, textSize } from '../lib/conditions.js';
-import { LOGBOX, appGone, center, expectOn, poller, tapPoint, forgetFront, formatRow, isRef, lastFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, signature, sliding, visibleRows, waitFor } from '../lib/screen.js';
+import { LOGBOX, appGone, center, expectOn, fillCode, poller, tapPoint, forgetFront, formatRow, isRef, lastFront, rememberFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, signature, sliding, visibleRows, waitFor } from '../lib/screen.js';
 import { duration, formatFrames, formatReading, formatSamples, readingJson } from '../lib/perf.js';
 import { flowFiles, flowName, junit } from '../lib/testing.js';
 import { ADB, HOME, LOCKED, NotFound, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
@@ -64,7 +64,12 @@ act                               add --ls to any of these to print the settled 
   type <text>                     into the focused field
   key <name> …                    return, escape, delete, tab, space, selectall, paste, home
                                   (Android: also back, or any KEYCODE_*)
-  fill <label|@ref> <text>        clear the field, type, check it holds the text (Android), leave it
+  fill <label|@ref> <text>        clear the field, type, check it holds the text (a password field: its
+                                  length), retyping slowly if it doesn't; fails if it still doesn't
+  paste <text>                    put text on the device's clipboard, check it's there, paste it into the
+                                  focused field
+  code <digits>                   a one-time code into its row of boxes: types from the first box, checks
+                                  each box, pastes the code if typing didn't fill them
   hidekb                          dismiss the keyboard and take focus from the field
   swipe <x1> <y1> <x2> <y2> [ms]
   back                            Android system back · iOS navigation-bar back button
@@ -322,7 +327,7 @@ function display(opts, config) {
   return { display: headless ? 'headless' : 'window', explicit: false };
 }
 const shutDown = (r) => `shut down: ${r.platform}  ${r.id}  ${r.name}`;
-const ACTIONS = new Set(['tap', 'longpress', 'zoom', 'tapxy', 'type', 'key', 'fill', 'hidekb', 'swipe', 'back', 'home', 'open', 'launch', 'bio', 'scrollto', 'rotate', 'fold']);
+const ACTIONS = new Set(['tap', 'longpress', 'zoom', 'tapxy', 'type', 'key', 'fill', 'paste', 'code', 'hidekb', 'swipe', 'back', 'home', 'open', 'launch', 'bio', 'scrollto', 'rotate', 'fold']);
 
 /** Print the listing (text or --json) and remember its @refs. `snap` defaults to a fresh read. */
 async function list(d, opts, snap) {
@@ -402,6 +407,11 @@ async function dispatch(d, cmd, args, opts) {
   // The screen just read doubles as the first look for the action's target: one read fewer on a slow device.
   await act(d, cmd, args, before ? { ...opts, snap: before } : opts);
   if (['launch', 'stop', 'reset', 'uninstall', 'install'].includes(cmd)) forgetFront(deviceId(d));
+  // The app launch started is in front: if it dies after launch returned, the next look names it.
+  if (cmd === 'launch') {
+    const f = await d.frontApp().catch(() => null);
+    if (f && d.appId(f) === (args[0] || d.app)) rememberFront(deviceId(d), f);
+  }
   // A cold start can take seconds, and the old screen may still be animating: wait for the app itself.
   if (look && cmd === 'launch') await waitForApp(d, args[0] || d.app, 6000);
   const after = look ? await settle(d, { all, before, changeTimeout: cmd === 'launch' || cmd === 'open' ? 6000 : 1500 }) : null;
@@ -567,7 +577,14 @@ async function act(d, cmd, args, opts) {
       need(1, 'fill <label|@ref> <text>');
       const text = args.slice(1).join(' ');
       if (!isRef(args[0])) return d.fill(args[0], text, { exact: opts.flags.has('exact') });
-      return d.fillAt(...center(await byRef(d, args[0])), text);
+      const field = await byRef(d, args[0]);
+      return d.fillAt(...center(field), text, field);
+    }
+    case 'paste': need(1, 'paste <text>'); return d.paste(args.join(' '));
+    case 'code': {
+      need(1, 'code <digits>');
+      const r = await fillCode(d, args.join(''));
+      return console.log(`entered ${args.join('')} in ${r.boxes} boxes (${r.how})`);
     }
     case 'hidekb': return d.hidekb();
     case 'swipe': need(4, 'swipe <x1> <y1> <x2> <y2> [ms]'); return d.swipe(...args.slice(0, 4).map(Number), args[4] ? Number(args[4]) : undefined);
@@ -599,7 +616,18 @@ async function act(d, cmd, args, opts) {
         if (!(await waitForApp(d, app, 6000))) throw new Error(`${app} didn't come to the front`);
         return console.log(`resumed ${app}`);
       }
-      return opts.flags.has('time') ? timedLaunch(d, app) : d.launch(app);
+      if (opts.flags.has('time')) return timedLaunch(d, app);
+      await d.launch(app);
+      // Done means it's in front, not that the start was sent: an app that dies at once says so. It can reach the
+      // front before it dies (iOS shows its launch screen), so it's checked again a moment after.
+      const died = new Error(`${app} exited right after it started — see: looktap crashes ${app}`);
+      for (const until = Date.now() + 10000; Date.now() < until; ) {
+        const front = await waitForApp(d, app, 1000);
+        if (front) await sleep(500);
+        if (!(await d.pidOf(app))) throw died;
+        if (front) return;
+      }
+      return console.error(`looktap: warning: ${app} is running, but didn't come to the front within 10 s`);
     }
     case 'stop': {
       const app = explicitApp(d, args[0], 'stop <app>');
