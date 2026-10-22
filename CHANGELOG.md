@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.7.4
+
+### Changed
+
+- **One line for what looktap is: let your AI agent see, use and control the apps on your phone.** It reads the
+  screen as text and taps by label, on iPhone and Android devices, and what worked then becomes a script or a test
+  your CI runs. The README, website, docs, agent skill, npm packages, MCP server and Claude Code plugin all say so,
+  and that it works on any app on the device, not only the one being built.
+- **Docs: a Tests & automation page.** Test flows in CI, recording a flow with `codegen`, screenshot sweeps and the
+  same screen on several devices move out of Examples into their own page, and the sidebar now reads Start, Agents,
+  Automation, Reference, Project. Automation is in the site's top nav.
+- **The share image** carries the new line.
+- **`@looktap/mcp` 0.7.1**: the same description and README wording. No code changes.
+
+### Fixed
+
+- **Website: the landing page's structured data (JSON-LD) parses.** A stray quote made it invalid, so search
+  engines couldn't read it.
+
 ## 0.7.3
 
 ### Added
