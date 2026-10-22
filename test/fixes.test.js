@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { element, holdsTyped } from '../lib/android.js';
-import { formatRow, tapPoint, visibleRows } from '../lib/screen.js';
+import { element } from '../lib/android.js';
+import { formatRow, holdsTyped, tapPoint, visibleRows } from '../lib/screen.js';
 import { UsageError, pickMatch } from '../lib/util.js';
 
 const el = (label, type, x, y, w, h, more = {}) => ({ label, type, x, y, w, h, ...more });
@@ -50,6 +50,8 @@ test('an Android field is named by its hint, with what is typed as its value', (
   assert.equal(element({ ...n, label: 'Contact', text: 'pizza' }).label, 'Contact'); // a content description wins
   assert.equal(element({ ...n, text: undefined, label: 'Search contacts…' }).value, undefined); // empty: shows its hint
   assert.equal(element({ ...n, password: true }).label, 'pizza');
+  // No hint or description: no label, the text its value (a web page's one-digit code box)
+  assert.deepEqual([element({ ...n, label: '4', text: '4', hint: undefined }).label, element({ ...n, label: '4', text: '4', hint: undefined }).value], ['', '4']);
   assert.equal(element({ ...n, cls: 'com.horcrux.svg.PathView', editable: false }).svg, true);
 });
 

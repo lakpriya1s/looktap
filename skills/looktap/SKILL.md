@@ -42,9 +42,9 @@ Look, act, read the result. `ls` prints one row per element:
 The columns are: ref, type, x,y, width×height (iOS points / Android dp), label, and `= value` for fields (a switch or checkbox: `1` on, `0` off).
 
 Add **`--ls`** to an action and it prints the screen once it has settled, so you don't need a separate `ls`.
-It works on `tap`, `longpress`, `zoom`, `tapxy`, `fill`, `type`, `key`, `hidekb`, `swipe`, `back`, `home`,
-`open`, `launch`, `bio`, `rotate`, `fold` and `scrollto`. It waits for the screen to change (up to 1.5 s, 6 s for
-`launch`/`open`), then for it to stop changing.
+It works on `tap`, `longpress`, `zoom`, `tapxy`, `fill`, `type`, `key`, `paste`, `code`, `hidekb`, `swipe`,
+`back`, `home`, `open`, `launch`, `bio`, `rotate`, `fold` and `scrollto`. It waits for the screen to change (up to
+1.5 s, 6 s for `launch`/`open`), then for it to stop changing.
 
 **`--ls` stops at a loading skeleton too.** If it shows a heading but none of the content, run
 `looktap wait "<text you expect>"` rather than acting on the placeholder.
@@ -130,11 +130,15 @@ looktap home
 ### Type
 
 ```bash
-# focus the field, clear it, type; empty text just clears
+# focus the field, clear it, type, read it back (a password field: its length); empty text just clears
 looktap fill "Email" sam@example.com
 looktap fill @4 ""
 # into the focused field
 looktap type "@example.com"
+# put text on the device's clipboard, check it's there, paste it into the focused field
+looktap paste "540390"
+# a one-time code into its row of digit boxes: every box is checked afterwards
+looktap code 540390
 # return escape delete tab space selectall paste home; Android also back KEYCODE_*
 looktap key return
 looktap key selectall delete
@@ -336,11 +340,22 @@ On exit 2, read the message, run `ls`, adjust. Don't retry the same command blin
   duplicate labels. A ref whose element moved or vanished is an error, never a wrong tap: run `ls` again.
 - **Labels** match exactly first, then a unique prefix or substring. An ambiguous label is an error that lists
   the matches: use more of the label, `--exact`, or a ref. The same label in two separate places (a section
-  heading and a tab, both "Library") is ambiguous too, even with `--exact`: tap the one you mean by `@ref`.
+  heading and a tab, both "Library") is ambiguous too, even with `--exact`: tap the one you mean by `@ref`. A
+  form's label over its own field (both "Email") is not: the label is plain text, so the field is the target.
 - **Android text fields** are named by their label or hint, as on iOS, with what's typed as their value
   (`EditText … Search contacts… = pizza`): `fill "Search contacts…"` and `expect "Search contacts…" = pizza` work
-  once the field holds text. `fill` reads the field back, types again key by key if a character went missing,
-  and exits 1 naming what the field holds if it still doesn't match.
+  once the field holds text.
+- **`fill` checks the field afterwards**, on every platform: it types again key by key if a character went
+  missing (then, on the iOS simulator, pastes), and exits 1 naming what the field holds if it still doesn't
+  match. A password field shows dots, so it checks the length (`holds 6 characters`). Don't type a password in
+  pieces to work around a failure: report the error.
+- **One-time codes go in with `code <digits>`** (a test account's code, see Rules), not `fill` or one `tap`+`type`
+  per box: boxes that move focus on their own put digits a box off when each one is tapped too. `code` exits 1
+  listing what each box holds if they don't read the code, or if another field changed. A code in a single field
+  is just `fill`.
+- **Paste with `paste "<text>"`, not `xcrun simctl pbcopy` and `key paste`.** On Xcode 27 the simulator's
+  clipboard follows the Mac's, so pbcopy alone can leave an old clipboard there to be pasted. `paste` checks the
+  clipboard holds the text before pasting, and exits 1 if it can't put it there.
 - **`tapxy x y`** is the last resort, for things `ls` doesn't list.
 - **After `rotate` or `fold`, read the screen again.** Old refs and coordinates are stale.
 
@@ -351,11 +366,16 @@ looktap launch --ls
 looktap fill "Email" sam@example.com
 looktap fill "Password" "$TEST_PASSWORD"
 looktap tap "Sign in"
+# a verification code, if the test account asks for one: only a code the user gave you for it
+looktap wait "Verification code"
+looktap code 540390 --ls
 looktap wait "Home"
 looktap shot home --scale 0.5
 ```
 
-Only with a test account the user gave you. Never type real credentials (see Rules).
+Only with a test account the user gave you. Never type real credentials (see Rules). The same commands work in a
+web sign-in inside an app (a web view): if `fill` or `code` exits 1, read what it says the field holds and report
+it, rather than typing around it.
 
 ## Example: reproduce a bug and collect the evidence
 
@@ -439,7 +459,9 @@ Then look at the few frames that matter, not all of them.
 
 ## Rules
 
-- **Never type real credentials, OTPs or card numbers.** A person signs in, then you take over.
+- **Never type real credentials, OTPs or card numbers.** A person signs in, then you take over. `fill` and `code`
+  are for a test account the user gave you (its password, its fixed or staging code) and for testing the form
+  itself, never for a real account's one-time code.
 - **Never `burst` or `record` a sign-in or passcode screen.** The frames capture what's typed.
 - **Against a live backend every tap is real.** Use the smallest amounts, and undo what you create.
 - **`reset` signs the user out** of most apps: ask before resetting an app someone else signed in to.
@@ -450,9 +472,11 @@ Then look at the few frames that matter, not all of them.
   that can't run exits 2 with the reason, so don't retry it.
 - **Let a screen settle before typing into it.** Add `--ls` to the tap that opens it: some screens (search
   screens especially) clear their field just after they open, taking the first letters with them. `fill` reads
-  an Android field back and retypes it, but `type` doesn't check: after `type`, confirm with `expect "<field>" = …`.
+  the field back and retypes it, but `type` doesn't check: after `type`, confirm with `expect "<field>" = …`.
 - **A field that moves when tapped** (a search bar that opens into a sheet) is typed into where it lands: `tap` it
   with `--ls`, then `type`, then `expect "<field>" = …`. `fill` aims at where it was.
+- **`launch` fails with "exited right after it started"?** The app crashed at launch: `looktap crashes <app>`
+  shows the report. A crash just after `launch` returns is named by the next `ls`.
 - **`launch` says an app isn't installed?** Some simulator runtimes ship without Maps, Photos and the like (the
   iPhone Duo's iOS 27.1 has Safari and Settings). `looktap apps --all` lists what's there; don't install system apps.
 - **Some simulators are slow** (the iPhone Duo, any just after boot): `launch --ls` can come back before the app is

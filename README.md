@@ -62,7 +62,7 @@ use the phone ([Record a flow](#record-a-flow-codegen)).
 |---|---|
 | 👀 | **Read the screen as text.** `ls` lists what's visible, one row per element: `@ref  type  x,y  w×h  label  = value`. It reads native screens, React Native screens and web content (Safari, in-app browsers, web views) |
 | 👆 | **Tap by label.** Exact match first, then a prefix or substring that names exactly one label. An ambiguous match is an error, never a guess. Also by `@ref` from the last `ls`, or by `x y` coordinates |
-| ⌨️ | **Type and fill.** `type` into the focused field, `fill` to clear a field and type, `key return\|escape\|delete\|tab\|selectall\|paste\|…` (the same names on both platforms), and `hidekb`, which never reports success while the keyboard is still up |
+| ⌨️ | **Type and fill.** `type` into the focused field, `fill` to clear a field, type and check it holds the text (a password field: its length), `paste` text through a clipboard it checks first, `code 540390` into a row of one-time-code boxes, `key return\|escape\|delete\|tab\|selectall\|paste\|…` (the same names on both platforms), and `hidekb`, which never reports success while the keyboard is still up |
 | 🧭 | **Navigate and gesture.** `swipe`, `scrollto <label>`, `back`, `home` (the Home button, the app keeps running), `open <deep link>`, `launch <app>`, `stop <app>`, `longpress`, and two-finger `zoom in\|out` |
 | ⏱️ | **Wait instead of sleep.** `wait "Welcome"`, `wait "Loading" --gone`. Actions already wait up to 3 s for their target |
 | 🧪 | **Tests in CI.** `expect "Welcome"`, `expect "Email" = sam@example.com`, `expect "Error" --gone` check the screen. `test flows/` runs flow files as tests, one line per flow, and a failure leaves its screen, screenshot, error logs and crashes behind. `--junit` for CI reports. On Android, `codegen` records a flow while you use the phone |
@@ -223,6 +223,7 @@ devices.** A real iPhone or iPad is the exception: it gets a small test runner (
 |---|---|---|
 | Read the screen | `looktap-sim`, a macOS helper that reads the simulator's accessibility tree through Apple's simulator frameworks (CoreSimulator, AccessibilityPlatformTranslation). Web content is found by probing the screen | `looktap-server.jar`, a 10 KB helper pushed to `/data/local/tmp` and run with `app_process`. It keeps one UiAutomation connection open |
 | Tap, type, swipe, keys | The same helper, as touch and keyboard events through SimulatorKit | The same helper, as input events through UiAutomation |
+| Clipboard (`paste`) | `simctl pbcopy`, checked with `simctl pbpaste`; when Xcode 27's clipboard sync (`dtpasteboardd`) wins over it, the Mac's clipboard, which the sync carries in, then put back | The helper sets the clipboard as the shell (`IClipboard`), then the field's paste action or the paste key |
 | Screenshots, `burst` | The simulator display's framebuffer, read in-process | Emulators: the emulator's gRPC API, which also gets past `FLAG_SECURE`. Devices: the helper |
 | Video (`record`) | `simctl io recordVideo` | `screenrecord` on the device |
 | Folding (`fold`) | What Device Hub's fold buttons send: a vendor-defined HID report with the hinge angle, through `dtuhidd`. `devicectl` says which screen is lit, and the helper reads, touches and captures that one | — |
@@ -363,9 +364,23 @@ looktap shot profile__validation
 ```
 
 `fill` finds the field by its label (on iOS also its identifier), or else the first field at or below a matching
-label. It clears the field and types. On Android it then reads the field back: a field that was still clearing can
-swallow the first letters, so it retypes key by key on a miss, and fails rather than report a value the field doesn't
-hold. It also presses Enter, because React Native fields only show validation on blur.
+label. It clears the field and types, then reads the field back. Keys can get lost (a field that was still clearing
+swallows the first letters; a web field drops keys while WebKit autocorrects), so on a miss it empties the field and
+types again key by key, then, on the iOS simulator, pastes the text, and fails rather than report a value the field
+doesn't hold. A field that formats its input (spaces, a currency sign, a capital) passes. A password field shows
+dots, so its length is what's checked. On Android it also presses Enter, because React Native fields only show
+validation on blur.
+
+A one-time code split across boxes goes in with `code`:
+
+```bash
+looktap code 540390
+```
+
+It finds the row of boxes, taps only the first and types the digits one at a time, pausing while the boxes move
+focus along (tapping every box too puts digits a box off). Then it reads every box. If they don't hold the code, it
+taps each box before its digit, then pastes the code into the first; it fails listing what each box holds if none of
+that works.
 
 On iOS, `hidekb` tries, in order:
 1. the keyboard's Done/Return key;
@@ -875,8 +890,8 @@ looktap mcp --config      # prints a ready-to-paste client config with absolute 
 - **Why absolute paths:** desktop apps start servers with a minimal `PATH`. `looktap` also finds `adb` in the
   Android SDK by itself.
 - **The tools:**
-  - `ls`, `tap`, `tap_xy`, `long_press`, `fill`, `type`, `key`, `hide_keyboard`, `swipe`, `scroll_to`, `back`,
-    `home` and `wait`;
+  - `ls`, `tap`, `tap_xy`, `long_press`, `fill`, `paste`, `code`, `type`, `key`, `hide_keyboard`, `swipe`, `scroll_to`,
+    `back`, `home` and `wait`;
   - `screenshot`, which returns the image itself;
   - `logs` and `crashes`;
   - `perf`: CPU, memory and threads, or with `frames` the frames and jank since the last call (`for`: seconds to sample);
@@ -901,7 +916,7 @@ to settle unless asked (`--ls`).
 | `looktap wait <label\|@ref> [--gone]` | Until it's on screen (with `--gone`, until it isn't). Default up to 10 s, or `--wait`. Exits 2 on timeout |
 | `looktap expect <label\|@ref> [= value] [--gone] [--exact]` | Checks it's on screen, with `= value` that its value is exactly that, or with `--gone` that it isn't. Matches like `wait` (`--exact`: the whole label only). Waits up to `--wait` (3 s) for it to come true. Exits 1 with what's there instead: `expect failed: "Email" is "sam@example.com", expected "kim@example.com"` |
 | `looktap scrollto <label> [--up]` | Swipes until the element is fully on screen. Each swipe holds still before lifting, so the list stops where it was dragged instead of coasting. With the keyboard up it swipes above it, and stops with a message if the keyboard leaves no room. Fails at the end of the list, or after 15 swipes |
-| `looktap shot <name> [--plain] [--scale f]` | Saves `<out>/<name>.png` and prints its path. On stderr, how the image maps to the screen: `216x384 px = 360x640 dp: tapxy x y = image x y × 1.667` |
+| `looktap shot <name> [--plain] [--scale f]` | Saves `<out>/<name>.png` (or the absolute path given) and prints its path. On stderr, how the image maps to the screen: `216x384 px = 360x640 dp: tapxy x y = image x y × 1.667` |
 | `looktap burst <dir> <seconds>` | A frame each time the screen changes. Only distinct frames are kept |
 | `looktap record start [name]` · `record stop` | An MP4 of everything in between, saved to `<out>/<name>.mp4`; `stop` prints the path and the length. Android: at most 3 minutes, `FLAG_SECURE` screens black |
 | **Act** (add `--ls` to print the settled screen afterwards) | |
@@ -909,15 +924,17 @@ to settle unless asked (`--ls`).
 | `looktap longpress <label\|@ref\|x y> [ms]` | Holds the touch for `ms` (default 800). Same targets as `tap`, or a point |
 | `looktap zoom in\|out [x y] [--scale f]` | Two-finger pinch around a point (default: the screen centre). `--scale` sets how far apart the fingers end up (default 2.5) |
 | `looktap tapxy <x> <y>` | Taps a point (iOS points / Android dp) |
-| `looktap type <text>` | Types into the focused field. Text the keyboard can't type (accents, emoji, CJK) is pasted, which replaces the clipboard |
+| `looktap type <text>` | Types into the focused field. Text the keyboard can't type (accents, emoji, CJK) is pasted, which replaces the clipboard. Doesn't check the field: `expect "<field>" = …` does |
 | `looktap key <name> …` | `return`, `escape`, `delete`, `tab`, `space`, `selectall`, `paste`, `home`. Android also `back`, any `KEYCODE_*` |
-| `looktap fill <label\|@ref> <text> [--exact]` | Focuses the field, clears it, types. Empty text just clears. iOS simulator: if the field doesn't read back the text afterwards (a web field drops keys while WebKit autocorrects), it pastes the text instead and empties the clipboard again. Android: reads the field back, retypes key by key if a character went missing, and exits 1 naming what the field holds if it still doesn't match (formatting a field adds, such as spaces or a currency sign, passes) |
+| `looktap fill <label\|@ref> <text> [--exact]` | Focuses the field, clears it, types. Empty text just clears. Then reads the field back: if a character went missing it retypes key by key (then, on the iOS simulator, pastes the text when the clipboard takes it), and exits 1 naming what the field holds if it still doesn't match. Formatting a field adds (spaces, a currency sign) passes; a password field is checked by its length |
+| `looktap paste <text>` | Puts the text on the device's clipboard, checks it's there, and pastes it into the focused field. iOS simulator: Xcode 27 mirrors the Mac's clipboard into the simulator's, which wins over `simctl pbcopy`, so it goes through the Mac's clipboard when it must and puts back the text it held. Exits 1 if the clipboard won't take it |
+| `looktap code <digits>` | A one-time code into its row of boxes (four or more small fields side by side, a second line included): taps the first box, types the digits, and checks every box. Retries tapping each box, then pasting the code. Exits 1 listing what each box holds if they don't read the code, or if another field changed |
 | `looktap hidekb` | Dismisses the keyboard and takes focus from the field (blur handlers run), checking after each method. Exits 2 if it's still up |
 | `looktap swipe <x1> <y1> <x2> <y2> [ms]` | Default 150 ms on iOS, 300 ms on Android |
 | `looktap back` | Android system Back · iOS: the navigation bar's back button, else a top-left "Back" button |
 | `looktap home` | The Home button: goes to the home screen and checks it's in front; the app keeps running |
 | `looktap open <url>` | Opens a deep link |
-| `looktap launch [app] [--time\|--resume]` | (Re)starts the app. `--time` times a cold start: until the app is in front, and until its first screen settled. It says when screen reads are too slow to time the screen precisely. Android adds the system's own `TotalTime`. `--resume` brings a running app back to the front as it was, without restarting it (simulators and Android) |
+| `looktap launch [app] [--time\|--resume]` | (Re)starts the app, and waits until it's in front: an app that exits at once fails the command (`looktap crashes <app>` has the report), and one that dies just after is named by the next `ls`. `--time` times a cold start: until the app is in front, and until its first screen settled. It says when screen reads are too slow to time the screen precisely. Android adds the system's own `TotalTime`. `--resume` brings a running app back to the front as it was, without restarting it (simulators and Android) |
 | `looktap stop [app]` | Terminates the app and waits until its process is gone |
 | `looktap bio match\|nomatch` | Face ID (iOS) or fingerprint (Android) |
 | `looktap rotate [portrait\|landscape\|left\|right\|upsidedown]` | Turns the device (`landscape` = `left`, turned counter-clockwise). `ls`, taps and screenshots follow the turned screen. Says so if the app doesn't support the orientation. Without an argument, prints the current one |
@@ -956,7 +973,7 @@ to settle unless asked (`--ls`).
 | `looktap setup` | Starts the helper ahead of time. Android: also `adb reverse tcp:8081` for Metro |
 | `looktap teardown` | Stops the helper. Android: also removes `adb reverse` rules |
 
-**`--ls`** works on `tap`, `longpress`, `zoom`, `tapxy`, `fill`, `type`, `key`, `hidekb`, `swipe`, `back`, `home`, `open`, `launch`, `bio`,
+**`--ls`** works on `tap`, `longpress`, `zoom`, `tapxy`, `fill`, `type`, `key`, `paste`, `code`, `hidekb`, `swipe`, `back`, `home`, `open`, `launch`, `bio`,
 `rotate`, `fold` and `scrollto`. After the action it waits for the screen to change (up to 1.5 s, or 6 s for `launch`/`open`), then for
 it to stop changing, then prints it like `ls`.
 
@@ -984,6 +1001,7 @@ front of you (`--json` for every command).
 | `location clear` | ✅ | ❌ a real device uses its own GPS; use a simulator to fake one | ❌ the emulator keeps its last location: set a new one instead | ❌ a device uses its own GPS (faking it needs a mock-location app) |
 | `logs` | ✅ | ❌ use Console.app with the device selected | ✅ | ✅ |
 | `network` | ❌ the simulator uses the Mac's own network, so it can't go offline or slow by itself. Network Link Conditioner (Xcode → Open Developer Tool → More Developer Tools → Additional Tools) throttles the whole Mac | ❌ turn on Airplane Mode in Control Center | ✅ | ⚠️ airplane mode: over wireless adb, going offline also drops looktap's connection |
+| `paste` | ✅ | ❌ the phone's clipboard can't be set from the Mac: type works with any text on a device | ✅ | ✅ |
 | `perf` | ✅ | ⚠️ read through Instruments (xcrun xctrace): a reading takes 10–25 s and --for gives one every ~8 s; memory is the footprint, without its peak | ✅ | ✅ |
 | `perf --frames` | ⚠️ frames as the screen shows them (the simulator's framebuffer updates), not the app's own render times: the first call starts counting | ⚠️ frames as the screen shows them, from its USB screen feed (60 Hz at most, so a 120 Hz screen counts at half its rate); needs a USB cable, an unlocked phone, and QuickTime not showing it | ✅ | ✅ |
 | `permission` | ⚠️ camera and notifications can't be set: simctl privacy has no such service | ❌ change it in the Settings app | ⚠️ contacts-limited, reminders and siri are iOS-only; any android.permission.* works | ⚠️ contacts-limited, reminders and siri are iOS-only; any android.permission.* works |
@@ -1067,10 +1085,15 @@ Precedence: command-line option, then environment variable, then config file, th
 | `both iOS and Android devices are up — pass -p ios\|android` | Add `-p`, or `export LOOKTAP_PLATFORM=…` |
 | `not found: <label>` | Run `looktap ls` and copy the label. If the screen is slow to load, raise `--wait` |
 | `"<label>" is ambiguous — matches N labels` | Use more of the label, a `@ref`, or `--exact` |
-| `"<label>" is ambiguous — "<label>" is in N places` | The same label twice on screen (a heading and a tab, say). `looktap ls`, then tap the one you mean by `@ref` |
+| `"<label>" is ambiguous — "<label>" is in N places` | The same label twice on screen (a heading and a tab, say). `looktap ls`, then tap the one you mean by `@ref`. A form's label over its own field isn't ambiguous: the field wins |
 | `that's React Native's LogBox toast … dismiss it with looktap tapxy …` | A dev build's warning toast blocks taps across the bottom of the screen. Run the `tapxy` it prints, then tap again. For long sessions, `LogBox.ignoreAllLogs()` in test builds |
 | `the keyboard leaves no room to scroll` | `looktap hidekb`, then `scrollto` again |
 | `fill: typed "…", but the field holds "…"` | The field limits or reshapes input (a maximum length, a mask), or keeps clearing itself. Check it with `looktap ls`; type into it with `type` after a `tap` |
+| `fill: typed N characters, but the field holds M characters` | A password field lost keys even typed one at a time, and the clipboard couldn't be used to paste it. Check the keyboard layout is US, and that no password manager or AutoFill sheet is over the field (`looktap ls`) |
+| `the simulator's pasteboard won't take the text` | Neither `simctl pbcopy` nor the Mac's clipboard reached it: Xcode's pasteboard sync can get stuck on an old item. `type` the text instead (`fill` and `code` already fall back to typing) |
+| `code: entered …, but the boxes hold …` | The boxes reject typed and pasted digits alike, or aren't one row. `looktap ls`, then `tap` the first box and `type` the digits, checking with `ls` |
+| `no row of code boxes on this screen` | `code` looks for four or more small fields side by side. A code in one field: `fill <field> <code>` |
+| `<app> exited right after it started` | The app crashed at launch. `looktap crashes <app>` shows the report |
 | `<app> isn't responding` / `<app> crashed (keeps stopping)` | The system's dialog is over the app. `looktap crashes <app>`, then tap "Wait" or "Close app" and `launch` it again |
 | `keyboard is still up` (iOS) | Search keyboards have no Done key. Tap the screen's Cancel/close control |
 | Android `ls` fails right after boot | Wait until `adb shell getprop sys.boot_completed` prints `1` |
@@ -1156,6 +1179,10 @@ the inner one open. Android foldable emulators aren't supported yet (see the [Ro
 
 It can type, but it **shouldn't type real credentials**. Have a person sign in (and enter OTPs), then let the agent
 continue. The skill tells agents exactly that. See [Safety rules](#safety-rules).
+
+With a test-only account it can: `fill` checks each field holds what it typed (a password by its length), and
+`code` enters a test account's fixed or staging one-time code into its boxes and checks each one. That's also how
+to test the sign-in form itself.
 </details>
 
 ## Roadmap

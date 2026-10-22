@@ -1,5 +1,44 @@
 # Changelog
 
+## 0.8.0
+
+### Added
+
+- **`paste <text>`: paste through a clipboard that's checked first.** It puts the text on the device's clipboard,
+  reads it back, and only then pastes. On Xcode 27 the simulator's clipboard mirrors the Mac's, and the mirror wins
+  over `simctl pbcopy`: an agent pasting that way got an old code from the Mac's clipboard instead. `paste` goes
+  through the Mac's clipboard when it must, puts back the text it held, and exits 1 when the clipboard won't take
+  the text. Android sets the clipboard through its helper. Not on a real iPhone.
+- **`code <digits>`: one-time codes into their row of boxes.** It finds the row (four or more small fields side by
+  side), taps only the first box and types the digits one at a time, pausing while the boxes move focus along
+  (tapping every box too put digits a box off). Then it checks every box, and if they don't hold the code, it taps
+  each box before its digit, then pastes the code. It exits 1 listing what each box holds, or if any other field
+  changed. Boxes a narrow screen wraps onto a second line count, and a box under the keyboard's Previous/Next bar
+  is scrolled clear rather than tapped through.
+
+### Fixed
+
+- **iOS simulator: `fill` no longer empties a field it had filled.** In a web view the page scrolls the focused
+  field clear of the keyboard, so the read-back looked where the field had been, found nothing, and fell back to
+  pasting, which emptied the field and then pasted whatever the clipboard held (nothing, or an old clipboard). A
+  password field came out empty or short with only a warning. The field is now found again wherever it moved, and
+  the clipboard is checked before anything is pasted.
+- **`fill` fails when the field doesn't hold the text**, on every platform, instead of warning. It retypes key by key
+  first, and on the iOS simulator then pastes. A password field is checked by its length (`holds 6 characters`).
+- **A form's label over its own field (both "Email") names the field**, instead of being ambiguous: when all but one
+  of the places a label is in are plain text, `tap` and `fill` take the other one.
+- **`ls` lists unlabelled text fields**, as it does unlabelled buttons: code boxes often have no label.
+- **Android: an unlabelled field's text is its value.** A field with no hint or content description showed what was
+  typed in it as its label, so it couldn't be read back.
+- **Android: `fill` clears the field it tapped.** The helper cleared whichever field had focus once there was one,
+  which could still be the field focused before the tap.
+- **`launch` fails when the app exits at once**, naming `looktap crashes <app>`, instead of returning as if it had
+  started; an app that dies just after `launch` returns is named by the next `ls`.
+- **iOS 27's number pad counts as a keyboard.** Its keys have no identifiers, so `hidekb` said "no keyboard" while
+  it covered the bottom of the screen, and `ls` listed its keys as buttons. Ten digit keys with a text field on
+  screen are a keyboard now (an app's own PIN pad shows dots, not a field, so it stays listed).
+- **`shot` takes an absolute path**, instead of putting it under the output folder.
+
 ## 0.7.2
 
 ### Added

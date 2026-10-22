@@ -349,16 +349,25 @@ static NSArray *tree(BOOL all, BOOL settle) {
   return nodes;
 }
 
-/** The software keyboard's keys carry stable, unlocalized identifiers. */
+/**
+ The software keyboard's keys carry stable, unlocalized identifiers. iOS 27's number pad (a code field's) has none,
+ and no layout view: it's ten digit keys with a text field on screen (an app's own PIN pad has dots, not a field).
+ */
 static BOOL keyboardShown(void) {
+  NSMutableSet *digits = [NSMutableSet set];
+  BOOL field = NO;
   for (NSDictionary *n in tree(NO, NO)) {
     NSString *ident = n[@"id"];
     // UIKeyboardLayout… is on every layout (letters, number pad); the key ids are a fallback.
     if ([ident hasPrefix:@"UIKeyboardLayout"] || [ident isEqualToString:@"delete"] || [ident isEqualToString:@"space"] ||
         [ident isEqualToString:@"shift"])
       return YES;
+    NSString *label = n[@"l"];
+    if ([n[@"t"] isEqualToString:@"Button"] && label.length == 1 && [label characterAtIndex:0] >= '0' && [label characterAtIndex:0] <= '9')
+      [digits addObject:label];
+    if ([@[ @"TextField", @"SecureTextField", @"TextArea", @"SearchField" ] containsObject:n[@"t"] ?: @""]) field = YES;
   }
-  return NO;
+  return digits.count == 10 && field;
 }
 
 /** The loaded CoreSimulator's version (e.g. "1048"), which decides the HID transport. */

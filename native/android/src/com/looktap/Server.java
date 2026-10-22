@@ -148,6 +148,7 @@ public final class Server {
                 reply(out, ok().put("display", display()), null);
                 return;
             case "tap":
+                noteFocus(req.getInt("x"), req.getInt("y"));
                 tap(req.getInt("x"), req.getInt("y"), req.optInt("hold", 50));
                 reply(out, ok(), null);
                 return;
@@ -163,6 +164,10 @@ public final class Server {
                 text(req.getString("s"));
                 reply(out, ok(), null);
                 return;
+            case "paste":
+                paste(req.getString("s"));
+                reply(out, ok(), null);
+                return;
             case "key": {
                 JSONArray names = req.getJSONArray("keys");
                 for (int i = 0; i < names.length(); i++) key(names.getString(i));
@@ -170,7 +175,7 @@ public final class Server {
                 return;
             }
             case "clear":
-                reply(out, ok().put("cleared", clear(req.optInt("wait", 1000))), null);
+                reply(out, ok().put("cleared", clear(req.optInt("wait", 1000), req.optBoolean("tapped", false))), null);
                 return;
             case "field":
                 reply(out, field(), null);
@@ -373,12 +378,35 @@ public final class Server {
     }
 
     /** Empty the focused input field (ACTION_SET_TEXT ""), waiting up to `wait` ms for one to take focus. */
-    static boolean clear(int wait) {
+    /** The focused input field's bounds when the last tap was sent, and where it went: what clear(tapped) waits past. */
+    static Rect focusAtTap;
+    static int tapX, tapY;
+
+    static void noteFocus(int x, int y) {
+        AccessibilityNodeInfo r = ua.getRootInActiveWindow();
+        AccessibilityNodeInfo f = r == null ? null : r.findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
+        focusAtTap = null;
+        if (f != null && f.isEditable()) {
+            focusAtTap = new Rect();
+            f.getBoundsInScreen(focusAtTap);
+        }
+        tapX = x;
+        tapY = y;
+    }
+
+    /**
+     Empty the focused input field once there is one. `tapped`: the field the last tap focuses, so not one that still
+     has focus from before the tap (focus moves a moment after it), unless the tap was on that very field.
+     */
+    static boolean clear(int wait, boolean tapped) {
         long until = SystemClock.uptimeMillis() + wait;
+        Rect b = new Rect();
         for (;;) {
             AccessibilityNodeInfo r = ua.getRootInActiveWindow();
             AccessibilityNodeInfo f = r == null ? null : r.findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
-            if (f != null && f.isEditable()) {
+            if (f != null && f.isEditable()) f.getBoundsInScreen(b);
+            boolean stale = tapped && focusAtTap != null && b.equals(focusAtTap) && !b.contains(tapX, tapY);
+            if (f != null && f.isEditable() && !stale) {
                 android.os.Bundle args = new android.os.Bundle();
                 args.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, "");
                 return f.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args);
