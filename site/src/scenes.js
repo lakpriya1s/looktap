@@ -31,7 +31,7 @@ export const SCENES = [
     id: 'look',
     kicker: '01 · Look',
     title: 'The screen, as text',
-    body: `<p><code>ls</code> lists what's on screen, one row per element: a ref, its type, where it is, and its label. It reads native screens, React Native, and web content in Safari or a web view.</p>
+    body: `<p><code>ls</code> lists what's on screen, one row per element: a ref, its type, where it is, and its label. It reads any app on the phone, not only yours: native screens, React Native, and web content in Safari or a web view.</p>
 <p>A screen read is about <strong>1 KB of text</strong>, where other agent tools return 4–125 KB. That's what an agent pays for in context, every turn.</p>`,
     covers: ['ls'],
     start: (p) => p.show('signin'),
@@ -558,9 +558,9 @@ export const SCENES = [
   {
     id: 'test',
     kicker: '13 · Test',
-    title: 'What worked becomes a test',
+    title: 'What worked becomes a script or a test',
     body: `<p><code>expect</code> checks the screen: a label is there, a field holds a value, an error is gone. It waits up to 3 s for it, and when it fails it says what's there instead.</p>
-<p>Save the steps that worked as a flow file, and <code>looktap test</code> runs your flows in CI: a line per flow, a JUnit report, and for every failure the screen, a screenshot, error logs and crashes. An app that dies fails its flow.</p>
+<p>Every command is a plain shell call with an exit code, so the steps your agent got working run on their own: in a shell script, or saved as a flow file that <code>looktap test</code> runs in CI: a line per flow, a JUnit report, and for every failure the screen, a screenshot, error logs and crashes. An app that dies fails its flow.</p>
 <p>On Android, <code>looktap codegen</code> writes the flow while you use the phone: each touch becomes a tap by label, a fill, a scrollto.</p>`,
     covers: ['expect', 'test', 'codegen'],
     start: (p) => {

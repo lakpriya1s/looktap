@@ -1,9 +1,10 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/lakpriya1s/looktap/main/assets/looktap-logo.svg" alt="looktap — hands on the phone, for AI agents" width="355">
+<img src="https://raw.githubusercontent.com/lakpriya1s/looktap/main/assets/looktap-logo.svg" alt="looktap — hands on the phone: let your AI agent see, use and control the apps on your phone" width="355">
 
-**Let AI agents drive iPhone and Android devices from the shell**<br>
-Read the screen, tap, type, swipe, screenshot, and read logs and crashes. No server to start and no dependencies.
+**Let your AI agent see, use and control the apps on your phone**<br>
+It reads the screen as text and taps by label, on iPhone and Android devices. Then what worked becomes a script or a
+test your CI runs. No server to start and no dependencies.
 
 [![npm](https://img.shields.io/npm/v/@looktap/cli.svg?color=cb3837&logo=npm)](https://www.npmjs.com/package/@looktap/cli)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://github.com/lakpriya1s/looktap/blob/main/LICENSE)
@@ -18,15 +19,17 @@ Read the screen, tap, type, swipe, screenshot, and read logs and crashes. No ser
 
 ---
 
-`looktap` is a small command-line tool for driving a mobile app on an iPhone or Android device, real or simulated.
-Each command does one thing and prints a few lines of plain text:
+`looktap` lets your AI agent see, use and control the apps on your phone: an iPhone or Android device, real or
+simulated. It reads the screen as text and taps by label. Each command does one thing and prints a few lines of plain
+text:
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/lakpriya1s/looktap/main/assets/looktap-demo.gif" alt="An agent drives a demo app with looktap: it reads the sign-in screen as a list of labelled elements, taps, fills in an email address, and scrolls and zooms a map, while the phone beside the terminal reacts to each command" width="760">
 </p>
 
-That makes it a good fit for an AI coding agent (Claude Code, Cursor, Codex, opencode, …) that needs to **see and
-use the app it's building**:
+**Your agent sees and uses the phone.** It's made for AI coding agents (Claude Code, Cursor, Codex, opencode, …)
+that need to **see and use the app they're building**, and it controls any app on the device, not only yours: system
+apps, apps you didn't build, and web pages, with nothing added to the app.
 - **Small output.** A screen read is about 1 KB of text, where other agent tools return 4–125 KB. A screenshot is a
   file path, where most MCP servers put 40–270 KB of image into the context.
 - **One call per step.** Add `--ls` to an action and its result comes back in the same call.
@@ -34,10 +37,15 @@ use the app it's building**:
   under a second, with no session to set up. Against eight other agent tools on the same devices, it had the lowest
   agent time on both iPhone and Android ([How it compares](#how-it-compares)).
 
-It's just as handy by hand, or in a shell script for screenshot sweeps and bug repros. And the steps that worked
-can be saved as **flow files that run as tests in CI**: `expect` checks the screen, and `looktap test` runs the flows
-and reports each one ([Test flows in CI](#test-flows-in-ci)). On Android, `looktap codegen` writes a flow while you
-use the phone ([Record a flow](#record-a-flow-codegen)).
+**Then what worked becomes a script or a test your CI runs.** Every command is a plain shell call with an exit
+code, so the steps that worked with the agent run on their own afterwards:
+- **Tests in CI.** Save the steps as flow files: `expect` checks the screen, and `looktap test` runs the flows and
+  reports each one, with a JUnit report ([Test flows in CI](#test-flows-in-ci)). On Android, `looktap codegen`
+  writes a flow while you use the phone ([Record a flow](#record-a-flow-codegen)).
+- **Screenshot sweeps**, on one device or several ([A repeatable screenshot sweep](#a-repeatable-screenshot-sweep),
+  [Same screen on several devices](#same-screen-on-several-devices)).
+- **Bug repros** that collect their own logs and crash reports
+  ([Debug](#debug-logs-crashes-where-did-my-app-go)).
 
 ---
 
@@ -60,7 +68,7 @@ use the phone ([Record a flow](#record-a-flow-codegen)).
 
 | | What you get |
 |---|---|
-| 👀 | **Read the screen as text.** `ls` lists what's visible, one row per element: `@ref  type  x,y  w×h  label  = value`. It reads native screens, React Native screens and web content (Safari, in-app browsers, web views) |
+| 👀 | **Read the screen as text.** `ls` lists what's visible, one row per element: `@ref  type  x,y  w×h  label  = value`. It reads any app on the phone, yours or not: native screens, React Native screens and web content (Safari, in-app browsers, web views) |
 | 👆 | **Tap by label.** Exact match first, then a prefix or substring that names exactly one label. An ambiguous match is an error, never a guess. Also by `@ref` from the last `ls`, or by `x y` coordinates |
 | ⌨️ | **Type and fill.** `type` into the focused field, `fill` to clear a field, type and check it holds the text (a password field: its length), `paste` text through a clipboard it checks first, `code 540390` into a row of one-time-code boxes, `key return\|escape\|delete\|tab\|selectall\|paste\|…` (the same names on both platforms), and `hidekb`, which never reports success while the keyboard is still up |
 | 🧭 | **Navigate and gesture.** `swipe`, `scrollto <label>`, `back`, `home` (the Home button, the app keeps running), `open <deep link>`, `launch <app>`, `stop <app>`, `longpress`, and two-finger `zoom in\|out` |

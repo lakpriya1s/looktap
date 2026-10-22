@@ -1,8 +1,8 @@
 # @looktap/mcp
 
-The MCP server for [looktap](https://github.com/lakpriya1s/looktap): it lets an AI agent drive an iPhone or Android
-device (simulator, emulator or real phone). It reads the screen as a few lines of text, taps by label, types,
-swipes, takes screenshots and reads logs and crashes.
+The MCP server for [looktap](https://github.com/lakpriya1s/looktap): it lets your AI agent see, use and control the apps on
+your phone: an iPhone or Android device (simulator, emulator or real phone), and any app on it. It reads the screen
+as text, taps by label, types, swipes, takes screenshots and reads logs and crashes.
 
 This package only starts the server. Everything else lives in [`@looktap/cli`](https://www.npmjs.com/package/@looktap/cli), which it installs, so you always
 get the latest looktap. If you already have the CLI installed, `looktap mcp` is the same server.
