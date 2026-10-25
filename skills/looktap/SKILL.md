@@ -63,7 +63,8 @@ failed. Keep track of that at every step:
    something drawn on top (a toast, a sheet, React Native's LogBox: `tap` names it), the keyboard covering the
    target, the element disabled or still loading, or the wrong one of two same-named elements.
 3. **Development builds: dismiss LogBox at the start.** `ls` notes when React Native's warning toast is up. It
-   blocks taps across the bottom of the screen, a tab bar included: tap its × (`tap` prints the exact `tapxy`).
+   blocks taps across the bottom of the screen, a tab bar included: `looktap dismiss logbox` closes it. In a flow,
+   `"dismissLogBox": true` in `looktap.config.json` closes it before every tap instead of a `tapxy` on its ×.
    For long sessions ask the developer for `LogBox.ignoreAllLogs()` in test builds.
 4. **Mind the keyboard.** Hide it (`hidekb`) before tapping anything in the lower half of the screen. `scrollto`
    swipes above it on its own and stops with a message if it leaves no room. `hidekb` also takes focus from the
@@ -101,6 +102,10 @@ looktap wait "Loading" --gone
 looktap expect "Welcome"
 looktap expect "Email" = sam@example.com
 looktap expect "Error" --gone
+# a web page or canvas with no labels to wait for (a sign-in page): until the screen, picture included, holds
+# still for 1 s (--for 2s for longer); 10 s at most, or --wait
+looktap wait --settle
+looktap wait --settle --for 2s
 # swipe until it's fully on screen (above the keyboard, when it's up); fails at the end of the list
 looktap scrollto "Privacy & Security"
 looktap scrollto "General" --up
@@ -116,6 +121,8 @@ looktap tap "Messages" --exact
 looktap tap @7
 # a point, in the units ls prints; for things ls doesn't list
 looktap tapxy 205 874
+# React Native's LogBox toast (dev builds) takes the taps around it: close it
+looktap dismiss logbox
 # hold (default 800 ms): context menus, drag handles, edit modes
 looktap longpress "Photo"
 looktap longpress @4 1500
@@ -158,7 +165,7 @@ looktap open "myapp://orders/42"
 # (re)start the app
 looktap launch
 looktap launch com.example.myapp
-# bring it back to the front as it was (simulator, emulator, Android phone): no restart, no lost screen
+# bring it back to the front as it was (a real iPhone too): no restart, no lost screen
 looktap launch com.example.myapp --resume
 looktap stop com.example.myapp   # terminate it; waits until the process is gone
 # Face ID / fingerprint
@@ -172,6 +179,8 @@ looktap bio nomatch
 # saves <out>/<name>.png and prints the path; --scale 0.5 is a quarter of the image tokens
 looktap shot checkout
 looktap shot checkout --scale 0.5
+# one pixel per point (iOS) or dp (Android): a spot you pick in the image is tapxy's x y as it is
+looktap shot checkout --points
 # Android emulators capture FLAG_SECURE screens by default; --plain shows them black, as on a device
 looktap shot payment --plain
 # a frame each time the screen changes, for 3 s; duplicates dropped (start it in the background)
@@ -191,6 +200,8 @@ looktap logs --grep checkout
 looktap logs --since 5m --lines 200
 # iOS: keep Apple-framework messages too
 looktap logs --all
+# a real iPhone keeps no log history: the first logs (or launch) starts collecting, so run logs (or launch) before
+# reproducing the problem, then logs again
 # crashes, ANRs and low-memory kills since your last `crashes` (first time: the last hour)
 looktap crashes
 looktap crashes com.example.myapp --since 1h
@@ -221,7 +232,8 @@ looktap capabilities
 looktap apps
 looktap apps com.example
 looktap apps --all --json
-# a simulator .app or an .apk (keeps the app's data; --grant: every runtime permission); prints the app id
+# a simulator .app, a device .app/.ipa (real iPhone) or an .apk (keeps the app's data; --grant: every runtime
+# permission); prints the app id. A failure says why (storage full, a downgrade, another signature) and what to do
 looktap install build/MyApp.app
 looktap install app-debug.apk --grant
 looktap uninstall com.example.myapp
@@ -274,6 +286,12 @@ looktap run - < steps.txt
 looktap test flows/ --junit results/junit.xml -o results
 # Android: the user uses the phone and each touch is saved as a step (a person drives this one, not you)
 looktap codegen flows/checkout.txt com.example.app
+# steps for flows: a fixed wait, for what has nothing to wait on (prefer wait or wait --settle)
+looktap pause 1.5
+# the person's turn (a consent screen, a second factor): shows the message and a notification, then carries on
+# once the label is on screen (--gone: off it), up to 5 min or --wait. Without --until: when they press Enter
+looktap handoff "Approve the sign-in on the phone" --until "Home"
+looktap handoff "Enter the code from the email" --until "Verify" --gone
 ```
 
 ### Devices and setup
@@ -290,6 +308,8 @@ looktap boot Pixel_9a --headless
 looktap shutdown Pixel_9a
 looktap devices
 looktap doctor
+# the way to one device: a real iPhone's tunnel, usbmuxd, lock screen, which routes its runner answers on
+looktap doctor -d 00008120-001A2B3C4D5E6F70
 # start the helper ahead of time (Android: also adb reverse tcp:8081 for Metro); teardown undoes it
 looktap setup
 looktap teardown
@@ -318,6 +338,8 @@ looktap -o out/run1 shot home
 looktap --app com.example.myapp launch
 # how long tap / fill / back wait for their target (default 3 s)
 looktap --wait 10 tap "Continue"
+# a locked device: wait up to 60 s for the user to unlock it, then carry on (default: fail at once)
+looktap --wait-unlock 60 launch com.example.myapp
 # every command and option: -h or --help · the version: -v or --version
 looktap --help
 looktap --version
@@ -486,11 +508,13 @@ Then look at the few frames that matter, not all of them.
 - **App-state and condition commands need the app id.** They never act on whatever happens to be on screen.
 - **`tap` aims at a part of the target nothing covers.** When a toast or bar hides its middle, it taps the
   uncovered part and says `off-centre`. If it warns that another element covers the point, nothing of the target
-  was left clear and the tap probably hit that: dismiss it (React Native's LogBox toast: its ×), then tap again.
+  was left clear and the tap probably hit that: dismiss it (React Native's LogBox toast: `looktap dismiss logbox`),
+  then tap again.
 - **`hidekb` also takes focus from the field** (Android too), so validate-on-blur errors appear after it.
 - **After `textsize` or `appearance` on Android**, a note that the app restarted means every ref is stale: `ls`.
 - **`shot` says how the image maps to the screen** (on stderr): `216x384 px = 360x640 dp: tapxy x y = image x y ×
-  1.667`. Multiply a point read off the image by that factor for `tapxy`.
+  1.667`. Multiply a point read off the image by that factor for `tapxy`, or take it with `--points`, where the
+  factor is 1.
 - **If `ls` says only the status bar is readable**, a system prompt (passcode, permission, alert) is on top.
   `shot` to see it. Never enter a passcode unless the user gave it to you for this device.
 - **Measure performance with `perf` and `launch --time`, not by eye.** Simulator numbers are the Mac's CPU and
@@ -502,8 +526,14 @@ Then look at the few frames that matter, not all of them.
   Trust, turn on Developer Mode). One marked "still starting" needs no one: `looktap boot <name>` waits for it.
 - **Use looktap, not adb or simctl, for device and app state:** `boot` instead of polling for boot completion,
   `apps <id>` instead of `simctl listapps` or `pm list packages` to check an app is installed.
-- **If a command says the device is locked**, ask the user to unlock it. Don't retry, and never enter a passcode
-  unless they gave it to you for this device.
+- **If a command says the device is locked**, ask the user to unlock it. Don't retry in a loop, and never enter a
+  passcode unless they gave it to you for this device. `looktap devices` shows `locked` up front; in a long
+  sequence, `--wait-unlock 60` lets the user unlock it while the command waits.
+- **A real iPhone on Wi-Fi that doesn't answer:** looktap says within ~20 s that the runner is up but out of reach,
+  and what each route answered. Ask the user to plug in a USB cable (looktap moves to it by itself) and run the
+  command again; `looktap doctor -d <UDID>` shows each step. Don't `teardown` first: the runner keeps running.
+- **Sign-in pages with no labels** (Google's, most web sign-ins): `wait --settle` after each tap, and `handoff` for
+  what only the user can do (consent, a second factor). Don't guess with `pause`.
 - **If `hidekb` exits 2** (iOS search keyboards have no Done key), tap the screen's close or cancel control.
 - **Log lines can contain tokens or personal data.** Quote only the lines that matter.
 

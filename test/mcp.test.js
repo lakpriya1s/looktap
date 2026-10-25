@@ -10,6 +10,8 @@ test('tool calls become looktap command lines', () => {
   assert.deepEqual(toWords('fill', { target: 'Email', text: 'a b' }), ['fill', 'Email', 'a b', '--ls']);
   assert.deepEqual(toWords('long_press', { x: 10, y: 20, ms: 900 }), ['longpress', '10', '20', '900', '--ls']);
   assert.deepEqual(toWords('wait', { target: 'Home', gone: true, seconds: 5 }), ['wait', 'Home', '--gone', '--wait', '5']);
+  assert.deepEqual(toWords('wait', { settle: true, seconds: 20 }), ['wait', '--settle', '--wait', '20']);
+  assert.throws(() => toWords('wait', {}), /a target, or settle/);
   assert.deepEqual(toWords('logs', { errors: true, grep: 'pay' }), ['logs', '--errors', '--grep', 'pay']);
   assert.throws(() => toWords('long_press', {}), /target, or x and y/);
   assert.deepEqual(toWords('perf', {}), ['perf']);
