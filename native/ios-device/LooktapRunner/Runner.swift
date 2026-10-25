@@ -217,6 +217,14 @@ final class Ops {
       known.insert(id, at: 0)
       return (["ok": true], nil)
 
+    case "activate":
+      // To the front as it was; started only if it isn't running (launch would restart it).
+      let id = r["app"] as? String ?? ""
+      app(id).activate()
+      known.removeAll { $0 == id }
+      known.insert(id, at: 0)
+      return (["ok": true], nil)
+
     case "terminate":
       app(r["app"] as? String ?? "").terminate()
       return (["ok": true], nil)

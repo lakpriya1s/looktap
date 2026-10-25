@@ -265,8 +265,8 @@ releases. `looktap doctor` checks they're present and shows which input path app
 
 A simulator can be driven from the Mac with nothing installed in it; a real iPhone or iPad can't. So the first
 command aimed at one builds a small XCUITest runner (`native/ios-device`), signs it with your Apple ID, and installs
-it. It reads the screen and taps, types and swipes through XCUITest, and looktap reaches it through usbmuxd, over
-USB or Wi-Fi. Every looktap user signs the runner with their own Apple ID. A free one is enough; the paid
+it. It reads the screen and taps, types and swipes through XCUITest, and looktap reaches it over USB or Wi-Fi (see
+[how it connects](#how-looktap-reaches-the-phone) below). Every looktap user signs the runner with their own Apple ID. A free one is enough; the paid
 Developer Program isn't needed.
 
 **Once per Mac and device:**
@@ -294,15 +294,31 @@ signed by the free account installed on one device at a time**. The runner count
 looktap names the apps it found and you delete one.
 
 **What works on a device:** everything except `location`, `network`, `push`, `statusbar`, `textsize`, `bio`,
-`record`, `permission`, `reset`, `logs` and `crashes`, which say so; `zoom` works around the screen's centre only.
+`record`, `permission`, `reset` and `crashes`, which say so; `zoom` works around the screen's centre only. `logs`
+reads the phone's live log (lockdown's syslog relay, as Console.app does), collected in the background from the first
+`logs` or `launch` on, since the phone keeps no history looktap can read.
 `perf` reads CPU, memory and threads through Instruments (`xcrun xctrace`, part of Xcode), 10–25 s a reading, and
 `perf --frames` reads the screen over the USB cable, so it needs the phone plugged in rather than on Wi-Fi.
 [Platform support](#platform-support) has the reasons, and `looktap capabilities` prints them. A command takes about 1–1.5 s, slower than on a simulator, because XCUITest takes longer to read the screen.
 
 The device must be unlocked while the runner starts. It keeps running until `looktap teardown`, or until the
 device is restarted. While the device is locked, commands that need the screen stop with "the device is locked"
-(`stop` still works). A runner can lose its permission to drive the screen while it keeps running (seen after the
+(`stop` still works), and `looktap devices` shows `locked` up front. `--wait-unlock 60` (or `"waitUnlock": 60` in the
+config, `LOOKTAP_WAIT_UNLOCK=60`) waits up to that many seconds for someone to unlock it instead, then runs the
+command; useful in a long flow, where the phone locks itself after a while. A runner can lose its permission to drive the screen while it keeps running (seen after the
 device sat idle); looktap then starts a fresh one, once, and carries on.
+
+#### How looktap reaches the phone
+
+Each command tries, in order: **USB** (usbmuxd, when the cable is in), the **CoreDevice tunnel** (how Xcode itself
+reaches a phone on Wi-Fi, and what starts the runner), then **usbmuxd's own Wi-Fi route**. A network can block the
+last while the tunnel works. Plugging in a cable mid-session moves to USB at the next command, with no `teardown`.
+
+When the runner is up on the phone but no route reaches it, looktap says so within about 20 s, with what each route
+answered, instead of waiting minutes: usually the network isolates its clients, or a VPN or firewall sits between
+the Mac and the phone. Plug in a cable and run the command again; the runner keeps running, so nothing restarts.
+`looktap doctor -d <UDID>` checks each step on the way: pairing, Developer Mode, the tunnel, usbmuxd, the lock
+screen, which routes the runner answers on, and the signing team.
 
 <details>
 <summary><strong>Android: the fallback path</strong></summary>
@@ -930,9 +946,10 @@ to settle unless asked (`--ls`).
 | **Look** | |
 | `looktap ls [--all] [--json]` | Visible elements with a label, plus unlabelled buttons, each with an `@ref`. `--all` includes everything. `--json` prints `{screen, elements}`. While the screen is still loading (nothing labelled yet), waits up to `--wait`. An Android text field shows its label or hint, with what's typed as `= value`, as on iOS. `--all` folds a react-native-svg drawing into one row (`(svg, 9 shapes)`). Notes on stderr when React Native's LogBox toast is up (it blocks taps around it) or the system's "isn't responding" / "keeps stopping" dialog is |
 | `looktap wait <label\|@ref> [--gone]` | Until it's on screen (with `--gone`, until it isn't). Default up to 10 s, or `--wait`. Exits 2 on timeout |
+| `looktap wait --settle [--for 1s]` | Until the screen holds still for 1 s (or `--for`): its elements and its picture both, so it works on web pages and canvases that have no labels to wait for (a sign-in page loading). Small screenshots are compared, so a blinking caret doesn't count as change. Up to 10 s, or `--wait`; exits 1 if it's still changing |
 | `looktap expect <label\|@ref> [= value] [--gone] [--exact]` | Checks it's on screen, with `= value` that its value is exactly that, or with `--gone` that it isn't. Matches like `wait` (`--exact`: the whole label only). Waits up to `--wait` (3 s) for it to come true. Exits 1 with what's there instead: `expect failed: "Email" is "sam@example.com", expected "kim@example.com"` |
 | `looktap scrollto <label> [--up]` | Swipes until the element is fully on screen. Each swipe holds still before lifting, so the list stops where it was dragged instead of coasting. With the keyboard up it swipes above it, and stops with a message if the keyboard leaves no room. Fails at the end of the list, or after 15 swipes |
-| `looktap shot <name> [--plain] [--scale f]` | Saves `<out>/<name>.png` (or the absolute path given) and prints its path. On stderr, how the image maps to the screen: `216x384 px = 360x640 dp: tapxy x y = image x y × 1.667` |
+| `looktap shot <name> [--plain] [--scale f] [--points]` | Saves `<out>/<name>.png` (or the absolute path given) and prints its path. On stderr, how the image maps to the screen: `216x384 px = 360x640 dp: tapxy x y = image x y × 1.667`. `--points` saves it at one pixel per iOS point or Android dp, so a spot picked in the image is `tapxy`'s `x y` as it is, with no scale maths |
 | `looktap burst <dir> <seconds>` | A frame each time the screen changes. Only distinct frames are kept |
 | `looktap record start [name]` · `record stop` | An MP4 of everything in between, saved to `<out>/<name>.mp4`; `stop` prints the path and the length. Android: at most 3 minutes, `FLAG_SECURE` screens black |
 | **Act** (add `--ls` to print the settled screen afterwards) | |
@@ -950,13 +967,14 @@ to settle unless asked (`--ls`).
 | `looktap back` | Android system Back · iOS: the navigation bar's back button, else a top-left "Back" button |
 | `looktap home` | The Home button: goes to the home screen and checks it's in front; the app keeps running |
 | `looktap open <url>` | Opens a deep link |
-| `looktap launch [app] [--time\|--resume]` | (Re)starts the app, and waits until it's in front: an app that exits at once fails the command (`looktap crashes <app>` has the report), and one that dies just after is named by the next `ls`. `--time` times a cold start: until the app is in front, and until its first screen settled. It says when screen reads are too slow to time the screen precisely. Android adds the system's own `TotalTime`. `--resume` brings a running app back to the front as it was, without restarting it (simulators and Android) |
+| `looktap launch [app] [--time\|--resume]` | (Re)starts the app, and waits until it's in front: an app that exits at once fails the command (`looktap crashes <app>` has the report), and one that dies just after is named by the next `ls`. `--time` times a cold start: until the app is in front, and until its first screen settled. It says when screen reads are too slow to time the screen precisely. Android adds the system's own `TotalTime`. `--resume` brings a running app back to the front as it was, without restarting it (and starts it if it isn't running) |
 | `looktap stop [app]` | Terminates the app and waits until its process is gone |
 | `looktap bio match\|nomatch` | Face ID (iOS) or fingerprint (Android) |
+| `looktap dismiss logbox` | Closes React Native's LogBox toast (dev builds), which takes every touch around it, a bottom tab bar included: taps its × and waits until it's gone. Says so when there's none. `"dismissLogBox": true` in `looktap.config.json` (or `LOOKTAP_DISMISS_LOGBOX=1`) closes it before every `tap`, `longpress` and `tapxy` |
 | `looktap rotate [portrait\|landscape\|left\|right\|upsidedown]` | Turns the device (`landscape` = `left`, turned counter-clockwise). `ls`, taps and screenshots follow the turned screen. Says so if the app doesn't support the orientation. Without an argument, prints the current one |
 | `looktap fold [closed\|half\|open]` | Folds or opens a foldable simulator (the iPhone Duo). `ls`, taps and screenshots follow the screen it then shows. Without an argument, prints which screen that is |
 | **Debug** (`[app]` defaults to `--app` / config, else the app in front) | |
-| `looktap logs [app] [--errors] [--grep re] [--since 5m] [--lines n] [--all]` | The app's log since the last `logs` (the first call covers the last minute). At most 80 lines, newest kept |
+| `looktap logs [app] [--errors] [--grep re] [--since 5m] [--lines n] [--all]` | The app's log since the last `logs` (the first call covers the last minute). At most 80 lines, newest kept. A real iPhone keeps no history looktap can read: the first `logs` or `launch` starts collecting its live log in the background (over USB or Wi-Fi, until 30 minutes after the last one), and later calls read from that |
 | `looktap crashes [app] [--since 1h]` | Crashes, ANRs and low-memory kills since the last `crashes` (the first call covers the last hour) |
 | `looktap app [app]` | The app in front and its pid, and whether `[app]` is running |
 | `looktap app [app] --paths` | Where the app's files are. iOS simulator: its bundle, data folder and app groups, as paths on the Mac. Android: its APKs and data folder, which `adb shell run-as` reads on debuggable builds |
@@ -965,7 +983,7 @@ to settle unless asked (`--ls`).
 | `looktap capabilities [--json]` | What this device can't do, or can only in part, and why. `--json`: every command with `supported`, `conditional` or `unsupported` |
 | **App state** (`<app>` from the argument or `--app` / config, never the app in front) | |
 | `looktap apps [filter] [--all] [--json]` | The installed apps: id, name (iOS) and version. `--all` adds the system's own apps. A filter matches part of the id or name, system apps included, and exits 1 when nothing matches, so `looktap apps com.example` answers "is it installed?" |
-| `looktap install <path> [--grant]` | iOS: a simulator `.app`. Android: an `.apk`, replacing an installed copy and keeping its data (`--grant`: all runtime permissions). Prints the app id |
+| `looktap install <path> [--grant]` | iOS: a simulator `.app`, or on a real iPhone an `.app`/`.ipa` built and signed for devices. Android: an `.apk`, replacing an installed copy and keeping its data (`--grant`: all runtime permissions). Prints the app id. A failure says why in the system's words (an iPhone with too little storage, an Android downgrade or signature mismatch) and what to do |
 | `looktap uninstall <app>` | Removes the app |
 | `looktap reset <app>` | As if freshly installed: data and permissions cleared. iOS: the keychain survives |
 | `looktap permission grant\|revoke\|reset <name> [app]` | `camera`, `microphone`, `location`, `location-always`, `photos`, `contacts`, `calendar`, `notifications`, `motion`, `all`, … Android also takes `android.permission.*` |
@@ -980,12 +998,14 @@ to settle unless asked (`--ls`).
 | `looktap mcp [--config]` | Serves these commands over MCP (stdio) for clients without a shell. `--config` prints a client config |
 | `looktap run '<cmd>; <cmd> …'` | Several commands in one process. `run -` reads them from stdin. Stops at the first failure and names it |
 | `looktap codegen <flow-file> [app]` | Android: restarts the app, then saves each touch on the device as the step that replays it: `tap "<label>"`, `fill <field> <text>`, `scrollto`, `longpress`, `zoom`, `back`, `home`. A command typed while it records (`expect "Welcome"`) is run and saved too; `undo` drops the last step; Enter on an empty line or Ctrl+C ends it. See [Record a flow](#record-a-flow-codegen) |
+| `looktap pause <seconds>` | Waits a fixed time: `2`, `1.5s`, `500ms`. For what has nothing to wait on; `wait` and `wait --settle` are quicker and sturdier when they apply |
+| `looktap handoff <message> [--until <label\|@ref>] [--gone]` | A step only a person can do: a consent screen, a second factor. Prints the message to the terminal at once (even inside `test`), shows it as a macOS notification (`LOOKTAP_NOTIFY=0` turns that off), then waits until `<label>` is on screen (`--gone`: until it's off it), up to 5 minutes or `--wait`. Without `--until`, until Enter is pressed in the terminal. So "a person signs in, then looktap carries on" is a step of the flow, not a failure |
 | `looktap test <flow\|dir> … [--junit file]` | Runs flow files (`run` scripts, one step per line) as tests, folders searched, and prints a line per flow and the totals. Exits 1 if any flow fails. A failed flow prints its output and leaves `error.txt`, `output.txt`, `screen.txt`, `screen.png`, `logs.txt` and `crashes.txt` in `<out>/failures/<flow>/`. An app that dies during a flow fails it. `--junit` writes a JUnit XML report |
 | `looktap skill [--install\|--uninstall\|--list] [--agents a,b\|all] [--project]` | Prints the AI-agent guide. `--install` writes it for every coding agent on the machine (or `--agents`), each in its own skills folder, or into the repo with `--project`. `--list` shows the agents and what's installed where ([details](#every-coding-agent)) |
-| `looktap devices [--all] [--json]` | What's running or connected, and what each is: simulator, emulator (with its AVD name) or real device (model, OS version, USB or Wi-Fi), and whether it has a window or runs headless. An Android phone on both USB and Wi-Fi is one row (`USB + Wi-Fi`), and commands drive it over USB; `-d` with its Wi-Fi id still picks Wi-Fi. A phone that's connected but not ready is listed with what to do (accept the USB debugging prompt, tap Trust, turn on Developer Mode). A simulator or emulator still starting is listed as such. `--all` also lists what `boot` can start; `--json` for scripts and agents |
+| `looktap devices [--all] [--json]` | What's running or connected, and what each is: simulator, emulator (with its AVD name) or real device (model, OS version, USB or Wi-Fi, and `locked` while its lock screen is up), and whether it has a window or runs headless. An Android phone on both USB and Wi-Fi is one row (`USB + Wi-Fi`), and commands drive it over USB; `-d` with its Wi-Fi id still picks Wi-Fi. A phone that's connected but not ready is listed with what to do (accept the USB debugging prompt, tap Trust, turn on Developer Mode). A simulator or emulator still starting is listed as such. `--all` also lists what `boot` can start; `--json` for scripts and agents |
 | `looktap boot [name] [--window\|--headless]` | Boots an iOS simulator or Android emulator by name, UDID or AVD name (exact, else a unique prefix or substring; `-p` to choose a platform) and waits until it's ready to drive. Opens its window unless `--headless` (or `LOOKTAP_HEADLESS=1`, or `"headless": true` in the config file). Already running: says so, and `--window` opens a simulator's window. One that's still starting (adb lists an emulator offline while it boots) is waited for, not started twice. A running device can't drop its window (closing the Simulator app shuts its simulators down; an emulator starts with or without one), so `--headless` then says how to restart it. From Xcode 27.1 simulators show in Device Hub, one window for the device picked in its sidebar: `--window` opens Device Hub, and you pick the simulator there |
 | `looktap shutdown [name]` | Shuts down a simulator or emulator (name, UDID, AVD name or serial), and waits until it's gone |
-| `looktap doctor` | Checks Node, Xcode and the simulator frameworks, adb, and booted devices |
+| `looktap doctor [-d <device>]` | Checks Node, Xcode and the simulator frameworks, adb, booted devices and the agent skill (an outdated copy counts only for the agent running `doctor`). With `-d`, the way to that device: a real iPhone's pairing, Developer Mode, CoreDevice tunnel and usbmuxd, lock state, which routes its runner answers on and which one commands use, and the signing team; an Android device's adb state, connection and lock state |
 | `looktap setup` | Starts the helper ahead of time. Android: also `adb reverse tcp:8081` for Metro |
 | `looktap teardown` | Stops the helper. Android: also removes `adb reverse` rules |
 
@@ -1015,7 +1035,7 @@ front of you (`--json` for every command).
 | `fold` | ⚠️ a foldable simulator only: the iPhone Duo (Xcode 27.1 or later) | ❌ only the iPhone Duo simulator folds, for now | ❌ only the iPhone Duo simulator folds, for now | ❌ only the iPhone Duo simulator folds, for now |
 | `location` | ✅ | ❌ a real device uses its own GPS; use a simulator to fake one | ✅ | ❌ a device uses its own GPS (faking it needs a mock-location app) |
 | `location clear` | ✅ | ❌ a real device uses its own GPS; use a simulator to fake one | ❌ the emulator keeps its last location: set a new one instead | ❌ a device uses its own GPS (faking it needs a mock-location app) |
-| `logs` | ✅ | ❌ use Console.app with the device selected | ✅ | ✅ |
+| `logs` | ✅ | ⚠️ the phone keeps no history looktap can read: the first logs (or launch) starts collecting its live log in the background, until 30 min after the last one, so what came before that isn't there | ✅ | ✅ |
 | `network` | ❌ the simulator uses the Mac's own network, so it can't go offline or slow by itself. Network Link Conditioner (Xcode → Open Developer Tool → More Developer Tools → Additional Tools) throttles the whole Mac | ❌ turn on Airplane Mode in Control Center | ✅ | ⚠️ airplane mode: over wireless adb, going offline also drops looktap's connection |
 | `paste` | ✅ | ❌ the phone's clipboard can't be set from the Mac: type works with any text on a device | ✅ | ✅ |
 | `perf` | ✅ | ⚠️ read through Instruments (xcrun xctrace): a reading takes 10–25 s and --for gives one every ~8 s; memory is the footprint, without its peak | ✅ | ✅ |

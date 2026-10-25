@@ -14,12 +14,13 @@ import { KINDS, capabilities, capability, unsupported } from '../lib/capabilitie
 import { Recorder, TouchReader, classify, mapper, quote } from '../lib/codegen.js';
 import { AGENTS, PROJECT_DEFAULT, claudePlugin, detectAgents, installSkill, installedVersion, pickAgents, skillsDir, uninstallSkill } from '../lib/agents.js';
 import { boot, shutdown } from '../lib/boot.js';
+import { resizePng } from '../lib/png.js';
 import { formatDevice, inventory } from '../lib/devices.js';
 import { ORIENTATIONS, coordinates, foldPosition, pushPayload, rotation, textSize } from '../lib/conditions.js';
-import { LOGBOX, appGone, center, expectOn, fillCode, poller, tapPoint, forgetFront, formatRow, isRef, lastFront, rememberFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, signature, sliding, visibleRows, waitFor } from '../lib/screen.js';
+import { LOGBOX, appGone, center, expectOn, fillCode, poller, tapPoint, forgetFront, formatRow, isRef, lastFront, logBoxToast, rememberFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, signature, sliding, stillScreen, visibleRows, waitFor } from '../lib/screen.js';
 import { duration, formatFrames, formatReading, formatSamples, readingJson } from '../lib/perf.js';
 import { flowFiles, flowName, junit } from '../lib/testing.js';
-import { ADB, HOME, LOCKED, NotFound, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
+import { ADB, HOME, LockedError, NotFound, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
 
 const SKILL = new URL('../skills/looktap/SKILL.md', import.meta.url);
 
@@ -37,7 +38,8 @@ setup & info
                                   it's ready. Default: a window (LOOKTAP_HEADLESS=1 or "headless": true in config
                                   for headless). On a running simulator --window opens its window
   shutdown [name]                 shut down a simulator or emulator
-  doctor                          check the toolchain
+  doctor [-d <device>]            check the toolchain; with -d, the way to that device: how it's connected, whether
+                                  it's locked, and (a real iPhone) whether its runner answers, over which route
   setup                           start the helper (optional: commands start it on first use)
                                   · Android: also adb reverse Metro
   teardown                        stop the helper · Android: remove adb reverse rules
@@ -45,12 +47,16 @@ setup & info
 look
   ls [--all] [--json]             on-screen elements: @ref  type  x,y  WxH  label  [= value]
   wait <label|@ref> [--gone]      until it appears (or disappears); default timeout 10 s, or --wait
+  wait --settle [--for 1s]        until the screen (its elements and its picture) holds still for 1 s: for web
+                                  pages and canvases with no labels to wait for. Timeout 10 s, or --wait
   expect <label|@ref> [= value] [--gone] [--exact]
                                   check it's on screen (with that value), or with --gone that it isn't.
                                   Waits up to --wait (3 s) for it; fails with what's there instead (exit 1)
   scrollto <label> [--up]         swipe until it is fully on screen (default scrolls down; above the keyboard)
-  shot <name> [--plain] [--scale f]  screenshot → <out>/<name>.png; --scale 0.5 = half size, fewer
-                                  image tokens (Android emulators bypass FLAG_SECURE; --plain doesn't)
+  shot <name> [--plain] [--scale f] [--points]
+                                  screenshot → <out>/<name>.png; --scale 0.5 = half size, fewer image tokens;
+                                  --points: one pixel per iOS point / Android dp, so a spot in the image is
+                                  tapxy's x y as is (Android emulators bypass FLAG_SECURE; --plain doesn't)
   burst <dir> <seconds>           a frame whenever the screen changes; duplicates removed
   record start [name] | stop      screen video → <out>/<name>.mp4, in the background until stopped
                                   (Android: at most 3 min, and FLAG_SECURE screens record black)
@@ -80,6 +86,8 @@ act                               add --ls to any of these to print the settled 
                                   bring it forward as it was, without restarting it
   stop [app]                      terminate it, and wait until its process is gone
   bio match|nomatch               Face ID / fingerprint
+  dismiss logbox                  close React Native's LogBox toast (dev builds), which blocks taps around it.
+                                  "dismissLogBox": true in looktap.config.json closes it before every tap
   rotate [portrait|landscape|left|right|upsidedown]
                                   turn the device (landscape = left: turned counter-clockwise); no
                                   argument prints the current orientation. ls, taps and shots follow it
@@ -89,7 +97,8 @@ act                               add --ls to any of these to print the settled 
 debug                             [app] defaults to --app / config, else the app in front
   logs [app] [--errors] [--grep re] [--since 5m] [--lines n] [--all]
                                   the app's log since the last \`logs\` (first time: the last minute).
-                                  iOS hides Apple-framework chatter unless it's an error (--all keeps it)
+                                  iOS hides Apple-framework chatter unless it's an error (--all keeps it).
+                                  A real iPhone has no history: collected from the first logs or launch on
   crashes [app] [--since 1h]      crashes, ANRs, low-memory kills since the last \`crashes\` (first: last hour)
   app [app]                       which app is in front, and whether [app] is running (pid)
   app [app] --paths               where its files are: iOS the bundle, data folder and app groups (on the Mac),
@@ -123,6 +132,13 @@ conditions
   push <app> <payload>            iOS: a remote notification. Payload: a .json file, '{json}', or plain
                                   text for an alert (Android pushes need Firebase)
 
+flows                             steps of run scripts and test flows, for what has no label to wait for
+  pause <seconds>                 wait a fixed time (2, 1.5s, 500ms): prefer wait/wait --settle when they apply
+  handoff <message> [--until <label|@ref>] [--gone]
+                                  a person's turn (a consent screen, a second factor): shows the message (and a
+                                  macOS notification), then waits until <label> is on screen (--gone: off it),
+                                  up to 5 min or --wait. Without --until, until Enter is pressed in the terminal
+
 batch & agents
   mcp [--config]                  serve these commands over MCP (stdio), for AI clients without a shell.
                                   --config prints a client config with absolute paths
@@ -147,6 +163,8 @@ options
   -o, --out <dir>                 screenshots and videos (default ./shots, or "out" in looktap.config.json)
       --app <id>                  app id for launch/open (or "ios.app" / "android.app" in config)
       --wait <seconds>            how long tap/fill/back wait for their target to appear (default 3)
+      --wait-unlock <seconds>     when the device is locked, wait this long for someone to unlock it, then carry
+                                  on (default 0: fail at once). Or "waitUnlock" in config, LOOKTAP_WAIT_UNLOCK
   -h, --help · -v, --version
 
 env: LOOKTAP_PLATFORM, LOOKTAP_DEVICE, LOOKTAP_OUT, LOOKTAP_WAIT, LOOKTAP_SCALE (Android px per dp),
@@ -178,7 +196,9 @@ function parse(argv) {
     else if (a === '--junit') opts.junit = val();
     else if (a === '--for') opts.for = val();
     else if (a === '--agents') opts.agents = val();
-    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window', '--paths', '--frames', '--time', '--resume', '--project', '--uninstall', '--list'].includes(a)) opts.flags.add(a.slice(2));
+    else if (a === '--until') opts.until = val();
+    else if (a === '--wait-unlock') opts.waitUnlock = val();
+    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window', '--paths', '--frames', '--time', '--resume', '--project', '--uninstall', '--list', '--settle', '--points'].includes(a)) opts.flags.add(a.slice(2));
     else if (a === '--') pos.push(...argv.slice(i + 1)), (i = argv.length);
     else pos.push(a);
   }
@@ -225,12 +245,21 @@ function pickDriver(opts, config) {
   const app = opts.app || config[platform]?.app;
   const wait = 1000 * Number(opts.wait ?? process.env.LOOKTAP_WAIT ?? config.wait ?? 3);
   if (!(wait >= 0)) throw new UsageError('--wait takes seconds, e.g. --wait 5');
-  if (platform === 'ios' && physicalUdid(device)) return new IosDevice(device, { out, app, wait, team: process.env.LOOKTAP_TEAM || config.ios?.team });
-  return platform === 'ios' ? new Ios(device, { out, app, wait }) : new Android(device, { out, app, wait });
+  const d =
+    platform === 'ios' && physicalUdid(device) ? new IosDevice(device, { out, app, wait, team: process.env.LOOKTAP_TEAM || config.ios?.team })
+    : platform === 'ios' ? new Ios(device, { out, app, wait })
+    : new Android(device, { out, app, wait });
+  const unlock = Number(opts.waitUnlock ?? process.env.LOOKTAP_WAIT_UNLOCK ?? config.waitUnlock ?? 0);
+  if (!(unlock >= 0)) throw new UsageError('--wait-unlock takes seconds, e.g. --wait-unlock 60');
+  d.waitUnlock = unlock * 1000;
+  const env = process.env.LOOKTAP_DISMISS_LOGBOX;
+  d.dismissLogBox = env != null && env !== '' ? env !== '0' : config.dismissLogBox === true;
+  return d;
 }
 
-function doctor() {
-  const ok = (b, msg, fix) => console.log(`${b ? '✓' : '✗'} ${msg}${!b && fix ? `  → ${fix}` : ''}`);
+async function doctor(opts) {
+  // null: worth knowing, neither good nor bad.
+  const ok = (b, msg, fix) => console.log(`${b == null ? '·' : b ? '✓' : '✗'} ${msg}${b === false && fix ? `  → ${fix}` : ''}`);
   ok(Number(process.versions.node.split('.')[0]) >= 18, `node ${process.versions.node} (needs ≥ 18)`);
   const xc = has('xcrun');
   ok(xc, 'xcrun (iOS)', 'install Xcode + command line tools');
@@ -256,6 +285,16 @@ function doctor() {
   if (adb) {
     const d = adbDevices();
     ok(d.length > 0, `adb devices: ${d.map((x) => x.id).join(', ') || 'none'}`, 'looktap boot <AVD name>, or connect a phone');
+  }
+  if (xc && !opts.device) for (const p of physicalDevices()) ok(null, `real iPhone: ${p.name} (${p.id}) — looktap doctor -d ${p.id} checks the way to it`);
+  if (!opts.device) return;
+  // The way to one device, step by step: what a command needs before it can drive it.
+  const d = pickDriver(opts, loadConfig());
+  console.log(`\n${KINDS[d.kind].title} ${deviceId(d)}`);
+  try {
+    for (const row of await d.diagnose()) ok(...row);
+  } finally {
+    d.close?.();
   }
 }
 
@@ -287,7 +326,7 @@ async function main() {
   if (opts.flags.has('version')) return console.log(pkg.version);
   if (!cmd || opts.flags.has('help') || cmd === 'help') return console.log(HELP);
 
-  if (cmd === 'doctor') return doctor();
+  if (cmd === 'doctor') return doctor(opts);
   if (cmd === 'skill') return skill(opts);
   if (cmd === 'mcp') return opts.flags.has('config') ? mcpConfig() : mcp(opts);
   if (cmd === 'devices') return console.log(deviceLines(opts).join('\n'));
@@ -359,7 +398,7 @@ async function list(d, opts, snap) {
   const stuck = front?.id === 'android' ? await d.stuck?.().catch(() => null) : null;
   if (stuck) console.error(`looktap: ${stuck.app} ${stuck.why}: the system's dialog about it is on screen, and the app can't be driven until it closes. See: looktap crashes ${stuck.app}`);
   else if (snap.elements.some((e) => LOGBOX.test(e.label || '')))
-    console.error("looktap: React Native's LogBox toast is up: it blocks taps around it (a bottom tab bar). tap reports its × when it gets in the way");
+    console.error("looktap: React Native's LogBox toast is up: it blocks taps around it (a bottom tab bar). Close it with looktap dismiss logbox (or \"dismissLogBox\": true in looktap.config.json, before every tap)");
   if (onlyStatusBar(snap.elements))
     console.error('looktap: only the status bar is readable — a system prompt (passcode, permission, alert) may be covering the app. `looktap shot` shows it');
 }
@@ -397,7 +436,34 @@ function warnIfGone(app, when = '') {
   if (app) console.error(`looktap: warning: ${app} is no longer running${when ? ` (${when})` : ''} — it crashed or was killed. See: looktap crashes ${app}`);
 }
 
+/** Commands made of other commands: each of their steps waits for an unlock itself, so the whole is never run again. */
+const COMPOUND = new Set(['run', 'test', 'codegen']);
+
+/**
+ Run a command. Stopped by the lock screen before it did anything (LockedError) with --wait-unlock: wait for someone
+ to unlock the device, then run it once more.
+ */
 async function dispatch(d, cmd, args, opts) {
+  try {
+    return await dispatchOnce(d, cmd, args, opts);
+  } catch (e) {
+    const ms = opts.waitUnlock != null ? Number(opts.waitUnlock) * 1000 : d.waitUnlock;
+    if (!(e instanceof LockedError) || !(ms > 0) || COMPOUND.has(cmd)) throw e;
+    await untilUnlocked(d, ms);
+    return dispatchOnce(d, cmd, args, opts);
+  }
+}
+
+/** Until the device is unlocked, for up to `ms`; a LockedError after that. */
+async function untilUnlocked(d, ms) {
+  console.error(`looktap: the device is locked — waiting up to ${Math.round(ms / 1000)} s for someone to unlock it`);
+  for (const until = Date.now() + ms; Date.now() < until; await sleep(1000)) {
+    if (!(await d.locked())) return console.error('looktap: unlocked — carrying on');
+  }
+  throw new LockedError();
+}
+
+async function dispatchOnce(d, cmd, args, opts) {
   const all = opts.flags.has('all');
   const look = opts.flags.has('ls') && ACTIONS.has(cmd);
   // Remember the screen before acting, so --ls waits for the action to show before printing.
@@ -479,8 +545,74 @@ async function shotSize(d, path, scale) {
 function warnCovered(covers) {
   for (const c of covers) {
     console.error(`looktap: warning: ${JSON.stringify(c.label || c.type)} at ${c.x},${c.y} ${c.w}x${c.h} covers that point and may have taken the tap`);
-    if (c.close) console.error(`looktap: that's React Native's LogBox toast (dev builds), which blocks taps around it: dismiss it with looktap tapxy ${c.close.join(' ')} (its ×), then tap again`);
+    if (c.close) console.error("looktap: that's React Native's LogBox toast (dev builds), which blocks taps around it: looktap dismiss logbox closes it (\"dismissLogBox\": true in looktap.config.json does that before every tap), then tap again");
   }
+}
+
+/** Close React Native's LogBox toast if it's among `elements`: tap its ×, wait for it to go. Returns where it tapped, or null. */
+async function closeLogBox(d, elements) {
+  const toast = logBoxToast(elements);
+  if (!toast) return null;
+  await d.tapxy(...toast.close);
+  for (let i = 0; i < 10 && logBoxToast((await d.snapshot()).elements); i++) await sleep(150);
+  return toast.close;
+}
+
+/**
+ `shot --points`: one pixel per iOS point or Android dp, so a spot in the picture is tapxy's x y as it is. Android knows
+ its density up front; iOS is shot at full size and shrunk to the screen's width in points.
+ */
+async function shotInPoints(d, name, opts) {
+  const path = shotPath(d.out, name);
+  if (d.serial) await d.shot(name, { plain: opts.flags.has('plain'), scale: Math.min(1, 1 / d.scale) });
+  else {
+    await d.shot(name, {});
+    const points = d.screen?.w || (await d.snapshot()).screen.w;
+    resizePng(path, points / readFileSync(path).readUInt32BE(16));
+  }
+  const png = readFileSync(path);
+  console.error(`looktap: ${png.readUInt32BE(16)}x${png.readUInt32BE(20)} px, one per ${d.serial ? 'dp' : 'point'}: tapxy x y = the image's x y`);
+}
+
+/**
+ `handoff <message> [--until <label>] [--gone]`: a step only a person can do (a consent screen, a second factor). The
+ message goes straight to the terminal (test holds a flow's output until it ends) and to a macOS notification; then
+ it waits until the screen shows the person is done, or (in a terminal, without --until) until Enter.
+ */
+async function handoff(d, args, opts) {
+  const message = args.join(' ');
+  const gone = opts.flags.has('gone');
+  if (!message) throw new UsageError('usage: looktap handoff <message> [--until <label|@ref>] [--gone]');
+  if (gone && !opts.until) throw new UsageError('handoff --gone goes with --until <label>');
+  // stdin is the protocol under MCP, and a script under run -: only a terminal can take an Enter.
+  if (!opts.until && !process.stdin.isTTY)
+    throw new UsageError(`handoff needs --until <label> here, since there's no terminal to press Enter in: e.g. handoff ${quote(message)} --until "Home"`);
+  const timeout = opts.wait != null ? Number(opts.wait) * 1000 : 300e3;
+  if (!(timeout > 0)) throw new UsageError('--wait takes seconds, e.g. --wait 600');
+  const span = timeout >= 60e3 ? `${Math.round(timeout / 60e3)} min` : `${timeout / 1000} s`;
+  const until = opts.until ? `once ${JSON.stringify(opts.until)} is ${gone ? 'gone from' : 'on'} the screen` : 'when you press Enter here';
+  process.stderr.write(`${process.stderr.isTTY ? '\x07' : ''}looktap: your turn on the device: ${message} — looktap carries on ${until} (waiting up to ${span})\n`);
+  if (process.platform === 'darwin' && process.env.LOOKTAP_NOTIFY !== '0')
+    run('osascript', ['-e', `display notification ${JSON.stringify(message)} with title "looktap: your turn on the device"`], { allowFail: true, timeout: 5000 });
+  if (opts.until) {
+    try {
+      const hit = await waitFor(d, deviceId(d), opts.until, { gone, timeout });
+      return console.log(`handed back: ${gone ? `${opts.until} is gone` : `found ${JSON.stringify(hit.label)}`}`);
+    } catch (e) {
+      if (e instanceof NotFound) throw new Error(`handoff: not done within ${span} (${e.message})`);
+      throw e;
+    }
+  }
+  const rl = createInterface({ input: process.stdin });
+  try {
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error(`handoff: nobody pressed Enter within ${span}`)), timeout);
+      rl.once('line', () => (clearTimeout(timer), resolve()));
+    });
+  } finally {
+    rl.close();
+  }
+  console.log('handed back');
 }
 
 async function act(d, cmd, args, opts) {
@@ -493,7 +625,14 @@ async function act(d, cmd, args, opts) {
     case 'teardown': return d.teardown();
     case 'ls': return list(d, opts);
     case 'wait': {
-      need(1, 'wait <label|@ref> [--gone]');
+      if (opts.flags.has('settle')) {
+        if (args.length) throw new UsageError('usage: looktap wait --settle [--for 1s] (no label: it waits for the whole screen)');
+        const quiet = opts.for != null ? duration(opts.for) : 1000;
+        if (!(quiet > 0)) throw new UsageError('--for takes a duration: 1s, 500ms');
+        const ms = await stillScreen(d, { quiet, timeout: opts.wait != null ? Number(opts.wait) * 1000 : 10000 });
+        return console.log(`settled: the screen held still for ${quiet / 1000} s (after ${(ms / 1000).toFixed(1)} s)`);
+      }
+      need(1, 'wait <label|@ref> [--gone] | wait --settle');
       const target = args.join(' ');
       const gone = opts.flags.has('gone');
       const hit = await waitFor(d, deviceId(d), target, { gone, timeout: opts.wait != null ? Number(opts.wait) * 1000 : 10000 });
@@ -519,8 +658,12 @@ async function act(d, cmd, args, opts) {
       return console.log(`found ${JSON.stringify(hit.label)} at ${center(hit).join(',')}`);
     }
     case 'shot': {
-      need(1, 'shot <name> [--scale f]');
+      need(1, 'shot <name> [--scale f] [--points]');
       if (opts.scale != null && !(opts.scale > 0 && opts.scale <= 1)) throw new UsageError('--scale takes a factor between 0 and 1, e.g. --scale 0.5');
+      if (opts.flags.has('points')) {
+        if (opts.scale != null) throw new UsageError('shot takes --scale or --points, not both');
+        return shotInPoints(d, args[0], opts);
+      }
       await d.shot(args[0], { plain: opts.flags.has('plain'), scale: opts.scale ?? 1 });
       return shotSize(d, shotPath(d.out, args[0]), opts.scale ?? 1);
     }
@@ -528,7 +671,9 @@ async function act(d, cmd, args, opts) {
     case 'record': return record(d, args);
     case 'tap': {
       need(1, 'tap <label|@ref>');
-      const { e, snap } = await target(d, isRef(args[0]) ? args[0] : args.join(' '), opts);
+      let { e, snap } = await target(d, isRef(args[0]) ? args[0] : args.join(' '), opts);
+      // "dismissLogBox": close React Native's toast first, then find the target again (it may have moved).
+      if (d.dismissLogBox && (await closeLogBox(d, snap.elements))) ({ e, snap } = await target(d, isRef(args[0]) ? args[0] : args.join(' '), { ...opts, snap: null }));
       // Aimed at a part of it nothing covers: the tap lands on whatever is on top.
       const { at, covers, avoided } = tapPoint(snap.elements, e);
       await d.tapxy(...at);
@@ -548,7 +693,8 @@ async function act(d, cmd, args, opts) {
       if (xy) (at = [Number(args[0]), Number(args[1])]), (what = `${at.join(',')}`);
       else {
         const words = timed ? args.slice(0, -1) : args;
-        const { e, snap } = await target(d, isRef(words[0]) ? words[0] : words.join(' '), opts);
+        let { e, snap } = await target(d, isRef(words[0]) ? words[0] : words.join(' '), opts);
+        if (d.dismissLogBox && (await closeLogBox(d, snap.elements))) ({ e, snap } = await target(d, isRef(words[0]) ? words[0] : words.join(' '), { ...opts, snap: null }));
         const p = tapPoint(snap.elements, e);
         warnCovered(p.covers);
         (at = p.at), (what = `${JSON.stringify(e.label || e.type)} at ${at.join(',')}`);
@@ -570,7 +716,16 @@ async function act(d, cmd, args, opts) {
       await d.pinch(x, y, ...(args[0] === 'in' ? [near, far] : [far, near]));
       return console.log(`zoomed ${args[0]} at ${x},${y} (fingers ${Math.round(2 * near)} ↔ ${Math.round(2 * far)} apart)`);
     }
-    case 'tapxy': need(2, 'tapxy <x> <y>'); return d.tapxy(Number(args[0]), Number(args[1]));
+    case 'tapxy': {
+      need(2, 'tapxy <x> <y>');
+      const [x, y] = [Number(args[0]), Number(args[1])];
+      if (d.dismissLogBox) {
+        // A point on the toast itself is aimed at it (a flow that taps its × by hand): leave it to the tap.
+        const els = (opts.snap || (await d.snapshot())).elements, toast = logBoxToast(els);
+        if (toast && !(x >= toast.x && x <= toast.x + toast.w && y >= toast.y && y <= toast.y + toast.h)) await closeLogBox(d, els);
+      }
+      return d.tapxy(x, y);
+    }
     case 'type': need(1, 'type <text>'); return d.type(args.join(' '));
     case 'key': need(1, 'key <name> … (return, escape, delete, tab, space, selectall, paste, home)'); return d.keys(args);
     case 'fill': {
@@ -601,7 +756,7 @@ async function act(d, cmd, args, opts) {
         await sleep(250);
       }
       if (front && front.id !== launcher) throw new Error(`pressed Home, but ${front.id || 'an app'} is still in front`);
-      if (!front && (await d.locked())) throw new UsageError(LOCKED); // no app in front: the lock screen looks the same
+      if (!front && (await d.locked())) throw new LockedError(); // no app in front: the lock screen looks the same
       const left = before && before.id !== launcher && before.id ? await d.pidOf(before.id) : 0;
       return console.log(`home screen${left ? ` · ${before.id} still running in the background, pid ${left}` : ''}`);
     }
@@ -641,6 +796,19 @@ async function act(d, cmd, args, opts) {
       return console.log(`stopped ${app} (pid ${was})${pid ? ` · the system started it again right away, pid ${pid}` : ''}`);
     }
     case 'bio': need(1, 'bio match|nomatch'); return d.bio(args[0]);
+    case 'dismiss': {
+      if (args[0]?.toLowerCase() !== 'logbox') throw new UsageError('usage: looktap dismiss logbox');
+      const closed = await closeLogBox(d, (opts.snap || (await d.snapshot())).elements);
+      return console.log(closed ? `closed the LogBox toast (tapped its × at ${closed.join(',')})` : 'no LogBox toast on screen');
+    }
+    case 'pause': {
+      need(1, 'pause <seconds> (2, 1.5s, 500ms)');
+      const ms = duration(args[0]);
+      if (!(ms >= 0) || ms > 600e3) throw new UsageError('pause takes up to 10 minutes: 2, 1.5s, 500ms, 1m');
+      await sleep(ms);
+      return console.log(`paused ${ms >= 1000 ? `${ms / 1000} s` : `${ms} ms`}`);
+    }
+    case 'handoff': return handoff(d, args, opts);
     case 'rotate': {
       const want = args[0] ? rotation(args[0]) : null;
       const r = await d.rotate(want);
@@ -930,7 +1098,7 @@ async function mcp(outer) {
     try {
       const { opts, cmd, args } = parse(words);
       if (!cmd || cmd === 'help') capture(HELP);
-      else if (cmd === 'doctor') doctor();
+      else if (cmd === 'doctor') await doctor({ ...opts, device: opts.device || where.device, platform: opts.platform || where.platform });
       else if (cmd === 'devices') capture(deviceLines(opts).join('\n'));
       else if (cmd === 'boot') capture(booted(await boot(args.join(' ') || null, { platform: opts.platform, ...display(opts, config) })));
       else if (cmd === 'shutdown') capture(shutDown(await shutdown(args.join(' ') || opts.device || null, { platform: opts.platform })));
@@ -1269,15 +1437,25 @@ function skill(opts) {
   );
 }
 
-/** doctor's line about the agent guide: which agents have it, and whether a copy is older than this looktap. */
+/** The coding agent running looktap right now, by what it sets in its commands' environment, or null. */
+const AGENT_ENV = { claude: 'CLAUDECODE', gemini: 'GEMINI_CLI' };
+const callingAgent = (env = process.env) => AGENTS.find((a) => AGENT_ENV[a.id] && env[AGENT_ENV[a.id]]) || null;
+
+/**
+ doctor's line about the agent guide: which agents have it. An outdated copy is a problem only for the agent running
+ doctor; old copies for other agents (installed once, maybe not used any more) get a note, not a failure.
+ */
 function skillStatus(ok) {
   const home = homedir();
   const have = AGENTS.map((a) => ({ a, v: installedVersion(join(skillsDir(a, { home }), 'looktap', 'SKILL.md')) })).filter((x) => x.v != null);
-  const stale = have.filter((x) => x.v !== pkg.version);
-  if (claudePlugin({ home }) && !have.some((x) => x.a.id === 'claude')) have.unshift({ a: { name: 'Claude Code (plugin)' }, v: pkg.version });
-  const names = have.map((x) => x.a.name).join(', ');
+  if (claudePlugin({ home }) && !have.some((x) => x.a.id === 'claude')) have.unshift({ a: { id: 'claude', name: 'Claude Code (plugin)' }, v: pkg.version });
   if (!have.length) return ok(false, 'agent skill: not installed for any agent', 'looktap skill --install');
-  ok(!stale.length, `agent skill: ${names}${stale.length ? ` (outdated for ${stale.map((x) => `${x.a.name} ${x.v}`).join(', ')})` : ''}`, 'looktap skill --install');
+  const me = callingAgent();
+  if (me && !have.some((x) => x.a.id === me.id)) ok(false, `agent skill: not installed for ${me.name}, the agent running this`, `looktap skill --install --agents ${me.id}`);
+  const stale = have.filter((x) => x.v !== pkg.version);
+  const mine = stale.filter((x) => x.a.id === me?.id), others = stale.filter((x) => x.a.id !== me?.id);
+  ok(!mine.length, `agent skill: ${have.map((x) => x.a.name).join(', ')}${mine.length ? ` (outdated for ${me.name}: ${mine[0].v})` : ''}`, `looktap skill --install --agents ${me?.id}`);
+  if (others.length) ok(null, `older copies of the skill (${others[0].v}${others.some((x) => x.v !== others[0].v) ? ' and others' : ''}) for ${others.map((x) => x.a.name).join(', ')}: looktap skill --install refreshes them, if you use those agents`);
 }
 
 main().catch((e) => {

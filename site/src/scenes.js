@@ -50,8 +50,8 @@ export const SCENES = [
     kicker: '02 · Tap',
     title: 'Tap by label, never by guess',
     body: `<p>Name the element: an exact label, else a prefix or substring that matches <em>one</em> label. A match that could mean two things is an error, not a coin toss. Or use the <code>@ref</code> from the last <code>ls</code>, or plain coordinates with <code>tapxy</code>.</p>
-<p>Every tap says what it hit and where.</p>`,
-    covers: ['tap', 'tapxy'],
+<p>Every tap says what it hit and where, and what covers it when something does: React Native's LogBox toast, which <code>dismiss logbox</code> closes (or <code>"dismissLogBox": true</code>, before every tap).</p>`,
+    covers: ['tap', 'tapxy', 'dismiss'],
     start: (p) => p.show('home'),
     beats: [
       { cmd: 'looktap tap "milk"', run: (p) => tap(p, 'milk') },
@@ -194,8 +194,9 @@ export const SCENES = [
     kicker: '05 · Wait',
     title: 'Wait for it. Don’t sleep',
     body: `<p><code>wait</code> returns the moment a label appears, or with <code>--gone</code>, the moment it's gone. No fixed sleeps that are too short on a slow day and wasted on a fast one.</p>
-<p>Every action already waits up to 3 s for its target, and <code>--ls</code> waits for the screen to settle before printing it.</p>`,
-    covers: ['wait'],
+<p>Every action already waits up to 3 s for its target, and <code>--ls</code> waits for the screen to settle before printing it. A web page with no labels (a sign-in page) has <code>wait --settle</code>, which waits until the picture itself holds still; <code>pause</code> is the fixed wait for what's left.</p>
+<p>When only a person can go on (a consent screen, a second factor), <code>handoff "Approve the sign-in" --until Home</code> says so, then picks up where they finish.</p>`,
+    covers: ['wait', 'pause', 'handoff'],
     start: (p) => {
       p.show('signin');
       p.set({ values: { Email: 'sam@example.com', Password: '••••••••••' } });

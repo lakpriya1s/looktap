@@ -1,5 +1,54 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **A real iPhone on Wi-Fi is reached through the CoreDevice tunnel too.** That's how Xcode itself reaches a phone
+  on Wi-Fi, and what starts the runner, while usbmuxd's own Wi-Fi route can be blocked on the same network. Each
+  command tries USB, then the tunnel, then usbmuxd's Wi-Fi, and plugging in a cable moves an MCP session or a `run`
+  script onto USB at the next command, with no `teardown`.
+- **`doctor -d <device>`: the way to one device, step by step.** For a real iPhone: pairing, Developer Mode, the
+  CoreDevice tunnel, usbmuxd, the lock screen, which routes the runner answers on (and which one commands use), and
+  the signing team. For Android: adb's state, USB or Wi-Fi, and the lock screen. Plain `doctor` names each real
+  iPhone it can check.
+- **`logs` on a real iPhone.** It reads the phone's live log through lockdown's syslog relay (as Console.app does,
+  over USB or Wi-Fi, with no new dependency). The phone keeps no history looktap can read, so the first `logs` or
+  `launch` starts collecting in the background, until 30 minutes after the last one, and `logs` reads from that
+  with the usual `--errors`, `--grep`, `--since` and `--all`. `teardown` stops it.
+- **`launch --resume` on a real iPhone** brings the app forward as it was (XCUITest's `activate`), instead of
+  saying it can't.
+- **`--wait-unlock <seconds>`** (or `"waitUnlock"` in the config, `LOOKTAP_WAIT_UNLOCK`): a command the lock screen
+  stops waits up to that long for someone to unlock the device, then runs. `devices` shows `locked` up front, for
+  real iPhones and Android devices.
+- **`wait --settle [--for 1s]`: until the screen holds still**, its elements and its picture both, for web pages
+  and canvases that have no labels to wait for. Small screenshots are compared, so a blinking caret doesn't count
+  as change, and a blank picture (a web view still loading) never counts as settled.
+- **`pause <seconds>`**, a fixed wait for flows, for what has nothing to wait on.
+- **`handoff <message> [--until <label>] [--gone]`: the person's turn in a flow** (a consent screen, a second
+  factor). The message goes to the terminal at once, even inside `test`, and to a macOS notification; then it
+  waits until the label is on screen (or gone), up to 5 minutes or `--wait`, or until Enter without `--until`.
+- **`dismiss logbox`** closes React Native's LogBox toast, and `"dismissLogBox": true` in the config (or
+  `LOOKTAP_DISMISS_LOGBOX=1`) closes it before every `tap`, `longpress` and `tapxy`, instead of a `tapxy` on its ×.
+- **`shot --points`**: one pixel per iOS point or Android dp, so a spot picked in the image is `tapxy`'s `x y`.
+- **MCP:** the `wait` tool takes `settle`.
+
+### Changed
+
+- **A runner that is up on a real iPhone but out of reach fails in about 20 s, saying why**, instead of after 3
+  minutes with "the runner did not answer": what each route answered, and what to do (a cable; client isolation,
+  a VPN or a firewall on Wi-Fi). The runner keeps running, so a cable plugged in afterwards reaches it at once. A
+  runner the Mac reaches but that doesn't answer (stuck in an earlier call) is told apart from one out of reach: it
+  is started afresh, and `doctor -d` says so, instead of blaming the network.
+- **`launch` on a locked iPhone says so at once.** XCUITest's launch waited out its whole minute on the lock
+  screen, and left the runner stuck; it's checked first now, so `--wait-unlock` applies.
+- **`install` failures say why.** A real iPhone's carry devicectl's own reason (an iPhone with too little storage
+  says how much it needs and has); Android's read adb's error, which goes to stderr and was missed, and say what to
+  do for the usual codes (`INSTALL_FAILED_VERSION_DOWNGRADE` and a signature mismatch: uninstall first; full
+  storage, wrong ABI, a test-only APK, a declined install prompt).
+- **`doctor` counts an outdated agent skill only for the agent running it** (Claude Code, Gemini CLI). Old copies
+  for other agents get a note rather than a failure, and an agent with no copy at all is named.
+
 ## 0.7.4
 
 ### Changed
