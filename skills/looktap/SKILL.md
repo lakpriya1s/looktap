@@ -508,7 +508,8 @@ Then look at the few frames that matter, not all of them.
 - **App-state and condition commands need the app id.** They never act on whatever happens to be on screen.
 - **`tap` aims at a part of the target nothing covers.** When a toast or bar hides its middle, it taps the
   uncovered part and says `off-centre`. If it warns that another element covers the point, nothing of the target
-  was left clear and the tap probably hit that: dismiss it (React Native's LogBox toast: its ×), then tap again.
+  was left clear and the tap probably hit that: dismiss it (React Native's LogBox toast: `looktap dismiss logbox`),
+  then tap again.
 - **`hidekb` also takes focus from the field** (Android too), so validate-on-blur errors appear after it.
 - **After `textsize` or `appearance` on Android**, a note that the app restarted means every ref is stale: `ls`.
 - **`shot` says how the image maps to the screen** (on stderr): `216x384 px = 360x640 dp: tapxy x y = image x y ×

@@ -422,6 +422,7 @@ errors), and presses Back only if the keyboard is still up. It checks after each
 ```bash
 looktap wait "Welcome"                  # until it's on screen (default up to 10 s; --wait 30)
 looktap wait "Loading" --gone           # until it's gone
+looktap wait --settle                   # a web page with no labels: until the screen, picture too, holds still
 looktap scrollto "Privacy & Security"   # swipe until fully on screen; fails at the end of the list
 looktap scrollto "General" --up
 looktap swipe 200 700 200 250           # scroll down (finger moves up); optional 5th arg: ms
@@ -462,6 +463,10 @@ looktap: warning: com.example is no longer running — it crashed or was killed.
 - **iOS:** what the app's own code logged, plus errors and faults from anything in its process. The simulator's
   own noise (low-level networking, the keyboard) is hidden. `--all` shows everything, Apple frameworks included.
   A read takes about 1–2 s.
+- **Real iPhone:** the phone's live log, read through lockdown's syslog relay over USB or Wi-Fi. The phone keeps no
+  history looktap can read, so the first `logs` (or `launch`) starts collecting it in the background, until 30
+  minutes after the last one: run `logs` or `launch` before reproducing the problem. Apple's libraries' notices are
+  hidden unless `--all`; their errors are kept.
 - **Android:** everything logcat has for the app's uid, so restarts are covered. A read takes about 0.1 s.
 
 **What `crashes` reports:**
@@ -654,6 +659,20 @@ looktap: 3 flows: 2 passed, 1 failed · 14.3 s · results/junit.xml
 Flows run in order on one device, each from wherever the last one left the app, so start each with `launch` (or
 `reset <app>` and `launch` for a fresh install). Steps wait for their targets, but
 a flow that depends on a backend can still be slow: raise `--wait` rather than adding sleeps.
+
+A web page with no accessibility labels (many sign-in pages) gives `wait` nothing to match: `wait --settle` waits
+until the screen, its picture included, holds still, and a blank page that's still loading doesn't count. Where a
+person has to act (a consent screen, a second factor), `handoff` makes that a step: it tells them, then carries on
+once the next screen shows. `pause` is the fixed wait for what's left. In a React Native dev build,
+`"dismissLogBox": true` in `looktap.config.json` closes the LogBox toast before every tap:
+
+```bash
+# flows/google-sign-in.txt
+tap "Continue with Google"
+wait --settle
+handoff "Sign in with Google and approve access" --until Home
+expect Home
+```
 
 Flow files live in your repo, so never put real credentials in one. Sign in with a test-only account, and keep its
 password out of the file: `test` replaces `${NAME}` with that environment variable (a CI secret), e.g.
