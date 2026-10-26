@@ -43,6 +43,9 @@ Walk the user through what only they can do, one step at a time:
 
 1. Xcode → Settings → Accounts: sign in with an Apple ID. A free one is enough.
 2. Pair the iPhone with the Mac (cable once, tap Trust) and turn on Settings → Privacy & Security → Developer Mode.
+   For an iPhone on iOS 16 or older (`devices` shows `through lockdown`) without a passcode, `looktap setup -d <UDID>`
+   turns it on instead: the phone restarts, so tell the user first. With a passcode, the command makes the switch
+   appear in Settings and the user turns it on.
 3. Unlock the iPhone, then run `looktap -d <hardware UDID> ls`. The first run builds and installs a small test
    runner, which takes about a minute.
 4. With a free Apple ID, the iPhone then asks to trust the developer: Settings → General → VPN & Device

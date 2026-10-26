@@ -24,7 +24,7 @@ test('every limit names a real command, a known status and a reason', () => {
 });
 
 test('a subcommand falls back to its command; anything unlisted is supported', () => {
-  assert.equal(capability('ios-device', 'location clear').status, 'unsupported');
+  assert.equal(capability('ios-device', 'location clear').status, 'conditional');
   assert.equal(capability('android-emulator', 'location').status, 'supported');
   assert.equal(capability('android-emulator', 'location clear').status, 'unsupported');
   assert.equal(capability('ios-simulator', 'tap').status, 'supported');

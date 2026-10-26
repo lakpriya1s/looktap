@@ -220,7 +220,7 @@ sign-in, stop and let me do it, then continue from there.
 | A real iPhone or iPad | The iOS row, plus an **Apple ID signed in to Xcode** (a free one works) and the device paired with the Mac, with Developer Mode on. See [Using a real iPhone](#using-a-real-iphone) |
 
 Tested with Xcode 26 and 27.1 / iOS 26, 27 and 27.1 (iPhone 14, iPhone 18 Pro and the foldable iPhone Duo
-simulators), a real iPhone 14 Pro on iOS 26, and Android 16 / API 36 (Pixel 9a emulator).
+simulators), a real iPhone 14 Pro on iOS 26, a real iPhone X on iOS 16.7 (Xcode 27.1, through lockdown), and Android 16 / API 36 (Pixel 9a emulator).
 
 ## How it works
 
@@ -273,7 +273,8 @@ Developer Program isn't needed.
 
 1. In Xcode → Settings → Accounts, sign in with your Apple ID. That gives you a "Personal Team".
 2. Pair the device with the Mac (connect it with a cable once and tap Trust; Wi-Fi works after that), and turn on
-   **Developer Mode** on it: Settings → Privacy & Security → Developer Mode.
+   **Developer Mode** on it: Settings → Privacy & Security → Developer Mode. (An iPhone on iOS 16 or older without a
+   passcode needs no hand here: `looktap setup -d <UDID>` turns it on, see [Older iPhones](#older-iphones-ios-16-and-earlier).)
 3. Unlock the device and run any command against it, for example `looktap -d <hardware UDID> ls`
    (`looktap devices` lists the UDID, and says what to do if the device isn't ready yet: Trust, Developer Mode). The first run builds the runner, which takes about a minute.
 4. With a free Apple ID, the device asks you to trust the developer the first time: Settings → General →
@@ -294,7 +295,8 @@ signed by the free account installed on one device at a time**. The runner count
 looktap names the apps it found and you delete one.
 
 **What works on a device:** everything except `location`, `network`, `push`, `statusbar`, `textsize`, `bio`,
-`record`, `permission`, `reset` and `crashes`, which say so; `zoom` works around the screen's centre only. `logs`
+`record`, `permission`, `reset` and `crashes`, which say so (on [iOS 16 and older](#older-iphones-ios-16-and-earlier),
+`location` and `crashes` work); `zoom` works around the screen's centre only. `logs`
 reads the phone's live log (lockdown's syslog relay, as Console.app does), collected in the background from the first
 `logs` or `launch` on, since the phone keeps no history looktap can read.
 `perf` reads CPU, memory and threads through Instruments (`xcrun xctrace`, part of Xcode), 10–25 s a reading, and
@@ -319,6 +321,34 @@ answered, instead of waiting minutes: usually the network isolates its clients, 
 the Mac and the phone. Plug in a cable and run the command again; the runner keeps running, so nothing restarts.
 `looktap doctor -d <UDID>` checks each step on the way: pairing, Developer Mode, the tunnel, usbmuxd, the lock
 screen, which routes the runner answers on, and the signing team.
+
+#### Older iPhones (iOS 16 and earlier)
+
+Xcode 27 no longer supports iOS 16 devices: it lists one without a UDID and won't build for it, install on it or
+start a test on it, and that's the way looktap reaches newer phones. So for an iPhone older than iOS 17, looktap does
+Xcode's part itself, through the services the phone's lockdown daemon offers over usbmuxd (USB, or Wi-Fi once paired):
+
+- **Developer Mode:** on a phone without a passcode, `looktap setup -d <UDID>` turns it on by itself: the phone
+  restarts, and looktap answers the Turn On prompt when it's back (about a minute). With a passcode only someone at
+  the phone can: the switch only appears in Settings once something has prepared the phone, so the first command (or
+  `setup`) makes it appear and says what to do; then turn it on, let the phone restart and tap Turn On.
+- **The developer disk image**, which holds XCTest and the developer services: mounted by the first command. Xcode 27
+  ships none for iOS 16, so looktap downloads the one Xcode used to ship, once, from
+  [doronz88/DeveloperDiskImage](https://github.com/doronz88/DeveloperDiskImage) into `~/.looktap/ddi`.
+- **The runner** is built for any iPhone, made to start on the older iOS (Xcode 27's test host asks for iOS 17:
+  looktap lowers that and marks the XCTest symbols iOS 16 lacks as optional, then signs it again), installed through
+  `installation_proxy`, and started over `testmanagerd` the way `xcodebuild test` does it.
+- **Registering the phone:** Xcode adds a phone to your team only when it supports it, so add this one by hand at
+  developer.apple.com → Certificates, IDs & Profiles → Devices (a paid team). looktap says so when the runner's
+  profile leaves the phone out, and moves Xcode's cached profiles made before that aside (to `~/.looktap/old-profiles`)
+  so the next build fetches one that includes it.
+- **"Enable UI Automation":** the first test session asks for the phone's passcode once, and gives up after a minute.
+  Enter it when asked, or turn on Settings → Developer → Enable UI Automation beforehand.
+
+After that it's like any other iPhone: `looktap devices` lists it as `iOS 16.7 (through lockdown)`, and `install`,
+`apps`, `uninstall`, `launch`, `stop` and the screen commands work. `location <lat> <lon>` works too (the developer
+image's simulated location, as in Xcode), and `crashes` reads the phone's crash reports. `perf` doesn't (Instruments
+needs Xcode's support), but `perf --frames` does. `looktap doctor -d <UDID>` checks Developer Mode and the image.
 
 <details>
 <summary><strong>Android: the fallback path</strong></summary>
@@ -1050,14 +1080,14 @@ front of you (`--json` for every command).
 | `bio` | ✅ | ❌ Face ID needs a real face on a device | ✅ | ❌ fingerprints can only be simulated on an emulator |
 | `burst` | ✅ | ✅ | ✅ | ⚠️ FLAG_SECURE screens come out black (emulators bypass it) |
 | `codegen` | ❌ recording touches works on Android only, for now: write the flow by hand, or record it on an Android device | ❌ recording touches works on Android only, for now: write the flow by hand, or record it on an Android device | ✅ | ✅ |
-| `crashes` | ✅ | ❌ see Xcode → Window → Devices and Simulators → View Device Logs | ✅ | ✅ |
+| `crashes` | ✅ | ⚠️ iOS 16 and older only (read from the phone's crash report service); on a newer iPhone see Xcode → Window → Devices and Simulators → View Device Logs | ✅ | ✅ |
 | `fold` | ⚠️ a foldable simulator only: the iPhone Duo (Xcode 27.1 or later) | ❌ only the iPhone Duo simulator folds, for now | ❌ only the iPhone Duo simulator folds, for now | ❌ only the iPhone Duo simulator folds, for now |
-| `location` | ✅ | ❌ a real device uses its own GPS; use a simulator to fake one | ✅ | ❌ a device uses its own GPS (faking it needs a mock-location app) |
-| `location clear` | ✅ | ❌ a real device uses its own GPS; use a simulator to fake one | ❌ the emulator keeps its last location: set a new one instead | ❌ a device uses its own GPS (faking it needs a mock-location app) |
+| `location` | ✅ | ⚠️ iOS 16 and older only (through the developer image, as Xcode's Simulate Location); a newer iPhone uses its own GPS: use a simulator to fake one | ✅ | ❌ a device uses its own GPS (faking it needs a mock-location app) |
+| `location clear` | ✅ | ⚠️ iOS 16 and older only (through the developer image, as Xcode's Simulate Location); a newer iPhone uses its own GPS: use a simulator to fake one | ❌ the emulator keeps its last location: set a new one instead | ❌ a device uses its own GPS (faking it needs a mock-location app) |
 | `logs` | ✅ | ⚠️ the phone keeps no history looktap can read: the first logs (or launch) starts collecting its live log in the background, until 30 min after the last one, so what came before that isn't there | ✅ | ✅ |
 | `network` | ❌ the simulator uses the Mac's own network, so it can't go offline or slow by itself. Network Link Conditioner (Xcode → Open Developer Tool → More Developer Tools → Additional Tools) throttles the whole Mac | ❌ turn on Airplane Mode in Control Center | ✅ | ⚠️ airplane mode: over wireless adb, going offline also drops looktap's connection |
 | `paste` | ✅ | ❌ the phone's clipboard can't be set from the Mac: type works with any text on a device | ✅ | ✅ |
-| `perf` | ✅ | ⚠️ read through Instruments (xcrun xctrace): a reading takes 10–25 s and --for gives one every ~8 s; memory is the footprint, without its peak | ✅ | ✅ |
+| `perf` | ✅ | ⚠️ read through Instruments (xcrun xctrace): a reading takes 10–25 s and --for gives one every ~8 s; memory is the footprint, without its peak. Not on an iPhone this Xcode doesn't support (iOS 16 and older on Xcode 27) | ✅ | ✅ |
 | `perf --frames` | ⚠️ frames as the screen shows them (the simulator's framebuffer updates), not the app's own render times: the first call starts counting | ⚠️ frames as the screen shows them, from its USB screen feed (60 Hz at most, so a 120 Hz screen counts at half its rate); needs a USB cable, an unlocked phone, and QuickTime not showing it | ✅ | ✅ |
 | `permission` | ⚠️ camera and notifications can't be set: simctl privacy has no such service | ❌ change it in the Settings app | ⚠️ contacts-limited, reminders and siri are iOS-only; any android.permission.* works | ⚠️ contacts-limited, reminders and siri are iOS-only; any android.permission.* works |
 | `push` | ✅ | ❌ send a real push through APNs | ❌ Android pushes come through Firebase (FCM), so adb can't inject one: send it from your backend or the Firebase console | ❌ Android pushes come through Firebase (FCM), so adb can't inject one: send it from your backend or the Firebase console |
