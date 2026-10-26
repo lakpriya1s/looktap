@@ -15,7 +15,7 @@ import { Recorder, TouchReader, classify, mapper, quote } from '../lib/codegen.j
 import { AGENTS, PROJECT_DEFAULT, claudePlugin, detectAgents, installSkill, installedVersion, pickAgents, skillsDir, uninstallSkill } from '../lib/agents.js';
 import { boot, shutdown } from '../lib/boot.js';
 import { resizePng } from '../lib/png.js';
-import { formatDevice, inventory } from '../lib/devices.js';
+import { formatDevice, inventory, lastDevice, rememberDevice } from '../lib/devices.js';
 import { ORIENTATIONS, coordinates, foldPosition, pushPayload, rotation, textSize } from '../lib/conditions.js';
 import { LOGBOX, appGone, center, expectOn, fillCode, poller, tapPoint, forgetFront, formatRow, isRef, lastFront, logBoxToast, rememberFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, signature, sliding, stillScreen, visibleRows, waitFor } from '../lib/screen.js';
 import { duration, formatFrames, formatReading, formatSamples, readingJson } from '../lib/perf.js';
@@ -145,8 +145,8 @@ batch & agents
   codegen <flow-file> [app]       Android: restart the app, then save each touch on the device as a flow
                                   step (tap by label, fill, scrollto, back …). Commands typed here (expect …)
                                   are run and saved too; undo drops the last step; Enter or Ctrl+C ends it
-  run '<cmd>; <cmd> …'            several commands in one process (or: run - < script). Stops at the
-                                  first failure, which it names
+  run '<cmd>; <cmd> …' [--ls]     several commands in one process (or: run - < script). Stops at the
+                                  first failure, which it names; --ls: then the screen it ended on
   test <flow|dir> … [--junit f]   run flow files (run scripts, one step per line) as tests: a line per
                                   flow, exit 1 if any fails. A failure saves the screen, a screenshot,
                                   error logs and crashes in <out>/failures/<flow>/; --junit writes a report.
@@ -159,7 +159,8 @@ batch & agents
 
 options
   -p, --platform ios|android      default: whichever has exactly one booted device
-  -d, --device <udid|serial>      default: the only booted one
+  -d, --device <udid|serial>      default: the one the last command used (for 10 min, while it's up),
+                                  else the only booted one
   -o, --out <dir>                 screenshots and videos (default ./shots, or "out" in looktap.config.json)
       --app <id>                  app id for launch/open (or "ios.app" / "android.app" in config)
       --wait <seconds>            how long tap/fill/back wait for their target to appear (default 3)
@@ -211,7 +212,9 @@ const physicalUdid = (id) => /^[0-9A-F]{8}-[0-9A-F]{16}$|^[0-9a-f]{40}$/i.test(i
 function pickDriver(opts, config) {
   let platform = opts.platform || process.env.LOOKTAP_PLATFORM;
   let device = opts.device || process.env.LOOKTAP_DEVICE;
-  // With both -p and -d there is nothing to detect — skip listing devices (saves 0.1–0.3 s per command).
+  // No device named: the one the last command drove, while it's recent and still up.
+  if (!device) ({ platform, device } = lastDevice(platform) || { platform, device });
+  // With both -p and -d there is nothing to detect — skip listing devices (saves 0.3–0.5 s per command).
   const known = platform && device;
   const sims = known || platform === 'android' ? [] : bootedSimulators();
   const droids = known || platform === 'ios' ? [] : adbDevices();
@@ -241,6 +244,7 @@ function pickDriver(opts, config) {
       );
     device = pool[0].id;
   }
+  rememberDevice(platform, device);
   const out = opts.out || process.env.LOOKTAP_OUT || config.out || 'shots';
   const app = opts.app || config[platform]?.app;
   const wait = 1000 * Number(opts.wait ?? process.env.LOOKTAP_WAIT ?? config.wait ?? 3);
@@ -330,19 +334,41 @@ async function main() {
   if (cmd === 'skill') return skill(opts);
   if (cmd === 'mcp') return opts.flags.has('config') ? mcpConfig() : mcp(opts);
   if (cmd === 'devices') return console.log(deviceLines(opts).join('\n'));
-  if (cmd === 'boot') return console.log(booted(await boot(args.join(' ') || null, { platform: opts.platform, ...display(opts, loadConfig()) })));
+  if (cmd === 'boot') {
+    const r = await boot(args.join(' ') || null, { platform: opts.platform, ...display(opts, loadConfig()) });
+    rememberDevice(r.platform, r.id);
+    return console.log(booted(r));
+  }
   if (cmd === 'shutdown') return console.log(shutDown(await shutdown(args.join(' ') || opts.device || null, { platform: opts.platform })));
 
   const config = loadConfig();
   const d = pickDriver(opts, config);
   try {
     return await dispatch(d, cmd, args, opts);
+  } catch (e) {
+    await screenOnFailure(d, cmd, e, opts);
+    throw e;
   } finally {
     d.close?.();
   }
 }
 
 const deviceId = (d) => d.udid || d.serial;
+
+/** Failures whose fix is on the screen: a label or ref not there, an ambiguous label, a screen not as expected. */
+const screenFailure = (e) => e instanceof NotFound || /expect failed|is ambiguous|is not in the last listing/.test(e.message);
+
+/**
+ After such a failure (a `run` step's too), print the error and then the screen as it is now, with fresh @refs: the
+ agent fixes the step from this output instead of spending another call on `ls`. `e.printed` marks it as said.
+ */
+async function screenOnFailure(d, cmd, e, opts) {
+  if (cmd === 'test' || cmd === 'codegen' || !screenFailure(e)) return;
+  console.error(`looktap: ${e.message}`);
+  e.printed = true;
+  console.error('looktap: the screen now:');
+  await list(d, opts, e.snap).catch((err) => console.error(`looktap: (couldn't read the screen: ${err.message})`));
+}
 
 /** `devices`: every device, what it is and whether it's ready; --all adds what `boot` can start; --json for agents. */
 function deviceLines(opts) {
@@ -1105,7 +1131,11 @@ async function mcp(outer) {
       else if (['mcp', 'skill'].includes(cmd)) throw new UsageError(`${cmd} isn't available over MCP`);
       else {
         const d = driverFor({ platform: opts.platform || where.platform, device: opts.device || where.device });
-        await dispatch(d, cmd, args, { ...base, ...opts, wait: opts.wait ?? base.wait, flags: opts.flags });
+        const o = { ...base, ...opts, wait: opts.wait ?? base.wait, flags: opts.flags };
+        await dispatch(d, cmd, args, o).catch(async (e) => {
+          await screenOnFailure(d, cmd, e, o);
+          throw e;
+        });
       }
       return { text: sink.join('\n') };
     } catch (e) {
@@ -1116,7 +1146,7 @@ async function mcp(outer) {
       }
       // Name the tool parameters, not the command-line flags.
       const msg = e.message.replace('pass -p ios|android', 'pass platform: "ios" or "android"').replace(/pass -d one of/, 'pass device: one of');
-      return { text: [...sink, `looktap: ${msg}`].join('\n'), error: true };
+      return { text: (e.printed ? sink : [...sink, `looktap: ${msg}`]).join('\n'), error: true };
     } finally {
       sink = null;
     }
@@ -1156,7 +1186,9 @@ Paste into your MCP client's config, e.g.
 /** Several commands in this one process: one helper connection, no per-command startup. */
 async function runScript(d, args, outer) {
   if (!args.length) throw new UsageError("usage: looktap run '<cmd>; <cmd> …'   or   looktap run - < script");
-  return runSteps(d, args[0] === '-' ? readFileSync(0, 'utf8') : args.join(' '), outer);
+  await runSteps(d, args[0] === '-' ? readFileSync(0, 'utf8') : args.join(' '), outer);
+  // --ls: the screen the steps ended on, once it holds still, so a batch needs no `ls` call after it.
+  if (outer.flags.has('ls')) await list(d, outer, await settle(d, { all: outer.flags.has('all') }));
 }
 
 /** Run a script's steps in order; the first failure stops it, named by its step. Returns how many ran. */
@@ -1459,6 +1491,6 @@ function skillStatus(ok) {
 }
 
 main().catch((e) => {
-  console.error(`looktap: ${e.message}`);
+  if (!e.printed) console.error(`looktap: ${e.message}`);
   process.exit(e instanceof UsageError ? 2 : 1);
 });

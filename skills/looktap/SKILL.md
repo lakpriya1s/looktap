@@ -27,6 +27,8 @@ looktap fill "Email" sam@example.com --ls
 looktap tap @8 --ls
 # wait for what the next screen should show, instead of sleeping
 looktap wait "Welcome"
+# steps through screens you've already read: one call, then the screen it ended on
+looktap run 'tap General; wait About; tap About' --ls
 # screenshot (only open it when you need to see layout or colours)
 looktap shot home --scale 0.5
 ```
@@ -50,6 +52,28 @@ It works on `tap`, `longpress`, `zoom`, `tapxy`, `fill`, `type`, `key`, `paste`,
 
 **`--ls` stops at a loading skeleton too.** If it shows a heading but none of the content, run
 `looktap wait "<text you expect>"` rather than acting on the placeholder.
+
+## Calls: fewest turns, no guessing
+
+Each call costs a turn (you read the output, then write the next command), and a turn takes longer than any
+looktap command. Make each call count, without acting on screens you haven't read:
+
+1. **A screen you haven't read yet: one action per call, with `--ls`.** Read what it prints before writing the next
+   step. Never put a label in a command unless you saw it in looktap's output.
+2. **Screens you've already read: one `run`.** Between steps, `wait "<a label on the next screen>"` instead of
+   `--ls` (it returns as soon as that label shows). `--ls` on the `run` prints the screen it ended on. The first
+   step that fails stops it and is named:
+   `looktap run 'tap General; wait About; tap About; expect "iOS Version"' --ls`
+3. **Never chain looktap commands with `;` or newlines in one shell call.** A failed step doesn't stop the next,
+   which then acts on whatever screen is up: on a real app that tap does something. Put them in `run`. `&&` stops
+   at a failed command but not at a wrong screen (`ls` and `--ls` exit 0 whatever is shown): check with
+   `wait`/`expect`.
+4. **A failure shows the screen.** After `not found`, an ambiguous label or a failed `expect` (a `run` step's too),
+   the screen as it is follows the error, with fresh `@ref`s. Fix the step from it; no `ls` first. Don't retry the
+   same label: each not-found waits 3 s (`--wait`) first.
+5. **Name the device once.** A command with no `-d` uses the device the last command used (for 10 min, while it's
+   up); `boot` and `-d` set it. Driving two devices at once (or with another agent)? Pass `-p` and `-d` on every
+   command.
 
 ## Navigating an app
 
@@ -263,7 +287,8 @@ looktap statusbar live
 # portrait landscape left right upsidedown; ls, taps and shots follow the turned screen
 looktap rotate landscape --ls
 # a foldable simulator (iPhone Duo): closed (the outer screen), half or open (the inner one); ls, taps, shots
-# and recordings follow the screen it shows. No argument prints which screen is in use
+# and recordings follow the screen it shows (closing takes a few seconds; fold waits). No argument prints which
+# screen is in use
 looktap fold open --ls
 looktap fold
 # Android only: airplane mode
@@ -277,8 +302,8 @@ looktap push com.example.myapp '{"aps":{"alert":"Hi"},"orderId":7}'
 ### Batch
 
 ```bash
-# several steps in one call; stops at the first failure and names it
-looktap run 'tap General; tap About; wait "iOS Version"; ls'
+# several steps in one call; stops at the first failure and names it; --ls: then the screen it ended on
+looktap run 'tap General; wait About; tap About; wait "iOS Version"' --ls
 # one step per line from stdin, # for comments
 looktap run - < steps.txt
 # flow files (run scripts) as tests: a line per flow, exit 1 if any fails. A failure saves the screen, a
@@ -352,11 +377,11 @@ looktap uses the nearest one, walking up from the current folder:
 { "out": "shots", "wait": 3, "ios": { "app": "com.example.myapp" }, "android": { "app": "com.example.myapp" } }
 ```
 
-Command-line options beat `LOOKTAP_*` environment variables, which beat the config file. Passing both `-p` and
-`-d` makes every command about 0.2 s faster.
+Command-line options beat `LOOKTAP_*` environment variables, which beat the config file. With no `-d`, a command
+uses the device the last one used (for 10 min, while it's up), without listing devices again.
 
 **Exit codes:** `0` OK · `2` usage or not found (bad arguments, no such element, no device) · `1` anything else.
-On exit 2, read the message, run `ls`, adjust. Don't retry the same command blindly.
+On exit 2, read the message and the screen printed after it, then adjust. Don't retry the same command blindly.
 
 ## Targeting elements
 
@@ -447,40 +472,6 @@ looktap appearance light
 looktap statusbar live
 ```
 
-## Example: check a layout on a foldable
-
-```bash
-# the iPhone Duo simulator (Xcode 27.1): the outer screen, then the inner one, unfolded
-looktap fold closed
-looktap launch com.example.myapp --ls
-looktap shot home__closed --scale 0.5
-looktap fold open --ls
-looktap shot home__open --scale 0.5
-# set it back as you found it
-looktap fold closed
-```
-
-Closing takes the simulator a few seconds; `fold` waits for it. Refs from before a fold are stale: `ls` again.
-
-## Example: start from a clean install
-
-```bash
-looktap install build/MyApp.app
-looktap reset com.example.myapp
-looktap permission grant location com.example.myapp
-looktap launch --ls
-```
-
-## Example: catch a toast or a spinner
-
-```bash
-looktap burst ./frames 5 &
-looktap swipe 200 250 200 700
-wait
-```
-
-Then look at the few frames that matter, not all of them.
-
 ## Rules
 
 - **Never type real credentials, OTPs or card numbers.** A person signs in, then you take over. `fill` and `code`
@@ -510,7 +501,6 @@ Then look at the few frames that matter, not all of them.
   uncovered part and says `off-centre`. If it warns that another element covers the point, nothing of the target
   was left clear and the tap probably hit that: dismiss it (React Native's LogBox toast: `looktap dismiss logbox`),
   then tap again.
-- **`hidekb` also takes focus from the field** (Android too), so validate-on-blur errors appear after it.
 - **After `textsize` or `appearance` on Android**, a note that the app restarted means every ref is stale: `ls`.
 - **`shot` says how the image maps to the screen** (on stderr): `216x384 px = 360x640 dp: tapxy x y = image x y ×
   1.667`. Multiply a point read off the image by that factor for `tapxy`, or take it with `--points`, where the

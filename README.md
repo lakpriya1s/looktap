@@ -818,8 +818,10 @@ for d in 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 F9213EDC-180D-412B-B24C-2FD69A37D3
 done
 ```
 
-Passing **both** `-p` and `-d` (or exporting `LOOKTAP_PLATFORM` and `LOOKTAP_DEVICE`) makes every command about
-0.2 s faster, because looktap then skips listing devices.
+A command that names no device uses the one the last command used, for 10 minutes and while it's still up, without
+listing devices again (0.3–0.5 s saved on each command). `boot` and every command that names a device (`-d`,
+`LOOKTAP_DEVICE`) set it. When two people or agents drive two devices at the same time, each should name its device
+on every command.
 
 ## For AI agents
 
@@ -890,12 +892,16 @@ took 11–19 on Android.
 - **`wait`** instead of guessing `sleep`s. After an action that loads data, `--ls` can return a loading skeleton,
   so wait for the text you expect.
 - **`run`** batches steps you already know into one call and one process. It prints each step as `$ <step>`, stops
-  at the first failure, and names it:
+  at the first failure, and names it. `--ls` prints the screen it ended on:
 
   ```bash
-  looktap run 'tap General; wait About; tap About --ls'
+  looktap run 'tap General; wait About; tap About' --ls
   looktap run - < steps.txt          # one step per line, # for comments
   ```
+
+- **A failure shows the screen.** When a label or `@ref` isn't there, a label is ambiguous or an `expect` doesn't
+  hold (in a `run` step too), looktap prints the error and then the screen as it is, with fresh `@ref`s. The next
+  call can fix the step without an `ls` first.
 
 - **`logs` / `crashes`** after a step that misbehaved. Each `logs` shows only what's new since the last one.
 - **`perf` / `launch --time`** when the question is speed or memory: numbers instead of impressions. `perf --for`
@@ -1045,7 +1051,7 @@ to settle unless asked (`--ls`).
 | `looktap push <app> <payload>` | iOS: a remote notification. The payload can be a `.json` file, inline JSON, or plain text for an alert |
 | **Batch, setup & info** | |
 | `looktap mcp [--config]` | Serves these commands over MCP (stdio) for clients without a shell. `--config` prints a client config |
-| `looktap run '<cmd>; <cmd> …'` | Several commands in one process. `run -` reads them from stdin. Stops at the first failure and names it |
+| `looktap run '<cmd>; <cmd> …' [--ls]` | Several commands in one process. `run -` reads them from stdin. Stops at the first failure and names it; `--ls` prints the screen it ended on |
 | `looktap codegen <flow-file> [app]` | Android: restarts the app, then saves each touch on the device as the step that replays it: `tap "<label>"`, `fill <field> <text>`, `scrollto`, `longpress`, `zoom`, `back`, `home`. A command typed while it records (`expect "Welcome"`) is run and saved too; `undo` drops the last step; Enter on an empty line or Ctrl+C ends it. See [Record a flow](#record-a-flow-codegen) |
 | `looktap pause <seconds>` | Waits a fixed time: `2`, `1.5s`, `500ms`. For what has nothing to wait on; `wait` and `wait --settle` are quicker and sturdier when they apply |
 | `looktap handoff <message> [--until <label\|@ref>] [--gone]` | A step only a person can do: a consent screen, a second factor. Prints the message to the terminal at once (even inside `test`), shows it as a macOS notification (`LOOKTAP_NOTIFY=0` turns that off), then waits until `<label>` is on screen (`--gone`: until it's off it), up to 5 minutes or `--wait`. Without `--until`, until Enter is pressed in the terminal. So "a person signs in, then looktap carries on" is a step of the flow, not a failure |
@@ -1064,7 +1070,8 @@ it to stop changing, then prints it like `ls`.
 
 **Exit codes:** `0` means OK. `2` means a usage problem: bad arguments, element not found, no device, or the
 helper can't start. `1` means anything else failed, including an `expect` that didn't hold and a `test` run with a
-failed flow. A script can `set -e` and stop at the first missing element.
+failed flow. A script can `set -e` and stop at the first missing element. After a missing or ambiguous element or a
+failed `expect`, the screen as it is follows the error.
 
 ## Platform support
 

@@ -20,9 +20,19 @@
   has neither, so looktap sets them in the built app and signs it again (`swift scripts/runner-icon.swift` redraws
   the PNGs).
 
+- **A failure shows the screen.** When a label or `@ref` isn't there, a label is ambiguous or an `expect` doesn't
+  hold (a `run` step's too, and over MCP), the error is followed by the screen as it is, with fresh `@ref`s: an agent
+  fixes the step from that output instead of spending a call on `ls`.
+- **`run --ls`** prints the screen the steps ended on, once it holds still.
+- **The skill says how to spend calls:** one action per call (with `--ls`) on a screen not yet read, one `run` for
+  screens already read, never looktap commands chained with `;` in the shell.
+
 ### Changed
 
 - The real-device runner now builds for iOS 16 and later (was 17), so it is rebuilt once.
+- **A command that names no device uses the one the last command used**, for 10 minutes and while it's still up,
+  instead of listing devices each time (0.3-0.5 s a command). `boot` and `-d` set it. Two devices driven at once
+  each need `-d` on every command.
 
 ## 0.7.5
 
