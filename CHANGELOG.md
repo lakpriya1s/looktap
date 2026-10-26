@@ -24,6 +24,11 @@
   hold (a `run` step's too, and over MCP), the error is followed by the screen as it is, with fresh `@ref`s: an agent
   fixes the step from that output instead of spending a call on `ls`.
 - **`run --ls`** prints the screen the steps ended on, once it holds still.
+- **The skill is split: a short `SKILL.md` and `references/`.** `SKILL.md` (227 lines, was 556) holds the loop, how
+  to spend calls, navigating, targeting, the common commands and the rules; every command and option, flows,
+  devices and debugging moved to `references/*.md`, which an agent reads only when the task needs them.
+  `skill --install` copies them beside each agent's `SKILL.md` (replacing an older install's), and
+  `looktap skill <name>` prints one, for an agent that can't open the installed files.
 - **The skill says how to spend calls:** one action per call (with `--ls`) on a screen not yet read, one `run` for
   screens already read, never looktap commands chained with `;` in the shell.
 

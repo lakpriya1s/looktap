@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { test } from 'node:test';
 
 import { formatRow as cliRow } from '../lib/screen.js';
@@ -51,12 +51,13 @@ test('the inventory covers every command, and every scene names real ones', () =
   assert.ok(sections(readme).some((s) => s.title === 'Commands'));
 });
 
-test('the agent skill lists every command and flag', () => {
+test('the agent skill (SKILL.md and its references) lists every command and flag', () => {
   const cli = readFileSync(new URL('../bin/looktap.js', import.meta.url), 'utf8');
-  const skill = readFileSync(new URL('../skills/looktap/SKILL.md', import.meta.url), 'utf8');
-  const commands = sections(skill).find((s) => s.title === 'Commands');
-  assert.ok(commands);
-  const used = new Set([...commands.md.matchAll(/^looktap ([a-z]+)/gm)].map((m) => m[1]));
+  const dir = new URL('../skills/looktap/', import.meta.url);
+  const refs = readdirSync(new URL('references/', dir)).filter((f) => f.endsWith('.md'));
+  assert.ok(refs.length);
+  const skill = ['SKILL.md', ...refs.map((f) => `references/${f}`)].map((f) => readFileSync(new URL(f, dir), 'utf8')).join('\n');
+  const used = new Set([...skill.matchAll(/^looktap ([a-z]+)/gm)].map((m) => m[1]));
   assert.deepEqual(cliCommands(cli).filter((c) => !used.has(c)), []);
   assert.deepEqual(cliFlags(cli).filter((f) => !new RegExp(`(^|[\\s\`\\[,])${f}\\b`).test(skill)), []);
 });

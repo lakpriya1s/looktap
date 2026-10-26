@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -62,6 +62,31 @@ test('install writes each agent its own copy (user-wide or in the repo), uninsta
     assert.equal(readFileSync(join(other, 'SKILL.md'), 'utf8'), '---\nname: something-else\n---\n');
   } finally {
     rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('install puts the references beside SKILL.md, replacing an earlier install\'s', () => {
+  const home = mkdtempSync(join(tmpdir(), 'looktap-home-'));
+  try {
+    const [first] = installSkill(pickAgents('codex'), { source: SOURCE, references: { 'old.md': 'gone soon\n', 'flows.md': 'v1\n' }, version: '1.0.0', home });
+    const refs = join(first.file, '..', 'references');
+    assert.deepEqual(readdirSync(refs).sort(), ['flows.md', 'old.md']);
+    installSkill(pickAgents('codex'), { source: SOURCE, references: { 'flows.md': 'v2\n', 'commands.md': 'all\n' }, version: '1.0.1', home });
+    assert.deepEqual(readdirSync(refs).sort(), ['commands.md', 'flows.md']);
+    assert.equal(readFileSync(join(refs, 'flows.md'), 'utf8'), 'v2\n');
+    // uninstall takes the whole folder, references included
+    uninstallSkill(pickAgents('codex'), { home });
+    assert.equal(existsSync(join(first.file, '..')), false);
+  } finally {
+    rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('the skill\'s links to its references all point at files that exist', () => {
+  const dir = new URL('../skills/looktap/', import.meta.url);
+  for (const f of ['SKILL.md', ...readdirSync(new URL('references/', dir)).map((r) => `references/${r}`)]) {
+    const base = new URL(f, dir);
+    for (const [, href] of readFileSync(base, 'utf8').matchAll(/\]\(((?:references\/)?[\w-]+\.md)\)/g)) assert.ok(existsSync(new URL(href, base)), `${f}: ${href}`);
   }
 });
 

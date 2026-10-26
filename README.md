@@ -837,8 +837,10 @@ Pick the route that fits your agent:
 
 `looktap skill --install` finds the coding agents on your machine (by their config folder or command) and writes
 the skill into the folder each one reads, with the frontmatter that agent accepts: Codex, for one, rejects fields
-it doesn't know. Each copy carries looktap's version: run it again after upgrading, and `looktap doctor` says when
-a copy is out of date.
+it doesn't know. The skill is a short `SKILL.md` for the everyday loop plus `references/` (every command, flows,
+devices, debugging) that the agent reads only when a task needs them; both are copied. Each copy carries looktap's
+version: run it again after upgrading, and `looktap doctor` says when a copy is out of date. `looktap skill
+commands` (or `flows`, `devices`, `debugging`) prints one reference.
 
 ```bash
 looktap skill --install                          # every agent found here, user-wide
@@ -1056,7 +1058,7 @@ to settle unless asked (`--ls`).
 | `looktap pause <seconds>` | Waits a fixed time: `2`, `1.5s`, `500ms`. For what has nothing to wait on; `wait` and `wait --settle` are quicker and sturdier when they apply |
 | `looktap handoff <message> [--until <label\|@ref>] [--gone]` | A step only a person can do: a consent screen, a second factor. Prints the message to the terminal at once (even inside `test`), shows it as a macOS notification (`LOOKTAP_NOTIFY=0` turns that off), then waits until `<label>` is on screen (`--gone`: until it's off it), up to 5 minutes or `--wait`. Without `--until`, until Enter is pressed in the terminal. So "a person signs in, then looktap carries on" is a step of the flow, not a failure |
 | `looktap test <flow\|dir> … [--junit file]` | Runs flow files (`run` scripts, one step per line) as tests, folders searched, and prints a line per flow and the totals. Exits 1 if any flow fails. A failed flow prints its output and leaves `error.txt`, `output.txt`, `screen.txt`, `screen.png`, `logs.txt` and `crashes.txt` in `<out>/failures/<flow>/`. An app that dies during a flow fails it. `--junit` writes a JUnit XML report |
-| `looktap skill [--install\|--uninstall\|--list] [--agents a,b\|all] [--project]` | Prints the AI-agent guide. `--install` writes it for every coding agent on the machine (or `--agents`), each in its own skills folder, or into the repo with `--project`. `--list` shows the agents and what's installed where ([details](#every-coding-agent)) |
+| `looktap skill [name] [--install\|--uninstall\|--list] [--agents a,b\|all] [--project]` | Prints the AI-agent guide, or one of its references by name (`commands`, `flows`, `devices`, `debugging`). `--install` writes it for every coding agent on the machine (or `--agents`), each in its own skills folder, or into the repo with `--project`. `--list` shows the agents and what's installed where ([details](#every-coding-agent)) |
 | `looktap devices [--all] [--json]` | What's running or connected, and what each is: simulator, emulator (with its AVD name) or real device (model, OS version, USB or Wi-Fi, and `locked` while its lock screen is up), and whether it has a window or runs headless. An Android phone on both USB and Wi-Fi is one row (`USB + Wi-Fi`), and commands drive it over USB; `-d` with its Wi-Fi id still picks Wi-Fi. A phone that's connected but not ready is listed with what to do (accept the USB debugging prompt, tap Trust, turn on Developer Mode). A simulator or emulator still starting is listed as such. `--all` also lists what `boot` can start; `--json` for scripts and agents |
 | `looktap boot [name] [--window\|--headless]` | Boots an iOS simulator or Android emulator by name, UDID or AVD name (exact, else a unique prefix or substring; `-p` to choose a platform) and waits until it's ready to drive. Opens its window unless `--headless` (or `LOOKTAP_HEADLESS=1`, or `"headless": true` in the config file). Already running: says so, and `--window` opens a simulator's window. One that's still starting (adb lists an emulator offline while it boots) is waited for, not started twice. A running device can't drop its window (closing the Simulator app shuts its simulators down; an emulator starts with or without one), so `--headless` then says how to restart it. From Xcode 27.1 simulators show in Device Hub, one window for the device picked in its sidebar: `--window` opens Device Hub, and you pick the simulator there |
 | `looktap shutdown [name]` | Shuts down a simulator or emulator (name, UDID, AVD name or serial), and waits until it's gone |
@@ -1336,7 +1338,8 @@ Notes for contributors:
   - a method on both `Ios` and `Android`, or, if it only reads the screen, code in `lib/screen.js`;
   - a `case` in `bin/looktap.js`;
   - a row in this README;
-  - a line in `skills/looktap/SKILL.md` if agents should use it;
+  - a line in `skills/looktap/SKILL.md` if agents use it on most runs, else in the fitting file under
+    `skills/looktap/references/`;
   - a scene that shows it in `site/src/scenes.js` (its `covers` list). `npm run site:build` fails until the
     README row and the scene are there.
 

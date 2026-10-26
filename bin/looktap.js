@@ -23,6 +23,12 @@ import { flowFiles, flowName, junit } from '../lib/testing.js';
 import { ADB, HOME, LockedError, NotFound, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
 
 const SKILL = new URL('../skills/looktap/SKILL.md', import.meta.url);
+const SKILL_REFS = new URL('../skills/looktap/references/', import.meta.url);
+
+/** The skill's reference files, { 'commands.md': text, … }: installed beside SKILL.md, printed by `skill <name>`. */
+function skillReferences() {
+  return Object.fromEntries(readdirSync(SKILL_REFS).filter((f) => f.endsWith('.md')).sort().map((f) => [f, readFileSync(new URL(f, SKILL_REFS), 'utf8')]));
+}
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
@@ -151,8 +157,8 @@ batch & agents
                                   flow, exit 1 if any fails. A failure saves the screen, a screenshot,
                                   error logs and crashes in <out>/failures/<flow>/; --junit writes a report.
                                   An app that dies during a flow fails it
-  skill [--install|--uninstall|--list] [--agents a,b|all] [--project]
-                                  print the AI-agent guide. --install: into every coding agent found here
+  skill [name] [--install|--uninstall|--list] [--agents a,b|all] [--project]
+                                  print the AI-agent guide (name: one of its references, e.g. commands). --install: into every coding agent found here
                                   (Claude Code, Codex, Cursor, Gemini CLI, Copilot, OpenCode, …), or --agents;
                                   run it again after an upgrade. --project: into this repo instead of your
                                   home folder. --list: the agents, what's installed where
@@ -331,7 +337,7 @@ async function main() {
   if (!cmd || opts.flags.has('help') || cmd === 'help') return console.log(HELP);
 
   if (cmd === 'doctor') return doctor(opts);
-  if (cmd === 'skill') return skill(opts);
+  if (cmd === 'skill') return skill(opts, args);
   if (cmd === 'mcp') return opts.flags.has('config') ? mcpConfig() : mcp(opts);
   if (cmd === 'devices') return console.log(deviceLines(opts).join('\n'));
   if (cmd === 'boot') {
@@ -1415,8 +1421,15 @@ const tilde = (p) => (p.startsWith(homedir()) ? `~${p.slice(homedir().length)}` 
  the folder and frontmatter that agent reads; --project: into this repo for the team. --uninstall takes it out
  again, --list shows every supported agent and what's installed where.
  */
-function skill(opts) {
+function skill(opts, args = []) {
   const source = readFileSync(SKILL, 'utf8');
+  const references = skillReferences();
+  // `skill commands`: one reference file, for an agent that can't open the installed copy.
+  if (args.length) {
+    const text = references[`${args[0].replace(/\.md$/, '')}.md`];
+    if (args.length > 1 || !text) throw new UsageError(`skill takes one of: ${Object.keys(references).map((f) => f.slice(0, -3)).join(', ')}`);
+    return process.stdout.write(text);
+  }
   const home = homedir();
   const actions = ['install', 'uninstall', 'list'].filter((f) => opts.flags.has(f));
   if (actions.length > 1) throw new UsageError('skill takes one of --install, --uninstall, --list');
@@ -1460,7 +1473,7 @@ function skill(opts) {
     agents = AGENTS.filter((a) => PROJECT_DEFAULT.includes(a.id));
     note += 'No coding agent found on this machine, so it went to the two folders most agents read.\n';
   }
-  const written = installSkill(agents, { source, version: pkg.version, home, root });
+  const written = installSkill(agents, { source, references, version: pkg.version, home, root });
   console.log(`installed the looktap skill (${pkg.version}) for:`);
   for (const w of written) console.log(`  ${w.agents.map((a) => a.name).join(', ').padEnd(16)} ${tilde(w.file)}`);
   const missing = AGENTS.filter((a) => !agents.includes(a) && !(a.id === 'claude' && plugin)).map((a) => a.id);
