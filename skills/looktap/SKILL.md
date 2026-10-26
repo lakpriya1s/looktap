@@ -27,6 +27,8 @@ looktap fill "Email" sam@example.com --ls
 looktap tap @8 --ls
 # wait for what the next screen should show, instead of sleeping
 looktap wait "Welcome"
+# steps through screens you've already read: one call, then the screen it ended on
+looktap run 'tap General; wait About; tap About' --ls
 # screenshot (only open it when you need to see layout or colours)
 looktap shot home --scale 0.5
 ```
@@ -50,6 +52,28 @@ It works on `tap`, `longpress`, `zoom`, `tapxy`, `fill`, `type`, `key`, `paste`,
 
 **`--ls` stops at a loading skeleton too.** If it shows a heading but none of the content, run
 `looktap wait "<text you expect>"` rather than acting on the placeholder.
+
+## Calls: fewest turns, no guessing
+
+Each call costs a turn (you read the output, then write the next command), and a turn takes longer than any
+looktap command. Make each call count, without acting on screens you haven't read:
+
+1. **A screen you haven't read yet: one action per call, with `--ls`.** Read what it prints before writing the next
+   step. Never put a label in a command unless you saw it in looktap's output.
+2. **Screens you've already read: one `run`.** Between steps, `wait "<a label on the next screen>"` instead of
+   `--ls` (it returns as soon as that label shows). `--ls` on the `run` prints the screen it ended on. The first
+   step that fails stops it and is named:
+   `looktap run 'tap General; wait About; tap About; expect "iOS Version"' --ls`
+3. **Never chain looktap commands with `;` or newlines in one shell call.** A failed step doesn't stop the next,
+   which then acts on whatever screen is up: on a real app that tap does something. Put them in `run`. `&&` stops
+   at a failed command but not at a wrong screen (`ls` and `--ls` exit 0 whatever is shown): check with
+   `wait`/`expect`.
+4. **A failure shows the screen.** After `not found`, an ambiguous label or a failed `expect` (a `run` step's too),
+   the screen as it is follows the error, with fresh `@ref`s. Fix the step from it; no `ls` first. Don't retry the
+   same label: each not-found waits 3 s (`--wait`) first.
+5. **Name the device once.** A command with no `-d` uses the device the last command used (for 10 min, while it's
+   up); `boot` and `-d` set it. Driving two devices at once (or with another agent)? Pass `-p` and `-d` on every
+   command.
 
 ## Navigating an app
 
@@ -85,278 +109,46 @@ failed. Keep track of that at every step:
     sidebar beside the detail pane, so a label can be in both ("General" as a sidebar row and as the pane's heading):
     tap the row by `@ref`, and check the pane changed. After `rotate` or `fold`, read the screen before acting.
 
-## Commands
-
-### Look
+## The commands you'll use most
 
 ```bash
-looktap ls
-# include elements without a label
-looktap ls --all
-# structured: {screen, elements: [{ref, label, type, x, y, w, h, value}]}
-looktap ls --json
-# until it's on screen (10 s by default; --wait 30 for longer), or until it's gone
-looktap wait "Welcome"
-looktap wait "Loading" --gone
-# check the screen (waits up to --wait, 3 s); fails with exit 1 and what's there instead
-looktap expect "Welcome"
-looktap expect "Email" = sam@example.com
-looktap expect "Error" --gone
-# a web page or canvas with no labels to wait for (a sign-in page): until the screen, picture included, holds
-# still for 1 s (--for 2s for longer); 10 s at most, or --wait
-looktap wait --settle
-looktap wait --settle --for 2s
-# swipe until it's fully on screen (above the keyboard, when it's up); fails at the end of the list
-looktap scrollto "Privacy & Security"
-looktap scrollto "General" --up
+looktap ls                            # the screen; --all: unlabelled elements too; --json
+looktap tap "Sign in" --ls            # a label (--exact) or an @ref from the last screen read
+looktap tapxy 205 874                 # a point, last resort: for what ls doesn't list
+looktap fill "Email" sam@example.com  # focus, clear, type, read it back
+looktap type "@example.com"           # into the focused field (check it with expect)
+looktap code 540390                   # a row of one-time-code boxes
+looktap key return                    # also: delete, selectall, escape …
+looktap hidekb                        # dismiss the keyboard
+looktap swipe 200 700 200 250         # scroll down: the finger moves up
+looktap scrollto "Privacy & Security" # swipe until it's on screen; --up
+looktap back                          # also: home
+looktap wait "Welcome"                # until it's on screen (--gone: off it); wait --settle for pages with no labels
+looktap expect "Email" = sam@example.com  # check, exit 1 if not; --gone
+looktap launch com.example.myapp --ls # restart it; --resume: back to where it was
+looktap open "myapp://orders/42" --ls # a deep link
+looktap run 'tap General; wait About; tap About' --ls
+looktap shot home --scale 0.5         # a screenshot; only open it to see layout or colours
+looktap logs --errors                 # what's new in the app's log; crashes: its crashes
+looktap devices                       # what's running or connected; boot "<name>" starts one
 ```
 
-### Tap and press
+`-p ios|android` and `-d <udid|serial>` choose the device when more than one is up; `--app <id>` (or
+`looktap.config.json`) the app; `--wait <s>` how long a target is waited for (3 s). **Exit codes:** `0` OK · `2`
+usage or not found (bad arguments, no such element, no device) · `1` anything else. On exit 2, read the message and
+the screen printed after it, then adjust. Don't retry the same command blindly.
 
-```bash
-# a label: exact first, else the one label that starts with / contains it (ambiguous is an error)
-looktap tap "General"
-looktap tap "Messages" --exact
-# a row from the last ls on this device
-looktap tap @7
-# a point, in the units ls prints; for things ls doesn't list
-looktap tapxy 205 874
-# React Native's LogBox toast (dev builds) takes the taps around it: close it
-looktap dismiss logbox
-# hold (default 800 ms): context menus, drag handles, edit modes
-looktap longpress "Photo"
-looktap longpress @4 1500
-looktap longpress 120 470
-# two-finger pinch around the centre or a point; --scale is how far the fingers travel (default 2.5)
-looktap zoom in
-looktap zoom out 200 400 --scale 4
-# Android: system Back · iOS: the navigation bar's back button
-looktap back
-# the Home button: to the home screen, the app keeps running in the background
-looktap home
-```
+## More, when the task needs it
 
-### Type
+These sit next to this file in `references/`. Read one only when the task calls for it; if you can't open files
+here, `looktap skill <name>` prints it.
 
-```bash
-# focus the field, clear it, type, read it back (a password field: its length); empty text just clears
-looktap fill "Email" sam@example.com
-looktap fill @4 ""
-# into the focused field
-looktap type "@example.com"
-# put text on the device's clipboard, check it's there, paste it into the focused field
-looktap paste "540390"
-# a one-time code into its row of digit boxes: every box is checked afterwards
-looktap code 540390
-# return escape delete tab space selectall paste home; Android also back KEYCODE_*
-looktap key return
-looktap key selectall delete
-# dismiss the keyboard; exits 2 if it's still up
-looktap hidekb
-```
-
-### Swipe and navigate
-
-```bash
-# scroll down: the finger moves up (optional 5th argument: duration in ms)
-looktap swipe 200 700 200 250
-# deep link
-looktap open "myapp://orders/42"
-# (re)start the app
-looktap launch
-looktap launch com.example.myapp
-# bring it back to the front as it was (a real iPhone too): no restart, no lost screen
-looktap launch com.example.myapp --resume
-looktap stop com.example.myapp   # terminate it; waits until the process is gone
-# Face ID / fingerprint
-looktap bio match
-looktap bio nomatch
-```
-
-### Screenshots and video
-
-```bash
-# saves <out>/<name>.png and prints the path; --scale 0.5 is a quarter of the image tokens
-looktap shot checkout
-looktap shot checkout --scale 0.5
-# one pixel per point (iOS) or dp (Android): a spot you pick in the image is tapxy's x y as it is
-looktap shot checkout --points
-# Android emulators capture FLAG_SECURE screens by default; --plain shows them black, as on a device
-looktap shot payment --plain
-# a frame each time the screen changes, for 3 s; duplicates dropped (start it in the background)
-looktap burst ./frames 3 &
-# a video of everything between start and stop (Android: at most 3 min)
-looktap record start checkout
-looktap record stop
-```
-
-### Logs and crashes
-
-```bash
-# the app's log since your last `logs` (first time: the last minute); at most 80 lines, newest kept
-looktap logs
-looktap logs --errors
-looktap logs --grep checkout
-looktap logs --since 5m --lines 200
-# iOS: keep Apple-framework messages too
-looktap logs --all
-# a real iPhone keeps no log history: the first logs (or launch) starts collecting, so run logs (or launch) before
-# reproducing the problem, then logs again
-# crashes, ANRs and low-memory kills since your last `crashes` (first time: the last hour)
-looktap crashes
-looktap crashes com.example.myapp --since 1h
-# CPU (100% = one core), memory and threads of the app (iOS: the footprint Xcode shows; Android: PSS, heaps);
-# --for samples once a second, then prints avg/max. --frames: frames and jank since the last --frames (iOS:
-# counted from the screen, a real iPhone over its USB cable; the first call only starts counting, so call it
-# before the action too).
-# A real iPhone goes through Instruments: 10-25 s a reading, --for about every 8 s
-looktap perf
-looktap perf com.example.myapp --for 10s
-looktap perf --frames --json
-# cold start, timed: until the app is in front and until its first screen settled (Android: also TotalTime)
-looktap launch com.example.myapp --time
-# which app is in front, and whether the given one is running
-looktap app
-looktap app com.example.myapp
-# where its files are: iOS the bundle, data folder and app groups (paths on the Mac, so read them directly);
-# Android its APKs and data folder (readable with adb shell run-as on debuggable builds)
-looktap app com.example.myapp --paths
-# what this device can't do (or only in part) and why; --json lists every command's status
-looktap capabilities
-```
-
-### App state
-
-```bash
-# is it installed, and which build? A filter matches part of the id or name (system apps included); exit 1 if none
-looktap apps
-looktap apps com.example
-looktap apps --all --json
-# a simulator .app, a device .app/.ipa (real iPhone) or an .apk (keeps the app's data; --grant: every runtime
-# permission); prints the app id. A failure says why (storage full, a downgrade, another signature) and what to do
-looktap install build/MyApp.app
-looktap install app-debug.apk --grant
-looktap uninstall com.example.myapp
-# as if freshly installed: data and permissions cleared (iOS keeps the keychain)
-looktap reset com.example.myapp
-# camera microphone location location-always photos contacts calendar notifications motion all
-# (Android also android.permission.*)
-looktap permission grant location com.example.myapp
-looktap permission revoke photos com.example.myapp
-looktap permission reset camera com.example.myapp
-```
-
-### Conditions
-
-```bash
-# simulated GPS (Android: emulators); `clear` on iOS
-looktap location 51.5072 -0.1276
-looktap location clear
-# no argument prints the current value
-looktap appearance dark
-looktap appearance light
-# xs s m l xl xxl xxxl ax1…ax5 (default l)
-looktap textsize ax2
-# 9:41, full battery and signal, for screenshots; `live` to undo
-looktap statusbar clean
-looktap statusbar live
-# portrait landscape left right upsidedown; ls, taps and shots follow the turned screen
-looktap rotate landscape --ls
-# a foldable simulator (iPhone Duo): closed (the outer screen), half or open (the inner one); ls, taps, shots
-# and recordings follow the screen it shows. No argument prints which screen is in use
-looktap fold open --ls
-looktap fold
-# Android only: airplane mode
-looktap network offline
-looktap network online
-# iOS only: a remote notification; plain text, '{json}', or a .json file
-looktap push com.example.myapp "Your order has shipped"
-looktap push com.example.myapp '{"aps":{"alert":"Hi"},"orderId":7}'
-```
-
-### Batch
-
-```bash
-# several steps in one call; stops at the first failure and names it
-looktap run 'tap General; tap About; wait "iOS Version"; ls'
-# one step per line from stdin, # for comments
-looktap run - < steps.txt
-# flow files (run scripts) as tests: a line per flow, exit 1 if any fails. A failure saves the screen, a
-# screenshot, error logs and crashes in <out>/failures/<flow>/. --junit: a report for CI
-looktap test flows/ --junit results/junit.xml -o results
-# Android: the user uses the phone and each touch is saved as a step (a person drives this one, not you)
-looktap codegen flows/checkout.txt com.example.app
-# steps for flows: a fixed wait, for what has nothing to wait on (prefer wait or wait --settle)
-looktap pause 1.5
-# the person's turn (a consent screen, a second factor): shows the message and a notification, then carries on
-# once the label is on screen (--gone: off it), up to 5 min or --wait. Without --until: when they press Enter
-looktap handoff "Approve the sign-in on the phone" --until "Home"
-looktap handoff "Enter the code from the email" --until "Verify" --gone
-```
-
-### Devices and setup
-
-```bash
-# what's running or connected: simulator, emulator or real phone (model, OS, USB/Wi-Fi), window or headless,
-# and what the user must do for a phone that isn't ready. --all: also what boot can start. --json: structured
-looktap devices --all
-# boot one by name (UDID or AVD too), wait until it's ready; --window (default) or --headless.
-# (Xcode 27.1 shows simulators in Device Hub, one at a time: the user picks it there to watch)
-# One that's still starting (devices says so) is waited for: use boot, not an adb/simctl polling loop
-looktap boot "iPhone 16 Pro" --window
-looktap boot Pixel_9a --headless
-looktap shutdown Pixel_9a
-looktap devices
-looktap doctor
-# the way to one device: a real iPhone's tunnel, usbmuxd, lock screen, which routes its runner answers on
-looktap doctor -d 00008120-001A2B3C4D5E6F70
-# start the helper ahead of time (Android: also adb reverse tcp:8081 for Metro); teardown undoes it
-looktap setup
-looktap teardown
-# serve the same commands over MCP, for clients without a shell; --config prints a client config
-looktap mcp --config
-# print this guide, or install it for every coding agent on this machine (Claude Code, Codex, Cursor, Gemini CLI,
-# Copilot, OpenCode, …); run it again after upgrading looktap, and doctor says when a copy is out of date
-looktap skill --install
-# only some agents; or into this repo (.claude/skills and .agents/skills by default) to share it with the team
-looktap skill --install --agents claude,cursor
-looktap skill --install --project
-# which agents looktap knows, which are on this machine, what's installed where; and taking it out again
-looktap skill --list
-looktap skill --uninstall
-```
-
-## Options and config
-
-```bash
-# with more than one booted device, name the platform (-p, --platform) and/or the device (-d, --device)
-looktap -p android ls
-looktap -p ios -d 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 ls
-# where screenshots and videos go (-o, --out; default ./shots)
-looktap -o out/run1 shot home
-# the app for launch / open / logs / crashes / reset …
-looktap --app com.example.myapp launch
-# how long tap / fill / back wait for their target (default 3 s)
-looktap --wait 10 tap "Continue"
-# a locked device: wait up to 60 s for the user to unlock it, then carry on (default: fail at once)
-looktap --wait-unlock 60 launch com.example.myapp
-# every command and option: -h or --help · the version: -v or --version
-looktap --help
-looktap --version
-```
-
-Put the app id in `looktap.config.json` at the repo root, so you don't have to pass it every time.
-looktap uses the nearest one, walking up from the current folder:
-
-```json
-{ "out": "shots", "wait": 3, "ios": { "app": "com.example.myapp" }, "android": { "app": "com.example.myapp" } }
-```
-
-Command-line options beat `LOOKTAP_*` environment variables, which beat the config file. Passing both `-p` and
-`-d` makes every command about 0.2 s faster.
-
-**Exit codes:** `0` OK · `2` usage or not found (bad arguments, no such element, no device) · `1` anything else.
-On exit 2, read the message, run `ls`, adjust. Don't retry the same command blindly.
+| File | Read it for |
+|---|---|
+| [references/commands.md](references/commands.md) | every command and option: gestures, typing, screenshots and video, installing and resetting apps, permissions, dark mode, text size, location, rotation, folding, network, push, the config file |
+| [references/flows.md](references/flows.md) | flow files as tests for CI (`test`), recording a flow (`codegen`), signing in, pages with no labels, handing over to the user (`handoff`) |
+| [references/devices.md](references/devices.md) | booting, choosing or setting up a device; a real phone that isn't ready, is on Wi-Fi, or runs iOS 16 or older |
+| [references/debugging.md](references/debugging.md) | a crash or an error: logs, crash reports, performance (`perf`, `launch --time`), the app's files |
 
 ## Targeting elements
 
@@ -383,104 +175,6 @@ On exit 2, read the message, run `ls`, adjust. Don't retry the same command blin
 - **`tapxy x y`** is the last resort, for things `ls` doesn't list.
 - **After `rotate` or `fold`, read the screen again.** Old refs and coordinates are stale.
 
-## Example: sign in and check the home screen
-
-```bash
-looktap launch --ls
-looktap fill "Email" sam@example.com
-looktap fill "Password" "$TEST_PASSWORD"
-looktap tap "Sign in"
-# a verification code, if the test account asks for one: only a code the user gave you for it
-looktap wait "Verification code"
-looktap code 540390 --ls
-looktap wait "Home"
-looktap shot home --scale 0.5
-```
-
-Only with a test account the user gave you. Never type real credentials (see Rules). The same commands work in a
-web sign-in inside an app (a web view): if `fill` or `code` exits 1, read what it says the field holds and report
-it, rather than typing around it.
-
-## Example: reproduce a bug and collect the evidence
-
-```bash
-looktap open "myapp://cart" --ls
-looktap tap "Pay" --ls
-# right after the step that misbehaved: only what's new is shown
-looktap logs --errors
-# "warning: … is no longer running" after an action means it crashed or was killed
-looktap crashes
-looktap shot pay__error
-```
-
-On iOS the full crash report is written up to a minute later; run `crashes` again. On Android, `LOW_MEMORY`
-means the system killed the app, which isn't a bug in it.
-
-## Example: turn what worked into a test
-
-Once a flow works by hand, save its steps as a file the user's CI can run, with `expect` where it should check:
-
-```bash
-# flows/sign-in.txt
-launch com.example.app
-fill Email sam@example.com
-tap "Sign in"
-wait Welcome
-expect "Sign in" --gone
-```
-
-Then `looktap test flows/`. Steps are the same commands, one per line, `#` for comments, and `${NAME}` reads an
-environment variable (for a test account's password: never write one into the file). A flow that fails names
-the step, prints its output, and leaves its evidence under `<out>/failures/`. An app that dies fails the flow.
-
-## Example: screenshots in dark mode with large text
-
-```bash
-looktap statusbar clean
-looktap appearance dark
-looktap textsize ax2
-looktap launch --ls
-looktap shot home__dark_ax2
-# set back what you changed
-looktap textsize l
-looktap appearance light
-looktap statusbar live
-```
-
-## Example: check a layout on a foldable
-
-```bash
-# the iPhone Duo simulator (Xcode 27.1): the outer screen, then the inner one, unfolded
-looktap fold closed
-looktap launch com.example.myapp --ls
-looktap shot home__closed --scale 0.5
-looktap fold open --ls
-looktap shot home__open --scale 0.5
-# set it back as you found it
-looktap fold closed
-```
-
-Closing takes the simulator a few seconds; `fold` waits for it. Refs from before a fold are stale: `ls` again.
-
-## Example: start from a clean install
-
-```bash
-looktap install build/MyApp.app
-looktap reset com.example.myapp
-looktap permission grant location com.example.myapp
-looktap launch --ls
-```
-
-## Example: catch a toast or a spinner
-
-```bash
-looktap burst ./frames 5 &
-looktap swipe 200 250 200 700
-wait
-```
-
-Then look at the few frames that matter, not all of them.
-
 ## Rules
 
 - **Never type real credentials, OTPs or card numbers.** A person signs in, then you take over. `fill` and `code`
@@ -499,10 +193,6 @@ Then look at the few frames that matter, not all of them.
   the field back and retypes it, but `type` doesn't check: after `type`, confirm with `expect "<field>" = …`.
 - **A field that moves when tapped** (a search bar that opens into a sheet) is typed into where it lands: `tap` it
   with `--ls`, then `type`, then `expect "<field>" = …`. `fill` aims at where it was.
-- **`launch` fails with "exited right after it started"?** The app crashed at launch: `looktap crashes <app>`
-  shows the report. A crash just after `launch` returns is named by the next `ls`.
-- **`launch` says an app isn't installed?** Some simulator runtimes ship without Maps, Photos and the like (the
-  iPhone Duo's iOS 27.1 has Safari and Settings). `looktap apps --all` lists what's there; don't install system apps.
 - **Some simulators are slow** (the iPhone Duo, any just after boot): `launch --ls` can come back before the app is
   in front. Follow it with `wait "<text you expect>"` instead of acting on the home screen.
 - **App-state and condition commands need the app id.** They never act on whatever happens to be on screen.
@@ -510,35 +200,16 @@ Then look at the few frames that matter, not all of them.
   uncovered part and says `off-centre`. If it warns that another element covers the point, nothing of the target
   was left clear and the tap probably hit that: dismiss it (React Native's LogBox toast: `looktap dismiss logbox`),
   then tap again.
-- **`hidekb` also takes focus from the field** (Android too), so validate-on-blur errors appear after it.
 - **After `textsize` or `appearance` on Android**, a note that the app restarted means every ref is stale: `ls`.
-- **`shot` says how the image maps to the screen** (on stderr): `216x384 px = 360x640 dp: tapxy x y = image x y ×
-  1.667`. Multiply a point read off the image by that factor for `tapxy`, or take it with `--points`, where the
-  factor is 1.
 - **If `ls` says only the status bar is readable**, a system prompt (passcode, permission, alert) is on top.
   `shot` to see it. Never enter a passcode unless the user gave it to you for this device.
-- **Measure performance with `perf` and `launch --time`, not by eye.** Simulator numbers are the Mac's CPU and
-  memory: compare builds or screens against each other, and say so when you report them. Run `perf --for` while
-  the screen does the thing being measured (a scroll, a load), and `perf --frames` just before and right after it.
-- **Start with `looktap devices`** to see which devices are real phones and which are simulators or emulators.
-  An Android phone on both USB and Wi-Fi is one row (`USB + Wi-Fi`) and is driven over USB.
-  A phone marked "not ready" needs the user: tell them exactly what it says (accept the USB debugging prompt, tap
-  Trust, turn on Developer Mode). One marked "still starting" needs no one: `looktap boot <name>` waits for it.
+- **Start with `looktap devices`**: it says which devices are real phones, and what the user must do for one that
+  isn't ready ([references/devices.md](references/devices.md)).
 - **Use looktap, not adb or simctl, for device and app state:** `boot` instead of polling for boot completion,
   `apps <id>` instead of `simctl listapps` or `pm list packages` to check an app is installed.
 - **If a command says the device is locked**, ask the user to unlock it. Don't retry in a loop, and never enter a
   passcode unless they gave it to you for this device. `looktap devices` shows `locked` up front; in a long
   sequence, `--wait-unlock 60` lets the user unlock it while the command waits.
-- **A real iPhone on Wi-Fi that doesn't answer:** looktap says within ~20 s that the runner is up but out of reach,
-  and what each route answered. Ask the user to plug in a USB cable (looktap moves to it by itself) and run the
-  command again; `looktap doctor -d <UDID>` shows each step. Don't `teardown` first: the runner keeps running.
-- **An iPhone on iOS 16 or older** (`devices` shows `through lockdown`): Xcode 27 doesn't support it, so looktap
-  sets it up itself. With Developer Mode off, `looktap setup -d <UDID>` turns it on when the phone has no passcode
-  (the phone restarts; warn the user first); with a passcode it asks the user to turn it on. The first command may also ask to enter the passcode once
-  for "Enable UI Automation"; relay that and wait. If it says the runner's profile doesn't include the phone, the
-  user has to add its UDID to their team at developer.apple.com; you can't.
-- **Sign-in pages with no labels** (Google's, most web sign-ins): `wait --settle` after each tap, and `handoff` for
-  what only the user can do (consent, a second factor). Don't guess with `pause`.
 - **If `hidekb` exits 2** (iOS search keyboards have no Done key), tap the screen's close or cancel control.
 - **Log lines can contain tokens or personal data.** Quote only the lines that matter.
 

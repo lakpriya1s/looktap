@@ -75,12 +75,30 @@ const PAGES = [
 ];
 const SKIPPED = ['Contents']; // the landing page and the sidebar replace it
 
+/** The skill's reference files (skills/looktap/references/*.md), shown on its page after SKILL.md: [{ file, title, md }]. */
+const SKILL_REFS = 'skills/looktap/references';
+const skillReferences = () =>
+  readdirSync(join(ROOT, SKILL_REFS)).filter((f) => f.endsWith('.md')).sort().map((file) => {
+    const md = read(`${SKILL_REFS}/${file}`);
+    return { file, title: /^# (.*)$/m.exec(md)[1], md };
+  });
+
+/** Every heading one level down (# → ##), outside code blocks. */
+function demote(md) {
+  let fence = false;
+  return md.split('\n').map((l) => {
+    if (/^\s*(```|~~~)/.test(l)) fence = !fence;
+    return !fence && /^#{1,5} /.test(l) ? `#${l}` : l;
+  }).join('\n');
+}
+
 /** A file's Markdown for a docs page: front matter and its own top heading dropped, the rest kept. */
 function fileBody(path) {
   let md = read(path).replace(/^---\n[\s\S]*?\n---\n/, '');
   // The page has its own title: the file's H1 becomes a section heading (or goes, for the skill).
-  md = path.endsWith('SKILL.md') ? md.replace(/^# .*\n/m, '') : md.replace(/^# (.*)$/m, '## The full benchmark: $1');
-  return md;
+  if (!path.endsWith('SKILL.md')) return md.replace(/^# (.*)$/m, '## The full benchmark: $1');
+  // The skill's references follow it, each a section of the page.
+  return [md.replace(/^# .*\n/m, ''), ...skillReferences().map((r) => demote(r.md))].join('\n\n');
 }
 
 /**
@@ -120,6 +138,9 @@ function makeLinker(page, anchors, pageIds) {
     }
     const [path, hash = ''] = href.replace(/^\.\//, '').split('#');
     const files = { 'BENCHMARK.md': 'benchmark', 'README.md': 'quick-start', 'skills/looktap/SKILL.md': 'agent-guide' };
+    // The skill's own links to its references (references/x.md, or x.md from another reference): their section here.
+    const ref = page.slug === 'agent-guide' && skillReferences().find((r) => path === r.file || path === `references/${r.file}`);
+    if (ref) return `#${render(`## ${ref.title}`).headings[0].id}`;
     if (files[path]) {
       const target = files[path];
       if (hash && !pageIds.get(target).has(hash)) problems.push(`${page.slug}: link to unknown anchor ${href}`);

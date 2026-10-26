@@ -818,8 +818,10 @@ for d in 42E41FA7-EA40-45C1-8C6E-13A70BAF1FD6 F9213EDC-180D-412B-B24C-2FD69A37D3
 done
 ```
 
-Passing **both** `-p` and `-d` (or exporting `LOOKTAP_PLATFORM` and `LOOKTAP_DEVICE`) makes every command about
-0.2 s faster, because looktap then skips listing devices.
+A command that names no device uses the one the last command used, for 10 minutes and while it's still up, without
+listing devices again (0.3–0.5 s saved on each command). `boot` and every command that names a device (`-d`,
+`LOOKTAP_DEVICE`) set it. When two people or agents drive two devices at the same time, each should name its device
+on every command.
 
 ## For AI agents
 
@@ -835,8 +837,10 @@ Pick the route that fits your agent:
 
 `looktap skill --install` finds the coding agents on your machine (by their config folder or command) and writes
 the skill into the folder each one reads, with the frontmatter that agent accepts: Codex, for one, rejects fields
-it doesn't know. Each copy carries looktap's version: run it again after upgrading, and `looktap doctor` says when
-a copy is out of date.
+it doesn't know. The skill is a short `SKILL.md` for the everyday loop plus `references/` (every command, flows,
+devices, debugging) that the agent reads only when a task needs them; both are copied. Each copy carries looktap's
+version: run it again after upgrading, and `looktap doctor` says when a copy is out of date. `looktap skill
+commands` (or `flows`, `devices`, `debugging`) prints one reference.
 
 ```bash
 looktap skill --install                          # every agent found here, user-wide
@@ -890,12 +894,16 @@ took 11–19 on Android.
 - **`wait`** instead of guessing `sleep`s. After an action that loads data, `--ls` can return a loading skeleton,
   so wait for the text you expect.
 - **`run`** batches steps you already know into one call and one process. It prints each step as `$ <step>`, stops
-  at the first failure, and names it:
+  at the first failure, and names it. `--ls` prints the screen it ended on:
 
   ```bash
-  looktap run 'tap General; wait About; tap About --ls'
+  looktap run 'tap General; wait About; tap About' --ls
   looktap run - < steps.txt          # one step per line, # for comments
   ```
+
+- **A failure shows the screen.** When a label or `@ref` isn't there, a label is ambiguous or an `expect` doesn't
+  hold (in a `run` step too), looktap prints the error and then the screen as it is, with fresh `@ref`s. The next
+  call can fix the step without an `ls` first.
 
 - **`logs` / `crashes`** after a step that misbehaved. Each `logs` shows only what's new since the last one.
 - **`perf` / `launch --time`** when the question is speed or memory: numbers instead of impressions. `perf --for`
@@ -1045,12 +1053,12 @@ to settle unless asked (`--ls`).
 | `looktap push <app> <payload>` | iOS: a remote notification. The payload can be a `.json` file, inline JSON, or plain text for an alert |
 | **Batch, setup & info** | |
 | `looktap mcp [--config]` | Serves these commands over MCP (stdio) for clients without a shell. `--config` prints a client config |
-| `looktap run '<cmd>; <cmd> …'` | Several commands in one process. `run -` reads them from stdin. Stops at the first failure and names it |
+| `looktap run '<cmd>; <cmd> …' [--ls]` | Several commands in one process. `run -` reads them from stdin. Stops at the first failure and names it; `--ls` prints the screen it ended on |
 | `looktap codegen <flow-file> [app]` | Android: restarts the app, then saves each touch on the device as the step that replays it: `tap "<label>"`, `fill <field> <text>`, `scrollto`, `longpress`, `zoom`, `back`, `home`. A command typed while it records (`expect "Welcome"`) is run and saved too; `undo` drops the last step; Enter on an empty line or Ctrl+C ends it. See [Record a flow](#record-a-flow-codegen) |
 | `looktap pause <seconds>` | Waits a fixed time: `2`, `1.5s`, `500ms`. For what has nothing to wait on; `wait` and `wait --settle` are quicker and sturdier when they apply |
 | `looktap handoff <message> [--until <label\|@ref>] [--gone]` | A step only a person can do: a consent screen, a second factor. Prints the message to the terminal at once (even inside `test`), shows it as a macOS notification (`LOOKTAP_NOTIFY=0` turns that off), then waits until `<label>` is on screen (`--gone`: until it's off it), up to 5 minutes or `--wait`. Without `--until`, until Enter is pressed in the terminal. So "a person signs in, then looktap carries on" is a step of the flow, not a failure |
 | `looktap test <flow\|dir> … [--junit file]` | Runs flow files (`run` scripts, one step per line) as tests, folders searched, and prints a line per flow and the totals. Exits 1 if any flow fails. A failed flow prints its output and leaves `error.txt`, `output.txt`, `screen.txt`, `screen.png`, `logs.txt` and `crashes.txt` in `<out>/failures/<flow>/`. An app that dies during a flow fails it. `--junit` writes a JUnit XML report |
-| `looktap skill [--install\|--uninstall\|--list] [--agents a,b\|all] [--project]` | Prints the AI-agent guide. `--install` writes it for every coding agent on the machine (or `--agents`), each in its own skills folder, or into the repo with `--project`. `--list` shows the agents and what's installed where ([details](#every-coding-agent)) |
+| `looktap skill [name] [--install\|--uninstall\|--list] [--agents a,b\|all] [--project]` | Prints the AI-agent guide, or one of its references by name (`commands`, `flows`, `devices`, `debugging`). `--install` writes it for every coding agent on the machine (or `--agents`), each in its own skills folder, or into the repo with `--project`. `--list` shows the agents and what's installed where ([details](#every-coding-agent)) |
 | `looktap devices [--all] [--json]` | What's running or connected, and what each is: simulator, emulator (with its AVD name) or real device (model, OS version, USB or Wi-Fi, and `locked` while its lock screen is up), and whether it has a window or runs headless. An Android phone on both USB and Wi-Fi is one row (`USB + Wi-Fi`), and commands drive it over USB; `-d` with its Wi-Fi id still picks Wi-Fi. A phone that's connected but not ready is listed with what to do (accept the USB debugging prompt, tap Trust, turn on Developer Mode). A simulator or emulator still starting is listed as such. `--all` also lists what `boot` can start; `--json` for scripts and agents |
 | `looktap boot [name] [--window\|--headless]` | Boots an iOS simulator or Android emulator by name, UDID or AVD name (exact, else a unique prefix or substring; `-p` to choose a platform) and waits until it's ready to drive. Opens its window unless `--headless` (or `LOOKTAP_HEADLESS=1`, or `"headless": true` in the config file). Already running: says so, and `--window` opens a simulator's window. One that's still starting (adb lists an emulator offline while it boots) is waited for, not started twice. A running device can't drop its window (closing the Simulator app shuts its simulators down; an emulator starts with or without one), so `--headless` then says how to restart it. From Xcode 27.1 simulators show in Device Hub, one window for the device picked in its sidebar: `--window` opens Device Hub, and you pick the simulator there |
 | `looktap shutdown [name]` | Shuts down a simulator or emulator (name, UDID, AVD name or serial), and waits until it's gone |
@@ -1064,7 +1072,8 @@ it to stop changing, then prints it like `ls`.
 
 **Exit codes:** `0` means OK. `2` means a usage problem: bad arguments, element not found, no device, or the
 helper can't start. `1` means anything else failed, including an `expect` that didn't hold and a `test` run with a
-failed flow. A script can `set -e` and stop at the first missing element.
+failed flow. A script can `set -e` and stop at the first missing element. After a missing or ambiguous element or a
+failed `expect`, the screen as it is follows the error.
 
 ## Platform support
 
@@ -1329,7 +1338,8 @@ Notes for contributors:
   - a method on both `Ios` and `Android`, or, if it only reads the screen, code in `lib/screen.js`;
   - a `case` in `bin/looktap.js`;
   - a row in this README;
-  - a line in `skills/looktap/SKILL.md` if agents should use it;
+  - a line in `skills/looktap/SKILL.md` if agents use it on most runs, else in the fitting file under
+    `skills/looktap/references/`;
   - a scene that shows it in `site/src/scenes.js` (its `covers` list). `npm run site:build` fails until the
     README row and the scene are there.
 
