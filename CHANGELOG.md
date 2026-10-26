@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.7.6
 
 ### Added
 
@@ -19,7 +19,6 @@
   "LooktapRunner-Runner"; it now shows the looktap mark (white on teal) as "looktap runner". Xcode's runner template
   has neither, so looktap sets them in the built app and signs it again (`swift scripts/runner-icon.swift` redraws
   the PNGs).
-
 - **A failure shows the screen.** When a label or `@ref` isn't there, a label is ambiguous or an `expect` doesn't
   hold (a `run` step's too, and over MCP), the error is followed by the screen as it is, with fresh `@ref`s: an agent
   fixes the step from that output instead of spending a call on `ls`.
