@@ -532,6 +532,11 @@ Then look at the few frames that matter, not all of them.
 - **A real iPhone on Wi-Fi that doesn't answer:** looktap says within ~20 s that the runner is up but out of reach,
   and what each route answered. Ask the user to plug in a USB cable (looktap moves to it by itself) and run the
   command again; `looktap doctor -d <UDID>` shows each step. Don't `teardown` first: the runner keeps running.
+- **An iPhone on iOS 16 or older** (`devices` shows `through lockdown`): Xcode 27 doesn't support it, so looktap
+  sets it up itself. With Developer Mode off, `looktap setup -d <UDID>` turns it on when the phone has no passcode
+  (the phone restarts; warn the user first); with a passcode it asks the user to turn it on. The first command may also ask to enter the passcode once
+  for "Enable UI Automation"; relay that and wait. If it says the runner's profile doesn't include the phone, the
+  user has to add its UDID to their team at developer.apple.com; you can't.
 - **Sign-in pages with no labels** (Google's, most web sign-ins): `wait --settle` after each tap, and `handoff` for
   what only the user can do (consent, a second factor). Don't guess with `pause`.
 - **If `hidekb` exits 2** (iOS search keyboards have no Done key), tap the screen's close or cancel control.

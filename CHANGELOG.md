@@ -1,5 +1,29 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **iPhones on iOS 16 and older, with Xcode 27.** Xcode 27 dropped them (it lists one without a UDID, and
+  `devicectl` and `xcodebuild` can't reach it), so looktap now does Xcode's part itself through the phone's lockdown
+  services, in Node with no new dependency: `setup` turns Developer Mode on (AMFI: the phone restarts and looktap
+  answers the prompt) when the phone has no passcode, and otherwise makes its switch appear in Settings; it mounts
+  the developer disk image (downloaded once when Xcode has none), installs apps through `installation_proxy` (over
+  AFC), and starts the runner over `testmanagerd` (DTX, as `xcodebuild test` does) instead of `xcodebuild`. The runner is
+  built for any iPhone and patched to start on the older iOS (Xcode 27's test host asks for iOS 17). `devices` lists
+  such a phone as `iOS 16.x (through lockdown)` instead of leaving it out, and `doctor -d` checks Developer Mode and
+  the image. Tested on an iPhone X on iOS 16.7.
+- **`location` and `crashes` on those iPhones:** the developer image's simulated location, and the phone's crash
+  reports (crashreportcopymobile), each summarised with the full report saved.
+- **The runner has an icon and a name.** The XCUITest runner app on a real iPhone showed a blank icon named
+  "LooktapRunner-Runner"; it now shows the looktap mark (white on teal) as "looktap runner". Xcode's runner template
+  has neither, so looktap sets them in the built app and signs it again (`swift scripts/runner-icon.swift` redraws
+  the PNGs).
+
+### Changed
+
+- The real-device runner now builds for iOS 16 and later (was 17), so it is rebuilt once.
+
 ## 0.7.5
 
 ### Added
