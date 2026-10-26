@@ -1,5 +1,34 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **`ls` says what's partly hidden.** A row that something listed is drawn over, or that runs past the screen's
+  edge, says how much after it: `[56% covered by @16 @17 @18]`, `[30% off screen]` (`covered`, `coveredBy` and
+  `offScreen` in `--json`). A list row half under a tab bar, or a toast over a button, now shows without comparing
+  frames by hand or taking a screenshot. `ls --covered` lists only those rows. It's the same "what's on top" that
+  `tap` aims around.
+- **`launch --until "<text>"`** launches the app, then waits until the text is on screen (up to `--wait`, default
+  30 s): past a splash screen, or a React Native debug build loading its bundle from Metro, in one call. After
+  `launch --ls` alone, a screen of a few rows with nothing to tap gets a note that it may still be loading.
+- **`--duration <ms>`** on `swipe` and `longpress`, the same as their trailing `ms` argument (`800`, `800ms`,
+  `0.8s`): the name people and agents reach for first.
+
+### Changed
+
+- **An unknown option is an error (a behaviour change).** looktap used to drop an option it didn't know and exit 0, so
+  `swipe 192 600 192 300 --duration 800` ran at the default speed with no word about it. It now exits 2 with
+  `unknown option --duration for swipe; usage: swipe <x1> <y1> <x2> <y2> [ms]`. Text that starts with `-` goes after
+  `--` (`type -- -5`); `codegen` writes flow steps that way. A saved flow or CI script with a leftover or misspelled
+  flag used to pass and now fails: take the flag out. Over MCP, text that starts with `-` is passed after `--` for you.
+
+### Fixed
+
+- **Android: what's drawn on top is known.** The helper lists each element's children in the order they're drawn
+  (elevation, React Native's `zIndex`) instead of their layout order, so a dialog drawn over a bottom sheet counts as
+  on top of it. `tap` aimed around the wrong element on such screens.
+
 ## 0.7.6
 
 ### Added

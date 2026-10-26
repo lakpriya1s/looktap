@@ -17,7 +17,7 @@ import { boot, shutdown } from '../lib/boot.js';
 import { resizePng } from '../lib/png.js';
 import { formatDevice, inventory, lastDevice, rememberDevice } from '../lib/devices.js';
 import { ORIENTATIONS, coordinates, foldPosition, pushPayload, rotation, textSize } from '../lib/conditions.js';
-import { LOGBOX, appGone, center, expectOn, fillCode, poller, tapPoint, forgetFront, formatRow, isRef, lastFront, logBoxToast, rememberFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, signature, sliding, stillScreen, visibleRows, waitFor } from '../lib/screen.js';
+import { LOGBOX, appGone, center, coverage, expectOn, fillCode, poller, tapPoint, forgetFront, formatCoverage, formatRow, isRef, lastFront, logBoxToast, rememberFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, signature, sliding, stillScreen, visibleRows, waitFor } from '../lib/screen.js';
 import { duration, formatFrames, formatReading, formatSamples, readingJson } from '../lib/perf.js';
 import { flowFiles, flowName, junit } from '../lib/testing.js';
 import { ADB, HOME, LockedError, NotFound, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
@@ -51,7 +51,9 @@ setup & info
   teardown                        stop the helper · Android: remove adb reverse rules
 
 look
-  ls [--all] [--json]             on-screen elements: @ref  type  x,y  WxH  label  [= value]
+  ls [--all] [--json] [--covered]
+                                  on-screen elements: @ref  type  x,y  WxH  label  [= value]. A row partly hidden
+                                  says so: [56% covered by @16 @17], [30% off screen]. --covered: only those rows
   wait <label|@ref> [--gone]      until it appears (or disappears); default timeout 10 s, or --wait
   wait --settle [--for 1s]        until the screen (its elements and its picture) holds still for 1 s: for web
                                   pages and canvases with no labels to wait for. Timeout 10 s, or --wait
@@ -70,7 +72,8 @@ look
 act                               add --ls to any of these to print the settled screen afterwards
   tap <label|@ref> [--exact]      @ref: a row from the last ls. Label: exact, else a prefix/contains
                                   match that names one label (ambiguous → error). Prints what it tapped
-  longpress <label|@ref|x y> [ms] hold for ms (default 800)
+  longpress <label|@ref|x y> [ms]
+                                  hold for ms (default 800; or --duration <ms>)
   zoom in|out [x y] [--scale f]   two-finger pinch around a point (default: the screen centre; scale 2.5)
   tapxy <x> <y>                   iOS points / Android dp
   type <text>                     into the focused field
@@ -83,13 +86,15 @@ act                               add --ls to any of these to print the settled 
   code <digits>                   a one-time code into its row of boxes: types from the first box, checks
                                   each box, pastes the code if typing didn't fill them
   hidekb                          dismiss the keyboard and take focus from the field
-  swipe <x1> <y1> <x2> <y2> [ms]
+  swipe <x1> <y1> <x2> <y2> [ms]  a drag over ms (or --duration <ms>)
   back                            Android system back · iOS navigation-bar back button
   home                            the Home button: to the home screen, the app left running
   open <url>                      deep link (e.g. myapp://home)
-  launch [app] [--time|--resume]  (re)start the app. --time: how long until it's in front and its first
+  launch [app] [--time|--resume] [--until <text>]
+                                  (re)start the app. --time: how long until it's in front and its first
                                   screen has settled (Android: also the system's own TotalTime). --resume:
-                                  bring it forward as it was, without restarting it
+                                  bring it forward as it was, without restarting it. --until: then wait until
+                                  <text> is on screen (past a splash screen; up to --wait, default 30 s)
   stop [app]                      terminate it, and wait until its process is gone
   bio match|nomatch               Face ID / fingerprint
   dismiss logbox                  close React Native's LogBox toast (dev builds), which blocks taps around it.
@@ -183,6 +188,7 @@ Never burst or record a sign-in screen: frames capture typed credentials.`;
 function parse(argv) {
   const opts = { flags: new Set() };
   const pos = [];
+  let unknown = null;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     const val = () => {
@@ -205,11 +211,33 @@ function parse(argv) {
     else if (a === '--agents') opts.agents = val();
     else if (a === '--until') opts.until = val();
     else if (a === '--wait-unlock') opts.waitUnlock = val();
-    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window', '--paths', '--frames', '--time', '--resume', '--project', '--uninstall', '--list', '--settle', '--points'].includes(a)) opts.flags.add(a.slice(2));
+    else if (a === '--duration') opts.duration = val();
+    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window', '--paths', '--frames', '--time', '--resume', '--project', '--uninstall', '--list', '--settle', '--points', '--covered'].includes(a)) opts.flags.add(a.slice(2));
     else if (a === '--') pos.push(...argv.slice(i + 1)), (i = argv.length);
+    // An option looktap doesn't know is a mistake, not an argument: dropped quietly, a guessed flag changes nothing
+    // and nobody hears of it. Negative numbers (-0.1276) and a lone - stay arguments.
+    else if (/^--?[a-z]/i.test(a)) unknown ??= a;
     else pos.push(a);
   }
-  return { opts, cmd: pos[0], args: pos.slice(1) };
+  const cmd = pos[0];
+  if (unknown) {
+    const usage = usageOf(cmd);
+    // A label or text can start with "-" too: it goes after --.
+    const text = ['tap', 'longpress', 'type', 'fill', 'paste', 'wait', 'expect', 'scrollto', 'handoff'].includes(cmd);
+    throw new UsageError(`unknown option ${unknown}${cmd ? ` for ${cmd}` : ''}${usage ? `; usage: ${usage}` : ''}${text ? ` (text that starts with "-" goes after --: looktap ${cmd} -- ${unknown})` : ''}`);
+  }
+  if (opts.duration != null) {
+    if (!['swipe', 'longpress'].includes(cmd)) throw new UsageError(`--duration goes with swipe and longpress${cmd ? `, not ${cmd}` : ''}`);
+    opts.duration = gestureMs(opts.duration);
+  }
+  return { opts, cmd, args: pos.slice(1) };
+}
+
+/** The command's line from the help text (`swipe <x1> <y1> <x2> <y2> [ms]`), or null. */
+function usageOf(cmd) {
+  if (!cmd || !/^[a-z]+$/.test(cmd)) return null;
+  const line = HELP.split('\n').find((l) => l.startsWith(`  ${cmd} `) || l === `  ${cmd}`);
+  return line ? line.trim().split(/\s{2,}/)[0] : null;
 }
 
 /** A physical iPhone/iPad's hardware UDID (00008110-000A…, or 40 hex digits on older ones), not a simulator's. */
@@ -422,10 +450,20 @@ async function list(d, opts, snap) {
     warnIfGone(await appGone(d, last), ago >= 1 ? `it was in front at the last ls, ${Math.round(ago)} min ago` : '');
   }
   saveRefs(deviceId(d), rows, front);
-  if (opts.flags.has('json'))
-    return console.log(JSON.stringify({ screen: snap.screen, elements: rows.map((e, i) => ({ ref: `@${i + 1}`, ...e })) }));
+  // What's partly hidden: under another element (a row under a tab bar) or past the screen's edge.
+  const hidden = coverage(snap.elements, rows, snap.screen);
+  const onlyHidden = opts.flags.has('covered');
+  if (opts.flags.has('json')) {
+    const json = (e, i) => {
+      const h = hidden.get(i);
+      return { ref: `@${i + 1}`, ...e, ...(h?.covered && { covered: Math.round(h.covered * 100), coveredBy: h.by }), ...(h?.off && { offScreen: Math.round(h.off * 100) }) };
+    };
+    return console.log(JSON.stringify({ screen: snap.screen, elements: rows.map(json).filter((_, i) => !onlyHidden || hidden.has(i)) }));
+  }
+  const lines = rows.map((e, i) => (hidden.has(i) ? `${formatRow(e, i + 1)}  ${formatCoverage(hidden.get(i))}` : onlyHidden ? null : formatRow(e, i + 1))).filter(Boolean);
   if (!rows.length) console.error('looktap: no labelled elements on screen (still loading, or the app sets no accessibility labels)');
-  else console.log(rows.map((e, i) => formatRow(e, i + 1)).join('\n'));
+  else if (!lines.length) console.log(`nothing covered or cut off (${rows.length} elements on screen)`);
+  else console.log(lines.join('\n'));
   // The system's own dialogs belong to package "android": only then is it worth asking what it is.
   const stuck = front?.id === 'android' ? await d.stuck?.().catch(() => null) : null;
   if (stuck) console.error(`looktap: ${stuck.app} ${stuck.why}: the system's dialog about it is on screen, and the app can't be driven until it closes. See: looktap crashes ${stuck.app}`);
@@ -515,6 +553,15 @@ async function dispatchOnce(d, cmd, args, opts) {
   const after = look ? await settle(d, { all, before, changeTimeout: cmd === 'launch' || cmd === 'open' ? 6000 : 1500 }) : null;
   if (app) warnIfGone(await appGone(d, app));
   if (look) await list(d, { ...opts, checked: Boolean(app) }, after);
+  if (look && cmd === 'launch' && !opts.until && splashLike(after.elements))
+    console.error('looktap: a few elements and nothing to tap: this may be a splash or loading screen (a React Native debug build loading its bundle). Follow with: looktap wait "<text>", or next time: looktap launch --until "<text>"');
+}
+
+/** A screen settle stopped at that is likely still loading: three rows at most, none a control or a field. */
+function splashLike(elements) {
+  const rows = visibleRows(elements).filter((e) => e.type !== 'Keyboard' && !(e.y + e.h <= 60));
+  // Android React Native's Pressable is a labelled ViewGroup: it counts as tappable.
+  return rows.length > 0 && rows.length <= 3 && !rows.some((e) => e.field || /Button|ViewGroup|Cell|Link|Switch|Tab|Field/.test(e.type));
 }
 
 /**
@@ -647,6 +694,30 @@ async function handoff(d, args, opts) {
   console.log('handed back');
 }
 
+/**
+ `launch --until <text>`: after the launch, until `text` is on screen — past a splash screen, or a debug build loading
+ its bundle. Up to --wait seconds (default 30: a bundle's first load from Metro is slow).
+ */
+async function launchedUntil(d, app, opts) {
+  if (!opts.until) return;
+  const timeout = opts.wait != null ? Number(opts.wait) * 1000 : 30e3;
+  try {
+    const hit = await waitFor(d, deviceId(d), opts.until, { timeout });
+    console.log(`launched ${app}: ${JSON.stringify(hit.label)} is on screen`);
+  } catch (e) {
+    if (!(e instanceof NotFound)) throw e;
+    if (!(await d.pidOf(app))) throw new Error(`${app} exited while looktap waited for ${JSON.stringify(opts.until)} — see: looktap crashes ${app}`);
+    throw e;
+  }
+}
+
+/** A gesture's length in ms: a bare number is ms (`600`), or with a unit (`600ms`, `0.8s`). */
+function gestureMs(v) {
+  const ms = /^\d+$/.test(String(v)) ? Number(v) : /[a-z]$/.test(String(v)) ? Math.round(duration(v)) : NaN;
+  if (!(ms > 0)) throw new UsageError(`a gesture's length is milliseconds, e.g. 600 or 0.6s, not ${JSON.stringify(String(v))}`);
+  return ms;
+}
+
 async function act(d, cmd, args, opts) {
   const need = (n, usage) => {
     if (args.length < n) throw new UsageError(`usage: looktap ${usage}`);
@@ -719,8 +790,8 @@ async function act(d, cmd, args, opts) {
       const num = (v) => /^\d+(\.\d+)?$/.test(v ?? '');
       // Two leading numbers are a point; a trailing number is the hold time, unless it is the whole target.
       const xy = num(args[0]) && num(args[1]);
-      const timed = args.length > (xy ? 2 : 1) && /^\d+$/.test(args.at(-1));
-      const ms = timed ? Number(args.at(-1)) : 800;
+      const timed = opts.duration == null && args.length > (xy ? 2 : 1) && /^\d+$/.test(args.at(-1));
+      const ms = gestureMs(opts.duration ?? (timed ? args.at(-1) : 800));
       let at, what;
       if (xy) (at = [Number(args[0]), Number(args[1])]), (what = `${at.join(',')}`);
       else {
@@ -774,7 +845,12 @@ async function act(d, cmd, args, opts) {
       return console.log(`entered ${args.join('')} in ${r.boxes} boxes (${r.how})`);
     }
     case 'hidekb': return d.hidekb();
-    case 'swipe': need(4, 'swipe <x1> <y1> <x2> <y2> [ms]'); return d.swipe(...args.slice(0, 4).map(Number), args[4] ? Number(args[4]) : undefined);
+    case 'swipe': {
+      need(4, 'swipe <x1> <y1> <x2> <y2> [ms]');
+      if (args.length > 5 || (args[4] && opts.duration != null)) throw new UsageError('usage: looktap swipe <x1> <y1> <x2> <y2> [ms] (or --duration <ms>)');
+      const ms = opts.duration ?? args[4];
+      return d.swipe(...args.slice(0, 4).map(Number), ms != null ? gestureMs(ms) : undefined);
+    }
     case 'back': return d.back();
     case 'home': {
       const before = await d.foreground();
@@ -796,15 +872,21 @@ async function act(d, cmd, args, opts) {
     case 'launch': {
       const app = args[0] || d.app;
       if (!app) throw new UsageError('usage: looktap launch <app-id> (or set --app / looktap.config.json)');
+      if (opts.until && opts.flags.has('time')) throw new UsageError('launch takes --time or --until, not both');
       if (opts.flags.has('resume')) {
         if (opts.flags.has('time')) throw new UsageError('launch takes --time or --resume, not both');
         await d.launch(app, { resume: true });
         // Done means it's in front, not that the start was sent.
         if (!(await waitForApp(d, app, 6000))) throw new Error(`${app} didn't come to the front`);
-        return console.log(`resumed ${app}`);
+        console.log(`resumed ${app}`);
+        return launchedUntil(d, app, opts);
       }
       if (opts.flags.has('time')) return timedLaunch(d, app);
       await d.launch(app);
+      if (opts.until) {
+        if (!(await waitForApp(d, app, 10000)) && !(await d.pidOf(app))) throw new Error(`${app} exited right after it started — see: looktap crashes ${app}`);
+        return launchedUntil(d, app, opts);
+      }
       // Done means it's in front, not that the start was sent: an app that dies at once says so. It can reach the
       // front before it dies (iOS shows its launch screen), so it's checked again a moment after.
       const died = new Error(`${app} exited right after it started — see: looktap crashes ${app}`);

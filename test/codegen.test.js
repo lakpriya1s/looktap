@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { parseTouchscreen } from '../lib/android.js';
-import { Recorder, TouchReader, classify, controlAt, fillLabel, labelFor, mapper, quote, secretName } from '../lib/codegen.js';
+import { Recorder, TouchReader, argWords, classify, controlAt, fillLabel, labelFor, mapper, quote, secretName } from '../lib/codegen.js';
 import { splitScript } from '../lib/util.js';
 
 const node = (label, x1, y1, x2, y2, extra = {}) => ({ label, x1, y1, x2, y2, cls: 'android.widget.TextView', focused: false, ...extra });
@@ -110,6 +110,10 @@ test('quote and secretName write what run reads back', () => {
     assert.deepEqual(splitScript(`tap ${quote(s)}`), [['tap', s]]);
   }
   assert.equal(quote('General'), 'General');
+  // Text that starts with "-" goes after --, so it isn't read as an option.
+  assert.equal(argWords('Email', 'sam@example.com'), 'Email sam@example.com');
+  assert.deepEqual(splitScript(`fill ${argWords('Amount', '-5 off')}`), [['fill', '--', 'Amount', '-5 off']]);
+  assert.equal(argWords('Photo', 800), 'Photo 800');
   assert.equal(secretName('Password'), 'PASSWORD');
   assert.equal(secretName('PIN code'), 'PIN_CODE');
 });
