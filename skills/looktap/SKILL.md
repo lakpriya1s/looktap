@@ -51,7 +51,12 @@ It works on `tap`, `longpress`, `zoom`, `tapxy`, `fill`, `type`, `key`, `paste`,
 1.5 s, 6 s for `launch`/`open`), then for it to stop changing.
 
 **`--ls` stops at a loading skeleton too.** If it shows a heading but none of the content, run
-`looktap wait "<text you expect>"` rather than acting on the placeholder.
+`looktap wait "<text you expect>"` rather than acting on the placeholder. Past a splash screen (a React Native debug
+build loading its bundle), `looktap launch --until "<text>"` launches and waits in one call.
+
+A row partly hidden says so after it: `[56% covered by @16 @17]` (something drawn over it: a tab bar, a toast) or
+`[30% off screen]`. Tap one that's covered by its uncovered part, or scroll it clear first; `ls --covered` lists only
+those rows, a quick layout check.
 
 ## Calls: fewest turns, no guessing
 
@@ -135,7 +140,7 @@ looktap devices                       # what's running or connected; boot "<name
 
 `-p ios|android` and `-d <udid|serial>` choose the device when more than one is up; `--app <id>` (or
 `looktap.config.json`) the app; `--wait <s>` how long a target is waited for (3 s). **Exit codes:** `0` OK · `2`
-usage or not found (bad arguments, no such element, no device) · `1` anything else. On exit 2, read the message and
+usage or not found (bad arguments, an unknown option, no such element, no device) · `1` anything else. On exit 2, read the message and
 the screen printed after it, then adjust. Don't retry the same command blindly.
 
 ## More, when the task needs it

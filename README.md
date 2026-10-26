@@ -892,7 +892,7 @@ took 11–19 on Android.
   ```
 
 - **`wait`** instead of guessing `sleep`s. After an action that loads data, `--ls` can return a loading skeleton,
-  so wait for the text you expect.
+  so wait for the text you expect. For a launch, `launch --until "<text>"` does both in one call.
 - **`run`** batches steps you already know into one call and one process. It prints each step as `$ <step>`, stops
   at the first failure, and names it. `--ls` prints the screen it ended on:
 
@@ -1001,7 +1001,7 @@ to settle unless asked (`--ls`).
 | Command | What it does |
 |---|---|
 | **Look** | |
-| `looktap ls [--all] [--json]` | Visible elements with a label, plus unlabelled buttons, each with an `@ref`. `--all` includes everything. `--json` prints `{screen, elements}`. While the screen is still loading (nothing labelled yet), waits up to `--wait`. An Android text field shows its label or hint, with what's typed as `= value`, as on iOS. `--all` folds a react-native-svg drawing into one row (`(svg, 9 shapes)`). Notes on stderr when React Native's LogBox toast is up (it blocks taps around it) or the system's "isn't responding" / "keeps stopping" dialog is |
+| `looktap ls [--all] [--json] [--covered]` | Visible elements with a label, plus unlabelled buttons, each with an `@ref`. `--all` includes everything. `--json` prints `{screen, elements}`. A row that something listed is drawn over, or that runs past the screen's edge, says how much: `[56% covered by @16 @17 @18]`, `[30% off screen]` (in `--json`: `covered`, `coveredBy`, `offScreen`), so a list row half under a tab bar or a toast over a button shows without a screenshot. `--covered` lists only those rows: a quick layout check. While the screen is still loading (nothing labelled yet), waits up to `--wait`. An Android text field shows its label or hint, with what's typed as `= value`, as on iOS. `--all` folds a react-native-svg drawing into one row (`(svg, 9 shapes)`). Notes on stderr when React Native's LogBox toast is up (it blocks taps around it) or the system's "isn't responding" / "keeps stopping" dialog is |
 | `looktap wait <label\|@ref> [--gone]` | Until it's on screen (with `--gone`, until it isn't). Default up to 10 s, or `--wait`. Exits 2 on timeout |
 | `looktap wait --settle [--for 1s]` | Until the screen holds still for 1 s (or `--for`): its elements and its picture both, so it works on web pages and canvases that have no labels to wait for (a sign-in page loading). Small screenshots are compared, so a blinking caret doesn't count as change. Up to 10 s, or `--wait`; exits 1 if it's still changing |
 | `looktap expect <label\|@ref> [= value] [--gone] [--exact]` | Checks it's on screen, with `= value` that its value is exactly that, or with `--gone` that it isn't. Matches like `wait` (`--exact`: the whole label only). Waits up to `--wait` (3 s) for it to come true. Exits 1 with what's there instead: `expect failed: "Email" is "sam@example.com", expected "kim@example.com"` |
@@ -1011,7 +1011,7 @@ to settle unless asked (`--ls`).
 | `looktap record start [name]` · `record stop` | An MP4 of everything in between, saved to `<out>/<name>.mp4`; `stop` prints the path and the length. Android: at most 3 minutes, `FLAG_SECURE` screens black |
 | **Act** (add `--ls` to print the settled screen afterwards) | |
 | `looktap tap <label\|@ref> [--exact]` | `@ref` from the last `ls`, or a label: exact, else a prefix/contains match that names a single label (ambiguous → exit 2, as is one label in two separate places). Aims at a part of the element nothing covers (a toast over half a button), and warns when nothing is left clear. Prints what it tapped |
-| `looktap longpress <label\|@ref\|x y> [ms]` | Holds the touch for `ms` (default 800). Same targets as `tap`, or a point |
+| `looktap longpress <label\|@ref\|x y> [ms]` | Holds the touch for `ms` (default 800; or `--duration <ms>`). Same targets as `tap`, or a point |
 | `looktap zoom in\|out [x y] [--scale f]` | Two-finger pinch around a point (default: the screen centre). `--scale` sets how far apart the fingers end up (default 2.5) |
 | `looktap tapxy <x> <y>` | Taps a point (iOS points / Android dp) |
 | `looktap type <text>` | Types into the focused field. Text the keyboard can't type (accents, emoji, CJK) is pasted, which replaces the clipboard. Doesn't check the field: `expect "<field>" = …` does |
@@ -1020,11 +1020,11 @@ to settle unless asked (`--ls`).
 | `looktap paste <text>` | Puts the text on the device's clipboard, checks it's there, and pastes it into the focused field. iOS simulator: Xcode 27 mirrors the Mac's clipboard into the simulator's, which wins over `simctl pbcopy`, so it goes through the Mac's clipboard when it must and puts back the text it held. Exits 1 if the clipboard won't take it |
 | `looktap code <digits>` | A one-time code into its row of boxes (four or more small fields side by side, a second line included): taps the first box, types the digits, and checks every box. Retries tapping each box, then pasting the code. Exits 1 listing what each box holds if they don't read the code, or if another field changed |
 | `looktap hidekb` | Dismisses the keyboard and takes focus from the field (blur handlers run), checking after each method. Exits 2 if it's still up |
-| `looktap swipe <x1> <y1> <x2> <y2> [ms]` | Default 150 ms on iOS, 300 ms on Android |
+| `looktap swipe <x1> <y1> <x2> <y2> [ms]` | Default 150 ms on iOS, 300 ms on Android. `--duration 800` (or `800ms`, `0.8s`) is the same as the fifth argument |
 | `looktap back` | Android system Back · iOS: the navigation bar's back button, else a top-left "Back" button |
 | `looktap home` | The Home button: goes to the home screen and checks it's in front; the app keeps running |
 | `looktap open <url>` | Opens a deep link |
-| `looktap launch [app] [--time\|--resume]` | (Re)starts the app, and waits until it's in front: an app that exits at once fails the command (`looktap crashes <app>` has the report), and one that dies just after is named by the next `ls`. `--time` times a cold start: until the app is in front, and until its first screen settled. It says when screen reads are too slow to time the screen precisely. Android adds the system's own `TotalTime`. `--resume` brings a running app back to the front as it was, without restarting it (and starts it if it isn't running) |
+| `looktap launch [app] [--time\|--resume] [--until <text>]` | (Re)starts the app, and waits until it's in front: an app that exits at once fails the command (`looktap crashes <app>` has the report), and one that dies just after is named by the next `ls`. `--time` times a cold start: until the app is in front, and until its first screen settled. It says when screen reads are too slow to time the screen precisely. Android adds the system's own `TotalTime`. `--resume` brings a running app back to the front as it was, without restarting it (and starts it if it isn't running). `--until <text>` then waits until that text is on screen (up to `--wait`, default 30 s): past a splash screen, or a debug build loading its bundle from Metro. After `launch --ls` alone, a screen of a few rows with nothing to tap gets a note that it may still be loading |
 | `looktap stop [app]` | Terminates the app and waits until its process is gone |
 | `looktap bio match\|nomatch` | Face ID (iOS) or fingerprint (Android) |
 | `looktap dismiss logbox` | Closes React Native's LogBox toast (dev builds), which takes every touch around it, a bottom tab bar included: taps its × and waits until it's gone. Says so when there's none. `"dismissLogBox": true` in `looktap.config.json` (or `LOOKTAP_DISMISS_LOGBOX=1`) closes it before every `tap`, `longpress` and `tapxy` |
@@ -1070,8 +1070,8 @@ to settle unless asked (`--ls`).
 `rotate`, `fold` and `scrollto`. After the action it waits for the screen to change (up to 1.5 s, or 6 s for `launch`/`open`), then for
 it to stop changing, then prints it like `ls`.
 
-**Exit codes:** `0` means OK. `2` means a usage problem: bad arguments, element not found, no device, or the
-helper can't start. `1` means anything else failed, including an `expect` that didn't hold and a `test` run with a
+**Exit codes:** `0` means OK. `2` means a usage problem: bad arguments (an option looktap doesn't know too: it's
+never dropped quietly), element not found, no device, or the helper can't start. `1` means anything else failed, including an `expect` that didn't hold and a `test` run with a
 failed flow. A script can `set -e` and stop at the first missing element. After a missing or ambiguous element or a
 failed `expect`, the screen as it is follows the error.
 

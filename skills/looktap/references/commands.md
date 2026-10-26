@@ -10,8 +10,10 @@ The full list, by what it does (`looktap --help` prints it in short). Logs, cras
 looktap ls
 # include elements without a label
 looktap ls --all
-# structured: {screen, elements: [{ref, label, type, x, y, w, h, value}]}
+# structured: {screen, elements: [{ref, label, type, x, y, w, h, value, covered, coveredBy, offScreen}]}
 looktap ls --json
+# only the rows partly hidden: under something drawn over them, or past the screen's edge
+looktap ls --covered
 # until it's on screen (10 s by default; --wait 30 for longer), or until it's gone
 looktap wait "Welcome"
 looktap wait "Loading" --gone
@@ -77,6 +79,8 @@ looktap hidekb
 ```bash
 # scroll down: the finger moves up (optional 5th argument: duration in ms)
 looktap swipe 200 700 200 250
+# a slow drag (a bottom sheet's handle): the same as a 5th argument of 800
+looktap swipe 192 600 192 300 --duration 800
 # deep link
 looktap open "myapp://orders/42"
 # (re)start the app
@@ -84,6 +88,8 @@ looktap launch
 looktap launch com.example.myapp
 # bring it back to the front as it was (a real iPhone too): no restart, no lost screen
 looktap launch com.example.myapp --resume
+# past the splash screen: until the text is on screen (up to --wait, default 30 s)
+looktap launch com.example.myapp --until "Welcome"
 looktap stop com.example.myapp   # terminate it; waits until the process is gone
 # Face ID / fingerprint
 looktap bio match
