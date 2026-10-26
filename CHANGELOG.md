@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- `skill --install` says the references went in too (`SKILL.md + 4 references` for each agent), so an install of
+  the split skill no longer looks like one of the old single file.
+
 ## 0.7.6
 
 ### Added

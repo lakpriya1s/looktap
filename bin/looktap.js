@@ -1475,7 +1475,10 @@ function skill(opts, args = []) {
   }
   const written = installSkill(agents, { source, references, version: pkg.version, home, root });
   console.log(`installed the looktap skill (${pkg.version}) for:`);
-  for (const w of written) console.log(`  ${w.agents.map((a) => a.name).join(', ').padEnd(16)} ${tilde(w.file)}`);
+  // The references sit beside SKILL.md: say so, or an install looks the same as one of the single-file skill.
+  const refs = Object.keys(references).length;
+  const extra = refs ? ` + ${refs} reference${refs === 1 ? '' : 's'}` : '';
+  for (const w of written) console.log(`  ${w.agents.map((a) => a.name).join(', ').padEnd(16)} ${tilde(w.file)}${extra}`);
   const missing = AGENTS.filter((a) => !agents.includes(a) && !(a.id === 'claude' && plugin)).map((a) => a.id);
   console.log(
     `${note}Restart an agent that's already running to load it.${missing.length ? ` Others: looktap skill --install --agents <${missing.slice(0, 4).join('|')}|…> (looktap skill --list shows them all)` : ''}`,
