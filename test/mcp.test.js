@@ -19,6 +19,8 @@ test('tool calls become looktap command lines', () => {
   assert.deepEqual(toWords('perf', { app: 'com.example.app', for: 10, json: true }), ['perf', 'com.example.app', '--for', '10s', '--json']);
   assert.deepEqual(toWords('perf', { frames: true }), ['perf', '--frames']);
   assert.throws(() => toWords('perf', { frames: true, for: 5 }), /frames or for, not both/);
+  assert.deepEqual(toWords('notifications', {}), ['notifications']);
+  assert.deepEqual(toWords('notifications', { app: 'com.example.app', until: 'Shipped', seconds: 60, json: true }), ['notifications', 'com.example.app', '--until', 'Shipped', '--wait', '60', '--json']);
 });
 
 test('every tool has a schema that names its required fields', () => {

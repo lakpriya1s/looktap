@@ -150,7 +150,7 @@ here, `looktap skill <name>` prints it.
 
 | File | Read it for |
 |---|---|
-| [references/commands.md](references/commands.md) | every command and option: gestures, typing, screenshots and video, installing and resetting apps, permissions, dark mode, text size, location, rotation, folding, network, push, the config file |
+| [references/commands.md](references/commands.md) | every command and option: gestures, typing, screenshots and video, installing and resetting apps, permissions, dark mode, text size, location, rotation, folding, network, push, reading notifications, the config file |
 | [references/flows.md](references/flows.md) | flow files as tests for CI (`test`), recording a flow (`codegen`), signing in, pages with no labels, handing over to the user (`handoff`) |
 | [references/devices.md](references/devices.md) | booting, choosing or setting up a device; a real phone that isn't ready, is on Wi-Fi, or runs iOS 16 or older |
 | [references/debugging.md](references/debugging.md) | a crash or an error: logs, crash reports, performance (`perf`, `launch --time`), the app's files |

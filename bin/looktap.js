@@ -5,7 +5,8 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync
 import { homedir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 
-import { Android, RECORD_LIMIT_S, adbDevices } from '../lib/android.js';
+import { Android, RECORD_LIMIT_S, adbDevices, overWifi, wifiTwin } from '../lib/android.js';
+import { KEEPER, hasKeeper, installKeeper, pair, removeKeeper, wifi } from '../lib/wifi.js';
 import { Ios, bootedSimulators } from '../lib/ios.js';
 import { IosDevice, physicalDevices } from '../lib/iosdevice.js';
 import { clock, grepper, startOf, tail, whichApp } from '../lib/logs.js';
@@ -18,6 +19,7 @@ import { resizePng } from '../lib/png.js';
 import { formatDevice, inventory, lastDevice, rememberDevice } from '../lib/devices.js';
 import { ORIENTATIONS, coordinates, foldPosition, pushPayload, rotation, textSize } from '../lib/conditions.js';
 import { LOGBOX, appGone, center, coverage, expectOn, fillCode, poller, tapPoint, forgetFront, formatCoverage, formatRow, isRef, lastFront, logBoxToast, rememberFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, signature, sliding, stillScreen, visibleRows, waitFor } from '../lib/screen.js';
+import { formatNotification, fromApp, notificationJson, notificationMatches } from '../lib/notifications.js';
 import { duration, formatFrames, formatReading, formatSamples, readingJson } from '../lib/perf.js';
 import { flowFiles, flowName, junit } from '../lib/testing.js';
 import { ADB, HOME, LockedError, NotFound, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
@@ -44,6 +46,13 @@ setup & info
                                   it's ready. Default: a window (LOOKTAP_HEADLESS=1 or "headless": true in config
                                   for headless). On a running simulator --window opens its window
   shutdown [name]                 shut down a simulator or emulator
+  wifi [--tcpip|--always|--off]   Android phone on USB: connect it over Wi-Fi too, so the cable can come out
+                                  (-d still takes its USB serial). Turns on Wireless debugging (Android 11+),
+                                  else adb tcpip 5555 (--tcpip: always). Both go off when the phone restarts.
+                                  --always (Android 11+, once): installs looktap's small Wi-Fi keeper app, which
+                                  turns it back on after restarts and on joining Wi-Fi. --off: removes it
+  pair <code> [host:port]         Android, no cable: pair over Wi-Fi with the code on the phone (Developer
+                                  options → Wireless debugging → Pair device with pairing code), then connect
   doctor [-d <device>]            check the toolchain; with -d, the way to that device: how it's connected, whether
                                   it's locked, and (a real iPhone) whether its runner answers, over which route
   setup                           start the helper (optional: commands start it on first use)
@@ -116,6 +125,11 @@ debug                             [app] defaults to --app / config, else the app
                                   Android its APKs and data folder (readable with run-as on debuggable builds)
   apps [filter] [--all] [--json]  installed apps: id, name, version (--all: system apps too). A filter
                                   matches part of the id or name; nothing matching → exit 1
+  notifications [app] [--until <text>] [--all] [--json]
+                                  what Notification Center / the notification shade holds, newest first: app,
+                                  title, body (iOS simulator: also the push payload). --until: wait until one
+                                  has <text> (up to --wait, default 30 s). A real iPhone: read off its screen,
+                                  pulling Notification Center down for a moment. --all: ongoing ones too
   capabilities [--json]           what this device can't do, or can only in part, and why
   perf [app] [--for 10s] [--json] the app's CPU (100% = one core), memory and threads; --for: a reading
                                   each second, then avg/max (iOS: the footprint Xcode shows; Android: PSS)
@@ -212,7 +226,7 @@ function parse(argv) {
     else if (a === '--until') opts.until = val();
     else if (a === '--wait-unlock') opts.waitUnlock = val();
     else if (a === '--duration') opts.duration = val();
-    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window', '--paths', '--frames', '--time', '--resume', '--project', '--uninstall', '--list', '--settle', '--points', '--covered'].includes(a)) opts.flags.add(a.slice(2));
+    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window', '--paths', '--frames', '--time', '--resume', '--project', '--uninstall', '--list', '--settle', '--points', '--covered', '--tcpip', '--always', '--off'].includes(a)) opts.flags.add(a.slice(2));
     else if (a === '--') pos.push(...argv.slice(i + 1)), (i = argv.length);
     // An option looktap doesn't know is a mistake, not an argument: dropped quietly, a guessed flag changes nothing
     // and nobody hears of it. Negative numbers (-0.1276) and a lone - stay arguments.
@@ -259,6 +273,9 @@ function pickDriver(opts, config) {
 
   if (device && !platform) {
     platform = sims.some((s) => s.id === device) ? 'ios' : droids.some((d) => d.id === device) ? 'android' : null;
+    // A USB serial whose cable came out: the same phone over Wi-Fi (after looktap wifi).
+    const twin = !platform && wifiTwin(device, droids.map((d) => d.id), (id) => run(ADB, ['-s', id, 'shell', 'getprop', 'ro.serialno'], { allowFail: true, timeout: 5000 }).trim());
+    if (twin) (platform = 'android'), (device = twin);
     if (!platform && lookForPhones().some((p) => p.id === device)) platform = 'ios';
     if (!platform) throw new UsageError(`device ${device} is not booted`);
   }
@@ -373,6 +390,15 @@ async function main() {
     rememberDevice(r.platform, r.id);
     return console.log(booted(r));
   }
+  if (cmd === 'wifi') return wifiCommand(opts);
+  if (cmd === 'pair') {
+    const r = await pair(args[0], args[1] || null, { say: (m) => console.error(`looktap: ${m}`) });
+    if (!r.id) return console.log(`paired with ${r.address}, but adb hasn't connected yet — looktap devices shows it once it does`);
+    rememberDevice('android', r.id);
+    console.log(`paired and connected: ${r.id}`);
+    if (!hasKeeper(r.id)) console.log(ALWAYS_HINT);
+    return;
+  }
   if (cmd === 'shutdown') return console.log(shutDown(await shutdown(args.join(' ') || opts.device || null, { platform: opts.platform })));
 
   const config = loadConfig();
@@ -388,6 +414,33 @@ async function main() {
 }
 
 const deviceId = (d) => d.udid || d.serial;
+
+const ALWAYS_HINT = 'The phone turns Wireless debugging off when it restarts: looktap wifi --always keeps it on (installs looktap\'s small Wi-Fi keeper app; looktap wifi --off removes it)';
+
+/** `wifi`: connect an Android phone over Wi-Fi; --always installs the keeper first, --off removes it. */
+async function wifiCommand(opts) {
+  const say = (m) => console.error(`looktap: ${m}`);
+  const device = opts.device || null;
+  if (opts.flags.has('always') && opts.flags.has('off')) throw new UsageError('wifi takes --always or --off, not both');
+  if (opts.flags.has('off')) {
+    const r = removeKeeper(device);
+    return console.log(`${r.removed ? `removed looktap's Wi-Fi keeper (${KEEPER}) from ${r.id}; ` : ''}Wireless debugging off — looktap wifi turns it on again until the next restart`);
+  }
+  let kept = null;
+  if (opts.flags.has('always')) {
+    kept = await installKeeper(device, { say });
+    console.log(`installed looktap's Wi-Fi keeper (${KEEPER}) on ${kept}: the phone turns Wireless debugging back on by itself after a restart and whenever it joins Wi-Fi (a network not yet "always allowed" asks first). looktap wifi --off removes it`);
+    // Already on Wi-Fi only (after pair): nothing more to connect.
+    if (overWifi(kept)) return;
+  }
+  const r = await wifi({ device: kept || device, tcpip: opts.flags.has('tcpip'), say });
+  if (r.already) console.log(`already over Wi-Fi: ${r.serial} → ${r.id}`);
+  else {
+    rememberDevice('android', r.id);
+    console.log(`over Wi-Fi: ${r.serial} → ${r.id}${r.address && r.address !== r.id ? ` (${r.address})` : ''}, by ${r.via}. The cable can come out; -d ${r.serial} still finds it`);
+  }
+  if (!kept && r.via !== 'adb tcpip' && !hasKeeper(r.serial)) console.log(ALWAYS_HINT);
+}
 
 /** Failures whose fix is on the screen: a label or ref not there, an ambiguous label, a screen not as expected. */
 const screenFailure = (e) => e instanceof NotFound || /expect failed|is ambiguous|is not in the last listing/.test(e.message);
@@ -945,6 +998,7 @@ async function act(d, cmd, args, opts) {
     case 'crashes': return showCrashes(d, args[0], opts);
     case 'app': return opts.flags.has('paths') ? showPaths(d, args[0]) : showApp(d, args[0]);
     case 'apps': return showApps(d, args.join(' '), opts);
+    case 'notifications': return showNotifications(d, args.join(' '), opts);
     case 'install': {
       need(1, 'install <path.app|path.apk> [--grant]');
       const id = await d.install(args[0], { grant: opts.flags.has('grant') });
@@ -1183,6 +1237,49 @@ async function showApps(d, filter, opts) {
   }
   const width = Math.max(...apps.map((a) => a.id.length));
   for (const a of apps) console.log([a.id.padEnd(width), a.name, a.version && `v${a.version}`, a.system && '(system)'].filter(Boolean).join('  ').trimEnd());
+}
+
+/**
+ `notifications [app] [--until text] [--all] [--json]`: what the device holds, newest first. --until waits for one
+ whose title or body has the text (one already there counts). Ongoing ones (charging, a foreground service) only
+ with --all or an app.
+ */
+async function showNotifications(d, app, opts) {
+  const json = opts.flags.has('json');
+  const all = opts.flags.has('all') || Boolean(app);
+  // A real iPhone shows app names (HEALTH), not ids.
+  const name = app.includes('.') && d instanceof IosDevice ? (await d.apps({ all: true }).catch(() => [])).find((a) => a.id === app)?.name : null;
+  let hidden = 0;
+  const read = async (o) => {
+    const list = (await d.notifications(o)).filter((n) => !app || fromApp(n, app, name));
+    hidden = all ? 0 : list.filter((n) => n.ongoing).length;
+    return all ? list : list.filter((n) => !n.ongoing);
+  };
+  const from = app ? ` from ${app}` : '';
+  if (!opts.until) {
+    const list = await read();
+    if (json) return console.log(notificationJson(list));
+    if (!list.length) console.log(`no notifications${from}`);
+    for (const n of list) console.log(formatNotification(n));
+    if (hidden) console.log(`(${hidden} ongoing hidden: --all lists them)`);
+    return;
+  }
+  const timeout = opts.wait != null ? Number(opts.wait) * 1000 : 30e3;
+  if (!(timeout >= 0)) throw new UsageError('--wait takes seconds, e.g. --wait 30');
+  // A real iPhone: Notification Center is pulled down at the start and the end; in between, banners are watched.
+  const phone = d instanceof IosDevice;
+  const t0 = Date.now();
+  let list = [];
+  for (let first = true; ; first = false) {
+    const last = Date.now() - t0 >= timeout;
+    list = await read(phone ? { open: first || last } : undefined);
+    const hit = list.find((n) => notificationMatches(n, opts.until));
+    if (hit) return console.log(json ? notificationJson([hit]) : formatNotification(hit));
+    if (last) break;
+    await sleep(Math.min(phone ? 300 : 1000, Math.max(0, timeout - (Date.now() - t0))));
+  }
+  const shown = list.slice(0, 8).map((n) => `  ${formatNotification(n)}`);
+  throw new Error(`no notification${from} matching ${JSON.stringify(opts.until)} within ${timeout / 1000} s${shown.length ? `; there are:\n${shown.join('\n')}` : ' (there are none)'}`);
 }
 
 /**

@@ -4,6 +4,24 @@
 
 ### Added
 
+- **`looktap notifications [app]`** says what notifications the device holds, newest first: app, title, body, when.
+  `--until "<text>"` waits until one has the text (up to `--wait`, default 30 s), so a flow can check that a push or
+  a reminder arrived; `--json` gives every field. All four kinds of device: the iOS simulator is read from the files
+  SpringBoard keeps Notification Center in (with the full push payload), Android from `dumpsys notification`
+  (ongoing ones such as charging only with `--all`), and a real iPhone off its screen, pulling Notification Center
+  down for a moment and back up. A real iPhone that's out of storage now says so when the runner can't install,
+  instead of "Failed to stream the app asset".
+- **`looktap wifi`** takes an Android phone off its cable: with it plugged in, it turns on Wireless debugging
+  (Android 11+) and waits until adb reaches it over the network (about 4 s), or on older Android (or with `--tcpip`)
+  runs `adb tcpip 5555` and connects. `-d <USB serial>` still finds the phone once it's unplugged.
+  **`looktap pair <code> [host:port]`** pairs with a phone that never had a cable, using the code from
+  "Pair device with pairing code"; looktap finds the phone on the network itself. `devices` now says when a phone's
+  Wi-Fi connection dropped (Wireless debugging goes off when the phone restarts), and what to do.
+  **`looktap wifi --always`** (Android 11+, opt-in) installs looktap's Wi-Fi keeper, a 13 KB app with no screen that
+  turns Wireless debugging back on after each restart and whenever the phone joins Wi-Fi; `wifi --off` removes it.
+  It isn't in the npm package: `--always` downloads it from the GitHub release GitHub Actions builds and signs
+  (`keeper-v5`), with a key made for that build and then deleted.
+  It's installed only when asked: `wifi` and `pair` mention it, nothing installs it on its own.
 - **`ls` says what's partly hidden.** A row that something listed is drawn over, or that runs past the screen's
   edge, says how much after it: `[56% covered by @16 @17 @18]`, `[30% off screen]` (`covered`, `coveredBy` and
   `offScreen` in `--json`). A list row half under a tab bar, or a toast over a button, now shows without comparing
