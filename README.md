@@ -82,7 +82,7 @@ code, so the steps that worked with the agent run on their own afterwards:
 | 🫆 | **Biometrics.** `bio match\|nomatch` simulates Face ID or a fingerprint |
 | 🌍 | **Simulated conditions.** `location <lat> <lon>`, `appearance dark`, `textsize xxl` (Dynamic Type / font scale), `statusbar clean` (9:41 for screenshots), `rotate landscape` (`ls`, taps and screenshots follow the turned screen), `fold open` (the iPhone Duo simulator), Android `network offline`, iOS `push` notifications, and `notifications` to read back what arrived (every platform, real phones too) |
 | 🧹 | **App state for repros.** `install` a build, `apps` to see what is installed (and which version), `reset` an app to a fresh install, `uninstall`, and `permission grant\|revoke\|reset camera\|location\|photos\|…`, with the same names on both platforms |
-| 📱 | **Devices on demand.** `boot "iPhone 16 Pro"` or `boot Pixel_9a` starts a simulator or emulator by name and waits until it's ready, with a window or `--headless`; `shutdown` stops it. `devices` tells real phones from simulators and emulators (model, OS, USB or Wi-Fi), and says what to do for a phone that isn't ready yet |
+| 📱 | **Devices on demand.** `boot "iPhone 16 Pro"` or `boot Pixel_9a` starts a simulator or emulator by name and waits until it's ready, with a window or `--headless`; `shutdown` stops it. `devices` tells real phones from simulators and emulators (model, OS, USB or Wi-Fi), and says what to do for a phone that isn't ready yet. `wifi` takes an Android phone off its cable, and `pair` connects one that never had one |
 | 🤖 | **Built for agents.** `--ls` on any action, `run` to batch steps, `--json`, `capabilities` to check what the device in use can and can't do, and a [Claude Code skill](#for-ai-agents) you install with one command |
 | 🧩 | **Nothing to install on simulators, emulators or Android phones**, no server to run, no npm dependencies. The helpers start on first use. A real iPhone gets a small test runner, built for you |
 | ⚠️ | **Honest failures.** A tap that's covered by a toast prints a warning, a stale `@ref` is an error rather than a wrong tap, a system prompt over the app is reported as one, a locked device is reported as locked (never typed into), and **an app that dies is named the moment looktap notices** |
@@ -226,6 +226,8 @@ simulators), a real iPhone 14 Pro on iOS 26, a real iPhone X on iOS 16.7 (Xcode 
 
 looktap ships its own small helper for each platform. **Nothing is installed on simulators, emulators or Android
 devices.** A real iPhone or iPad is the exception: it gets a small test runner ([Using a real iPhone](#using-a-real-iphone)).
+The one Android exception is opt-in: `looktap wifi --always` installs a small app that keeps Wireless debugging on
+(built and signed on GitHub Actions, downloaded from the release; `wifi --off` removes it).
 
 | | iOS simulator | Android emulator / device |
 |---|---|---|
@@ -1210,6 +1212,11 @@ Precedence: command-line option, then environment variable, then config file, th
 | `keyboard is still up` (iOS) | Search keyboards have no Done key. Tap the screen's Cancel/close control |
 | Android `ls` fails right after boot | Wait until `adb shell getprop sys.boot_completed` prints `1` |
 | `device <serial> is not connected` / `<serial> isn't connected any more` | `looktap devices` lists what is. A phone unplugged from USB may still be there over Wi-Fi, under its Wi-Fi id (`adb-…._adb-tls-connect._tcp`); a phone on both is one row, `USB + Wi-Fi` |
+| `couldn't reach <serial> at <ip> over Wi-Fi` / `<serial> isn't on Wi-Fi` | Put the phone and this computer on the same network. Guest and office networks often keep devices from reaching each other: try a phone hotspot |
+| `found no phone showing a pairing code on this network` | Keep Developer options → Wireless debugging → Pair device with pairing code open on the phone, or pass the host:port shown under the code: `looktap pair 482913 192.168.1.15:37199` |
+| `pairing with <address> failed` | The code changes each time that screen opens: use the one on screen now |
+| `Wireless debugging needs Android 11 or later` (from `wifi --always`) | Older phones can't keep Wi-Fi across a restart: run `looktap wifi` with the cable in again after each one |
+| `the device is out of storage, so the runner can't be installed` | Free some space on the iPhone (Settings → General → iPhone Storage), then run the command again |
 | `perf --frames on a real iPhone reads its screen over the USB cable` | Plug the iPhone in with a cable and unlock it: the screen feed it reads doesn't exist over Wi-Fi |
 | `the iPhone's screen feed didn't start` | Unlock the phone, and close QuickTime (or anything else showing the phone's screen): one app at a time can read it |
 | `Instruments is busy on the device` | An earlier Instruments recording on the phone didn't end (looktap's, Xcode's or another tool's). It clears in a few minutes, or reconnect the cable; restarting the phone always clears it |
