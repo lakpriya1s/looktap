@@ -251,12 +251,71 @@ final class Ops {
       if let m = r["mode"] as? String { XCUIDevice.shared.appearance = m == "dark" ? .dark : .light }
       return (["ok": true, "mode": XCUIDevice.shared.appearance == .dark ? "dark" : "light"], nil)
 
+    case "notifications":
+      // What SpringBoard shows: a banner, or the cover sheet (Notification Center, the lock screen). `open`: when
+      // the cover sheet isn't showing, pull it down to read what it keeps, then push it back up, so the app that
+      // was in front is again. (Pushed up from the lock screen, it would ask for the passcode: it isn't.)
+      let screen = springboard.frame
+      var snap = try springboard.snapshot()
+      var found = platters(snap, screen: screen)
+      var opened = false
+      if r["open"] as? Bool ?? false, !coverSheetShown(snap, screen: screen) {
+        let top = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0)).withOffset(CGVector(dx: 0, dy: 1))
+        top.press(forDuration: 0.05, thenDragTo: springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.7)))
+        Thread.sleep(forTimeInterval: 0.8)
+        snap = try springboard.snapshot()
+        found = platters(snap, screen: screen)
+        if coverSheetShown(snap, screen: screen) {
+          let bottom = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 1)).withOffset(CGVector(dx: 0, dy: -2))
+          bottom.press(forDuration: 0.05, thenDragTo: springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2)))
+          opened = true
+        }
+      }
+      return (["ok": true, "items": found, "opened": opened], nil)
+
     default:
       throw Failure("unknown op: \(op)")
     }
   }
 
   // MARK: helpers
+
+  /**
+   Notifications on SpringBoard's screen. Each is a "ShortLook.Platter" (iOS 17+): its texts are the title (and
+   subtitle), the body sits under a "NotificationBody…" group, and the cell around it is labelled "APP, time, title,
+   body". iOS 16 and older draw a "NotificationShortLookView" with no texts inside: only that label.
+   */
+  private func platters(_ root: XCUIElementSnapshot, screen: CGRect) -> [[String: Any]] {
+    var out: [[String: Any]] = []
+    func texts(_ s: XCUIElementSnapshot, body: Bool, heads: inout [String], lines: inout [String], inner: inout String) {
+      let inBody = body || s.identifier.hasPrefix("NotificationBody")
+      if s.elementType == .staticText, !s.label.isEmpty {
+        if inBody { lines.append(s.label) } else { heads.append(s.label) }
+      } else if inner.isEmpty, s.elementType == .button, !s.label.isEmpty { inner = s.label }
+      for c in s.children { texts(c, body: inBody, heads: &heads, lines: &lines, inner: &inner) }
+    }
+    func walk(_ s: XCUIElementSnapshot, header: String) {
+      if s.identifier == "ShortLook.Platter" || s.identifier == "NotificationShortLookView" {
+        var heads: [String] = [], lines: [String] = [], inner = ""
+        texts(s, body: false, heads: &heads, lines: &lines, inner: &inner)
+        let f = s.frame
+        out.append(["header": s.label.isEmpty ? header : s.label, "inner": inner, "texts": heads, "body": lines.joined(separator: "\n"),
+                    "y": f.minY.rounded(), "listed": f.intersects(screen) && f.height > 0])
+        return
+      }
+      for c in s.children { walk(c, header: s.label.isEmpty ? header : s.label) }
+    }
+    walk(root, header: "")
+    return out
+  }
+
+  /** Is SpringBoard's cover sheet (Notification Center, or the lock screen) on screen? */
+  private func coverSheetShown(_ s: XCUIElementSnapshot, screen: CGRect) -> Bool {
+    if s.elementType == .window, s.label == "SBCoverSheetWindow" || s.identifier == "SBCoverSheetWindow" {
+      return s.frame.intersection(screen).width > screen.width / 2
+    }
+    return s.children.contains { coverSheetShown($0, screen: screen) }
+  }
 
   private func hasAlert(_ s: XCUIElementSnapshot) -> Bool {
     s.elementType == .alert || s.children.contains { hasAlert($0) }

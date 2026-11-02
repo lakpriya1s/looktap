@@ -4,6 +4,13 @@
 
 ### Added
 
+- **`looktap notifications [app]`** says what notifications the device holds, newest first: app, title, body, when.
+  `--until "<text>"` waits until one has the text (up to `--wait`, default 30 s), so a flow can check that a push or
+  a reminder arrived; `--json` gives every field. All four kinds of device: the iOS simulator is read from the files
+  SpringBoard keeps Notification Center in (with the full push payload), Android from `dumpsys notification`
+  (ongoing ones such as charging only with `--all`), and a real iPhone off its screen, pulling Notification Center
+  down for a moment and back up. A real iPhone that's out of storage now says so when the runner can't install,
+  instead of "Failed to stream the app asset".
 - **`looktap wifi`** takes an Android phone off its cable: with it plugged in, it turns on Wireless debugging
   (Android 11+) and waits until adb reaches it over the network (about 4 s), or on older Android (or with `--tcpip`)
   runs `adb tcpip 5555` and connects. `-d <USB serial>` still finds the phone once it's unplugged.

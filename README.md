@@ -80,7 +80,7 @@ code, so the steps that worked with the agent run on their own afterwards:
 | ⏱️ | **Performance.** `perf` reads the app's CPU, memory and threads, once or each second with `--for 10s`; `perf --frames` adds frames, jank and frame-time percentiles (on iOS, from the screen itself). `launch --time` times a cold start until the first screen settles |
 | 💥 | **Crashes.** `crashes` reads iOS crash reports (exception, reason, top frames) and Android crashes, ANRs and **low-memory kills**, so "the app vanished" always comes with a reason |
 | 🫆 | **Biometrics.** `bio match\|nomatch` simulates Face ID or a fingerprint |
-| 🌍 | **Simulated conditions.** `location <lat> <lon>`, `appearance dark`, `textsize xxl` (Dynamic Type / font scale), `statusbar clean` (9:41 for screenshots), `rotate landscape` (`ls`, taps and screenshots follow the turned screen), `fold open` (the iPhone Duo simulator), Android `network offline`, and iOS `push` notifications |
+| 🌍 | **Simulated conditions.** `location <lat> <lon>`, `appearance dark`, `textsize xxl` (Dynamic Type / font scale), `statusbar clean` (9:41 for screenshots), `rotate landscape` (`ls`, taps and screenshots follow the turned screen), `fold open` (the iPhone Duo simulator), Android `network offline`, iOS `push` notifications, and `notifications` to read back what arrived (every platform, real phones too) |
 | 🧹 | **App state for repros.** `install` a build, `apps` to see what is installed (and which version), `reset` an app to a fresh install, `uninstall`, and `permission grant\|revoke\|reset camera\|location\|photos\|…`, with the same names on both platforms |
 | 📱 | **Devices on demand.** `boot "iPhone 16 Pro"` or `boot Pixel_9a` starts a simulator or emulator by name and waits until it's ready, with a window or `--headless`; `shutdown` stops it. `devices` tells real phones from simulators and emulators (model, OS, USB or Wi-Fi), and says what to do for a phone that isn't ready yet |
 | 🤖 | **Built for agents.** `--ls` on any action, `run` to batch steps, `--json`, `capabilities` to check what the device in use can and can't do, and a [Claude Code skill](#for-ai-agents) you install with one command |
@@ -604,7 +604,7 @@ looktap uninstall com.example.myapp
 - **These commands never guess the app from the screen.** `stop`, `uninstall`, `reset` and `permission` take the app id
   as an argument, or from `--app` / `looktap.config.json`.
 
-### Simulated conditions: location, dark mode, text size, orientation, network, push
+### Simulated conditions: location, dark mode, text size, orientation, network, push, notifications
 
 ```bash
 looktap location 51.5072 -0.1276        # GPS (Android: emulators) · `location clear` on iOS
@@ -616,6 +616,8 @@ looktap fold open --ls                  # a foldable (iPhone Duo): closed, half 
 looktap network offline                 # Android: airplane mode · `network online`
 looktap push com.example.myapp "Your order has shipped"          # iOS: an alert
 looktap push com.example.myapp '{"aps":{"alert":"Hi"},"orderId":7}'   # or any payload / a .json file
+looktap notifications                   # what arrived: Notification Center / the shade, newest first
+looktap notifications com.example.myapp --until "has shipped"    # wait for it (up to --wait, default 30 s)
 ```
 
 - **`textsize`** uses the iOS Dynamic Type sizes. On Android each size maps to the nearest font scale, from 0.8
@@ -636,6 +638,18 @@ looktap push com.example.myapp '{"aps":{"alert":"Hi"},"orderId":7}'   # or any p
   - A payload without `"aps"` is sent as a silent (background) push carrying that data.
   - **Android pushes can't be simulated locally.** They come through Firebase (FCM), so send them from your
     backend or the Firebase console.
+- **`notifications`** lists the notifications the device holds, newest first: when, app, title (· subtitle) and
+  body. `[app]` narrows it to one app; `--json` gives every field. `--until <text>` waits until one whose title or
+  body has the text is there (one already there counts), so a flow can check that a push, a reminder or a
+  message arrived. It works on all four kinds of device, each read its own way:
+  - **iOS simulator:** from the files SpringBoard keeps Notification Center in, so nothing on screen moves.
+    `--json` includes the full push payload, badge, thread and category.
+  - **Android (emulator and device):** from `dumpsys notification`. Ongoing ones (charging, USB, a foreground
+    service) are left out unless you name the app or pass `--all`.
+  - **A real iPhone:** off the screen, through the runner: Notification Center is pulled down for a moment and
+    pushed back up, so the app in front stays in front. App names and times are as the phone shows them
+    (`HEALTH`, `2m ago`), and there's no payload; iOS 16 and older give the title and body as one text. While
+    `--until` waits, it watches for the banner.
 
 ### Biometrics
 
@@ -1051,6 +1065,7 @@ to settle unless asked (`--ls`).
 | `looktap statusbar clean\|live` | A screenshot-clean status bar (9:41, full battery and Wi-Fi), or back to live values |
 | `looktap network [offline\|online]` | Android only: airplane mode on or off, waiting until the device has lost (or regained) its connection. Without an argument, prints the current state |
 | `looktap push <app> <payload>` | iOS: a remote notification. The payload can be a `.json` file, inline JSON, or plain text for an alert |
+| `looktap notifications [app] [--until <text>] [--all] [--json]` | What Notification Center (iOS) or the notification shade (Android) holds, newest first: app, title, body (iOS simulator: the push payload too). `--until` waits until one has the text (up to `--wait`, default 30 s). A real iPhone is read off its screen, with Notification Center pulled down for a moment. `--all`: ongoing ones too |
 | **Batch, setup & info** | |
 | `looktap mcp [--config]` | Serves these commands over MCP (stdio) for clients without a shell. `--config` prints a client config |
 | `looktap run '<cmd>; <cmd> …' [--ls]` | Several commands in one process. `run -` reads them from stdin. Stops at the first failure and names it; `--ls` prints the screen it ended on |
@@ -1097,6 +1112,7 @@ front of you (`--json` for every command).
 | `location clear` | ✅ | ⚠️ iOS 16 and older only (through the developer image, as Xcode's Simulate Location); a newer iPhone uses its own GPS: use a simulator to fake one | ❌ the emulator keeps its last location: set a new one instead | ❌ a device uses its own GPS (faking it needs a mock-location app) |
 | `logs` | ✅ | ⚠️ the phone keeps no history looktap can read: the first logs (or launch) starts collecting its live log in the background, until 30 min after the last one, so what came before that isn't there | ✅ | ✅ |
 | `network` | ❌ the simulator uses the Mac's own network, so it can't go offline or slow by itself. Network Link Conditioner (Xcode → Open Developer Tool → More Developer Tools → Additional Tools) throttles the whole Mac | ❌ turn on Airplane Mode in Control Center | ✅ | ⚠️ airplane mode: over wireless adb, going offline also drops looktap's connection |
+| `notifications` | ✅ | ⚠️ read off the screen: Notification Center is pulled down for a moment and pushed back up; app names and times are as shown (HEALTH, 2m ago), and there's no push payload; on iOS 16 and older the title and body come as one text | ✅ | ✅ |
 | `paste` | ✅ | ❌ the phone's clipboard can't be set from the Mac: type works with any text on a device | ✅ | ✅ |
 | `perf` | ✅ | ⚠️ read through Instruments (xcrun xctrace): a reading takes 10–25 s and --for gives one every ~8 s; memory is the footprint, without its peak. Not on an iPhone this Xcode doesn't support (iOS 16 and older on Xcode 27) | ✅ | ✅ |
 | `perf --frames` | ⚠️ frames as the screen shows them (the simulator's framebuffer updates), not the app's own render times: the first call starts counting | ⚠️ frames as the screen shows them, from its USB screen feed (60 Hz at most, so a 120 Hz screen counts at half its rate); needs a USB cable, an unlocked phone, and QuickTime not showing it | ✅ | ✅ |

@@ -367,9 +367,9 @@ export const SCENES = [
     id: 'conditions',
     kicker: '09 · Conditions',
     title: 'Dark mode, big text, landscape, offline',
-    body: `<p>Put the device in the state your bug report describes, one command each: <code>appearance dark</code>, <code>textsize ax2</code> (Dynamic Type or font scale), <code>statusbar clean</code> for a 9:41 screenshot, <code>push</code> a notification (iOS), go <code>network offline</code> (Android airplane mode).</p>
+    body: `<p>Put the device in the state your bug report describes, one command each: <code>appearance dark</code>, <code>textsize ax2</code> (Dynamic Type or font scale), <code>statusbar clean</code> for a 9:41 screenshot, <code>push</code> a notification (iOS) and read back what arrived with <code>notifications</code> (both platforms, real phones too), go <code>network offline</code> (Android airplane mode).</p>
 <p><code>rotate landscape</code> turns the device, and everything follows: <code>ls</code> coordinates, taps and screenshots match what's on screen. An app that doesn't support the orientation stays put, and looktap says so. <code>fold open</code> unfolds a foldable simulator (the iPhone Duo) the same way: reads, taps and shots move to the screen it shows.</p>`,
-    covers: ['appearance', 'textsize', 'statusbar', 'push', 'network', 'rotate', 'fold'],
+    covers: ['appearance', 'textsize', 'statusbar', 'push', 'notifications', 'network', 'rotate', 'fold'],
     start: (p) => p.show('home'),
     beats: [
       {
@@ -401,6 +401,10 @@ export const SCENES = [
           setTimeout(() => p.clear('banner'), 2200);
           return [`pushed to ${APP}`];
         },
+      },
+      {
+        cmd: 'looktap notifications --until shipped',
+        run: async (p, c) => [c.ios ? `0s ago    ${APP}  Your order has shipped` : `4s ago    ${APP}  Order #1042: Your order has shipped`],
       },
       {
         cmd: 'looktap network offline',
