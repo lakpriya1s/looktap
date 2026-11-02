@@ -5,7 +5,8 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync
 import { homedir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 
-import { Android, RECORD_LIMIT_S, adbDevices } from '../lib/android.js';
+import { Android, RECORD_LIMIT_S, adbDevices, overWifi, wifiTwin } from '../lib/android.js';
+import { KEEPER, hasKeeper, installKeeper, pair, removeKeeper, wifi } from '../lib/wifi.js';
 import { Ios, bootedSimulators } from '../lib/ios.js';
 import { IosDevice, physicalDevices } from '../lib/iosdevice.js';
 import { clock, grepper, startOf, tail, whichApp } from '../lib/logs.js';
@@ -44,6 +45,13 @@ setup & info
                                   it's ready. Default: a window (LOOKTAP_HEADLESS=1 or "headless": true in config
                                   for headless). On a running simulator --window opens its window
   shutdown [name]                 shut down a simulator or emulator
+  wifi [--tcpip|--always|--off]   Android phone on USB: connect it over Wi-Fi too, so the cable can come out
+                                  (-d still takes its USB serial). Turns on Wireless debugging (Android 11+),
+                                  else adb tcpip 5555 (--tcpip: always). Both go off when the phone restarts.
+                                  --always (Android 11+, once): installs looktap's small Wi-Fi keeper app, which
+                                  turns it back on after restarts and on joining Wi-Fi. --off: removes it
+  pair <code> [host:port]         Android, no cable: pair over Wi-Fi with the code on the phone (Developer
+                                  options → Wireless debugging → Pair device with pairing code), then connect
   doctor [-d <device>]            check the toolchain; with -d, the way to that device: how it's connected, whether
                                   it's locked, and (a real iPhone) whether its runner answers, over which route
   setup                           start the helper (optional: commands start it on first use)
@@ -212,7 +220,7 @@ function parse(argv) {
     else if (a === '--until') opts.until = val();
     else if (a === '--wait-unlock') opts.waitUnlock = val();
     else if (a === '--duration') opts.duration = val();
-    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window', '--paths', '--frames', '--time', '--resume', '--project', '--uninstall', '--list', '--settle', '--points', '--covered'].includes(a)) opts.flags.add(a.slice(2));
+    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window', '--paths', '--frames', '--time', '--resume', '--project', '--uninstall', '--list', '--settle', '--points', '--covered', '--tcpip', '--always', '--off'].includes(a)) opts.flags.add(a.slice(2));
     else if (a === '--') pos.push(...argv.slice(i + 1)), (i = argv.length);
     // An option looktap doesn't know is a mistake, not an argument: dropped quietly, a guessed flag changes nothing
     // and nobody hears of it. Negative numbers (-0.1276) and a lone - stay arguments.
@@ -259,6 +267,9 @@ function pickDriver(opts, config) {
 
   if (device && !platform) {
     platform = sims.some((s) => s.id === device) ? 'ios' : droids.some((d) => d.id === device) ? 'android' : null;
+    // A USB serial whose cable came out: the same phone over Wi-Fi (after looktap wifi).
+    const twin = !platform && wifiTwin(device, droids.map((d) => d.id), (id) => run(ADB, ['-s', id, 'shell', 'getprop', 'ro.serialno'], { allowFail: true, timeout: 5000 }).trim());
+    if (twin) (platform = 'android'), (device = twin);
     if (!platform && lookForPhones().some((p) => p.id === device)) platform = 'ios';
     if (!platform) throw new UsageError(`device ${device} is not booted`);
   }
@@ -373,6 +384,15 @@ async function main() {
     rememberDevice(r.platform, r.id);
     return console.log(booted(r));
   }
+  if (cmd === 'wifi') return wifiCommand(opts);
+  if (cmd === 'pair') {
+    const r = await pair(args[0], args[1] || null, { say: (m) => console.error(`looktap: ${m}`) });
+    if (!r.id) return console.log(`paired with ${r.address}, but adb hasn't connected yet — looktap devices shows it once it does`);
+    rememberDevice('android', r.id);
+    console.log(`paired and connected: ${r.id}`);
+    if (!hasKeeper(r.id)) console.log(ALWAYS_HINT);
+    return;
+  }
   if (cmd === 'shutdown') return console.log(shutDown(await shutdown(args.join(' ') || opts.device || null, { platform: opts.platform })));
 
   const config = loadConfig();
@@ -388,6 +408,33 @@ async function main() {
 }
 
 const deviceId = (d) => d.udid || d.serial;
+
+const ALWAYS_HINT = 'The phone turns Wireless debugging off when it restarts: looktap wifi --always keeps it on (installs looktap\'s small Wi-Fi keeper app; looktap wifi --off removes it)';
+
+/** `wifi`: connect an Android phone over Wi-Fi; --always installs the keeper first, --off removes it. */
+async function wifiCommand(opts) {
+  const say = (m) => console.error(`looktap: ${m}`);
+  const device = opts.device || null;
+  if (opts.flags.has('always') && opts.flags.has('off')) throw new UsageError('wifi takes --always or --off, not both');
+  if (opts.flags.has('off')) {
+    const r = removeKeeper(device);
+    return console.log(`${r.removed ? `removed looktap's Wi-Fi keeper (${KEEPER}) from ${r.id}; ` : ''}Wireless debugging off — looktap wifi turns it on again until the next restart`);
+  }
+  let kept = null;
+  if (opts.flags.has('always')) {
+    kept = await installKeeper(device, { say });
+    console.log(`installed looktap's Wi-Fi keeper (${KEEPER}) on ${kept}: the phone turns Wireless debugging back on by itself after a restart and whenever it joins Wi-Fi (a network not yet "always allowed" asks first). looktap wifi --off removes it`);
+    // Already on Wi-Fi only (after pair): nothing more to connect.
+    if (overWifi(kept)) return;
+  }
+  const r = await wifi({ device: kept || device, tcpip: opts.flags.has('tcpip'), say });
+  if (r.already) console.log(`already over Wi-Fi: ${r.serial} → ${r.id}`);
+  else {
+    rememberDevice('android', r.id);
+    console.log(`over Wi-Fi: ${r.serial} → ${r.id}${r.address && r.address !== r.id ? ` (${r.address})` : ''}, by ${r.via}. The cable can come out; -d ${r.serial} still finds it`);
+  }
+  if (!kept && r.via !== 'adb tcpip' && !hasKeeper(r.serial)) console.log(ALWAYS_HINT);
+}
 
 /** Failures whose fix is on the screen: a label or ref not there, an ambiguous label, a screen not as expected. */
 const screenFailure = (e) => e instanceof NotFound || /expect failed|is ambiguous|is not in the last listing/.test(e.message);

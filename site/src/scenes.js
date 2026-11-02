@@ -604,8 +604,8 @@ export const SCENES = [
     kicker: '14 · Setup',
     title: 'Nothing to install on simulators',
     body: `<p>No server to run and no npm dependencies. looktap's own small helpers start on first use: a macOS helper that speaks to the simulator through Apple's frameworks, and a 10 KB Android helper run with <code>app_process</code>. A real iPhone gets a small XCUITest runner, built and signed with your own Apple ID on first use.</p>
-<p><code>boot</code> starts a simulator or emulator by name and waits until it's ready; <code>shutdown</code> stops it. Ready for the first command in under a second, against 8–29 s for mobile-mcp, Maestro and Appium.</p>`,
-    covers: ['doctor', 'devices', 'boot', 'shutdown', 'setup', 'teardown'],
+<p><code>boot</code> starts a simulator or emulator by name and waits until it's ready; <code>shutdown</code> stops it. <code>wifi</code> takes an Android phone off its cable, and <code>pair</code> connects one that never had one. Ready for the first command in under a second, against 8–29 s for mobile-mcp, Maestro and Appium.</p>`,
+    covers: ['doctor', 'devices', 'boot', 'shutdown', 'wifi', 'pair', 'setup', 'teardown'],
     start: (p) => p.show('springboard'),
     beats: [
       {
