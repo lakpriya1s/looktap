@@ -1,5 +1,52 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **`looktap notifications [app]`** says what notifications the device holds, newest first: app, title, body, when.
+  `--until "<text>"` waits until one has the text (up to `--wait`, default 30 s), so a flow can check that a push or
+  a reminder arrived; `--json` gives every field. All four kinds of device: the iOS simulator is read from the files
+  SpringBoard keeps Notification Center in (with the full push payload), Android from `dumpsys notification`
+  (ongoing ones such as charging only with `--all`), and a real iPhone off its screen, pulling Notification Center
+  down for a moment and back up. A real iPhone that's out of storage now says so when the runner can't install,
+  instead of "Failed to stream the app asset".
+- **`looktap wifi`** takes an Android phone off its cable: with it plugged in, it turns on Wireless debugging
+  (Android 11+) and waits until adb reaches it over the network (about 4 s), or on older Android (or with `--tcpip`)
+  runs `adb tcpip 5555` and connects. `-d <USB serial>` still finds the phone once it's unplugged.
+  **`looktap pair <code> [host:port]`** pairs with a phone that never had a cable, using the code from
+  "Pair device with pairing code"; looktap finds the phone on the network itself. `devices` now says when a phone's
+  Wi-Fi connection dropped (Wireless debugging goes off when the phone restarts), and what to do.
+  **`looktap wifi --always`** (Android 11+, opt-in) installs looktap's Wi-Fi keeper, a 13 KB app with no screen that
+  turns Wireless debugging back on after each restart and whenever the phone joins Wi-Fi; `wifi --off` removes it.
+  It isn't in the npm package: `--always` downloads it from the GitHub release GitHub Actions builds and signs
+  (`keeper-v5`), with a key made for that build and then deleted.
+  It's installed only when asked: `wifi` and `pair` mention it, nothing installs it on its own.
+- **`ls` says what's partly hidden.** A row that something listed is drawn over, or that runs past the screen's
+  edge, says how much after it: `[56% covered by @16 @17 @18]`, `[30% off screen]` (`covered`, `coveredBy` and
+  `offScreen` in `--json`). A list row half under a tab bar, or a toast over a button, now shows without comparing
+  frames by hand or taking a screenshot. `ls --covered` lists only those rows. It's the same "what's on top" that
+  `tap` aims around.
+- **`launch --until "<text>"`** launches the app, then waits until the text is on screen (up to `--wait`, default
+  30 s): past a splash screen, or a React Native debug build loading its bundle from Metro, in one call. After
+  `launch --ls` alone, a screen of a few rows with nothing to tap gets a note that it may still be loading.
+- **`--duration <ms>`** on `swipe` and `longpress`, the same as their trailing `ms` argument (`800`, `800ms`,
+  `0.8s`): the name people and agents reach for first.
+
+### Changed
+
+- **An unknown option is an error (a behaviour change).** looktap used to drop an option it didn't know and exit 0, so
+  `swipe 192 600 192 300 --duration 800` ran at the default speed with no word about it. It now exits 2 with
+  `unknown option --duration for swipe; usage: swipe <x1> <y1> <x2> <y2> [ms]`. Text that starts with `-` goes after
+  `--` (`type -- -5`); `codegen` writes flow steps that way. A saved flow or CI script with a leftover or misspelled
+  flag used to pass and now fails: take the flag out. Over MCP, text that starts with `-` is passed after `--` for you.
+
+### Fixed
+
+- **Android: what's drawn on top is known.** The helper lists each element's children in the order they're drawn
+  (elevation, React Native's `zIndex`) instead of their layout order, so a dialog drawn over a bottom sheet counts as
+  on top of it. `tap` aimed around the wrong element on such screens.
+
 ## 0.7.6
 
 ### Added

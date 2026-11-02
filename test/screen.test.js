@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 
 process.env.LOOKTAP_HOME = mkdtempSync(join(tmpdir(), 'looktap-test-'));
-const { check, coveringAt, formatRow, keyboardArea, matches, onlyStatusBar, resolveRef, saveRefs, visibleRows } = await import('../lib/screen.js');
+const { check, coverage, coveringAt, formatCoverage, formatRow, keyboardArea, matches, onlyStatusBar, resolveRef, saveRefs, visibleRows } = await import('../lib/screen.js');
 const { scaleRgb } = await import('../lib/png.js');
 
 const el = (label, type, x, y, w, h, extra = {}) => ({ label, type, x, y, w, h, ...extra });
@@ -60,6 +60,22 @@ test('coveringAt flags a later overlay on the tap point, not the target\'s own p
   assert.deepEqual(coveringAt(elements, tab, [351, 786]).map((e) => e.label), ['!, Open debugger to view warnings.']);
   assert.deepEqual(coveringAt([tab, icon], tab, [351, 786]), []);
   assert.deepEqual(coveringAt([toast, tab], tab, [351, 786]), []); // drawn earlier: underneath
+});
+
+test('coverage: a row half under a tab bar names the tabs, a row past the bottom edge says so', () => {
+  const row = el('Onboard Tester, 0 km', 'ViewGroup', 10, 702, 363, 63);
+  const clear = el('Other row', 'ViewGroup', 10, 600, 363, 63);
+  const cut = el('Below', 'ViewGroup', 10, 820, 363, 63);
+  const tabs = [el('Circles', 'View', 0, 730, 128, 64), el('3, Chat', 'View', 128, 730, 128, 64), el('Settings', 'View', 256, 730, 128, 64)];
+  const elements = [el('', 'FrameLayout', 0, 0, 384, 853), clear, row, cut, el('', 'ViewGroup', 0, 730, 384, 64), ...tabs];
+  const rows = [clear, row, ...tabs, cut];
+  const hidden = coverage(elements, rows, { w: 384, h: 853 });
+  assert.deepEqual([...hidden.keys()], [1, 5]);
+  assert.equal(formatCoverage(hidden.get(1)), '[56% covered by @3 @4 @5]');
+  assert.equal(formatCoverage(hidden.get(5)), '[48% off screen]');
+  // Drawn before the row (underneath it), or a sliver from rounded bounds: not covered.
+  assert.equal(coverage([...tabs, row], [row], { w: 384, h: 853 }).size, 0);
+  assert.equal(coverage([row, el('Bar', 'View', 0, 763, 384, 40)], [row], { w: 384, h: 853 }).size, 0);
 });
 
 test('onlyStatusBar spots a screen where only the status bar is readable', () => {

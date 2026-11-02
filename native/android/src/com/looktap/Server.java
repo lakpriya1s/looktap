@@ -242,7 +242,7 @@ public final class Server {
     }
 
     /**
-     Visible nodes, pre-order, bounds in px: {l: label, c: class, b: [x1,y1,x2,y2], f: focused, v: checked,
+     Visible nodes, pre-order with siblings in drawing order (later is on top), bounds in px: {l: label, c: class, b: [x1,y1,x2,y2], f: focused, v: checked,
      k: clickable, e: editable, p: password, h: a field's hint, t: a field's text (absent while it shows its hint)}.
      */
     static JSONArray tree(boolean allWindows) throws Exception {
@@ -314,6 +314,12 @@ public final class Server {
 
     static final Rect tmp = new Rect();
 
+    static final java.util.Comparator<AccessibilityNodeInfo> BY_DRAWING_ORDER = new java.util.Comparator<AccessibilityNodeInfo>() {
+        public int compare(AccessibilityNodeInfo a, AccessibilityNodeInfo b) {
+            return Integer.compare(a.getDrawingOrder(), b.getDrawingOrder());
+        }
+    };
+
     static void walk(AccessibilityNodeInfo n, JSONArray out, boolean refresh) throws Exception {
         if (refresh) n.refresh();
         if (!n.isVisibleToUser()) return;
@@ -337,10 +343,15 @@ public final class Server {
             if (!n.isShowingHintText() && txt != null) o.put("t", txt.toString());
         }
         out.put(o);
+        // Children in the order they're drawn (elevation, React Native's zIndex), not as laid out: a later node is
+        // drawn over an earlier one, which is what tap's and ls's "what covers it" go by.
+        List<AccessibilityNodeInfo> kids = new java.util.ArrayList<>();
         for (int i = 0; i < n.getChildCount(); i++) {
             AccessibilityNodeInfo c = n.getChild(i);
-            if (c != null) walk(c, out, refresh);
+            if (c != null) kids.add(c);
         }
+        java.util.Collections.sort(kids, BY_DRAWING_ORDER);
+        for (AccessibilityNodeInfo c : kids) walk(c, out, refresh);
     }
 
     static String cachedPackage = "";
