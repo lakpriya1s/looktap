@@ -165,6 +165,12 @@ looktap network online
 # iOS only: a remote notification; plain text, '{json}', or a .json file
 looktap push com.example.myapp "Your order has shipped"
 looktap push com.example.myapp '{"aps":{"alert":"Hi"},"orderId":7}'
+# what arrived, newest first: app, title, body (iOS simulator --json: the push payload too). Every platform; on a
+# real iPhone it pulls Notification Center down for a moment. Android hides ongoing ones (charging…) unless --all
+looktap notifications
+looktap notifications com.example.myapp --json
+# wait until one has the text (one already there counts; up to --wait, default 30 s): did the push/reminder arrive?
+looktap notifications com.example.myapp --until "has shipped"
 ```
 
 ## Example: screenshots in dark mode with large text

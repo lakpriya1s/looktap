@@ -19,6 +19,7 @@ import { resizePng } from '../lib/png.js';
 import { formatDevice, inventory, lastDevice, rememberDevice } from '../lib/devices.js';
 import { ORIENTATIONS, coordinates, foldPosition, pushPayload, rotation, textSize } from '../lib/conditions.js';
 import { LOGBOX, appGone, center, coverage, expectOn, fillCode, poller, tapPoint, forgetFront, formatCoverage, formatRow, isRef, lastFront, logBoxToast, rememberFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, signature, sliding, stillScreen, visibleRows, waitFor } from '../lib/screen.js';
+import { formatNotification, fromApp, notificationJson, notificationMatches } from '../lib/notifications.js';
 import { duration, formatFrames, formatReading, formatSamples, readingJson } from '../lib/perf.js';
 import { flowFiles, flowName, junit } from '../lib/testing.js';
 import { ADB, HOME, LockedError, NotFound, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
@@ -124,6 +125,11 @@ debug                             [app] defaults to --app / config, else the app
                                   Android its APKs and data folder (readable with run-as on debuggable builds)
   apps [filter] [--all] [--json]  installed apps: id, name, version (--all: system apps too). A filter
                                   matches part of the id or name; nothing matching → exit 1
+  notifications [app] [--until <text>] [--all] [--json]
+                                  what Notification Center / the notification shade holds, newest first: app,
+                                  title, body (iOS simulator: also the push payload). --until: wait until one
+                                  has <text> (up to --wait, default 30 s). A real iPhone: read off its screen,
+                                  pulling Notification Center down for a moment. --all: ongoing ones too
   capabilities [--json]           what this device can't do, or can only in part, and why
   perf [app] [--for 10s] [--json] the app's CPU (100% = one core), memory and threads; --for: a reading
                                   each second, then avg/max (iOS: the footprint Xcode shows; Android: PSS)
@@ -992,6 +998,7 @@ async function act(d, cmd, args, opts) {
     case 'crashes': return showCrashes(d, args[0], opts);
     case 'app': return opts.flags.has('paths') ? showPaths(d, args[0]) : showApp(d, args[0]);
     case 'apps': return showApps(d, args.join(' '), opts);
+    case 'notifications': return showNotifications(d, args.join(' '), opts);
     case 'install': {
       need(1, 'install <path.app|path.apk> [--grant]');
       const id = await d.install(args[0], { grant: opts.flags.has('grant') });
@@ -1230,6 +1237,49 @@ async function showApps(d, filter, opts) {
   }
   const width = Math.max(...apps.map((a) => a.id.length));
   for (const a of apps) console.log([a.id.padEnd(width), a.name, a.version && `v${a.version}`, a.system && '(system)'].filter(Boolean).join('  ').trimEnd());
+}
+
+/**
+ `notifications [app] [--until text] [--all] [--json]`: what the device holds, newest first. --until waits for one
+ whose title or body has the text (one already there counts). Ongoing ones (charging, a foreground service) only
+ with --all or an app.
+ */
+async function showNotifications(d, app, opts) {
+  const json = opts.flags.has('json');
+  const all = opts.flags.has('all') || Boolean(app);
+  // A real iPhone shows app names (HEALTH), not ids.
+  const name = app.includes('.') && d instanceof IosDevice ? (await d.apps({ all: true }).catch(() => [])).find((a) => a.id === app)?.name : null;
+  let hidden = 0;
+  const read = async (o) => {
+    const list = (await d.notifications(o)).filter((n) => !app || fromApp(n, app, name));
+    hidden = all ? 0 : list.filter((n) => n.ongoing).length;
+    return all ? list : list.filter((n) => !n.ongoing);
+  };
+  const from = app ? ` from ${app}` : '';
+  if (!opts.until) {
+    const list = await read();
+    if (json) return console.log(notificationJson(list));
+    if (!list.length) console.log(`no notifications${from}`);
+    for (const n of list) console.log(formatNotification(n));
+    if (hidden) console.log(`(${hidden} ongoing hidden: --all lists them)`);
+    return;
+  }
+  const timeout = opts.wait != null ? Number(opts.wait) * 1000 : 30e3;
+  if (!(timeout >= 0)) throw new UsageError('--wait takes seconds, e.g. --wait 30');
+  // A real iPhone: Notification Center is pulled down at the start and the end; in between, banners are watched.
+  const phone = d instanceof IosDevice;
+  const t0 = Date.now();
+  let list = [];
+  for (let first = true; ; first = false) {
+    const last = Date.now() - t0 >= timeout;
+    list = await read(phone ? { open: first || last } : undefined);
+    const hit = list.find((n) => notificationMatches(n, opts.until));
+    if (hit) return console.log(json ? notificationJson([hit]) : formatNotification(hit));
+    if (last) break;
+    await sleep(Math.min(phone ? 300 : 1000, Math.max(0, timeout - (Date.now() - t0))));
+  }
+  const shown = list.slice(0, 8).map((n) => `  ${formatNotification(n)}`);
+  throw new Error(`no notification${from} matching ${JSON.stringify(opts.until)} within ${timeout / 1000} s${shown.length ? `; there are:\n${shown.join('\n')}` : ' (there are none)'}`);
 }
 
 /**
