@@ -6,7 +6,7 @@ import { homedir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 
 import { Android, RECORD_LIMIT_S, adbDevices, overWifi, wifiTwin } from '../lib/android.js';
-import { KEEPER, hasKeeper, installKeeper, pair, removeKeeper, wifi } from '../lib/wifi.js';
+import { KEEPER, connect, hasKeeper, installKeeper, pair, removeKeeper, wifi } from '../lib/wifi.js';
 import { Ios, bootedSimulators } from '../lib/ios.js';
 import { IosDevice, physicalDevices } from '../lib/iosdevice.js';
 import { clock, grepper, startOf, tail, whichApp } from '../lib/logs.js';
@@ -53,6 +53,9 @@ setup & info
                                   turns it back on after restarts and on joining Wi-Fi. --off: removes it
   pair <code> [host:port]         Android, no cable: pair over Wi-Fi with the code on the phone (Developer
                                   options → Wireless debugging → Pair device with pairing code), then connect
+  connect <host[:port]>           Android, no cable and no code: connect to the address a device's debugging screen
+                                  shows (a Wear OS watch's Debug over Wi-Fi, or after adb tcpip; port 5555 if left
+                                  out), waiting while it asks "Allow debugging?"
   doctor [-d <device>]            check the toolchain; with -d, the way to that device: how it's connected, whether
                                   it's locked, and (a real iPhone) whether its runner answers, over which route
   setup                           start the helper (optional: commands start it on first use)
@@ -398,6 +401,11 @@ async function main() {
     console.log(`paired and connected: ${r.id}`);
     if (!hasKeeper(r.id)) console.log(ALWAYS_HINT);
     return;
+  }
+  if (cmd === 'connect') {
+    const r = await connect(args[0], { say: (m) => console.error(`looktap: ${m}`) });
+    rememberDevice('android', r.id);
+    return console.log(r.already ? `already connected: ${r.id}` : `connected: ${r.id}. It goes off when the device restarts: turn debugging over Wi-Fi back on and run looktap connect again`);
   }
   if (cmd === 'shutdown') return console.log(shutDown(await shutdown(args.join(' ') || opts.device || null, { platform: opts.platform })));
 

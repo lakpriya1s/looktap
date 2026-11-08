@@ -20,6 +20,9 @@ looktap wifi --always
 looktap wifi --off
 # no cable: the code from Developer options → Wireless debugging → Pair device with pairing code
 looktap pair 482913
+# no cable and no code: the address a Wear OS watch shows under Developer options → Debug over Wi-Fi (or any
+# device after adb tcpip; port 5555 if left out). Waits while the device asks "Allow debugging?" (the user taps OK)
+looktap connect 192.168.1.96:5555
 looktap devices
 looktap doctor
 # the way to one device: a real iPhone's tunnel, usbmuxd, lock screen, which routes its runner answers on
