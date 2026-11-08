@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { formatDevice, iosEntry, parseAdbLine } from '../lib/devices.js';
+import { androidDevice, formatDevice, iosEntry, parseAdbLine } from '../lib/devices.js';
 
 test('adb lines: ready, waiting for the USB debugging prompt, and noise', () => {
   assert.deepEqual(parseAdbLine('emulator-5554          device product:sdk_gphone model:sdk_gphone device:emu'), { id: 'emulator-5554', state: 'device', rest: ' product:sdk_gphone model:sdk_gphone device:emu' });
@@ -36,4 +36,18 @@ test('one line: id second, then what it is; not-ready says why', () => {
     'android  R83Y  SM A065F · device · USB  ✗ not ready: accept "Allow USB debugging?" on the phone',
   );
   assert.equal(formatDevice({ platform: 'android', kind: 'emulator', id: 'Pixel_9a', name: 'Pixel_9a', running: false }), 'android  Pixel_9a  Pixel_9a · emulator');
+});
+
+test('Android devices: a phone, a Wear OS watch, and one that gives no answer', () => {
+  assert.deepEqual(androidDevice('samsung\nSM-A065F\n16\nphone\n'), { name: 'Samsung SM-A065F', os: 'Android 16' });
+  assert.deepEqual(androidDevice('samsung\nSM-R860\n11\nnosdcard,watch\n'), { name: 'Samsung SM-R860', os: 'Wear OS (Android 11)', form: 'watch' });
+  assert.deepEqual(androidDevice('Google\nPixel 9a\n16\n'), { name: 'Google Pixel 9a', os: 'Android 16' });
+  const silentWatch = androidDevice('', ' product:freshbs model:SM_R860 device:freshbs', true);
+  assert.equal(silentWatch.ready, false);
+  assert.equal(silentWatch.name, 'SM R860');
+  assert.match(silentWatch.problem, /wake its screen/);
+  const silentPhone = androidDevice('', '', false);
+  assert.equal(silentPhone.name, 'Android device');
+  assert.match(silentPhone.problem, /reconnect the cable/);
+  assert.equal(formatDevice({ platform: 'android', kind: 'device', id: '192.168.1.96:5555', connection: 'Wi-Fi', ready: true, ...androidDevice('samsung\nSM-R860\n11\nwatch\n') }), 'android  192.168.1.96:5555  Samsung SM-R860 · device · Wear OS (Android 11) · Wi-Fi');
 });
