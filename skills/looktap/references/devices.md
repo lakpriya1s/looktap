@@ -43,6 +43,30 @@ looktap skill --list
 looktap skill --uninstall
 ```
 
+## Watches
+
+A Wear OS watch (a real one over Wi-Fi with `connect`, or an emulator) and an Apple Watch simulator take the same
+commands as a phone, on a small screen. `looktap capabilities` says what a watch does differently.
+
+```bash
+# an Apple Watch simulator (devices --all lists them as watchOS); -d picks it when an iPhone simulator runs too
+looktap boot "Apple Watch Series 12 (46mm)"
+# the crown: to the watch face
+looktap home
+# a watch takes no hardware keyboard: open its keyboard by tapping the field, then type taps its keys (letters and
+# spaces; it capitalizes and corrects as for a person). key delete, key space and key return (Done) tap its keys too
+looktap tap "Create Message" --ls
+looktap type "on my way"
+looktap key return
+```
+
+- **Back** on an Apple Watch taps the back button, else swipes in from the left edge.
+- **A Wear OS watch dims** to its always-on face after a few idle seconds, with nothing to read: commands that act on
+  the screen wake it first; after `ls` says it has dimmed, `looktap key WAKEUP`.
+- **Not on a watch:** rotation, fingerprint/Face ID; on an Apple Watch also paste, appearance, text size, the
+  status bar and reading notifications (swipe down on the watch face and `ls` instead).
+- A real Apple Watch can't be driven (it's reached only through its iPhone): use the simulator.
+
 ## A phone that's stuck, and sharing devices with other agents
 
 Every adb call looktap makes has a timeout (15 s, `LOOKTAP_ADB_TIMEOUT` in seconds), and each device command first

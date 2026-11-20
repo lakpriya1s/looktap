@@ -48,7 +48,8 @@ setup & info
   devices [--all] [--json]        what's running or connected: simulator, emulator or real device (model, OS,
                                   USB/Wi-Fi), with window or headless, and what to do for a phone not ready yet.
                                   --all: also what boot can start
-  boot [name] [--window|--headless]  boot a simulator or emulator (name, UDID or AVD; -p to choose) and wait until
+  boot [name] [--window|--headless]  boot a simulator or emulator (an iPhone, an Apple Watch, an Android or Wear OS
+                                  AVD; name, UDID or AVD; -p to choose) and wait until
                                   it's ready. Default: a window (LOOKTAP_HEADLESS=1 or "headless": true in config
                                   for headless). On a running simulator --window opens its window
   shutdown [name]                 shut down a simulator or emulator
@@ -641,7 +642,9 @@ async function list(d, opts, snap) {
     return console.log(JSON.stringify({ screen: snap.screen, elements: rows.map(json).filter((_, i) => !onlyHidden || hidden.has(i)) }));
   }
   const lines = rows.map((e, i) => (hidden.has(i) ? `${formatRow(e, i + 1)}  ${formatCoverage(hidden.get(i))}` : onlyHidden ? null : formatRow(e, i + 1))).filter(Boolean);
-  if (!rows.length) console.error('looktap: no labelled elements on screen (still loading, or the app sets no accessibility labels)');
+  if (!rows.length && d.watch && (await d.dozing?.().catch(() => false)))
+    console.error('looktap: the watch has dimmed to its always-on face, with nothing to read: looktap key WAKEUP (commands that act on the screen wake it themselves)');
+  else if (!rows.length) console.error('looktap: no labelled elements on screen (still loading, or the app sets no accessibility labels)');
   else if (!lines.length) console.log(`nothing covered or cut off (${rows.length} elements on screen)`);
   else console.log(lines.join('\n'));
   // The system's own dialogs belong to package "android": only then is it worth asking what it is.
@@ -1130,7 +1133,7 @@ const REAL_GPS = (off) =>
 /** `reverse <port>[:<port>]`, `reverse --list`, `reverse --remove <port>|all`: the device's localhost reaching this computer. */
 function reverseCommand(d, args, opts) {
   if (!d.reverse) {
-    if (d.kind === 'ios-simulator') return console.log("the simulator shares this Mac's network: localhost on it is this Mac's, no rule needed");
+    if (['ios-simulator', 'watchos-simulator'].includes(d.kind)) return console.log("the simulator shares this Mac's network: localhost on it is this Mac's, no rule needed");
     unsupported(d.kind, 'reverse');
   }
   const show = (rules) => (rules.length ? rules.map((r) => `${r.remote} → this computer's ${r.local}`).join('\n') : 'no adb reverse rules');
@@ -1158,7 +1161,7 @@ async function metroCommand(d, args) {
   const up = await metroUp(port);
   console.log(up ? `Metro is running on this computer (localhost:${port}/status answers)` : `Metro isn't answering on this computer's port ${port}: start it (npx react-native start, or npx expo start)`);
   if (!d.reverse) {
-    if (d.kind === 'ios-simulator') return console.log("the simulator shares this Mac's network: it reaches Metro at localhost");
+    if (['ios-simulator', 'watchos-simulator'].includes(d.kind)) return console.log("the simulator shares this Mac's network: it reaches Metro at localhost");
     return console.log('a real iPhone reaches Metro over Wi-Fi, at this Mac\'s IP address (the app\'s dev menu → Configure Bundler)');
   }
   let rules = d.reverses();
@@ -1184,7 +1187,7 @@ async function showPs(d, arg) {
   if (!pid) return console.log(`${app}: not running`);
   const front = (await d.foreground().catch(() => null))?.id === app;
   // A simulator's apps are processes on this Mac: ps knows how long they've run.
-  const etime = d.kind === 'ios-simulator' ? run('ps', ['-o', 'etime=', '-p', String(pid)], { allowFail: true, timeout: 5000 }).trim() : '';
+  const etime = ['ios-simulator', 'watchos-simulator'].includes(d.kind) ? run('ps', ['-o', 'etime=', '-p', String(pid)], { allowFail: true, timeout: 5000 }).trim() : '';
   console.log(`${app}: pid ${pid}${etime ? `, up ${clockTime(etimeSecs(etime) * 1000)}` : ''}, ${front ? 'in front' : 'in the background'}`);
 }
 

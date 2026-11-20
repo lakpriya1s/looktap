@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### Watches
+
+- **Apple Watch simulators** are driven like iPhone simulators, by the same helper: `devices --all` lists them
+  (watchOS), `boot` starts one, and `ls`, `tap`, `swipe`, `shot`, `record`, `launch`, `logs`, `location`, `push`,
+  `perf`, `kill` and the rest work. Home is the Digital Crown (the watch face). Back taps the back button, else swipes
+  in from the left edge. The watch takes no hardware keyboard, so `type` taps its own keyboard's keys (letters and
+  spaces), and `key delete|space|return` tap its keys and Done. An app whose root reports no children (watchOS
+  Calculator) is read by hit-testing the screen. What the simulator refuses (appearance, text size, the status bar,
+  paste, Face ID, rotation) fails at once with the reason.
+- **Wear OS watches** are their own kind in `capabilities` (no rotation or fingerprint; an idle watch dims). Commands
+  that act on the screen wake a dimmed watch first, and an empty `ls` says it has dimmed.
+- The capability table has an Apple Watch simulator and a Wear OS watch column.
+
 ### A stuck adb, raw adb, and several agents on one device
 
 From a day of testing on a Samsung over a USB hub and an iPhone X, with more than one agent session attached.

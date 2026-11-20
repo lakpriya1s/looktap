@@ -172,6 +172,8 @@ static void walk(id el, NSMutableArray *out, NSMutableArray *holes, BOOL all, CG
   for (id child in children) walk(child, out, holes, all, screen);
 }
 
+static BOOL listed(NSArray *out, NSDictionary *n);
+
 /** Hit-test a grid over `hole`, adding elements the walk could not reach. */
 static void fillHole(CGRect hole, NSMutableArray *out) {
   const double step = 20;
@@ -207,7 +209,13 @@ static void fillHole(CGRect hole, NSMutableArray *out) {
       BOOL dup = NO;
       for (NSDictionary *m in out)
         if (CGRectEqualToRect(frameOf(m), frameOf(n)) && [m[@"l"] isEqualToString:n[@"l"]]) dup = YES;
-      if (!dup) [out addObject:n];
+      if (dup) continue;
+      [out addObject:n];
+      // What it holds, when it says (a hit test can land on a container whose children the walk never reached).
+      NSMutableArray *inner = [NSMutableArray array], *innerHoles = [NSMutableArray array];
+      for (id child in [el accessibilityChildren]) walk(child, inner, innerHoles, NO, hole);
+      for (NSDictionary *m in inner)
+        if (!listed(out, m)) [out addObject:m];
     }
   }
 }
@@ -309,6 +317,9 @@ static NSArray *readTree(BOOL all) {
   for (NSValue *h in holes) {
     fillHole(h.rectValue, out);
   }
+  // An app whose root reports no children at all (SwiftUI apps on watchOS: Calculator) is read by hit-testing the
+  // whole screen, as a childless container is.
+  if (app && out.count <= 1) fillHole(screen, out);
   scanForHiddenContent(out, screen, app ? pidOf(app) : 0);
   return out;
 }

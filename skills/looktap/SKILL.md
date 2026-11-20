@@ -171,7 +171,7 @@ here, `looktap skill <name>` prints it.
 |---|---|
 | [references/commands.md](references/commands.md) | every command and option: gestures, typing, screenshots and video, installing and resetting apps, permissions, dark mode, text size, location, rotation, folding, network, push, reading notifications, the config file |
 | [references/flows.md](references/flows.md) | flow files as tests for CI (`test`), recording a flow (`codegen`), signing in, pages with no labels, handing over to the user (`handoff`) |
-| [references/devices.md](references/devices.md) | booting, choosing or setting up a device; a real phone that isn't ready, is on Wi-Fi, runs iOS 16 or older, or is stuck; Metro and `adb reverse`; other agents using the same device (`who`, `release`) |
+| [references/devices.md](references/devices.md) | booting, choosing or setting up a device; watches (Wear OS, Apple Watch simulators); a real phone that isn't ready, is on Wi-Fi, runs iOS 16 or older, or is stuck; Metro and `adb reverse`; other agents using the same device (`who`, `release`) |
 | [references/debugging.md](references/debugging.md) | a crash or an error: logs (following them live, marks), crash reports, performance (`perf`, `launch --time`), the app's files and saved settings (`prefs`) |
 | [references/location.md](references/location.md) | location, geofence and background features: moving the device (`route`), the app killed or in the background (`kill`, `background`), the system's geofences, battery and network use |
 
