@@ -26,11 +26,12 @@ test('every limit names a real command, a known status and a reason', () => {
 test('a subcommand falls back to its command; anything unlisted is supported', () => {
   assert.equal(capability('ios-device', 'location clear').status, 'conditional');
   assert.equal(capability('android-emulator', 'location').status, 'supported');
-  assert.equal(capability('android-emulator', 'location clear').status, 'unsupported');
+  assert.equal(capability('android-emulator', 'location clear').status, 'conditional');
+  assert.equal(capability('android-device', 'location clear').status, 'conditional'); // falls back to location's own limit
   assert.equal(capability('ios-simulator', 'tap').status, 'supported');
-  assert.equal(capabilities('android-device')['location clear'].status, 'unsupported');
-  // Every command, plus its one subcommand limit.
-  assert.deepEqual(Object.keys(capabilities('ios-simulator')).filter((c) => !COMMANDS.includes(c)), ['perf --frames']);
+  assert.equal(capabilities('android-device')['network <app>'].status, 'conditional');
+  // Every command, plus its subcommand limits.
+  assert.deepEqual(Object.keys(capabilities('ios-simulator')).filter((c) => !COMMANDS.includes(c)), ['perf --frames', 'network <app>']);
   assert.equal(capabilities('ios-simulator')['perf --frames'].status, 'conditional');
   assert.equal(capabilities('ios-simulator').perf.status, 'supported');
 });

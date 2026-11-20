@@ -1,5 +1,66 @@
 # Changelog
 
+## Unreleased
+
+From the notes of a device-testing session of a React Native app's location and geofence features (an Android 16
+phone over USB, an iOS 16 iPhone through lockdown).
+
+### Added
+
+- **`looktap route`** moves the device instead of putting it at a point: a fix every `--step` along a line from
+  `--from <lat,lon>`, `--from-current` or `--offset-from-pref <app>:<latKey>,<lonKey>` (a place the app saved), at
+  `--bearing`/`--distance`/`--speed`, or along a `--gpx` track at its own pace (`--speed-scale`), then held still for
+  `--then-still`. It runs in the foreground or with `--background` (`route status`, `route stop`), and prints distance
+  and time, never coordinates. iOS simulator: `simctl location start`, waypoints on stdin; iPhone on iOS 16 or older:
+  the developer image, a fix at a time; Android 12+: the shell's `gps` and `network` test providers, set up by looktap
+  (mock locations allowed for the shell, each add checked before use, since one that hasn't taken fails as "gps
+  provider is not a test provider"), so the fused provider and Play services' geofencing see the fixes. Android 16's
+  shell can't put speed or bearing on a fix; `capabilities` says so.
+- **`looktap kill <app>`** ends an app as the system does under memory pressure (Home, then Android `am kill`, retried
+  while the system re-ranks the app, or SIGKILL through `run-as`; iOS SIGKILL, as jetsam sends). Unlike `stop`, which
+  on Android is a force-stop that removes the app's geofences, alarms and jobs, what it registered survives.
+  **`looktap background <app>`** sends it to the background and checks it's still running.
+- **`looktap prefs <app> [key …]`** prints an app's UserDefaults (iOS simulator; a real iPhone's development builds,
+  over house_arrest) or SharedPreferences (Android debuggable builds, through `run-as`; `--file` picks the file) as
+  `key = value`. Values whose keys look like coordinates, a `lat,lon` pair in a string or coordinates inside JSON are
+  redacted by default; `--redact` names more keys. `--json` for scripts; a key asked for that isn't set exits 1.
+- **`looktap logs --follow`** streams the app's log until Ctrl+C or `--for`, with its process starting and ending as
+  events: `── app relaunched in the background, pid 4388 (broadcast GeofenceReceiver)`. Android follows the app's uid
+  and reads why ActivityManager started it; iOS reports a new pid. **`looktap logs mark [name]`** and `--since <name>`
+  read only what came after a marker (for `crashes` too).
+- **`looktap geofences <app>`** (Android): whether Play services is geofencing for the app (its location request on
+  the app's behalf, and when that was added or removed), each geofence's id, radius and transitions where the Play
+  services build lists them, and AOSP proximity alerts. No coordinates. iOS can't show an app's monitored regions:
+  `capabilities` and the skill give the recipe.
+- **`looktap battery <app> [--reset|--restore]`** (Android): batterystats for the app; `--reset` also makes a phone on
+  USB count as unplugged so the stats build up. **`looktap network <app> [--for 60s]`** (Android): what the app sent
+  and received, and in how many bursts, to check upload batching.
+- **`looktap value <label>`** prints an element's value alone (a switch: 1 or 0), for scripts. A label with no value
+  of its own reads the switch in its row (Android settings rows), and `expect "<label>" = 1` does the same.
+- **`looktap dismiss logbox --until-gone`** closes React Native's LogBox toast again each time it comes back, until it
+  stays gone for a second.
+- The skill has a new reference, `location.md`: moving the device, `kill` versus `stop`, and reading what happened.
+
+### Changed
+
+- **A label that names one control beats the groups around it.** On iOS a group's label is its children's labels run
+  together, so `tap "Driving, On"` used to be ambiguous with three groups and the switch. Now one button, switch or cell
+  matching exactly or by prefix wins over containers that only contain the text; two or more controls are still
+  ambiguous. A switch also answers to its spoken name (`"<label>, On"`).
+- **`tap` on an element React Native's LogBox toast covers closes the toast first**, finds the target again and taps
+  it, with a note. `tapxy` in the toast's invisible container (a tab bar under it) does the same. The skill now has a
+  section on React Native development builds, with `"dismissLogBox": true` up front.
+- **Android debug builds and Metro:** with Metro running on the Mac, `launch` runs `adb reverse tcp:8081` first, and
+  `launch --ls` prints "bundle loading from Metro…" and waits through the splash screen (up to 120 s, or `--wait`);
+  `launch --until` waits as long.
+- **`location` prints `location set`**, never the coordinates, and a failure prints `failed: <reason>` with any
+  coordinate-like number taken out. Android phones (12+) can now be given a location, through the same test
+  providers as `route`; `location clear` and `route stop` remove them and give the shell back its mock-location setting.
+- **`devices` asks every dump that can say an Android device is locked** (makers word it differently) and shows
+  `screen off` for a device asleep.
+- **`logs` on a real iPhone** notes when a development build's own code has logged nothing: Swift's `print()` never
+  reaches a device's log, only `NSLog` and `os_log`/`Logger` do (in the debugging reference too).
+
 ## 0.7.7
 
 ### Added

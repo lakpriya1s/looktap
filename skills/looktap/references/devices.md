@@ -46,6 +46,7 @@ looktap skill --uninstall
 ## Real phones
 
 - **Start with `looktap devices`** to see which devices are real phones and which are simulators or emulators.
+  A phone that is `locked` (or has its `screen off`) takes no screen commands: ask the user to unlock it first.
   An Android phone on both USB and Wi-Fi is one row (`USB + Wi-Fi`) and is driven over USB.
   A phone marked "not ready" needs the user: tell them exactly what it says (accept the USB debugging prompt, tap
   Trust, turn on Developer Mode). One marked "still starting" needs no one: `looktap boot <name>` waits for it.
