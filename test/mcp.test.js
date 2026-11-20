@@ -8,6 +8,7 @@ test('tool calls become looktap command lines', () => {
   assert.deepEqual(toWords('tap', { target: 'Sign in' }), ['tap', 'Sign in', '--ls']);
   assert.deepEqual(toWords('tap', { target: '@3', ls: false }), ['tap', '@3']);
   assert.deepEqual(toWords('fill', { target: 'Email', text: 'a b' }), ['fill', 'Email', 'a b', '--ls']);
+  assert.deepEqual(toWords('type', { text: '-5 off' }), ['type', '--ls', '--', '-5 off']);
   assert.deepEqual(toWords('long_press', { x: 10, y: 20, ms: 900 }), ['longpress', '10', '20', '900', '--ls']);
   assert.deepEqual(toWords('wait', { target: 'Home', gone: true, seconds: 5 }), ['wait', 'Home', '--gone', '--wait', '5']);
   assert.deepEqual(toWords('wait', { settle: true, seconds: 20 }), ['wait', '--settle', '--wait', '20']);
@@ -18,6 +19,8 @@ test('tool calls become looktap command lines', () => {
   assert.deepEqual(toWords('perf', { app: 'com.example.app', for: 10, json: true }), ['perf', 'com.example.app', '--for', '10s', '--json']);
   assert.deepEqual(toWords('perf', { frames: true }), ['perf', '--frames']);
   assert.throws(() => toWords('perf', { frames: true, for: 5 }), /frames or for, not both/);
+  assert.deepEqual(toWords('notifications', {}), ['notifications']);
+  assert.deepEqual(toWords('notifications', { app: 'com.example.app', until: 'Shipped', seconds: 60, json: true }), ['notifications', 'com.example.app', '--until', 'Shipped', '--wait', '60', '--json']);
 });
 
 test('every tool has a schema that names its required fields', () => {

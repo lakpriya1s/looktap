@@ -12,6 +12,14 @@ looktap devices --all
 looktap boot "iPhone 16 Pro" --window
 looktap boot Pixel_9a --headless
 looktap shutdown Pixel_9a
+# an Android phone on USB: connect it over Wi-Fi too, then the cable can come out (--tcpip: adb tcpip, any Android)
+looktap wifi
+# keep it on after restarts and on rejoining Wi-Fi: installs looktap's small Wi-Fi keeper app (ask the user first);
+# --off removes it and turns Wireless debugging off
+looktap wifi --always
+looktap wifi --off
+# no cable: the code from Developer options → Wireless debugging → Pair device with pairing code
+looktap pair 482913
 looktap devices
 looktap doctor
 # the way to one device: a real iPhone's tunnel, usbmuxd, lock screen, which routes its runner answers on
@@ -38,6 +46,14 @@ looktap skill --uninstall
   An Android phone on both USB and Wi-Fi is one row (`USB + Wi-Fi`) and is driven over USB.
   A phone marked "not ready" needs the user: tell them exactly what it says (accept the USB debugging prompt, tap
   Trust, turn on Developer Mode). One marked "still starting" needs no one: `looktap boot <name>` waits for it.
+- **An Android phone off the cable:** with it plugged in, `looktap wifi` connects it over Wi-Fi too (Wireless
+  debugging on Android 11+, else adb tcpip; `--tcpip` forces that); then the cable can come out and `-d <its USB serial>`
+  still finds it. With no cable, the user opens Developer options → Wireless debugging → Pair device with pairing code
+  and tells you the code: `looktap pair 123456` (add the host:port shown under it if looktap can't find the phone).
+  The phone turns Wireless debugging off when it restarts; `devices` then says the Wi-Fi connection dropped.
+  If the user wants it to stay on, `looktap wifi --always` (Android 11+) installs a small looktap app on the phone
+  (downloaded from looktap's GitHub releases the first time)
+  that turns it back on after restarts and on joining Wi-Fi. It installs an app, so only when the user agrees.
 - **A real iPhone on Wi-Fi that doesn't answer:** looktap says within ~20 s that the runner is up but out of reach,
   and what each route answered. Ask the user to plug in a USB cable (looktap moves to it by itself) and run the
   command again; `looktap doctor -d <UDID>` shows each step. Don't `teardown` first: the runner keeps running.

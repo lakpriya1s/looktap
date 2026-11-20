@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- looktap Wi-Fi keeper: installed only by "looktap wifi always", removed by "looktap wifi off". -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.looktap.wifi" android:versionCode="5" android:versionName="5">
+  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+  <!-- granted over adb (pm grant), never by the phone's own UI: lets it switch Wireless debugging on -->
+  <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
+  <application android:label="looktap Wi-Fi" android:hasCode="true" android:allowBackup="false">
+    <receiver android:name=".Receiver" android:exported="true" android:directBootAware="true">
+      <intent-filter>
+        <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+        <action android:name="android.intent.action.BOOT_COMPLETED" />
+        <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+      </intent-filter>
+    </receiver>
+    <service android:name=".Keeper" android:permission="android.permission.BIND_JOB_SERVICE" android:exported="false" android:directBootAware="true" />
+  </application>
+</manifest>

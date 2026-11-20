@@ -80,9 +80,9 @@ code, so the steps that worked with the agent run on their own afterwards:
 | ⏱️ | **Performance.** `perf` reads the app's CPU, memory and threads, once or each second with `--for 10s`; `perf --frames` adds frames, jank and frame-time percentiles (on iOS, from the screen itself). `launch --time` times a cold start until the first screen settles |
 | 💥 | **Crashes.** `crashes` reads iOS crash reports (exception, reason, top frames) and Android crashes, ANRs and **low-memory kills**, so "the app vanished" always comes with a reason |
 | 🫆 | **Biometrics.** `bio match\|nomatch` simulates Face ID or a fingerprint |
-| 🌍 | **Simulated conditions.** `location <lat> <lon>`, `appearance dark`, `textsize xxl` (Dynamic Type / font scale), `statusbar clean` (9:41 for screenshots), `rotate landscape` (`ls`, taps and screenshots follow the turned screen), `fold open` (the iPhone Duo simulator), Android `network offline`, and iOS `push` notifications |
+| 🌍 | **Simulated conditions.** `location <lat> <lon>`, `appearance dark`, `textsize xxl` (Dynamic Type / font scale), `statusbar clean` (9:41 for screenshots), `rotate landscape` (`ls`, taps and screenshots follow the turned screen), `fold open` (the iPhone Duo simulator), Android `network offline`, iOS `push` notifications, and `notifications` to read back what arrived (every platform, real phones too) |
 | 🧹 | **App state for repros.** `install` a build, `apps` to see what is installed (and which version), `reset` an app to a fresh install, `uninstall`, and `permission grant\|revoke\|reset camera\|location\|photos\|…`, with the same names on both platforms |
-| 📱 | **Devices on demand.** `boot "iPhone 16 Pro"` or `boot Pixel_9a` starts a simulator or emulator by name and waits until it's ready, with a window or `--headless`; `shutdown` stops it. `devices` tells real phones from simulators and emulators (model, OS, USB or Wi-Fi), and says what to do for a phone that isn't ready yet |
+| 📱 | **Devices on demand.** `boot "iPhone 16 Pro"` or `boot Pixel_9a` starts a simulator or emulator by name and waits until it's ready, with a window or `--headless`; `shutdown` stops it. `devices` tells real phones from simulators and emulators (model, OS, USB or Wi-Fi), and says what to do for a phone that isn't ready yet. `wifi` takes an Android phone off its cable, and `pair` connects one that never had one |
 | 🤖 | **Built for agents.** `--ls` on any action, `run` to batch steps, `--json`, `capabilities` to check what the device in use can and can't do, and a [Claude Code skill](#for-ai-agents) you install with one command |
 | 🧩 | **Nothing to install on simulators, emulators or Android phones**, no server to run, no npm dependencies. The helpers start on first use. A real iPhone gets a small test runner, built for you |
 | ⚠️ | **Honest failures.** A tap that's covered by a toast prints a warning, a stale `@ref` is an error rather than a wrong tap, a system prompt over the app is reported as one, a locked device is reported as locked (never typed into), and **an app that dies is named the moment looktap notices** |
@@ -226,6 +226,8 @@ simulators), a real iPhone 14 Pro on iOS 26, a real iPhone X on iOS 16.7 (Xcode 
 
 looktap ships its own small helper for each platform. **Nothing is installed on simulators, emulators or Android
 devices.** A real iPhone or iPad is the exception: it gets a small test runner ([Using a real iPhone](#using-a-real-iphone)).
+The one Android exception is opt-in: `looktap wifi --always` installs a small app that keeps Wireless debugging on
+(built and signed on GitHub Actions, downloaded from the release; `wifi --off` removes it).
 
 | | iOS simulator | Android emulator / device |
 |---|---|---|
@@ -604,7 +606,7 @@ looktap uninstall com.example.myapp
 - **These commands never guess the app from the screen.** `stop`, `uninstall`, `reset` and `permission` take the app id
   as an argument, or from `--app` / `looktap.config.json`.
 
-### Simulated conditions: location, dark mode, text size, orientation, network, push
+### Simulated conditions: location, dark mode, text size, orientation, network, push, notifications
 
 ```bash
 looktap location 51.5072 -0.1276        # GPS (Android: emulators) · `location clear` on iOS
@@ -616,6 +618,8 @@ looktap fold open --ls                  # a foldable (iPhone Duo): closed, half 
 looktap network offline                 # Android: airplane mode · `network online`
 looktap push com.example.myapp "Your order has shipped"          # iOS: an alert
 looktap push com.example.myapp '{"aps":{"alert":"Hi"},"orderId":7}'   # or any payload / a .json file
+looktap notifications                   # what arrived: Notification Center / the shade, newest first
+looktap notifications com.example.myapp --until "has shipped"    # wait for it (up to --wait, default 30 s)
 ```
 
 - **`textsize`** uses the iOS Dynamic Type sizes. On Android each size maps to the nearest font scale, from 0.8
@@ -636,6 +640,18 @@ looktap push com.example.myapp '{"aps":{"alert":"Hi"},"orderId":7}'   # or any p
   - A payload without `"aps"` is sent as a silent (background) push carrying that data.
   - **Android pushes can't be simulated locally.** They come through Firebase (FCM), so send them from your
     backend or the Firebase console.
+- **`notifications`** lists the notifications the device holds, newest first: when, app, title (· subtitle) and
+  body. `[app]` narrows it to one app; `--json` gives every field. `--until <text>` waits until one whose title or
+  body has the text is there (one already there counts), so a flow can check that a push, a reminder or a
+  message arrived. It works on all four kinds of device, each read its own way:
+  - **iOS simulator:** from the files SpringBoard keeps Notification Center in, so nothing on screen moves.
+    `--json` includes the full push payload, badge, thread and category.
+  - **Android (emulator and device):** from `dumpsys notification`. Ongoing ones (charging, USB, a foreground
+    service) are left out unless you name the app or pass `--all`.
+  - **A real iPhone:** off the screen, through the runner: Notification Center is pulled down for a moment and
+    pushed back up, so the app in front stays in front. App names and times are as the phone shows them
+    (`HEALTH`, `2m ago`), and there's no payload; iOS 16 and older give the title and body as one text. While
+    `--until` waits, it watches for the banner.
 
 ### Biometrics
 
@@ -892,7 +908,7 @@ took 11–19 on Android.
   ```
 
 - **`wait`** instead of guessing `sleep`s. After an action that loads data, `--ls` can return a loading skeleton,
-  so wait for the text you expect.
+  so wait for the text you expect. For a launch, `launch --until "<text>"` does both in one call.
 - **`run`** batches steps you already know into one call and one process. It prints each step as `$ <step>`, stops
   at the first failure, and names it. `--ls` prints the screen it ended on:
 
@@ -1001,7 +1017,7 @@ to settle unless asked (`--ls`).
 | Command | What it does |
 |---|---|
 | **Look** | |
-| `looktap ls [--all] [--json]` | Visible elements with a label, plus unlabelled buttons, each with an `@ref`. `--all` includes everything. `--json` prints `{screen, elements}`. While the screen is still loading (nothing labelled yet), waits up to `--wait`. An Android text field shows its label or hint, with what's typed as `= value`, as on iOS. `--all` folds a react-native-svg drawing into one row (`(svg, 9 shapes)`). Notes on stderr when React Native's LogBox toast is up (it blocks taps around it) or the system's "isn't responding" / "keeps stopping" dialog is |
+| `looktap ls [--all] [--json] [--covered]` | Visible elements with a label, plus unlabelled buttons, each with an `@ref`. `--all` includes everything. `--json` prints `{screen, elements}`. A row that something listed is drawn over, or that runs past the screen's edge, says how much: `[56% covered by @16 @17 @18]`, `[30% off screen]` (in `--json`: `covered`, `coveredBy`, `offScreen`), so a list row half under a tab bar or a toast over a button shows without a screenshot. `--covered` lists only those rows: a quick layout check. While the screen is still loading (nothing labelled yet), waits up to `--wait`. An Android text field shows its label or hint, with what's typed as `= value`, as on iOS. `--all` folds a react-native-svg drawing into one row (`(svg, 9 shapes)`). Notes on stderr when React Native's LogBox toast is up (it blocks taps around it) or the system's "isn't responding" / "keeps stopping" dialog is |
 | `looktap wait <label\|@ref> [--gone]` | Until it's on screen (with `--gone`, until it isn't). Default up to 10 s, or `--wait`. Exits 2 on timeout |
 | `looktap wait --settle [--for 1s]` | Until the screen holds still for 1 s (or `--for`): its elements and its picture both, so it works on web pages and canvases that have no labels to wait for (a sign-in page loading). Small screenshots are compared, so a blinking caret doesn't count as change. Up to 10 s, or `--wait`; exits 1 if it's still changing |
 | `looktap expect <label\|@ref> [= value] [--gone] [--exact]` | Checks it's on screen, with `= value` that its value is exactly that, or with `--gone` that it isn't. Matches like `wait` (`--exact`: the whole label only). Waits up to `--wait` (3 s) for it to come true. Exits 1 with what's there instead: `expect failed: "Email" is "sam@example.com", expected "kim@example.com"` |
@@ -1011,7 +1027,7 @@ to settle unless asked (`--ls`).
 | `looktap record start [name]` · `record stop` | An MP4 of everything in between, saved to `<out>/<name>.mp4`; `stop` prints the path and the length. Android: at most 3 minutes, `FLAG_SECURE` screens black |
 | **Act** (add `--ls` to print the settled screen afterwards) | |
 | `looktap tap <label\|@ref> [--exact]` | `@ref` from the last `ls`, or a label: exact, else a prefix/contains match that names a single label (ambiguous → exit 2, as is one label in two separate places). Aims at a part of the element nothing covers (a toast over half a button), and warns when nothing is left clear. Prints what it tapped |
-| `looktap longpress <label\|@ref\|x y> [ms]` | Holds the touch for `ms` (default 800). Same targets as `tap`, or a point |
+| `looktap longpress <label\|@ref\|x y> [ms]` | Holds the touch for `ms` (default 800; or `--duration <ms>`). Same targets as `tap`, or a point |
 | `looktap zoom in\|out [x y] [--scale f]` | Two-finger pinch around a point (default: the screen centre). `--scale` sets how far apart the fingers end up (default 2.5) |
 | `looktap tapxy <x> <y>` | Taps a point (iOS points / Android dp) |
 | `looktap type <text>` | Types into the focused field. Text the keyboard can't type (accents, emoji, CJK) is pasted, which replaces the clipboard. Doesn't check the field: `expect "<field>" = …` does |
@@ -1020,11 +1036,11 @@ to settle unless asked (`--ls`).
 | `looktap paste <text>` | Puts the text on the device's clipboard, checks it's there, and pastes it into the focused field. iOS simulator: Xcode 27 mirrors the Mac's clipboard into the simulator's, which wins over `simctl pbcopy`, so it goes through the Mac's clipboard when it must and puts back the text it held. Exits 1 if the clipboard won't take it |
 | `looktap code <digits>` | A one-time code into its row of boxes (four or more small fields side by side, a second line included): taps the first box, types the digits, and checks every box. Retries tapping each box, then pasting the code. Exits 1 listing what each box holds if they don't read the code, or if another field changed |
 | `looktap hidekb` | Dismisses the keyboard and takes focus from the field (blur handlers run), checking after each method. Exits 2 if it's still up |
-| `looktap swipe <x1> <y1> <x2> <y2> [ms]` | Default 150 ms on iOS, 300 ms on Android |
+| `looktap swipe <x1> <y1> <x2> <y2> [ms]` | Default 150 ms on iOS, 300 ms on Android. `--duration 800` (or `800ms`, `0.8s`) is the same as the fifth argument |
 | `looktap back` | Android system Back · iOS: the navigation bar's back button, else a top-left "Back" button |
 | `looktap home` | The Home button: goes to the home screen and checks it's in front; the app keeps running |
 | `looktap open <url>` | Opens a deep link |
-| `looktap launch [app] [--time\|--resume]` | (Re)starts the app, and waits until it's in front: an app that exits at once fails the command (`looktap crashes <app>` has the report), and one that dies just after is named by the next `ls`. `--time` times a cold start: until the app is in front, and until its first screen settled. It says when screen reads are too slow to time the screen precisely. Android adds the system's own `TotalTime`. `--resume` brings a running app back to the front as it was, without restarting it (and starts it if it isn't running) |
+| `looktap launch [app] [--time\|--resume] [--until <text>]` | (Re)starts the app, and waits until it's in front: an app that exits at once fails the command (`looktap crashes <app>` has the report), and one that dies just after is named by the next `ls`. `--time` times a cold start: until the app is in front, and until its first screen settled. It says when screen reads are too slow to time the screen precisely. Android adds the system's own `TotalTime`. `--resume` brings a running app back to the front as it was, without restarting it (and starts it if it isn't running). `--until <text>` then waits until that text is on screen (up to `--wait`, default 30 s): past a splash screen, or a debug build loading its bundle from Metro. After `launch --ls` alone, a screen of a few rows with nothing to tap gets a note that it may still be loading |
 | `looktap stop [app]` | Terminates the app and waits until its process is gone |
 | `looktap bio match\|nomatch` | Face ID (iOS) or fingerprint (Android) |
 | `looktap dismiss logbox` | Closes React Native's LogBox toast (dev builds), which takes every touch around it, a bottom tab bar included: taps its × and waits until it's gone. Says so when there's none. `"dismissLogBox": true` in `looktap.config.json` (or `LOOKTAP_DISMISS_LOGBOX=1`) closes it before every `tap`, `longpress` and `tapxy` |
@@ -1051,6 +1067,7 @@ to settle unless asked (`--ls`).
 | `looktap statusbar clean\|live` | A screenshot-clean status bar (9:41, full battery and Wi-Fi), or back to live values |
 | `looktap network [offline\|online]` | Android only: airplane mode on or off, waiting until the device has lost (or regained) its connection. Without an argument, prints the current state |
 | `looktap push <app> <payload>` | iOS: a remote notification. The payload can be a `.json` file, inline JSON, or plain text for an alert |
+| `looktap notifications [app] [--until <text>] [--all] [--json]` | What Notification Center (iOS) or the notification shade (Android) holds, newest first: app, title, body (iOS simulator: the push payload too). `--until` waits until one has the text (up to `--wait`, default 30 s). A real iPhone is read off its screen, with Notification Center pulled down for a moment. `--all`: ongoing ones too |
 | **Batch, setup & info** | |
 | `looktap mcp [--config]` | Serves these commands over MCP (stdio) for clients without a shell. `--config` prints a client config |
 | `looktap run '<cmd>; <cmd> …' [--ls]` | Several commands in one process. `run -` reads them from stdin. Stops at the first failure and names it; `--ls` prints the screen it ended on |
@@ -1062,6 +1079,8 @@ to settle unless asked (`--ls`).
 | `looktap devices [--all] [--json]` | What's running or connected, and what each is: simulator, emulator (with its AVD name) or real device (model, OS version, USB or Wi-Fi, and `locked` while its lock screen is up), and whether it has a window or runs headless. An Android phone on both USB and Wi-Fi is one row (`USB + Wi-Fi`), and commands drive it over USB; `-d` with its Wi-Fi id still picks Wi-Fi. A phone that's connected but not ready is listed with what to do (accept the USB debugging prompt, tap Trust, turn on Developer Mode). A simulator or emulator still starting is listed as such. `--all` also lists what `boot` can start; `--json` for scripts and agents |
 | `looktap boot [name] [--window\|--headless]` | Boots an iOS simulator or Android emulator by name, UDID or AVD name (exact, else a unique prefix or substring; `-p` to choose a platform) and waits until it's ready to drive. Opens its window unless `--headless` (or `LOOKTAP_HEADLESS=1`, or `"headless": true` in the config file). Already running: says so, and `--window` opens a simulator's window. One that's still starting (adb lists an emulator offline while it boots) is waited for, not started twice. A running device can't drop its window (closing the Simulator app shuts its simulators down; an emulator starts with or without one), so `--headless` then says how to restart it. From Xcode 27.1 simulators show in Device Hub, one window for the device picked in its sidebar: `--window` opens Device Hub, and you pick the simulator there |
 | `looktap shutdown [name]` | Shuts down a simulator or emulator (name, UDID, AVD name or serial), and waits until it's gone |
+| `looktap wifi [--tcpip\|--always\|--off]` | An Android phone on USB: connects it over Wi-Fi as well, so the cable can come out. Android 11+: turns on Wireless debugging and waits until adb reaches it (the phone may ask "Allow wireless debugging on this network?" first); older Android, or `--tcpip`: `adb tcpip 5555` and `adb connect`. `-d` with the USB serial still finds the phone once it's unplugged. Either way the phone turns it off when it restarts: plug in and run `wifi` again, or once `wifi --always` (Android 11+): it installs looktap's Wi-Fi keeper (`com.looktap.wifi`, 13 KB, no screen; downloaded the first time from looktap's GitHub releases, where GitHub Actions builds and signs it), which turns Wireless debugging back on after each restart and whenever the phone joins Wi-Fi. To change that setting it gets `WRITE_SECURE_SETTINGS`, granted over adb; it's installed only by `--always`, and `wifi --off` removes it. It works before the first unlock after a restart. A network the phone wasn't told to always allow still asks first, and if someone turns Wireless debugging off (or declines that prompt), the keeper leaves it off until the phone next joins Wi-Fi |
+| `looktap pair <code> [host:port]` | An Android phone with no cable: pairs this computer with it over Wi-Fi using the six-digit code from Developer options → Wireless debugging → Pair device with pairing code (looktap finds the phone on the network; or pass the host:port shown under the code), then connects. Once paired, adb reconnects by itself whenever Wireless debugging is on |
 | `looktap doctor [-d <device>]` | Checks Node, Xcode and the simulator frameworks, adb, booted devices and the agent skill (an outdated copy counts only for the agent running `doctor`). With `-d`, the way to that device: a real iPhone's pairing, Developer Mode, CoreDevice tunnel and usbmuxd, lock state, which routes its runner answers on and which one commands use, and the signing team; an Android device's adb state, connection and lock state |
 | `looktap setup` | Starts the helper ahead of time. Android: also `adb reverse tcp:8081` for Metro |
 | `looktap teardown` | Stops the helper. Android: also removes `adb reverse` rules |
@@ -1070,8 +1089,8 @@ to settle unless asked (`--ls`).
 `rotate`, `fold` and `scrollto`. After the action it waits for the screen to change (up to 1.5 s, or 6 s for `launch`/`open`), then for
 it to stop changing, then prints it like `ls`.
 
-**Exit codes:** `0` means OK. `2` means a usage problem: bad arguments, element not found, no device, or the
-helper can't start. `1` means anything else failed, including an `expect` that didn't hold and a `test` run with a
+**Exit codes:** `0` means OK. `2` means a usage problem: bad arguments (an option looktap doesn't know too: it's
+never dropped quietly), element not found, no device, or the helper can't start. `1` means anything else failed, including an `expect` that didn't hold and a `test` run with a
 failed flow. A script can `set -e` and stop at the first missing element. After a missing or ambiguous element or a
 failed `expect`, the screen as it is follows the error.
 
@@ -1095,6 +1114,7 @@ front of you (`--json` for every command).
 | `location clear` | ✅ | ⚠️ iOS 16 and older only (through the developer image, as Xcode's Simulate Location); a newer iPhone uses its own GPS: use a simulator to fake one | ❌ the emulator keeps its last location: set a new one instead | ❌ a device uses its own GPS (faking it needs a mock-location app) |
 | `logs` | ✅ | ⚠️ the phone keeps no history looktap can read: the first logs (or launch) starts collecting its live log in the background, until 30 min after the last one, so what came before that isn't there | ✅ | ✅ |
 | `network` | ❌ the simulator uses the Mac's own network, so it can't go offline or slow by itself. Network Link Conditioner (Xcode → Open Developer Tool → More Developer Tools → Additional Tools) throttles the whole Mac | ❌ turn on Airplane Mode in Control Center | ✅ | ⚠️ airplane mode: over wireless adb, going offline also drops looktap's connection |
+| `notifications` | ✅ | ⚠️ read off the screen: Notification Center is pulled down for a moment and pushed back up; app names and times are as shown (HEALTH, 2m ago), and there's no push payload; on iOS 16 and older the title and body come as one text | ✅ | ✅ |
 | `paste` | ✅ | ❌ the phone's clipboard can't be set from the Mac: type works with any text on a device | ✅ | ✅ |
 | `perf` | ✅ | ⚠️ read through Instruments (xcrun xctrace): a reading takes 10–25 s and --for gives one every ~8 s; memory is the footprint, without its peak. Not on an iPhone this Xcode doesn't support (iOS 16 and older on Xcode 27) | ✅ | ✅ |
 | `perf --frames` | ⚠️ frames as the screen shows them (the simulator's framebuffer updates), not the app's own render times: the first call starts counting | ⚠️ frames as the screen shows them, from its USB screen feed (60 Hz at most, so a 120 Hz screen counts at half its rate); needs a USB cable, an unlocked phone, and QuickTime not showing it | ✅ | ✅ |
@@ -1192,6 +1212,11 @@ Precedence: command-line option, then environment variable, then config file, th
 | `keyboard is still up` (iOS) | Search keyboards have no Done key. Tap the screen's Cancel/close control |
 | Android `ls` fails right after boot | Wait until `adb shell getprop sys.boot_completed` prints `1` |
 | `device <serial> is not connected` / `<serial> isn't connected any more` | `looktap devices` lists what is. A phone unplugged from USB may still be there over Wi-Fi, under its Wi-Fi id (`adb-…._adb-tls-connect._tcp`); a phone on both is one row, `USB + Wi-Fi` |
+| `couldn't reach <serial> at <ip> over Wi-Fi` / `<serial> isn't on Wi-Fi` | Put the phone and this computer on the same network. Guest and office networks often keep devices from reaching each other: try a phone hotspot |
+| `found no phone showing a pairing code on this network` | Keep Developer options → Wireless debugging → Pair device with pairing code open on the phone, or pass the host:port shown under the code: `looktap pair 482913 192.168.1.15:37199` |
+| `pairing with <address> failed` | The code changes each time that screen opens: use the one on screen now |
+| `Wireless debugging needs Android 11 or later` (from `wifi --always`) | Older phones can't keep Wi-Fi across a restart: run `looktap wifi` with the cable in again after each one |
+| `the device is out of storage, so the runner can't be installed` | Free some space on the iPhone (Settings → General → iPhone Storage), then run the command again |
 | `perf --frames on a real iPhone reads its screen over the USB cable` | Plug the iPhone in with a cable and unlock it: the screen feed it reads doesn't exist over Wi-Fi |
 | `the iPhone's screen feed didn't start` | Unlock the phone, and close QuickTime (or anything else showing the phone's screen): one app at a time can read it |
 | `Instruments is busy on the device` | An earlier Instruments recording on the phone didn't end (looktap's, Xcode's or another tool's). It clears in a few minutes, or reconnect the cable; restarting the phone always clears it |
