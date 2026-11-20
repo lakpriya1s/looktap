@@ -32,8 +32,17 @@ From a day of testing on a Samsung over a USB hub and an iPhone X, with more tha
 - **Leases.** A command that changes a device holds it alone while it runs; another waits up to `--busy-wait` (10 s),
   then fails with `device busy: <owner> running "<command>" for 2m14s`. Reads, screenshots and log streams share it.
   Leases live in `~/.looktap/leases`, beat every 5 s, and are dead after 30 s of silence or when their process is gone.
-- **`location` and `route` on an Android phone** warn when Play services' fused location is far from the simulated
-  one: the phone's own Wi-Fi and cell positions are still reaching apps (turn off Google Location Accuracy).
+- **`location` and `route` on an Android phone** warn when Play services' fused location reports the phone's own
+  position alongside the simulated one: a fresh fix, not marked mock, over 100 m away (a stale fix doesn't count). On
+  a Samsung (Android 16) it showed the real position 900 km off seconds after the mock was set: turn off Google
+  Location Accuracy while testing.
+- **A real iPhone's `kill`** sends the pid as an archived NSNumber. As a raw int32 the service mishandled it, dropped its
+  connections (looktap's runner went with them) and the app kept running.
+- **`logs --follow` on a real iPhone** reports the app starting and ending from its pid (asked every 3 s), not only
+  when it logs a line.
+- **`devices` says Wear OS for a Wear OS emulator too** (`form: watch`), not only for a watch over Wi-Fi.
+- The app last seen in front stops counting after an hour: a reused emulator serial no longer warns that an app
+  from a month ago "is no longer running".
 
 
 From the notes of a device-testing session of a React Native app's location and geofence features (an Android 16

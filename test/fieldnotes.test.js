@@ -349,3 +349,10 @@ test('Metro counts as up only when its status page says it is running', async ()
   }
   assert.equal(await android.metroUp(1), false); // nothing listening
 });
+
+test('fusedFix: the fused fix, its age since boot, and whether it is a mock one', async () => {
+  const { fusedFix } = await import('../lib/android.js');
+  assert.deepEqual(fusedFix('last location=Location[fused 1.5,2.5 hAcc=5.0 et=+36m13s771ms mock]'), { at: [1.5, 2.5], et: 2173.771, mock: true });
+  assert.deepEqual(fusedFix('    last location=Location[fused 1.5,2.5 hAcc=12 et=+1d2h3m4s5ms alt=3 {Bundle[]}]'), { at: [1.5, 2.5], et: 93784.005, mock: false });
+  assert.equal(fusedFix('last location=Location[gps 1.5,2.5 hAcc=5]'), null);
+});
