@@ -15,6 +15,15 @@
 - **A failed `run` lists the steps it didn't reach** (`not run: 3. tap Internet · 4. wait Airplane`), after the
   failure and the screen, so the agent sends the steps that fit the screen instead of the old ones.
 
+### Fixed on devices
+
+- **Closing LogBox on a real iPhone** tapped the middle of the screen: React Native gives a screen-wide container a
+  combined label that includes the toast's text, and that was taken for the toast. The smallest element saying it is
+  the toast now.
+- **An Android pinch holds both fingers still before lifting** (as `swipe` does), so nothing keeps zooming or sliding
+  after the gesture. Checked in Google Maps: the point under the fingers stays put.
+- `ls` no longer says `covered by ` with nothing after it when what covers a row isn't a listed row.
+
 ### Watches
 
 - **Apple Watch simulators** are driven like iPhone simulators, by the same helper: `devices --all` lists them

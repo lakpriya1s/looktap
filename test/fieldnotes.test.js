@@ -356,3 +356,20 @@ test('fusedFix: the fused fix, its age since boot, and whether it is a mock one'
   assert.deepEqual(fusedFix('    last location=Location[fused 1.5,2.5 hAcc=12 et=+1d2h3m4s5ms alt=3 {Bundle[]}]'), { at: [1.5, 2.5], et: 93784.005, mock: false });
   assert.equal(fusedFix('last location=Location[gps 1.5,2.5 hAcc=5]'), null);
 });
+
+test('logBoxToast: the toast itself, not a screen-wide container whose combined label includes its text', async () => {
+  const { logBoxToast } = await import('../lib/screen.js');
+  const els = [
+    { label: 'Compass My location Google Maps ! Open debugger to view warnings.', type: 'Group', x: 0, y: 0, w: 375, h: 812 },
+    { label: '! Open debugger to view warnings.', type: 'Group', x: 10, y: 725, w: 355, h: 67 },
+  ];
+  const t = logBoxToast(els);
+  assert.equal(t.y, 725);
+  assert.deepEqual(t.close, [351, 759]);
+});
+
+test('formatCoverage: names what covers a row, and says so when that is not a listed row', async () => {
+  const { formatCoverage } = await import('../lib/screen.js');
+  assert.equal(formatCoverage({ covered: 0.31, by: ['@3'], off: 0 }), '[31% covered by @3]');
+  assert.equal(formatCoverage({ covered: 0.31, by: [], off: 0 }), '[31% covered (by elements ls --all lists)]');
+});

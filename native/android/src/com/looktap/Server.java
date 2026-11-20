@@ -570,6 +570,8 @@ public final class Server {
         e.recycle();
     }
 
+    static final int PINCH_HOLD_MS = 200;
+
     /** Two fingers on a horizontal line through (cx, cy), from r0 to r1 px either side: r1 > r0 zooms in. */
     static void pinch(int cx, int cy, int r0, int r1, int ms) {
         int steps = Math.max(2, ms / 10);
@@ -582,6 +584,12 @@ public final class Server {
             long wait = at - SystemClock.uptimeMillis();
             if (wait > 0) SystemClock.sleep(wait);
             touch2(MotionEvent.ACTION_MOVE, down, at, cx, cy, r0 + (r1 - r0) * (float) i / steps, 2);
+        }
+        // Hold both fingers still before lifting, as swipe does: lifted while still moving, they carry velocity, and a
+        // map keeps zooming and sliding after the gesture (or reads the finger left between the two lifts as a pan).
+        for (long until = SystemClock.uptimeMillis() + PINCH_HOLD_MS; SystemClock.uptimeMillis() < until; ) {
+            SystemClock.sleep(20);
+            touch2(MotionEvent.ACTION_MOVE, down, SystemClock.uptimeMillis(), cx, cy, r1, 2);
         }
         long end = SystemClock.uptimeMillis();
         touch2(MotionEvent.ACTION_POINTER_UP | second, down, end, cx, cy, r1, 2);
