@@ -1,0 +1,54 @@
+#!/usr/bin/env node
+// A fake adb for tests, driven by FAKE_ADB_MODE:
+//   ok            a healthy device FAKE123 on USB through two hubs
+//   hang          adb devices answers, anything sent to the device never does (a stuck USB link)
+//   slow          the device answers after FAKE_ADB_DELAY ms
+//   unauthorized  the phone hasn't accepted this computer
+//   server-hung   adb devices never answers, but an open logcat stream keeps going (the server half-stuck)
+//   stale         healthy, but the newest line in the device's log is three hours old
+(() => {
+const args = process.argv.slice(2);
+const mode = process.env.FAKE_ADB_MODE || 'ok';
+const forever = () => setInterval(() => {}, 1e6);
+const out = (s) => process.stdout.write(s);
+const serial = args[0] === '-s' ? args[1] : null;
+const rest = serial ? args.slice(2) : args;
+const sub = rest[0];
+
+if (sub === 'version') return void out('Android Debug Bridge version 1.0.41\nVersion 36.0.0\n');
+if (sub === 'devices') {
+  if (mode === 'server-hung') return void forever();
+  const state = mode === 'unauthorized' ? 'unauthorized' : 'device';
+  return void out(`List of devices attached\nFAKE123                device usb:2-1.1.1 product:fake model:Fake_Phone transport_id:3\n`.replace('device usb', `${state} usb`));
+}
+if (sub === 'logcat' && !rest.includes('-d') && !rest.includes('-c')) {
+  // A stream: a line every 100 ms, whatever the server is doing.
+  let n = 0;
+  const stamp = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${d.toTimeString().slice(0, 8)}.${String(d.getMilliseconds()).padStart(3, '0')}`;
+  setInterval(() => out(`${stamp(new Date())}  1000  1000 I Fake: line ${++n}\n`), 100);
+  return;
+}
+if (mode === 'unauthorized') {
+  process.stderr.write('adb: device unauthorized.\n');
+  process.exit(1);
+}
+if (mode === 'hang' || mode === 'server-hung') return void forever();
+const answer = () => {
+  if (sub === 'get-state') return out('device\n');
+  if (sub === 'reverse') return out(rest[1] === '--list' ? 'host-3 tcp:8081 tcp:8081\n' : '');
+  if (sub === 'shell') {
+    const cmd = rest.slice(1).join(' ');
+    if (cmd === 'echo ok') return out('ok\n');
+    if (cmd.startsWith('date +%s')) {
+      const now = Math.floor(Date.now() / 1000);
+      const newest = mode === 'stale' ? now - 3 * 3600 : now - 5;
+      return out(`${now}\n${newest}.123  1000  1000 I Fake: the newest line\n`);
+    }
+    if (cmd.startsWith('cmd package list packages -U')) return out(`package:${rest.at(-1)} uid:10123\n`);
+    return out('');
+  }
+  return out('');
+};
+if (mode === 'slow') setTimeout(answer, Number(process.env.FAKE_ADB_DELAY || 4000));
+else answer();
+})();

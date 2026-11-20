@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
 import { createInterface } from 'node:readline';
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 
@@ -11,7 +11,7 @@ import { Ios, bootedSimulators } from '../lib/ios.js';
 import { IosDevice, physicalDevices } from '../lib/iosdevice.js';
 import { clock, grepper, setMark, sinceOf, startOf, tail, whichApp } from '../lib/logs.js';
 import { ACTIONS as PERMISSION_ACTIONS } from '../lib/permissions.js';
-import { KINDS, capabilities, capability, unsupported } from '../lib/capabilities.js';
+import { COMMANDS, KINDS, capabilities, capability, unsupported } from '../lib/capabilities.js';
 import { Recorder, TouchReader, classify, mapper, quote } from '../lib/codegen.js';
 import { AGENTS, PROJECT_DEFAULT, claudePlugin, detectAgents, installSkill, installedVersion, pickAgents, skillsDir, uninstallSkill } from '../lib/agents.js';
 import { boot, shutdown } from '../lib/boot.js';
@@ -24,7 +24,11 @@ import { duration, formatFrames, formatReading, formatSamples, readingJson } fro
 import { flowFiles, flowName, junit } from '../lib/testing.js';
 import { clockTime, distance, gpxPlan, metres, parseGpx, planSummary, point, scrubCoords, straightPlan } from '../lib/geo.js';
 import { formatPrefs, redactList } from '../lib/prefs.js';
-import { ADB, HOME, LockedError, NotFound, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
+import { BusyError, acquire, kindOf, leases } from '../lib/lease.js';
+import { RECOVERY, adbRows, didYouMean, rememberReverses, release, restartAdb, whoLines } from '../lib/upkeep.js';
+import { metroUp } from '../lib/android.js';
+import { etimeSecs } from '../lib/health.js';
+import { ADB, HOME, LockedError, NotFound, StuckError, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
 
 const SKILL = new URL('../skills/looktap/SKILL.md', import.meta.url);
 const SKILL_REFS = new URL('../skills/looktap/references/', import.meta.url);
@@ -58,8 +62,19 @@ setup & info
   connect <host[:port]>           Android, no cable and no code: connect to the address a device's debugging screen
                                   shows (a Wear OS watch's Debug over Wi-Fi, or after adb tcpip; port 5555 if left
                                   out), waiting while it asks "Allow debugging?"
-  doctor [-d <device>]            check the toolchain; with -d, the way to that device: how it's connected, whether
-                                  it's locked, and (a real iPhone) whether its runner answers, over which route
+  doctor [-d <device>] [--fix [--yes]]
+                                  check the toolchain; with -d, the way to that device: how it's connected, whether
+                                  it's locked, and (a real iPhone) whether its runner answers, over which route.
+                                  Android: the adb server and every adb process, the device's state and round trip,
+                                  its USB path (hubs), reverse rules, and the recovery steps when one fails.
+                                  --fix: restart the adb server (lists who it cuts off and asks first; --yes doesn't),
+                                  then put the adb reverse rules back
+  who [device]                    who is using the devices: looktap commands and their log captures (exclusive or
+                                  shared, owner, age, heartbeat), and adb/idevicesyslog processes started elsewhere
+  release <device> [--force]      clear holds whose process is gone or silent for 30 s (--force: live ones, asks)
+  reverse <port>[:<port>] | --list | remove <port>|all
+                                  Android: the device's localhost:<port> reaches this computer's port (adb reverse)
+  metro [port]                    Metro answering here, the reverse rule (added if missing), the device reaching it
   setup                           start the helper (optional: commands start it on first use)
                                   · Android: also adb reverse Metro
   teardown                        stop the helper · Android: remove adb reverse rules
@@ -75,7 +90,7 @@ look
                                   check it's on screen (with that value), or with --gone that it isn't.
                                   Waits up to --wait (3 s) for it; fails with what's there instead (exit 1)
   scrollto <label> [--up]         swipe until it is fully on screen (default scrolls down; above the keyboard)
-  shot <name> [--plain] [--scale f] [--points]
+  shot <name> [--plain] [--scale f] [--points]  (or screenshot)
                                   screenshot → <out>/<name>.png; --scale 0.5 = half size, fewer image tokens;
                                   --points: one pixel per iOS point / Android dp, so a spot in the image is
                                   tapxy's x y as is (Android emulators bypass FLAG_SECURE; --plain doesn't)
@@ -109,7 +124,7 @@ act                               add --ls to any of these to print the settled 
                                   screen has settled (Android: also the system's own TotalTime). --resume:
                                   bring it forward as it was, without restarting it. --until: then wait until
                                   <text> is on screen (past a splash screen; up to --wait, default 30 s)
-  stop [app]                      terminate it, and wait until its process is gone (Android: force-stop, which
+  stop [app]                      (or terminate) terminate it, and wait until its process is gone (Android: force-stop, which
                                   also removes its geofences, alarms and jobs)
   kill [app]                      end its process as the system does under memory pressure (Home, then Android
                                   am kill / iOS SIGKILL): its registrations survive, for "app killed" tests
@@ -133,9 +148,16 @@ debug                             [app] defaults to --app / config, else the app
   logs [app] --follow [--grep re] [--for 10m]
                                   the app's log as it comes, until Ctrl+C (or --for), with its process starting
                                   and ending as events: a killed app relaunched in the background shows here
+  logs [app] --buffer <b> | --tag T1,T2
+                                  Android: one logcat buffer (main, system, crash, events, all), or only those tags.
+                                  An empty answer is checked against the device's clock: a stale log is warned about
+  logs [app] --follow --file <f>  the capture appended to a file; after an adb restart it attaches again and records
+                                  the gap
+  logs --clear                    Android: empty the device's log (logcat -c)
   logs mark [name]                a marker now: --since <name> starts there (default name: mark)
   crashes [app] [--since 1h]      crashes, ANRs, low-memory kills since the last \`crashes\` (first: last hour)
   app [app]                       which app is in front, and whether [app] is running (pid)
+  ps <app>                        its pid, how long it has run, and whether it's in front
   app [app] --paths               where its files are: iOS the bundle, data folder and app groups (on the Mac),
                                   Android its APKs and data folder (readable with run-as on debuggable builds)
   apps [filter] [--all] [--json]  installed apps: id, name, version (--all: system apps too). A filter
@@ -162,7 +184,7 @@ debug                             [app] defaults to --app / config, else the app
 
 app state                         <app> defaults to --app / config (never the app in front)
   install <path> [--grant]        iOS: a simulator .app · Android: an .apk (keeps data; --grant: all
-                                  runtime permissions). Prints the app id
+                                  runtime permissions). Prints the app id, version code and how long it took
   uninstall <app>
   reset <app>                     as if freshly installed: data and permissions cleared (iOS: the
                                   keychain survives, as on a real iPhone)
@@ -220,15 +242,51 @@ options
   -o, --out <dir>                 screenshots and videos (default ./shots, or "out" in looktap.config.json)
       --app <id>                  app id for launch/open (or "ios.app" / "android.app" in config)
       --wait <seconds>            how long tap/fill/back wait for their target to appear (default 3)
+      --busy-wait <seconds>       when another session is driving the device, wait this long for it (default 10),
+                                  then fail with who holds it (LOOKTAP_BUSY_WAIT)
       --wait-unlock <seconds>     when the device is locked, wait this long for someone to unlock it, then carry
                                   on (default 0: fail at once). Or "waitUnlock" in config, LOOKTAP_WAIT_UNLOCK
   -h, --help · -v, --version
 
 env: LOOKTAP_PLATFORM, LOOKTAP_DEVICE, LOOKTAP_OUT, LOOKTAP_WAIT, LOOKTAP_SCALE (Android px per dp),
-     LOOKTAP_ANDROID_HELPER=0 (plain adb + uiautomator dump),
+     LOOKTAP_ANDROID_HELPER=0 (plain adb + uiautomator dump), LOOKTAP_ADB_TIMEOUT (seconds an adb call may
+     take, default 15), LOOKTAP_OWNER (your session's name in looktap who),
      LOOKTAP_EMULATOR_GRPC=0 (no emulator gRPC frames), LOOKTAP_HEADLESS=1 (boot without a window)
 
 Never burst or record a sign-in screen: frames capture typed credentials.`;
+
+/** Other names for a command: what adb, simctl and other tools call it. (`kill` is its own command: see kill vs stop.) */
+const ALIASES = { terminate: 'stop', screenshot: 'shot' };
+
+/** Commands that run without a device. */
+const HOST_COMMANDS = ['help', 'doctor', 'skill', 'mcp', 'devices', 'boot', 'wifi', 'pair', 'connect', 'shutdown', 'who', 'release'];
+
+/** A command looktap doesn't have: say so before looking for a device, with the one probably meant. */
+function knownCommand(cmd) {
+  const known = [...HOST_COMMANDS, ...COMMANDS];
+  if (known.includes(cmd)) return;
+  const meant = didYouMean(cmd, known);
+  throw new UsageError(`unknown command: ${cmd}${meant ? ` — did you mean looktap ${meant}?` : ''} (looktap --help lists them)`);
+}
+
+/**
+ Run a device command the way every caller does: hold the device's lease for as long as it runs (exclusive for what
+ changes the device, shared for reading and streams), then probe the way to it (a stuck adb link fails here, at once,
+ with what's wrong), then the command.
+ */
+async function drive(d, cmd, args, opts) {
+  const device = deviceId(d);
+  const kind = process.env.LOOKTAP_ROUTE_PLAN ? 'shared-stream' : kindOf(cmd, args);
+  const wait = 1000 * Number(opts.busyWait ?? process.env.LOOKTAP_BUSY_WAIT ?? 10);
+  if (!(wait >= 0)) throw new UsageError('--busy-wait takes seconds, e.g. --busy-wait 30');
+  const lease = cmd === 'capabilities' ? null : await acquire(device, { kind, command: [cmd, ...args, ...[...opts.flags].map((f) => `--${f}`)].join(' ').slice(0, 120), wait });
+  try {
+    if (d.health && cmd !== 'capabilities') d.health();
+    return await dispatch(d, cmd, args, opts);
+  } finally {
+    lease?.release();
+  }
+}
 
 function parse(argv) {
   const opts = { flags: new Set() };
@@ -268,14 +326,18 @@ function parse(argv) {
     else if (a === '--offset-from-pref') opts.offsetFromPref = val();
     else if (a === '--file') opts.file = val();
     else if (a === '--redact') opts.redact = val();
-    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window', '--paths', '--frames', '--time', '--resume', '--project', '--uninstall', '--list', '--settle', '--points', '--covered', '--tcpip', '--always', '--off', '--until-gone', '--follow', '--background', '--from-current', '--reset', '--restore'].includes(a)) opts.flags.add(a.slice(2));
+    else if (a === '--busy-wait') opts.busyWait = val();
+    else if (a === '--tag') opts.tag = val();
+    else if (a === '--buffer') opts.buffer = val();
+    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window', '--paths', '--frames', '--time', '--resume', '--project', '--uninstall', '--list', '--settle', '--points', '--covered', '--tcpip', '--always', '--off', '--until-gone', '--follow', '--background', '--from-current', '--reset', '--restore', '--yes', '--force', '--fix', '--clear'].includes(a)) opts.flags.add(a.slice(2));
     else if (a === '--') pos.push(...argv.slice(i + 1)), (i = argv.length);
     // An option looktap doesn't know is a mistake, not an argument: dropped quietly, a guessed flag changes nothing
     // and nobody hears of it. Negative numbers (-0.1276) and a lone - stay arguments.
     else if (/^--?[a-z]/i.test(a)) unknown ??= a;
     else pos.push(a);
   }
-  const cmd = pos[0];
+  // Names other tools use, and agents guess: the same command.
+  const cmd = ALIASES[pos[0]] ?? pos[0];
   if (unknown) {
     const usage = usageOf(cmd);
     // A label or text can start with "-" too: it goes after --.
@@ -384,15 +446,30 @@ async function doctor(opts) {
     ok(d.length > 0, `adb devices: ${d.map((x) => x.id).join(', ') || 'none'}`, 'looktap boot <AVD name>, or connect a phone');
   }
   if (xc && !opts.device) for (const p of physicalDevices()) ok(null, `real iPhone: ${p.name} (${p.id}) — looktap doctor -d ${p.id} checks the way to it`);
-  if (!opts.device) return;
-  // The way to one device, step by step: what a command needs before it can drive it.
-  const d = pickDriver(opts, loadConfig());
-  console.log(`\n${KINDS[d.kind].title} ${deviceId(d)}`);
-  try {
-    for (const row of await d.diagnose()) ok(...row);
-  } finally {
-    d.close?.();
+  if (!opts.device) {
+    if (opts.flags.has('fix')) throw new UsageError('doctor --fix needs the device: looktap doctor -d <serial> --fix');
+    return;
   }
+  // The way to one device, layer by layer: adb server, USB link, device, app. What a command needs before it can drive it.
+  let d, failed = false;
+  try {
+    d = pickDriver(opts, loadConfig());
+  } catch (e) {
+    if (!(e instanceof StuckError)) throw e;
+    ok(false, e.message);
+    failed = true;
+  }
+  const android = d ? Boolean(d.serial) : opts.platform !== 'ios';
+  if (d) console.log(`\n${KINDS[d.kind].title} ${deviceId(d)}`);
+  try {
+    if (android) for (const row of adbRows(opts.device)) (ok(...row), (failed ||= row[0] === false));
+    if (d) for (const row of await d.diagnose({ app: opts.app || d.app })) (ok(...row), (failed ||= row[0] === false));
+  } finally {
+    d?.close?.();
+  }
+  if (!android) return;
+  if (failed) console.log(`\nIf the phone is stuck, in this order:\n${RECOVERY.map((r, i) => `  ${i + 1}. ${r.replace('<serial>', opts.device)}`).join('\n')}`);
+  if (opts.flags.has('fix')) for (const line of await restartAdb({ yes: opts.flags.has('yes'), say: (m) => console.log(m) })) console.log(line);
 }
 
 async function burst(driver, dir, seconds) {
@@ -447,11 +524,14 @@ async function main() {
     return console.log(r.already ? `already connected: ${r.id}` : `connected: ${r.id}. It goes off when the device restarts: turn debugging over Wi-Fi back on and run looktap connect again`);
   }
   if (cmd === 'shutdown') return console.log(shutDown(await shutdown(args.join(' ') || opts.device || null, { platform: opts.platform })));
+  if (cmd === 'who') return console.log(whoLines(args[0] || opts.device || null).join('\n'));
+  if (cmd === 'release') return console.log(await release(args[0] || opts.device, { force: opts.flags.has('force'), yes: opts.flags.has('yes') }));
+  knownCommand(cmd);
 
   const config = loadConfig();
   const d = pickDriver(opts, config);
   try {
-    return await dispatch(d, cmd, args, opts);
+    return await drive(d, cmd, args, opts);
   } catch (e) {
     await screenOnFailure(d, cmd, e, opts);
     throw e;
@@ -926,6 +1006,8 @@ async function playRoute(d, { fixes, step }) {
     if (!d.feed && last) await located(() => d.location(...last.at));
     return console.log(`route stopped after ${metres(last?.m || 0)} · the device stays there until looktap location clear`);
   }
+  const off = last && (await d.realLocationLeak?.(last.at).catch(() => null));
+  if (off) console.error(`looktap: warning: ${REAL_GPS(off)}`);
   console.log(`route done: ${metres(sum.m)} in ${clockTime(sum.ms)}${sum.stillMs ? ` and still for ${clockTime(sum.stillMs)}` : ''} · the device stays at its end until looktap location clear${d.serial ? ' (which removes the test providers)' : ''}`);
 }
 
@@ -1041,6 +1123,71 @@ async function networkUse(d, app, opts) {
 }
 
 /** `logs mark [name]`: a marker now, for `logs --since <name>` (and crashes --since) to start from. */
+/** The warning when Play services' fused location is far from the simulated one: the phone's own location is mixed in. */
+const REAL_GPS = (off) =>
+  `the phone's own location is still reaching apps: Play services' fused location is ${metres(off)} from the simulated one (it mixes in Wi-Fi and cell positions, so a walk can look like a drive). Turn off Google Location Accuracy (Settings → Location → Location services) while testing`;
+
+/** `reverse <port>[:<port>]`, `reverse --list`, `reverse --remove <port>|all`: the device's localhost reaching this computer. */
+function reverseCommand(d, args, opts) {
+  if (!d.reverse) {
+    if (d.kind === 'ios-simulator') return console.log("the simulator shares this Mac's network: localhost on it is this Mac's, no rule needed");
+    unsupported(d.kind, 'reverse');
+  }
+  const show = (rules) => (rules.length ? rules.map((r) => `${r.remote} → this computer's ${r.local}`).join('\n') : 'no adb reverse rules');
+  if (opts.flags.has('list') || !args.length) {
+    const rules = d.reverses();
+    rememberReverses(d.serial, rules);
+    return console.log(show(rules));
+  }
+  if (args[0] === '--remove' || args[0] === 'remove') {
+    if (!args[1]) throw new UsageError('usage: looktap reverse remove <port>|all');
+    const rules = d.unreverse(args[1]);
+    rememberReverses(d.serial, rules);
+    return console.log(show(rules));
+  }
+  const m = /^(\d{1,5})(?::(\d{1,5}))?$/.exec(args[0]);
+  if (!m) throw new UsageError('usage: looktap reverse <port>[:<port>] (the device\'s port, then this computer\'s), reverse --list, reverse remove <port>|all');
+  const rules = d.reverse(Number(m[1]), Number(m[2] || m[1]));
+  rememberReverses(d.serial, rules);
+  console.log(`the device's localhost:${m[1]} now reaches this computer's port ${m[2] || m[1]}`);
+}
+
+/** `metro [port]`: is Metro answering on this computer, and can the device reach it? */
+async function metroCommand(d, args) {
+  const port = Number(args[0] || 8081);
+  const up = await metroUp(port);
+  console.log(up ? `Metro is running on this computer (localhost:${port}/status answers)` : `Metro isn't answering on this computer's port ${port}: start it (npx react-native start, or npx expo start)`);
+  if (!d.reverse) {
+    if (d.kind === 'ios-simulator') return console.log("the simulator shares this Mac's network: it reaches Metro at localhost");
+    return console.log('a real iPhone reaches Metro over Wi-Fi, at this Mac\'s IP address (the app\'s dev menu → Configure Bundler)');
+  }
+  let rules = d.reverses();
+  if (!rules.some((r) => r.remote === `tcp:${port}`)) {
+    rules = d.reverse(port, port);
+    console.log(`added adb reverse tcp:${port}: the device's localhost:${port} reaches this computer`);
+  } else console.log(`adb reverse tcp:${port} is set`);
+  rememberReverses(d.serial, rules);
+  if (!up) return;
+  const reach = d.reachesMetro(port);
+  console.log(reach == null ? "(the device has no nc to check it can reach Metro: the reverse rule is set)" : reach ? 'the device reaches Metro' : `the device doesn't reach Metro through the reverse rule: replug the cable, or looktap doctor -d ${d.serial}`);
+}
+
+/** `ps <app>`: its pid, how long it has run, and whether it's in front. */
+async function showPs(d, arg) {
+  const app = explicitApp(d, arg, 'ps <app>');
+  if (d.ps) {
+    const p = await d.ps(app);
+    if (!p) return console.log(`${app}: not running`);
+    return console.log(`${app}: pid ${p.pid}${p.secs != null ? `, up ${clockTime(p.secs * 1000)}` : ''}, ${p.front ? 'in front' : 'in the background'}`);
+  }
+  const pid = await d.pidOf(app);
+  if (!pid) return console.log(`${app}: not running`);
+  const front = (await d.foreground().catch(() => null))?.id === app;
+  // A simulator's apps are processes on this Mac: ps knows how long they've run.
+  const etime = d.kind === 'ios-simulator' ? run('ps', ['-o', 'etime=', '-p', String(pid)], { allowFail: true, timeout: 5000 }).trim() : '';
+  console.log(`${app}: pid ${pid}${etime ? `, up ${clockTime(etimeSecs(etime) * 1000)}` : ''}, ${front ? 'in front' : 'in the background'}`);
+}
+
 function markLogs(d, name = 'mark', opts) {
   const t = setMark(deviceId(d), name);
   console.log(`mark ${JSON.stringify(name)} at ${clock(t)} — after the action: looktap logs <app> --since ${name}`);
@@ -1379,9 +1526,14 @@ async function act(d, cmd, args, opts) {
     case 'notifications': return showNotifications(d, args.join(' '), opts);
     case 'install': {
       need(1, 'install <path.app|path.apk> [--grant]');
-      const id = await d.install(args[0], { grant: opts.flags.has('grant') });
-      return console.log(`installed ${id || args[0]}`);
+      const t = Date.now();
+      const r = await d.install(args[0], { grant: opts.flags.has('grant') });
+      const { id, version } = r && typeof r === 'object' ? r : { id: r };
+      return console.log(`installed ${id || args[0]}${version ? ` (version code ${version})` : ''} in ${((Date.now() - t) / 1000).toFixed(1)} s`);
     }
+    case 'reverse': return reverseCommand(d, args, opts);
+    case 'metro': return metroCommand(d, args);
+    case 'ps': return showPs(d, args[0]);
     case 'uninstall': {
       const app = explicitApp(d, args[0], 'uninstall <app>');
       await d.uninstall(app);
@@ -1404,7 +1556,10 @@ async function act(d, cmd, args, opts) {
       await located(() => d.location(lat, lon));
       rememberLocation(d, [lat, lon]);
       // Never the coordinates: what an agent reads back shouldn't carry a location.
-      return console.log('location set');
+      console.log('location set');
+      const off = await d.realLocationLeak?.([lat, lon]).catch(() => null);
+      if (off) console.error(`looktap: warning: ${REAL_GPS(off)}`);
+      return;
     }
     case 'appearance': {
       if (args[0] && !['dark', 'light'].includes(args[0])) throw new UsageError('usage: looktap appearance [dark|light]');
@@ -1531,12 +1686,36 @@ function explicitApp(d, arg, usage) {
   return app;
 }
 
+/** Android log buffers `--buffer` takes. */
+const BUFFERS = ['main', 'system', 'crash', 'events', 'radio', 'kernel', 'all'];
+
+/**
+ A stale log: the device's newest log line is far behind its clock (a stopped logd, or a buffer nothing writes to),
+ so "no lines from the app" means nothing. Says so; returns the warning or null.
+ */
+function staleLog(d) {
+  if (!d.logAge) return null;
+  const { now, newest } = d.logAge();
+  if (!now || !newest || now - newest < 10 * 60e3) return null;
+  const msg = `the device's newest log line is ${clockTime(now - newest)} old (by the device's own clock): its log buffer is stale or logd has stopped, so a missing line proves nothing. looktap logs --clear starts it fresh; if new lines still don't come, reboot the device`;
+  console.error(`looktap: warning: ${msg}`);
+  return msg;
+}
+
 async function showLogs(d, arg, opts) {
+  if (opts.buffer && !BUFFERS.includes(opts.buffer)) throw new UsageError(`--buffer takes ${BUFFERS.join(', ')}`);
+  if ((opts.buffer || opts.tag) && !d.serial) throw new UsageError('--buffer and --tag are Android logcat filters (iOS: --grep)');
+  if (opts.flags.has('clear')) {
+    if (!d.clearLogs) throw new UsageError("logs --clear is Android's logcat -c (iOS keeps its log; logs mark and --since start from now)");
+    d.clearLogs(opts.buffer === 'all');
+    return console.log(`cleared the device's log${opts.buffer === 'all' ? ' (all buffers)' : ''}: the next logs starts from now`);
+  }
   const app = await whichApp(d, arg);
   if (opts.flags.has('follow')) return followLogs(d, app, opts);
   const since = startOf(deviceId(d), `logs:${app}`, opts.since, 60e3);
   const keep = grepper(opts.grep);
-  const lines = (await d.readLogs(app, since, { errors: opts.flags.has('errors'), all: opts.flags.has('all') })).filter(keep);
+  const lines = (await d.readLogs(app, since, { errors: opts.flags.has('errors'), all: opts.flags.has('all'), buffer: opts.buffer, tag: opts.tag })).filter(keep);
+  if (!lines.length) staleLog(d);
   if (!lines.length) return console.log(`no ${opts.flags.has('errors') ? 'errors' : 'log lines'} from ${app} since ${clock(since)}`);
   const { shown, dropped } = tail(lines, opts.lines > 0 ? opts.lines : 80);
   if (dropped) console.log(`… ${dropped} earlier lines (--lines ${lines.length} to see them, or --grep / --errors to narrow)`);
@@ -1556,20 +1735,32 @@ async function followLogs(d, app, opts) {
   const since = opts.since ? sinceOf(deviceId(d), opts.since) : Date.now();
   const keep = grepper(opts.grep), errors = opts.flags.has('errors');
   let seen = (await d.pidOf(app).catch(() => 0)) || 0;
-  console.error(`looktap: following ${app}'s log${opts.grep ? ` (lines matching ${opts.grep})` : ''}${seen ? `, running as pid ${seen}` : ', not running now'} — ${span ? `for ${clockTime(span)}, or ` : ''}until Ctrl+C`);
+  // --file: the capture goes to a file (appended), so it survives this terminal; the events go there too.
+  const file = opts.file ? resolve(opts.file) : null;
+  if (file) mkdirSync(dirname(file), { recursive: true }), appendFileSync(file, '');
+  const out = file ? (line) => appendFileSync(file, `${line}\n`) : (line) => console.log(line);
+  console.error(`looktap: following ${app}'s log${opts.grep ? ` (lines matching ${opts.grep})` : ''}${seen ? `, running as pid ${seen}` : ', not running now'}${file ? ` into ${file}` : ''} — ${span ? `for ${clockTime(span)}, or ` : ''}until Ctrl+C`);
+  staleLog(d);
   const stop = d.followLogs(app, since, {
     all: opts.flags.has('all'),
+    buffer: opts.buffer,
+    tag: opts.tag,
+    onGap: ({ from, to, by }) => {
+      const line = `── capture interrupted ${clock(from).slice(0, 8)}–${clock(to).slice(0, 8)}: ${by ? `adb restarted by ${by.from}` : 'adb dropped the connection'} (lines from that time were read back where the device still had them)`;
+      out(line);
+      if (file) console.error(`looktap: ${line.slice(3)}`);
+    },
     onLine: (l) => {
       if (errors && !/^\S+ [EF] /.test(l.text)) return;
-      if (keep(l)) console.log(l.text.length > 500 ? `${l.text.slice(0, 500)} …` : l.text);
+      if (keep(l)) out(l.text.length > 500 ? `${l.text.slice(0, 500)} …` : l.text);
     },
     onEvent: async (e) => {
-      if (e.kind === 'died') return console.log(`── ${app} ended (pid ${e.pid})${e.why ? `: ${e.why}` : ''}`);
+      if (e.kind === 'died') return out(`── ${app} ended (pid ${e.pid})${e.why ? `: ${e.why}` : ''}`);
       if (e.pid === seen && !e.why) return;
       // In front or not, a moment after it started: a region event relaunches it in the background.
       await sleep(500);
       const front = (await d.foreground().catch(() => null))?.id === app;
-      console.log(`── ${app} ${seen ? 'relaunched' : 'started'} ${front ? 'in front' : 'in the background'}, pid ${e.pid}${e.why ? ` (${e.why})` : ''}`);
+      out(`── ${app} ${seen ? 'relaunched' : 'started'} ${front ? 'in front' : 'in the background'}, pid ${e.pid}${e.why ? ` (${e.why})` : ''}`);
       seen = e.pid;
     },
   });
@@ -1780,10 +1971,13 @@ async function mcp(outer) {
       else if (cmd === 'boot') capture(booted(await boot(args.join(' ') || null, { platform: opts.platform, ...display(opts, config) })));
       else if (cmd === 'shutdown') capture(shutDown(await shutdown(args.join(' ') || opts.device || null, { platform: opts.platform })));
       else if (['mcp', 'skill'].includes(cmd)) throw new UsageError(`${cmd} isn't available over MCP`);
+      else if (cmd === 'who') capture(whoLines(args[0] || opts.device || where.device || null).join('\n'));
+      else if (cmd === 'release') capture(await release(args[0] || opts.device || where.device, { force: opts.flags.has('force'), yes: opts.flags.has('yes') }));
       else {
+        knownCommand(cmd);
         const d = driverFor({ platform: opts.platform || where.platform, device: opts.device || where.device });
         const o = { ...base, ...opts, wait: opts.wait ?? base.wait, flags: opts.flags };
-        await dispatch(d, cmd, args, o).catch(async (e) => {
+        await drive(d, cmd, args, o).catch(async (e) => {
           await screenOnFailure(d, cmd, e, o);
           throw e;
         });

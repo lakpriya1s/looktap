@@ -445,7 +445,7 @@ export const SCENES = [
     body: `<p><code>install</code> a build and get its app id back, and <code>apps</code> says what's installed, with versions. <code>reset</code> puts an app back to a fresh install (data and permissions cleared), and <code>permission grant|revoke|reset</code> uses the same names on both platforms: camera, location, photos, notifications and more.</p>
 <p><code>kill</code> ends an app as the system does under memory pressure, keeping what it registered (unlike <code>stop</code>), and <code>background</code> sends it to the background and checks it's still running.</p>
 <p>These commands always need the app id. They never act on whatever happens to be on screen.</p>`,
-    covers: ['install', 'apps', 'permission', 'reset', 'launch', 'stop', 'uninstall', 'kill', 'background'],
+    covers: ['install', 'apps', 'permission', 'reset', 'launch', 'stop', 'uninstall', 'kill', 'background', 'ps'],
     start: (p) => p.show('springboardEmpty'),
     beats: [
       {
@@ -610,8 +610,8 @@ export const SCENES = [
     kicker: '14 · Setup',
     title: 'Nothing to install on simulators',
     body: `<p>No server to run and no npm dependencies. looktap's own small helpers start on first use: a macOS helper that speaks to the simulator through Apple's frameworks, and a 10 KB Android helper run with <code>app_process</code>. A real iPhone gets a small XCUITest runner, built and signed with your own Apple ID on first use.</p>
-<p><code>boot</code> starts a simulator or emulator by name and waits until it's ready; <code>shutdown</code> stops it. <code>wifi</code> takes an Android phone off its cable, <code>pair</code> connects one that never had one, and <code>connect</code> reaches a Wear OS watch by the address its debugging screen shows. Ready for the first command in under a second, against 8–29 s for mobile-mcp, Maestro and Appium.</p>`,
-    covers: ['doctor', 'devices', 'boot', 'shutdown', 'wifi', 'pair', 'connect', 'setup', 'teardown'],
+<p><code>boot</code> starts a simulator or emulator by name and waits until it's ready; <code>shutdown</code> stops it. A stuck adb link fails at once with the layer that failed, and <code>doctor -d</code> walks through it; <code>who</code> shows which agents and log captures are using a device, and <code>release</code> clears a dead one's hold. <code>wifi</code> takes an Android phone off its cable, <code>pair</code> connects one that never had one, and <code>connect</code> reaches a Wear OS watch by the address its debugging screen shows. Ready for the first command in under a second, against 8–29 s for mobile-mcp, Maestro and Appium.</p>`,
+    covers: ['doctor', 'devices', 'boot', 'shutdown', 'wifi', 'pair', 'connect', 'setup', 'teardown', 'who', 'release', 'reverse', 'metro'],
     start: (p) => p.show('springboard'),
     beats: [
       {

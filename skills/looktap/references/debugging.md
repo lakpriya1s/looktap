@@ -18,6 +18,16 @@ looktap logs --since before-tap
 # as it comes, until Ctrl+C or --for: the app's lines, and its process starting and ending between them
 # (Android: why the system started it, e.g. a broadcast). --grep/--errors narrow it
 looktap logs com.example.myapp --follow --grep "upload|region" --for 10m
+# Android logcat filters: one buffer (main, system, crash, events, all), or only some tags
+looktap logs com.example.app --buffer main --since 5m
+looktap logs com.example.app --tag ReactNativeJS,OkHttp
+# empty the device's log (logcat -c). When logs comes back empty, looktap checks the device's newest log line against
+# its clock: a warning that it is hours old means a stale buffer or a stopped logd, and the empty answer means nothing
+looktap logs --clear
+# a capture into a file that outlives this terminal; it re-attaches by itself after an adb restart and records the gap
+looktap logs com.example.app --follow --file logs/app.log --for 30m
+# the app's process: pid, how long it has run, in front or in the background
+looktap ps com.example.app
 # crashes, ANRs and low-memory kills since your last `crashes` (first time: the last hour)
 looktap crashes
 looktap crashes com.example.myapp --since 1h

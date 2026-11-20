@@ -2,6 +2,40 @@
 
 ## Unreleased
 
+### A stuck adb, raw adb, and several agents on one device
+
+From a day of testing on a Samsung over a USB hub and an iPhone X, with more than one agent session attached.
+
+- **No adb call can hang.** Every adb call has a timeout (15 s, `LOOKTAP_ADB_TIMEOUT`) and is killed when it runs out.
+  A call that ran out of time is an error naming the layer that failed (the adb server, the USB link, the device), never
+  an empty answer: `launch` no longer reports a stuck phone as "no launchable activity … is it installed?".
+- **A health probe before each device command** (`adb devices -l` and a timed `shell echo ok`, cached 10 s across
+  processes): `ok`, `slow` (over 3 s: a warning), `unresponsive`, `unauthorized`, `offline`, or `adb-server-hung` when
+  `adb devices` itself doesn't answer. Each fails at once with what to do.
+- **`doctor -d <serial>`** on Android now shows the adb server (version, pid, uptime), every adb process on the
+  computer and how long it has run, the probe and round-trip time, the USB port path with a warning for hubs
+  (`2-1.1.1`: two), the `adb reverse` rules, the lock screen, and whether `--app` is installed, then the recovery
+  steps in order. **`--fix`** restarts the adb server after listing every session and stream it will cut off and
+  asking (`--yes` doesn't ask), warns looktap holders, and puts the reverse rules back.
+- **The helper says why it didn't start**: the forward or the copy failed (adb's words), it crashed (its exception
+  from the log), or it runs but doesn't answer; with the command that failed.
+- **`launch`** falls back to `monkey -p <app> -c LAUNCHER 1` when the launcher activity doesn't resolve, after checking
+  the app is installed.
+- **New commands:** `reverse <port>[:<port>]` / `--list` / `remove`, `metro` (Metro answering, the reverse rule, and
+  the device reaching it), `ps <app>` (pid, uptime, in front), `who [device]`, `release <device> [--force]`.
+  `install` prints the version code and how long it took. `terminate` is `stop` and `screenshot` is `shot`; an
+  unknown command suggests the one meant (`logcat` → `logs`).
+- **`logs`**: `--buffer main|system|crash|events|all`, `--tag`, `--clear` (`logcat -c`), and `--follow --file <f>`. An
+  empty answer is checked against the device's clock, with a warning when its newest log line is hours old. A
+  `--follow` capture cut off by an adb restart attaches again and records the gap and who restarted adb, instead of
+  ending with code 137.
+- **Leases.** A command that changes a device holds it alone while it runs; another waits up to `--busy-wait` (10 s),
+  then fails with `device busy: <owner> running "<command>" for 2m14s`. Reads, screenshots and log streams share it.
+  Leases live in `~/.looktap/leases`, beat every 5 s, and are dead after 30 s of silence or when their process is gone.
+- **`location` and `route` on an Android phone** warn when Play services' fused location is far from the simulated
+  one: the phone's own Wi-Fi and cell positions are still reaching apps (turn off Google Location Accuracy).
+
+
 From the notes of a device-testing session of a React Native app's location and geofence features (an Android 16
 phone over USB, an iOS 16 iPhone through lockdown).
 

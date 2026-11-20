@@ -31,7 +31,7 @@ test('a subcommand falls back to its command; anything unlisted is supported', (
   assert.equal(capability('ios-simulator', 'tap').status, 'supported');
   assert.equal(capabilities('android-device')['network <app>'].status, 'conditional');
   // Every command, plus its subcommand limits.
-  assert.deepEqual(Object.keys(capabilities('ios-simulator')).filter((c) => !COMMANDS.includes(c)), ['perf --frames', 'network <app>']);
+  assert.deepEqual(Object.keys(capabilities('ios-simulator')).filter((c) => !COMMANDS.includes(c)), ['perf --frames', 'network <app>', 'logs --clear']);
   assert.equal(capabilities('ios-simulator')['perf --frames'].status, 'conditional');
   assert.equal(capabilities('ios-simulator').perf.status, 'supported');
 });

@@ -171,7 +171,7 @@ here, `looktap skill <name>` prints it.
 |---|---|
 | [references/commands.md](references/commands.md) | every command and option: gestures, typing, screenshots and video, installing and resetting apps, permissions, dark mode, text size, location, rotation, folding, network, push, reading notifications, the config file |
 | [references/flows.md](references/flows.md) | flow files as tests for CI (`test`), recording a flow (`codegen`), signing in, pages with no labels, handing over to the user (`handoff`) |
-| [references/devices.md](references/devices.md) | booting, choosing or setting up a device; a real phone that isn't ready, is on Wi-Fi, or runs iOS 16 or older |
+| [references/devices.md](references/devices.md) | booting, choosing or setting up a device; a real phone that isn't ready, is on Wi-Fi, runs iOS 16 or older, or is stuck; Metro and `adb reverse`; other agents using the same device (`who`, `release`) |
 | [references/debugging.md](references/debugging.md) | a crash or an error: logs (following them live, marks), crash reports, performance (`perf`, `launch --time`), the app's files and saved settings (`prefs`) |
 | [references/location.md](references/location.md) | location, geofence and background features: moving the device (`route`), the app killed or in the background (`kill`, `background`), the system's geofences, battery and network use |
 
@@ -234,7 +234,14 @@ here, `looktap skill <name>` prints it.
 - **Start with `looktap devices`**: it says which devices are real phones, and what the user must do for one that
   isn't ready ([references/devices.md](references/devices.md)).
 - **Use looktap, not adb or simctl, for device and app state:** `boot` instead of polling for boot completion,
-  `apps <id>` instead of `simctl listapps` or `pm list packages` to check an app is installed.
+  `apps <id>` instead of `simctl listapps` or `pm list packages` to check an app is installed, `install`, `reverse`,
+  `metro`, `ps <app>` and `logs` instead of `adb install`, `adb reverse`, `pidof` and `adb logcat`. The names other
+  tools use work too: `terminate` is `stop`, `screenshot` is `shot`.
+- **A device that doesn't answer** fails within 15 s with what's wrong (the adb server, the USB link, the device).
+  Run `looktap doctor -d <serial>` and follow its steps; never `adb kill-server` or `pkill adb` yourself, which cuts
+  off other sessions' log captures (`doctor --fix` restarts adb safely). `device busy: …` means another session is
+  driving the device: tell the user, don't loop. `looktap who` shows who's using it
+  ([references/devices.md](references/devices.md)).
 - **If a command says the device is locked** (Android phones too: `devices` shows `locked`, or `screen off`), ask the user to unlock it. Don't retry in a loop, and never enter a
   passcode unless they gave it to you for this device. `looktap devices` shows `locked` up front; in a long
   sequence, `--wait-unlock 60` lets the user unlock it while the command waits.

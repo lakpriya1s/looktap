@@ -43,6 +43,49 @@ looktap skill --list
 looktap skill --uninstall
 ```
 
+## A phone that's stuck, and sharing devices with other agents
+
+Every adb call looktap makes has a timeout (15 s, `LOOKTAP_ADB_TIMEOUT` in seconds), and each device command first
+probes the way to the device (cached 10 s). A stuck link fails at once and names the layer that failed: the adb
+server on this computer, the USB link, the device, the app or looktap's helper. It's never reported as "not
+installed".
+
+```bash
+# the way to one Android device, layer by layer: the adb server (version, pid) and every adb process on this
+# computer, the device's state and round-trip time, its USB path (a warning when it goes through hubs), the
+# adb reverse rules, the lock screen, and whether --app is installed. Prints the recovery steps when one fails
+looktap doctor -d R83Y30R6V6M --app com.example.app
+# restart the adb server: lists who it will cut off first and asks; --yes doesn't ask. Puts adb reverse back after
+looktap doctor -d R83Y30R6V6M --fix
+# who is using the devices: looktap commands (and their log captures), and adb or idevicesyslog processes started
+# by anything else, with how long each has run
+looktap who
+looktap who R83Y30R6V6M
+# clear a hold whose process died (one still running: --force, which asks first)
+looktap release R83Y30R6V6M
+```
+
+If the phone is stuck, in this order: 1. `looktap doctor -d <serial> --fix` (restarts the adb server), 2. replug the
+USB cable straight into the computer, not a hub, 3. toggle USB debugging off and on, and accept the prompt again,
+4. reboot the phone. **Never `adb kill-server` or `pkill adb` yourself:** that cuts off every other session's log
+capture without a word. `doctor --fix` names them first, warns looktap ones (their captures re-attach and record
+the gap), and puts the reverse rules back.
+
+A command that changes the device (tap, type, launch, install, stop, location) holds it alone while it runs; another
+agent's command waits up to 10 s (`--busy-wait <s>`) and then fails with `device busy: <owner> running "<command>"
+for 2m14s`. Don't loop on that: tell the user another session is using the device. Reading the screen, screenshots
+and log streams share it. Set `LOOKTAP_OWNER` to name your session in `who`.
+
+```bash
+# Metro on this computer, the reverse rule (added if missing), and whether the device reaches it
+looktap metro
+# any other port: the device's localhost:<port> reaches this computer's
+looktap reverse 9090
+looktap reverse 9090:3000
+looktap reverse --list
+looktap reverse remove all
+```
+
 ## Real phones
 
 - **Start with `looktap devices`** to see which devices are real phones and which are simulators or emulators.

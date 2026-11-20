@@ -95,6 +95,7 @@ looktap launch com.example.myapp --resume
 # past the splash screen: until the text is on screen (up to --wait, default 30 s)
 looktap launch com.example.myapp --until "Welcome"
 looktap stop com.example.myapp   # terminate it; waits until the process is gone (Android: force-stop)
+# (terminate is the same command, and screenshot is shot: the names other tools use)
 # end it as the system does under memory pressure: what it registered (geofences, alarms, jobs) survives, unlike stop
 looktap kill com.example.myapp
 # Home, and check it's in the background and still running
@@ -134,6 +135,7 @@ looktap apps com.example
 looktap apps --all --json
 # a simulator .app, a device .app/.ipa (real iPhone) or an .apk (keeps the app's data; --grant: every runtime
 # permission); prints the app id. A failure says why (storage full, a downgrade, another signature) and what to do
+# prints the app id, its version code (Android) and how long it took
 looktap install build/MyApp.app
 looktap install app-debug.apk --grant
 looktap uninstall com.example.myapp
