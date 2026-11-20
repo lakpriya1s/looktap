@@ -225,7 +225,10 @@ batch & agents
                                   step (tap by label, fill, scrollto, back …). Commands typed here (expect …)
                                   are run and saved too; undo drops the last step; Enter or Ctrl+C ends it
   run '<cmd>; <cmd> …' [--ls]     several commands in one process (or: run - < script). Stops at the
-                                  first failure, which it names; --ls: then the screen it ended on
+                                  first failure, which it names, with the screen and the steps not run;
+                                  --ls: then the screen it ended on. Separate looktap commands chained in one
+                                  shell script: after a failed action the later actions and waits are skipped
+                                  (LOOKTAP_CONTINUE_AFTER_FAILURE=1 runs them anyway)
   test <flow|dir> … [--junit f]   run flow files (run scripts, one step per line) as tests: a line per
                                   flow, exit 1 if any fails. A failure saves the screen, a screenshot,
                                   error logs and crashes in <out>/failures/<flow>/; --junit writes a report.
@@ -261,6 +264,53 @@ const ALIASES = { terminate: 'stop', screenshot: 'shot' };
 
 /** Commands that run without a device. */
 const HOST_COMMANDS = ['help', 'doctor', 'skill', 'mcp', 'devices', 'boot', 'wifi', 'pair', 'connect', 'shutdown', 'who', 'release'];
+
+// ── a chain of commands that went off course ───────────────────────────────
+// An agent often sends several looktap commands in one shell call, one per line or joined with ";". The shell runs
+// every one even after one fails, so when the app went another way (a different screen, a button that isn't there),
+// each later command fails slowly against the wrong screen, minutes in all, or taps something real on it. So once an
+// action fails, the later actions and waits from the same script (same parent shell, not a terminal) are skipped at
+// once with what failed. Reading the screen still runs. A person typing in a terminal is never stopped.
+const CHAIN = join(HOME, 'chain.json');
+const CHAIN_MS = 10 * 60e3;
+/** What starts the stop: an action that couldn't do what it was asked. A failed check (expect, wait) doesn't: `expect X || looktap tap Y` is a choice. */
+const chainFails = (cmd) => cmd !== 'launch' && (ACTIONS.has(cmd) || cmd === 'run' || cmd === 'value');
+/** What it stops: acting or waiting on a screen nobody has looked at since. */
+const chainStops = (cmd) => chainFails(cmd) || cmd === 'wait' || cmd === 'expect';
+const chained = () => !process.stdin.isTTY && !process.env.LOOKTAP_CONTINUE_AFTER_FAILURE;
+
+/** Remember that an action failed in this script, unless the failure is about the device (locked, stuck, busy). */
+function failedIn(d, cmd, args, e) {
+  if (!chained() || !chainFails(cmd) || e instanceof LockedError || e instanceof StuckError || e instanceof BusyError) return;
+  try {
+    writeJson(CHAIN, { ...readJson(CHAIN, {}), [deviceId(d)]: { ppid: process.ppid, at: Date.now(), step: [cmd, ...args].join(' '), why: String(e.message).split('\n')[0].slice(0, 200) } });
+  } catch {}
+}
+
+/** Skip an action or wait that follows a failed one in the same script. */
+function afterFailure(d, cmd) {
+  if (!chained() || !chainStops(cmd)) return;
+  const f = readJson(CHAIN, {})[deviceId(d)];
+  if (!f || f.ppid !== process.ppid || Date.now() - f.at > CHAIN_MS) return;
+  throw new UsageError(
+    `skipped: an earlier command in this script failed (looktap ${f.step}: ${f.why}), so the app is not where the rest of the script expects. Read the screen (looktap ls), then send the next steps for the screen it is on, in a new command. (LOOKTAP_CONTINUE_AFTER_FAILURE=1 runs it anyway)`,
+  );
+}
+
+/**
+ The screen was read (ls, shot) or the app restarted (launch) after the failure: whoever sends the next command has
+ seen where it is, so it isn't stopped. (An agent that keeps one shell open for all its commands has one parent for
+ all of them: without this, its corrected next step would be stopped too.)
+ */
+function lookedAgain(d, cmd) {
+  if (!['ls', 'shot', 'launch'].includes(cmd)) return;
+  const all = readJson(CHAIN, {});
+  if (all[deviceId(d)]?.ppid !== process.ppid) return;
+  delete all[deviceId(d)];
+  try {
+    writeJson(CHAIN, all);
+  } catch {}
+}
 
 /** A command looktap doesn't have: say so before looking for a device, with the one probably meant. */
 function knownCommand(cmd) {
@@ -532,7 +582,13 @@ async function main() {
   const config = loadConfig();
   const d = pickDriver(opts, config);
   try {
-    return await drive(d, cmd, args, opts);
+    afterFailure(d, cmd);
+    const r = await drive(d, cmd, args, opts).catch((e) => {
+      failedIn(d, cmd, args, e);
+      throw e;
+    });
+    lookedAgain(d, cmd);
+    return r;
   } catch (e) {
     await screenOnFailure(d, cmd, e, opts);
     throw e;
@@ -580,6 +636,7 @@ const screenFailure = (e) => e instanceof NotFound || /expect failed|is ambiguou
 async function screenOnFailure(d, cmd, e, opts) {
   if (cmd === 'test' || cmd === 'codegen' || !screenFailure(e)) return;
   console.error(`looktap: ${e.message}`);
+  if (e.after) console.error(`looktap: ${e.after}`);
   e.printed = true;
   console.error('looktap: the screen now:');
   await list(d, opts, e.snap).catch((err) => console.error(`looktap: (couldn't read the screen: ${err.message})`));
@@ -1994,7 +2051,7 @@ async function mcp(outer) {
       }
       // Name the tool parameters, not the command-line flags.
       const msg = e.message.replace('pass -p ios|android', 'pass platform: "ios" or "android"').replace(/pass -d one of/, 'pass device: one of');
-      return { text: (e.printed ? sink : [...sink, `looktap: ${msg}`]).join('\n'), error: true };
+      return { text: (e.printed ? sink : [...sink, `looktap: ${msg}`, ...(e.after ? [`looktap: ${e.after}`] : [])]).join('\n'), error: true };
     } finally {
       sink = null;
     }
@@ -2050,7 +2107,10 @@ async function runSteps(d, text, outer, { env = null } = {}) {
     try {
       await dispatch(d, cmd, stepArgs, { ...outer, ...opts, wait: opts.wait ?? outer.wait, flags: opts.flags });
     } catch (e) {
+      const rest = steps.slice(i + 1).map((w) => w.join(' '));
       e.message = `step ${i + 1} (${words.join(' ')}): ${e.message}`;
+      // What didn't run, so the agent can send the rest (or a corrected rest) once it has read the screen.
+      if (rest.length) e.after = `not run: ${rest.map((r, j) => `${i + 2 + j}. ${r}`).join(' · ')}. The app went another way: read the screen below (or looktap ls), then run the steps that fit it`;
       throw e;
     }
   }
@@ -2346,6 +2406,6 @@ function skillStatus(ok) {
 }
 
 main().catch((e) => {
-  if (!e.printed) console.error(`looktap: ${e.message}`);
+  if (!e.printed) console.error(`looktap: ${e.message}${e.after ? `\nlooktap: ${e.after}` : ''}`);
   process.exit(e instanceof UsageError ? 2 : 1);
 });

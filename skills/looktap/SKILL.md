@@ -93,10 +93,13 @@ looktap command. Make each call count, without acting on screens you haven't rea
 3. **Never chain looktap commands with `;` or newlines in one shell call.** A failed step doesn't stop the next,
    which then acts on whatever screen is up: on a real app that tap does something. Put them in `run`. `&&` stops
    at a failed command but not at a wrong screen (`ls` and `--ls` exit 0 whatever is shown): check with
-   `wait`/`expect`.
+   `wait`/`expect`. If you chain them anyway, looktap skips every action and wait after a failed action in that
+   call (`skipped: an earlier command in this script failed …`): read the screen and send the next steps for it.
 4. **A failure shows the screen.** After `not found`, an ambiguous label or a failed `expect` (a `run` step's too),
    the screen as it is follows the error, with fresh `@ref`s. Fix the step from it; no `ls` first. Don't retry the
-   same label: each not-found waits 3 s (`--wait`) first.
+   same label: each not-found waits 3 s (`--wait`) first. A failed `run` also lists the steps it didn't reach
+   (`not run: 3. tap Internet · 4. …`): the app went another way, so send a new `run` with the steps that fit the
+   screen it shows, not the old ones again.
 5. **Name the device once.** A command with no `-d` uses the device the last command used (for 10 min, while it's
    up); `boot` and `-d` set it. Driving two devices at once (or with another agent)? Pass `-p` and `-d` on every
    command.

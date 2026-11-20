@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### A script that went off course
+
+- **Chained commands stop at a failed action.** An agent often sends several looktap commands in one shell call, one
+  per line or joined with `;`, and the shell runs each even after one fails. When the app had gone another way, each
+  later command failed slowly against the wrong screen (minutes in all) or tapped something on it. Now, after an
+  action fails (not found, ambiguous), the later actions and waits from the same script are skipped at once:
+  `skipped: an earlier command in this script failed (looktap tap Checkout: not found: Checkout) …`. Reading the
+  screen (`ls`, `shot`) and `launch` still run and lift the stop; a terminal is never stopped; failed checks
+  (`expect`, `wait`) don't start it, so `expect X || looktap tap Y` works; `LOOKTAP_CONTINUE_AFTER_FAILURE=1` runs
+  them anyway.
+- **A failed `run` lists the steps it didn't reach** (`not run: 3. tap Internet · 4. wait Airplane`), after the
+  failure and the screen, so the agent sends the steps that fit the screen instead of the old ones.
+
 ### Watches
 
 - **Apple Watch simulators** are driven like iPhone simulators, by the same helper: `devices --all` lists them
