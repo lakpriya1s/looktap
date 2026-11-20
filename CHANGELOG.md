@@ -121,6 +121,8 @@ phone over USB, an iOS 16 iPhone through lockdown).
 
 ### Changed
 
+- `skill --install` says the references went in too (`SKILL.md + 5 references` for each agent), so an install of
+  the split skill no longer looks like one of the old single file.
 - **A label that names one control beats the groups around it.** On iOS a group's label is its children's labels run
   together, so `tap "Driving, On"` used to be ambiguous with three groups and the switch. Now one button, switch or cell
   matching exactly or by prefix wins over containers that only contain the text; two or more controls are still
