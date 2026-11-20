@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { mdnsSerial, parseMdns, parseWifiIp } from '../lib/wifi.js';
+import { connectFailure, connectId, mdnsSerial, parseMdns, parseWifiIp } from '../lib/wifi.js';
 import { wifiTwin } from '../lib/android.js';
 
 test('adb mdns services lines → name, type, address', () => {
@@ -31,4 +31,23 @@ test("the keeper looktap downloads is the version its manifest builds", async ()
   const { KEEPER_VERSION } = await import('../lib/wifi.js');
   const manifest = readFileSync(new URL('../native/android-wifi/AndroidManifest.xml', import.meta.url), 'utf8');
   assert.equal(Number(/android:versionCode="(\d+)"/.exec(manifest)[1]), KEEPER_VERSION);
+});
+
+test('connect: the address on the debugging screen → adb id, port 5555 when left out', () => {
+  assert.equal(connectId('192.168.1.96'), '192.168.1.96:5555');
+  assert.equal(connectId('192.168.1.96:37123'), '192.168.1.96:37123');
+  assert.equal(connectId('watch.local'), 'watch.local:5555');
+  assert.equal(connectId('not an address'), null);
+  assert.equal(connectId(''), null);
+  assert.equal(connectId(undefined), null);
+});
+
+test("connect: what adb connect's answer means", () => {
+  const id = '192.168.1.96:5555';
+  assert.equal(connectFailure('connected to 192.168.1.96:5555', id), null);
+  assert.equal(connectFailure('already connected to 192.168.1.96:5555', id), null);
+  assert.equal(connectFailure('', id), null); // still waiting: the device is asking "Allow debugging?"
+  assert.match(connectFailure("failed to connect to '192.168.1.96:5555': No route to host", id), /Local Network/);
+  assert.match(connectFailure("failed to connect to '192.168.1.96:5555': Connection refused", id), /Debug|debugging over Wi-Fi is off/);
+  assert.match(connectFailure("failed to connect to '192.168.1.96:5555': Operation timed out", id), /same Wi-Fi/);
 });
