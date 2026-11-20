@@ -20,7 +20,7 @@ test your CI runs. No server to start and no dependencies.
 ---
 
 `looktap` lets your AI agent see, use and control the apps on your phone: an iPhone or Android device, real or
-simulated. It reads the screen as text and taps by label. Each command does one thing and prints a few lines of plain
+simulated (and watches: Wear OS, and Apple Watch simulators). It reads the screen as text and taps by label. Each command does one thing and prints a few lines of plain
 text:
 
 <p align="center">

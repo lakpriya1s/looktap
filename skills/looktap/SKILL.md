@@ -1,6 +1,6 @@
 ---
 name: looktap
-description: Drive iPhone and Android devices (simulators, emulators or real phones) from the shell with looktap — read the screen, tap, type, swipe, deep-link, screenshot, record, read logs and crashes, and set permissions, location, dark mode and text size. Use when asked to open, navigate, test (or write e2e flow tests for), reproduce a bug in, or take screenshots of a mobile app (the user's own, a system app or any other installed app) running in a simulator, emulator or on a real device.
+description: Drive iPhone and Android devices (simulators, emulators or real phones), Wear OS watches and Apple Watch simulators from the shell with looktap — read the screen, tap, type, swipe, deep-link, screenshot, record, read logs and crashes, and set permissions, location, dark mode and text size. Use when asked to open, navigate, test (or write e2e flow tests for), reproduce a bug in, or take screenshots of a mobile app (the user's own, a system app or any other installed app) running in a simulator, emulator or on a real device.
 allowed-tools: Bash(looktap:*) Bash(npx @looktap/cli:*) Bash(npx -y @looktap/cli:*)
 ---
 

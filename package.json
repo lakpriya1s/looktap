@@ -19,7 +19,10 @@
     "screenshots",
     "react-native",
     "simctl",
-    "adb"
+    "adb",
+    "wear-os",
+    "apple-watch",
+    "watchos"
   ],
   "author": "Lakpriya Senevirathna <lakpriya@codescale.lk>",
   "license": "AGPL-3.0-only",
