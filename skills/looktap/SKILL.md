@@ -1,6 +1,6 @@
 ---
 name: looktap
-description: Drive iPhone and Android devices (simulators, emulators or real phones) from the shell with looktap — read the screen, tap, type, swipe, deep-link, screenshot, record, read logs and crashes, and set permissions, location, dark mode and text size. Use when asked to open, navigate, test (or write e2e flow tests for), reproduce a bug in, or take screenshots of a mobile app (the user's own, a system app or any other installed app) running in a simulator, emulator or on a real device.
+description: Drive iPhone and Android devices (simulators, emulators or real phones), Wear OS watches and Apple Watch simulators from the shell with looktap — read the screen, tap, type, swipe, deep-link, screenshot, record, read logs and crashes, and set permissions, location, dark mode and text size. Use when asked to open, navigate, test (or write e2e flow tests for), reproduce a bug in, or take screenshots of a mobile app (the user's own, a system app or any other installed app) running in a simulator, emulator or on a real device.
 allowed-tools: Bash(looktap:*) Bash(npx @looktap/cli:*) Bash(npx -y @looktap/cli:*)
 ---
 
@@ -58,6 +58,27 @@ A row partly hidden says so after it: `[56% covered by @16 @17]` (something draw
 `[30% off screen]`. Tap one that's covered by its uncovered part, or scroll it clear first; `ls --covered` lists only
 those rows, a quick layout check.
 
+## React Native development builds
+
+Debug builds put React Native's **LogBox toast** at the bottom of the screen whenever the app logs a warning. Its
+invisible container takes every touch around it, so a bottom tab bar under it goes dead, and the toast comes back each
+time the warning is logged again. For a whole session with a dev build, set this once in `looktap.config.json`:
+
+```json
+{ "dismissLogBox": true }
+```
+
+Then every `tap`, `longpress` and `tapxy` closes the toast first. Without it:
+
+- `tap` on an element the toast covers closes the toast, finds the target again and taps it, with a note saying so.
+- `looktap dismiss logbox --until-gone` closes it, and again each time it comes back, until it stays gone for a second.
+- `ls` notes when the toast is up. For long sessions, ask the developer for `LogBox.ignoreAllLogs()` in test builds.
+
+**Android debug builds load their bundle from Metro.** When Metro is running on this Mac, `launch` runs
+`adb reverse tcp:8081` first (a real phone has no other way to reach it), and `launch --ls` waits through the splash
+screen while the bundle loads ("bundle loading from Metro…", 30–60 s on a phone the first time; up to 120 s, or
+`--wait`). `launch --until "<text>"` waits as long.
+
 ## Calls: fewest turns, no guessing
 
 Each call costs a turn (you read the output, then write the next command), and a turn takes longer than any
@@ -72,10 +93,13 @@ looktap command. Make each call count, without acting on screens you haven't rea
 3. **Never chain looktap commands with `;` or newlines in one shell call.** A failed step doesn't stop the next,
    which then acts on whatever screen is up: on a real app that tap does something. Put them in `run`. `&&` stops
    at a failed command but not at a wrong screen (`ls` and `--ls` exit 0 whatever is shown): check with
-   `wait`/`expect`.
+   `wait`/`expect`. If you chain them anyway, looktap skips every action and wait after a failed action in that
+   call (`skipped: an earlier command in this script failed …`): read the screen and send the next steps for it.
 4. **A failure shows the screen.** After `not found`, an ambiguous label or a failed `expect` (a `run` step's too),
    the screen as it is follows the error, with fresh `@ref`s. Fix the step from it; no `ls` first. Don't retry the
-   same label: each not-found waits 3 s (`--wait`) first.
+   same label: each not-found waits 3 s (`--wait`) first. A failed `run` also lists the steps it didn't reach
+   (`not run: 3. tap Internet · 4. …`): the app went another way, so send a new `run` with the steps that fit the
+   screen it shows, not the old ones again.
 5. **Name the device once.** A command with no `-d` uses the device the last command used (for 10 min, while it's
    up); `boot` and `-d` set it. Driving two devices at once (or with another agent)? Pass `-p` and `-d` on every
    command.
@@ -91,10 +115,8 @@ failed. Keep track of that at every step:
 2. **A tap that changed nothing is a failure, not a pause.** Find out why before tapping again, in this order:
    something drawn on top (a toast, a sheet, React Native's LogBox: `tap` names it), the keyboard covering the
    target, the element disabled or still loading, or the wrong one of two same-named elements.
-3. **Development builds: dismiss LogBox at the start.** `ls` notes when React Native's warning toast is up. It
-   blocks taps across the bottom of the screen, a tab bar included: `looktap dismiss logbox` closes it. In a flow,
-   `"dismissLogBox": true` in `looktap.config.json` closes it before every tap instead of a `tapxy` on its ×.
-   For long sessions ask the developer for `LogBox.ignoreAllLogs()` in test builds.
+3. **Development builds: set `"dismissLogBox": true`** (see "React Native development builds" above). React
+   Native's warning toast blocks taps across the bottom of the screen, a tab bar included, and keeps coming back.
 4. **Mind the keyboard.** Hide it (`hidekb`) before tapping anything in the lower half of the screen. `scrollto`
    swipes above it on its own and stops with a message if it leaves no room. `hidekb` also takes focus from the
    field, which runs validation and can close a search: do it on purpose, not as a reflex.
@@ -152,15 +174,18 @@ here, `looktap skill <name>` prints it.
 |---|---|
 | [references/commands.md](references/commands.md) | every command and option: gestures, typing, screenshots and video, installing and resetting apps, permissions, dark mode, text size, location, rotation, folding, network, push, reading notifications, the config file |
 | [references/flows.md](references/flows.md) | flow files as tests for CI (`test`), recording a flow (`codegen`), signing in, pages with no labels, handing over to the user (`handoff`) |
-| [references/devices.md](references/devices.md) | booting, choosing or setting up a device; a real phone that isn't ready, is on Wi-Fi, or runs iOS 16 or older |
-| [references/debugging.md](references/debugging.md) | a crash or an error: logs, crash reports, performance (`perf`, `launch --time`), the app's files |
+| [references/devices.md](references/devices.md) | booting, choosing or setting up a device; watches (Wear OS, Apple Watch simulators); a real phone that isn't ready, is on Wi-Fi, runs iOS 16 or older, or is stuck; Metro and `adb reverse`; other agents using the same device (`who`, `release`) |
+| [references/debugging.md](references/debugging.md) | a crash or an error: logs (following them live, marks), crash reports, performance (`perf`, `launch --time`), the app's files and saved settings (`prefs`) |
+| [references/location.md](references/location.md) | location, geofence and background features: moving the device (`route`), the app killed or in the background (`kill`, `background`), the system's geofences, battery and network use |
 
 ## Targeting elements
 
 - **`@N` refs** come from the most recent `ls`/`--ls` on that device. Use them for unlabelled buttons and
   duplicate labels. A ref whose element moved or vanished is an error, never a wrong tap: run `ls` again.
 - **Labels** match exactly first, then a unique prefix or substring. An ambiguous label is an error that lists
-  the matches: use more of the label, `--exact`, or a ref. The same label in two separate places (a section
+  the matches: use more of the label, `--exact`, or a ref. When one button, switch or cell matches and the other
+  matches are only groups around it (an iOS group's label is all its children's labels run together), the control is
+  the target; a switch also answers to its spoken name (`tap "Driving, On"`). Two or more controls are ambiguous. The same label in two separate places (a section
   heading and a tab, both "Library") is ambiguous too, even with `--exact`: tap the one you mean by `@ref`. A
   form's label over its own field (both "Email") is not: the label is plain text, so the field is the target.
 - **Android text fields** are named by their label or hint, as on iOS, with what's typed as their value
@@ -178,6 +203,7 @@ here, `looktap skill <name>` prints it.
   clipboard follows the Mac's, so pbcopy alone can leave an old clipboard there to be pasted. `paste` checks the
   clipboard holds the text before pasting, and exits 1 if it can't put it there.
 - **`tapxy x y`** is the last resort, for things `ls` doesn't list.
+- **Read one value for a script with `looktap value "<label>"`**: it prints the value alone (a switch: `1` or `0`).
 - **After `rotate` or `fold`, read the screen again.** Old refs and coordinates are stale.
 
 ## Rules
@@ -211,12 +237,24 @@ here, `looktap skill <name>` prints it.
 - **Start with `looktap devices`**: it says which devices are real phones, and what the user must do for one that
   isn't ready ([references/devices.md](references/devices.md)).
 - **Use looktap, not adb or simctl, for device and app state:** `boot` instead of polling for boot completion,
-  `apps <id>` instead of `simctl listapps` or `pm list packages` to check an app is installed.
-- **If a command says the device is locked**, ask the user to unlock it. Don't retry in a loop, and never enter a
+  `apps <id>` instead of `simctl listapps` or `pm list packages` to check an app is installed, `install`, `reverse`,
+  `metro`, `ps <app>` and `logs` instead of `adb install`, `adb reverse`, `pidof` and `adb logcat`. The names other
+  tools use work too: `terminate` is `stop`, `screenshot` is `shot`.
+- **A device that doesn't answer** fails within 15 s with what's wrong (the adb server, the USB link, the device).
+  Run `looktap doctor -d <serial>` and follow its steps; never `adb kill-server` or `pkill adb` yourself, which cuts
+  off other sessions' log captures (`doctor --fix` restarts adb safely). `device busy: …` means another session is
+  driving the device: tell the user, don't loop. `looktap who` shows who's using it
+  ([references/devices.md](references/devices.md)).
+- **If a command says the device is locked** (Android phones too: `devices` shows `locked`, or `screen off`), ask the user to unlock it. Don't retry in a loop, and never enter a
   passcode unless they gave it to you for this device. `looktap devices` shows `locked` up front; in a long
   sequence, `--wait-unlock 60` lets the user unlock it while the command waits.
 - **If `hidekb` exits 2** (iOS search keyboards have no Done key), tap the screen's close or cancel control.
 - **Log lines can contain tokens or personal data.** Quote only the lines that matter.
+- **Keep coordinates out of what you write.** looktap prints `location set`, distances and redacted values instead of
+  coordinates; don't copy coordinates into notes, scripts or messages (start a route `--from-current` or
+  `--offset-from-pref` where you can).
+- **Test "the app was killed" with `kill`, never `stop`.** On Android `stop` force-stops it, which removes its
+  geofences, alarms and jobs, as no real phone does on its own ([references/location.md](references/location.md)).
 
 ## Installation
 

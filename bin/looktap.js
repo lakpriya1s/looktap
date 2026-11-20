@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
 import { createInterface } from 'node:readline';
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 
@@ -9,20 +9,26 @@ import { Android, RECORD_LIMIT_S, adbDevices, overWifi, wifiTwin } from '../lib/
 import { KEEPER, connect, hasKeeper, installKeeper, pair, removeKeeper, wifi } from '../lib/wifi.js';
 import { Ios, bootedSimulators } from '../lib/ios.js';
 import { IosDevice, physicalDevices } from '../lib/iosdevice.js';
-import { clock, grepper, startOf, tail, whichApp } from '../lib/logs.js';
+import { clock, grepper, setMark, sinceOf, startOf, tail, whichApp } from '../lib/logs.js';
 import { ACTIONS as PERMISSION_ACTIONS } from '../lib/permissions.js';
-import { KINDS, capabilities, capability, unsupported } from '../lib/capabilities.js';
+import { COMMANDS, KINDS, capabilities, capability, unsupported } from '../lib/capabilities.js';
 import { Recorder, TouchReader, classify, mapper, quote } from '../lib/codegen.js';
 import { AGENTS, PROJECT_DEFAULT, claudePlugin, detectAgents, installSkill, installedVersion, pickAgents, skillsDir, uninstallSkill } from '../lib/agents.js';
 import { boot, shutdown } from '../lib/boot.js';
 import { resizePng } from '../lib/png.js';
 import { formatDevice, inventory, lastDevice, rememberDevice } from '../lib/devices.js';
 import { ORIENTATIONS, coordinates, foldPosition, pushPayload, rotation, textSize } from '../lib/conditions.js';
-import { LOGBOX, appGone, center, coverage, expectOn, fillCode, poller, tapPoint, forgetFront, formatCoverage, formatRow, isRef, lastFront, logBoxToast, rememberFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, signature, sliding, stillScreen, visibleRows, waitFor } from '../lib/screen.js';
+import { LOGBOX, appGone, center, logBoxAround, valueBeside, coverage, expectOn, fillCode, poller, tapPoint, forgetFront, formatCoverage, formatRow, isRef, lastFront, logBoxToast, rememberFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, signature, sliding, stillScreen, visibleRows, waitFor } from '../lib/screen.js';
 import { formatNotification, fromApp, notificationJson, notificationMatches } from '../lib/notifications.js';
 import { duration, formatFrames, formatReading, formatSamples, readingJson } from '../lib/perf.js';
 import { flowFiles, flowName, junit } from '../lib/testing.js';
-import { ADB, HOME, LockedError, NotFound, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
+import { clockTime, distance, gpxPlan, metres, parseGpx, planSummary, point, scrubCoords, straightPlan } from '../lib/geo.js';
+import { formatPrefs, redactList } from '../lib/prefs.js';
+import { BusyError, acquire, kindOf, leases } from '../lib/lease.js';
+import { RECOVERY, adbRows, didYouMean, rememberReverses, release, restartAdb, whoLines } from '../lib/upkeep.js';
+import { metroUp } from '../lib/android.js';
+import { etimeSecs } from '../lib/health.js';
+import { ADB, HOME, LockedError, NotFound, StuckError, UsageError, has, loadConfig, pickMatch, readJson, run, shotPath, sleep, splitScript, waitFor as retry, writeJson } from '../lib/util.js';
 
 const SKILL = new URL('../skills/looktap/SKILL.md', import.meta.url);
 const SKILL_REFS = new URL('../skills/looktap/references/', import.meta.url);
@@ -42,7 +48,8 @@ setup & info
   devices [--all] [--json]        what's running or connected: simulator, emulator or real device (model, OS,
                                   USB/Wi-Fi), with window or headless, and what to do for a phone not ready yet.
                                   --all: also what boot can start
-  boot [name] [--window|--headless]  boot a simulator or emulator (name, UDID or AVD; -p to choose) and wait until
+  boot [name] [--window|--headless]  boot a simulator or emulator (an iPhone, an Apple Watch, an Android or Wear OS
+                                  AVD; name, UDID or AVD; -p to choose) and wait until
                                   it's ready. Default: a window (LOOKTAP_HEADLESS=1 or "headless": true in config
                                   for headless). On a running simulator --window opens its window
   shutdown [name]                 shut down a simulator or emulator
@@ -56,8 +63,19 @@ setup & info
   connect <host[:port]>           Android, no cable and no code: connect to the address a device's debugging screen
                                   shows (a Wear OS watch's Debug over Wi-Fi, or after adb tcpip; port 5555 if left
                                   out), waiting while it asks "Allow debugging?"
-  doctor [-d <device>]            check the toolchain; with -d, the way to that device: how it's connected, whether
-                                  it's locked, and (a real iPhone) whether its runner answers, over which route
+  doctor [-d <device>] [--fix [--yes]]
+                                  check the toolchain; with -d, the way to that device: how it's connected, whether
+                                  it's locked, and (a real iPhone) whether its runner answers, over which route.
+                                  Android: the adb server and every adb process, the device's state and round trip,
+                                  its USB path (hubs), reverse rules, and the recovery steps when one fails.
+                                  --fix: restart the adb server (lists who it cuts off and asks first; --yes doesn't),
+                                  then put the adb reverse rules back
+  who [device]                    who is using the devices: looktap commands and their log captures (exclusive or
+                                  shared, owner, age, heartbeat), and adb/idevicesyslog processes started elsewhere
+  release <device> [--force]      clear holds whose process is gone or silent for 30 s (--force: live ones, asks)
+  reverse <port>[:<port>] | --list | remove <port>|all
+                                  Android: the device's localhost:<port> reaches this computer's port (adb reverse)
+  metro [port]                    Metro answering here, the reverse rule (added if missing), the device reaching it
   setup                           start the helper (optional: commands start it on first use)
                                   · Android: also adb reverse Metro
   teardown                        stop the helper · Android: remove adb reverse rules
@@ -73,7 +91,7 @@ look
                                   check it's on screen (with that value), or with --gone that it isn't.
                                   Waits up to --wait (3 s) for it; fails with what's there instead (exit 1)
   scrollto <label> [--up]         swipe until it is fully on screen (default scrolls down; above the keyboard)
-  shot <name> [--plain] [--scale f] [--points]
+  shot <name> [--plain] [--scale f] [--points]  (or screenshot)
                                   screenshot → <out>/<name>.png; --scale 0.5 = half size, fewer image tokens;
                                   --points: one pixel per iOS point / Android dp, so a spot in the image is
                                   tapxy's x y as is (Android emulators bypass FLAG_SECURE; --plain doesn't)
@@ -107,9 +125,15 @@ act                               add --ls to any of these to print the settled 
                                   screen has settled (Android: also the system's own TotalTime). --resume:
                                   bring it forward as it was, without restarting it. --until: then wait until
                                   <text> is on screen (past a splash screen; up to --wait, default 30 s)
-  stop [app]                      terminate it, and wait until its process is gone
+  stop [app]                      (or terminate) terminate it, and wait until its process is gone (Android: force-stop, which
+                                  also removes its geofences, alarms and jobs)
+  kill [app]                      end its process as the system does under memory pressure (Home, then Android
+                                  am kill / iOS SIGKILL): its registrations survive, for "app killed" tests
+  background [app]                Home, then check the app is in the background and still running
+  value <label|@ref>              print the element's value alone (a switch: 1 or 0), for scripts
   bio match|nomatch               Face ID / fingerprint
-  dismiss logbox                  close React Native's LogBox toast (dev builds), which blocks taps around it.
+  dismiss logbox [--until-gone]   close React Native's LogBox toast (dev builds), which blocks taps around it.
+                                  --until-gone: close it again whenever it comes back, until it stays gone 1 s.
                                   "dismissLogBox": true in looktap.config.json closes it before every tap
   rotate [portrait|landscape|left|right|upsidedown]
                                   turn the device (landscape = left: turned counter-clockwise); no
@@ -118,12 +142,23 @@ act                               add --ls to any of these to print the settled 
                                   the screen it then shows. No argument prints which one that is
 
 debug                             [app] defaults to --app / config, else the app in front
-  logs [app] [--errors] [--grep re] [--since 5m] [--lines n] [--all]
+  logs [app] [--errors] [--grep re] [--since 5m|<mark>] [--lines n] [--all]
                                   the app's log since the last \`logs\` (first time: the last minute).
                                   iOS hides Apple-framework chatter unless it's an error (--all keeps it).
                                   A real iPhone has no history: collected from the first logs or launch on
+  logs [app] --follow [--grep re] [--for 10m]
+                                  the app's log as it comes, until Ctrl+C (or --for), with its process starting
+                                  and ending as events: a killed app relaunched in the background shows here
+  logs [app] --buffer <b> | --tag T1,T2
+                                  Android: one logcat buffer (main, system, crash, events, all), or only those tags.
+                                  An empty answer is checked against the device's clock: a stale log is warned about
+  logs [app] --follow --file <f>  the capture appended to a file; after an adb restart it attaches again and records
+                                  the gap
+  logs --clear                    Android: empty the device's log (logcat -c)
+  logs mark [name]                a marker now: --since <name> starts there (default name: mark)
   crashes [app] [--since 1h]      crashes, ANRs, low-memory kills since the last \`crashes\` (first: last hour)
   app [app]                       which app is in front, and whether [app] is running (pid)
+  ps <app>                        its pid, how long it has run, and whether it's in front
   app [app] --paths               where its files are: iOS the bundle, data folder and app groups (on the Mac),
                                   Android its APKs and data folder (readable with run-as on debuggable builds)
   apps [filter] [--all] [--json]  installed apps: id, name, version (--all: system apps too). A filter
@@ -133,6 +168,15 @@ debug                             [app] defaults to --app / config, else the app
                                   title, body (iOS simulator: also the push payload). --until: wait until one
                                   has <text> (up to --wait, default 30 s). A real iPhone: read off its screen,
                                   pulling Notification Center down for a moment. --all: ongoing ones too
+  prefs <app> [key …] [--file f] [--redact k,…] [--json]
+                                  the app's UserDefaults (iOS; a device: development builds) or SharedPreferences
+                                  (Android: debuggable builds, --file picks the file) as key = value. Values whose
+                                  keys look like coordinates are redacted, and --redact hides more keys
+  geofences [app]                 Android: the geofences the system holds for the app (no coordinates)
+  battery [app] [--reset|--restore]
+                                  Android: the app's battery use since --reset (which also makes a phone on USB
+                                  count as unplugged; --restore undoes that)
+  network <app> [--for 60s]       Android: what the app sent and received over the window, and in how many bursts
   capabilities [--json]           what this device can't do, or can only in part, and why
   perf [app] [--for 10s] [--json] the app's CPU (100% = one core), memory and threads; --for: a reading
                                   each second, then avg/max (iOS: the footprint Xcode shows; Android: PSS)
@@ -141,7 +185,7 @@ debug                             [app] defaults to --app / config, else the app
 
 app state                         <app> defaults to --app / config (never the app in front)
   install <path> [--grant]        iOS: a simulator .app · Android: an .apk (keeps data; --grant: all
-                                  runtime permissions). Prints the app id
+                                  runtime permissions). Prints the app id, version code and how long it took
   uninstall <app>
   reset <app>                     as if freshly installed: data and permissions cleared (iOS: the
                                   keychain survives, as on a real iPhone)
@@ -150,7 +194,14 @@ app state                         <app> defaults to --app / config (never the ap
                                   calendar, notifications, motion, all … (Android: or android.permission.*)
 
 conditions
-  location <lat> <lon> | clear    simulated GPS (Android: emulators)
+  location <lat> <lon> | clear    simulated GPS; prints "location set", never the coordinates. Android phones:
+                                  through the shell's test providers (Android 12+); clear restores the real GPS
+  route --from <lat,lon>|--from-current|--offset-from-pref <app>:<latKey>,<lonKey>
+        --distance 630m [--bearing 0] [--speed 1.4] [--step 1s] [--then-still 7m] [--background]
+  route --gpx <file> [--speed-scale 2] [--step 1s] [--then-still 7m] [--background]
+                                  move, not jump: fixes along a line (bearing in degrees, speed in m/s) or a GPX
+                                  track, then hold still. Prints distance and time, never coordinates
+  route stop | status             end a route (and remove the test providers: the real GPS again); how far it got
   appearance [dark|light]         dark mode; no argument prints the current one
   textsize [size]                 Dynamic Type / font scale: xs s m l xl xxl xxxl ax1…ax5 (or the iOS
                                   names, e.g. accessibility-large); no argument prints the current one
@@ -174,7 +225,10 @@ batch & agents
                                   step (tap by label, fill, scrollto, back …). Commands typed here (expect …)
                                   are run and saved too; undo drops the last step; Enter or Ctrl+C ends it
   run '<cmd>; <cmd> …' [--ls]     several commands in one process (or: run - < script). Stops at the
-                                  first failure, which it names; --ls: then the screen it ended on
+                                  first failure, which it names, with the screen and the steps not run;
+                                  --ls: then the screen it ended on. Separate looktap commands chained in one
+                                  shell script: after a failed action the later actions and waits are skipped
+                                  (LOOKTAP_CONTINUE_AFTER_FAILURE=1 runs them anyway)
   test <flow|dir> … [--junit f]   run flow files (run scripts, one step per line) as tests: a line per
                                   flow, exit 1 if any fails. A failure saves the screen, a screenshot,
                                   error logs and crashes in <out>/failures/<flow>/; --junit writes a report.
@@ -192,15 +246,98 @@ options
   -o, --out <dir>                 screenshots and videos (default ./shots, or "out" in looktap.config.json)
       --app <id>                  app id for launch/open (or "ios.app" / "android.app" in config)
       --wait <seconds>            how long tap/fill/back wait for their target to appear (default 3)
+      --busy-wait <seconds>       when another session is driving the device, wait this long for it (default 10),
+                                  then fail with who holds it (LOOKTAP_BUSY_WAIT)
       --wait-unlock <seconds>     when the device is locked, wait this long for someone to unlock it, then carry
                                   on (default 0: fail at once). Or "waitUnlock" in config, LOOKTAP_WAIT_UNLOCK
   -h, --help · -v, --version
 
 env: LOOKTAP_PLATFORM, LOOKTAP_DEVICE, LOOKTAP_OUT, LOOKTAP_WAIT, LOOKTAP_SCALE (Android px per dp),
-     LOOKTAP_ANDROID_HELPER=0 (plain adb + uiautomator dump),
+     LOOKTAP_ANDROID_HELPER=0 (plain adb + uiautomator dump), LOOKTAP_ADB_TIMEOUT (seconds an adb call may
+     take, default 15), LOOKTAP_OWNER (your session's name in looktap who),
      LOOKTAP_EMULATOR_GRPC=0 (no emulator gRPC frames), LOOKTAP_HEADLESS=1 (boot without a window)
 
 Never burst or record a sign-in screen: frames capture typed credentials.`;
+
+/** Other names for a command: what adb, simctl and other tools call it. (`kill` is its own command: see kill vs stop.) */
+const ALIASES = { terminate: 'stop', screenshot: 'shot' };
+
+/** Commands that run without a device. */
+const HOST_COMMANDS = ['help', 'doctor', 'skill', 'mcp', 'devices', 'boot', 'wifi', 'pair', 'connect', 'shutdown', 'who', 'release'];
+
+// ── a chain of commands that went off course ───────────────────────────────
+// An agent often sends several looktap commands in one shell call, one per line or joined with ";". The shell runs
+// every one even after one fails, so when the app went another way (a different screen, a button that isn't there),
+// each later command fails slowly against the wrong screen, minutes in all, or taps something real on it. So once an
+// action fails, the later actions and waits from the same script (same parent shell, not a terminal) are skipped at
+// once with what failed. Reading the screen still runs. A person typing in a terminal is never stopped.
+const CHAIN = join(HOME, 'chain.json');
+const CHAIN_MS = 10 * 60e3;
+/** What starts the stop: an action that couldn't do what it was asked. A failed check (expect, wait) doesn't: `expect X || looktap tap Y` is a choice. */
+const chainFails = (cmd) => cmd !== 'launch' && (ACTIONS.has(cmd) || cmd === 'run' || cmd === 'value');
+/** What it stops: acting or waiting on a screen nobody has looked at since. */
+const chainStops = (cmd) => chainFails(cmd) || cmd === 'wait' || cmd === 'expect';
+const chained = () => !process.stdin.isTTY && !process.env.LOOKTAP_CONTINUE_AFTER_FAILURE;
+
+/** Remember that an action failed in this script, unless the failure is about the device (locked, stuck, busy). */
+function failedIn(d, cmd, args, e) {
+  if (!chained() || !chainFails(cmd) || e instanceof LockedError || e instanceof StuckError || e instanceof BusyError) return;
+  try {
+    writeJson(CHAIN, { ...readJson(CHAIN, {}), [deviceId(d)]: { ppid: process.ppid, at: Date.now(), step: [cmd, ...args].join(' '), why: String(e.message).split('\n')[0].slice(0, 200) } });
+  } catch {}
+}
+
+/** Skip an action or wait that follows a failed one in the same script. */
+function afterFailure(d, cmd) {
+  if (!chained() || !chainStops(cmd)) return;
+  const f = readJson(CHAIN, {})[deviceId(d)];
+  if (!f || f.ppid !== process.ppid || Date.now() - f.at > CHAIN_MS) return;
+  throw new UsageError(
+    `skipped: an earlier command in this script failed (looktap ${f.step}: ${f.why}), so the app is not where the rest of the script expects. Read the screen (looktap ls), then send the next steps for the screen it is on, in a new command. (LOOKTAP_CONTINUE_AFTER_FAILURE=1 runs it anyway)`,
+  );
+}
+
+/**
+ The screen was read (ls, shot) or the app restarted (launch) after the failure: whoever sends the next command has
+ seen where it is, so it isn't stopped. (An agent that keeps one shell open for all its commands has one parent for
+ all of them: without this, its corrected next step would be stopped too.)
+ */
+function lookedAgain(d, cmd) {
+  if (!['ls', 'shot', 'launch'].includes(cmd)) return;
+  const all = readJson(CHAIN, {});
+  if (all[deviceId(d)]?.ppid !== process.ppid) return;
+  delete all[deviceId(d)];
+  try {
+    writeJson(CHAIN, all);
+  } catch {}
+}
+
+/** A command looktap doesn't have: say so before looking for a device, with the one probably meant. */
+function knownCommand(cmd) {
+  const known = [...HOST_COMMANDS, ...COMMANDS];
+  if (known.includes(cmd)) return;
+  const meant = didYouMean(cmd, known);
+  throw new UsageError(`unknown command: ${cmd}${meant ? ` — did you mean looktap ${meant}?` : ''} (looktap --help lists them)`);
+}
+
+/**
+ Run a device command the way every caller does: hold the device's lease for as long as it runs (exclusive for what
+ changes the device, shared for reading and streams), then probe the way to it (a stuck adb link fails here, at once,
+ with what's wrong), then the command.
+ */
+async function drive(d, cmd, args, opts) {
+  const device = deviceId(d);
+  const kind = process.env.LOOKTAP_ROUTE_PLAN ? 'shared-stream' : kindOf(cmd, args);
+  const wait = 1000 * Number(opts.busyWait ?? process.env.LOOKTAP_BUSY_WAIT ?? 10);
+  if (!(wait >= 0)) throw new UsageError('--busy-wait takes seconds, e.g. --busy-wait 30');
+  const lease = cmd === 'capabilities' ? null : await acquire(device, { kind, command: [cmd, ...args, ...[...opts.flags].map((f) => `--${f}`)].join(' ').slice(0, 120), wait });
+  try {
+    if (d.health && cmd !== 'capabilities') d.health();
+    return await dispatch(d, cmd, args, opts);
+  } finally {
+    lease?.release();
+  }
+}
 
 function parse(argv) {
   const opts = { flags: new Set() };
@@ -229,14 +366,29 @@ function parse(argv) {
     else if (a === '--until') opts.until = val();
     else if (a === '--wait-unlock') opts.waitUnlock = val();
     else if (a === '--duration') opts.duration = val();
-    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window', '--paths', '--frames', '--time', '--resume', '--project', '--uninstall', '--list', '--settle', '--points', '--covered', '--tcpip', '--always', '--off'].includes(a)) opts.flags.add(a.slice(2));
+    else if (a === '--from') opts.from = val();
+    else if (a === '--bearing') opts.bearing = val();
+    else if (a === '--distance') opts.distance = val();
+    else if (a === '--speed') opts.speed = val();
+    else if (a === '--step') opts.step = val();
+    else if (a === '--then-still') opts.thenStill = val();
+    else if (a === '--gpx') opts.gpx = val();
+    else if (a === '--speed-scale') opts.speedScale = val();
+    else if (a === '--offset-from-pref') opts.offsetFromPref = val();
+    else if (a === '--file') opts.file = val();
+    else if (a === '--redact') opts.redact = val();
+    else if (a === '--busy-wait') opts.busyWait = val();
+    else if (a === '--tag') opts.tag = val();
+    else if (a === '--buffer') opts.buffer = val();
+    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window', '--paths', '--frames', '--time', '--resume', '--project', '--uninstall', '--list', '--settle', '--points', '--covered', '--tcpip', '--always', '--off', '--until-gone', '--follow', '--background', '--from-current', '--reset', '--restore', '--yes', '--force', '--fix', '--clear'].includes(a)) opts.flags.add(a.slice(2));
     else if (a === '--') pos.push(...argv.slice(i + 1)), (i = argv.length);
     // An option looktap doesn't know is a mistake, not an argument: dropped quietly, a guessed flag changes nothing
     // and nobody hears of it. Negative numbers (-0.1276) and a lone - stay arguments.
     else if (/^--?[a-z]/i.test(a)) unknown ??= a;
     else pos.push(a);
   }
-  const cmd = pos[0];
+  // Names other tools use, and agents guess: the same command.
+  const cmd = ALIASES[pos[0]] ?? pos[0];
   if (unknown) {
     const usage = usageOf(cmd);
     // A label or text can start with "-" too: it goes after --.
@@ -345,15 +497,30 @@ async function doctor(opts) {
     ok(d.length > 0, `adb devices: ${d.map((x) => x.id).join(', ') || 'none'}`, 'looktap boot <AVD name>, or connect a phone');
   }
   if (xc && !opts.device) for (const p of physicalDevices()) ok(null, `real iPhone: ${p.name} (${p.id}) — looktap doctor -d ${p.id} checks the way to it`);
-  if (!opts.device) return;
-  // The way to one device, step by step: what a command needs before it can drive it.
-  const d = pickDriver(opts, loadConfig());
-  console.log(`\n${KINDS[d.kind].title} ${deviceId(d)}`);
-  try {
-    for (const row of await d.diagnose()) ok(...row);
-  } finally {
-    d.close?.();
+  if (!opts.device) {
+    if (opts.flags.has('fix')) throw new UsageError('doctor --fix needs the device: looktap doctor -d <serial> --fix');
+    return;
   }
+  // The way to one device, layer by layer: adb server, USB link, device, app. What a command needs before it can drive it.
+  let d, failed = false;
+  try {
+    d = pickDriver(opts, loadConfig());
+  } catch (e) {
+    if (!(e instanceof StuckError)) throw e;
+    ok(false, e.message);
+    failed = true;
+  }
+  const android = d ? Boolean(d.serial) : opts.platform !== 'ios';
+  if (d) console.log(`\n${KINDS[d.kind].title} ${deviceId(d)}`);
+  try {
+    if (android) for (const row of adbRows(opts.device)) (ok(...row), (failed ||= row[0] === false));
+    if (d) for (const row of await d.diagnose({ app: opts.app || d.app })) (ok(...row), (failed ||= row[0] === false));
+  } finally {
+    d?.close?.();
+  }
+  if (!android) return;
+  if (failed) console.log(`\nIf the phone is stuck, in this order:\n${RECOVERY.map((r, i) => `  ${i + 1}. ${r.replace('<serial>', opts.device)}`).join('\n')}`);
+  if (opts.flags.has('fix')) for (const line of await restartAdb({ yes: opts.flags.has('yes'), say: (m) => console.log(m) })) console.log(line);
 }
 
 async function burst(driver, dir, seconds) {
@@ -408,11 +575,20 @@ async function main() {
     return console.log(r.already ? `already connected: ${r.id}` : `connected: ${r.id}. It goes off when the device restarts: turn debugging over Wi-Fi back on and run looktap connect again`);
   }
   if (cmd === 'shutdown') return console.log(shutDown(await shutdown(args.join(' ') || opts.device || null, { platform: opts.platform })));
+  if (cmd === 'who') return console.log(whoLines(args[0] || opts.device || null).join('\n'));
+  if (cmd === 'release') return console.log(await release(args[0] || opts.device, { force: opts.flags.has('force'), yes: opts.flags.has('yes') }));
+  knownCommand(cmd);
 
   const config = loadConfig();
   const d = pickDriver(opts, config);
   try {
-    return await dispatch(d, cmd, args, opts);
+    afterFailure(d, cmd);
+    const r = await drive(d, cmd, args, opts).catch((e) => {
+      failedIn(d, cmd, args, e);
+      throw e;
+    });
+    lookedAgain(d, cmd);
+    return r;
   } catch (e) {
     await screenOnFailure(d, cmd, e, opts);
     throw e;
@@ -460,6 +636,7 @@ const screenFailure = (e) => e instanceof NotFound || /expect failed|is ambiguou
 async function screenOnFailure(d, cmd, e, opts) {
   if (cmd === 'test' || cmd === 'codegen' || !screenFailure(e)) return;
   console.error(`looktap: ${e.message}`);
+  if (e.after) console.error(`looktap: ${e.after}`);
   e.printed = true;
   console.error('looktap: the screen now:');
   await list(d, opts, e.snap).catch((err) => console.error(`looktap: (couldn't read the screen: ${err.message})`));
@@ -522,7 +699,9 @@ async function list(d, opts, snap) {
     return console.log(JSON.stringify({ screen: snap.screen, elements: rows.map(json).filter((_, i) => !onlyHidden || hidden.has(i)) }));
   }
   const lines = rows.map((e, i) => (hidden.has(i) ? `${formatRow(e, i + 1)}  ${formatCoverage(hidden.get(i))}` : onlyHidden ? null : formatRow(e, i + 1))).filter(Boolean);
-  if (!rows.length) console.error('looktap: no labelled elements on screen (still loading, or the app sets no accessibility labels)');
+  if (!rows.length && d.watch && (await d.dozing?.().catch(() => false)))
+    console.error('looktap: the watch has dimmed to its always-on face, with nothing to read: looktap key WAKEUP (commands that act on the screen wake it themselves)');
+  else if (!rows.length) console.error('looktap: no labelled elements on screen (still loading, or the app sets no accessibility labels)');
   else if (!lines.length) console.log(`nothing covered or cut off (${rows.length} elements on screen)`);
   else console.log(lines.join('\n'));
   // The system's own dialogs belong to package "android": only then is it worth asking what it is.
@@ -603,7 +782,7 @@ async function dispatchOnce(d, cmd, args, opts) {
   const app = WATCHED.has(cmd) ? await d.frontApp().catch(() => null) : null;
   // The screen just read doubles as the first look for the action's target: one read fewer on a slow device.
   await act(d, cmd, args, before ? { ...opts, snap: before } : opts);
-  if (['launch', 'stop', 'reset', 'uninstall', 'install'].includes(cmd)) forgetFront(deviceId(d));
+  if (['launch', 'stop', 'kill', 'reset', 'uninstall', 'install'].includes(cmd)) forgetFront(deviceId(d));
   // The app launch started is in front: if it dies after launch returned, the next look names it.
   if (cmd === 'launch') {
     const f = await d.frontApp().catch(() => null);
@@ -611,10 +790,12 @@ async function dispatchOnce(d, cmd, args, opts) {
   }
   // A cold start can take seconds, and the old screen may still be animating: wait for the app itself.
   if (look && cmd === 'launch') await waitForApp(d, args[0] || d.app, 6000);
-  const after = look ? await settle(d, { all, before, changeTimeout: cmd === 'launch' || cmd === 'open' ? 6000 : 1500 }) : null;
+  let after = look ? await settle(d, { all, before, changeTimeout: cmd === 'launch' || cmd === 'open' ? 6000 : 1500 }) : null;
+  // A debug build's splash while its bundle comes from Metro: wait it out (up to --wait, default 120 s), not return on it.
+  if (look && cmd === 'launch' && d.fromMetro && splashLike(after.elements)) after = await pastSplash(d, { all, timeout: opts.wait != null ? Number(opts.wait) * 1000 : 120e3 });
   if (app) warnIfGone(await appGone(d, app));
   if (look) await list(d, { ...opts, checked: Boolean(app) }, after);
-  if (look && cmd === 'launch' && !opts.until && splashLike(after.elements))
+  if (look && cmd === 'launch' && !opts.until && !d.fromMetro && splashLike(after.elements))
     console.error('looktap: a few elements and nothing to tap: this may be a splash or loading screen (a React Native debug build loading its bundle). Follow with: looktap wait "<text>", or next time: looktap launch --until "<text>"');
 }
 
@@ -699,6 +880,380 @@ async function closeLogBox(d, elements) {
 }
 
 /**
+ `dismiss logbox --until-gone`: close the toast, and again each time it comes back, until it has stayed gone for a
+ second. A toast that keeps returning (a warning logged on every render) fails after `timeout`. Returns how many
+ times it closed it.
+ */
+async function logBoxGone(d, timeout, quiet = 1000) {
+  let closed = 0, clear = Date.now();
+  for (const until = Date.now() + timeout; Date.now() < until; ) {
+    const els = (await d.snapshot()).elements;
+    if (logBoxToast(els)) {
+      await closeLogBox(d, els);
+      closed++;
+      clear = Date.now();
+    } else if (Date.now() - clear >= quiet) return closed;
+    else await sleep(150);
+  }
+  throw new Error(`the LogBox toast kept coming back (closed ${closed} times in ${timeout / 1000} s): the app logs that warning over and over. Ask for LogBox.ignoreAllLogs() in test builds, or set "dismissLogBox": true in looktap.config.json`);
+}
+
+/** After `launch --ls` stopped at a debug build's splash: until its first real screen (the bundle came from Metro). */
+async function pastSplash(d, { all, timeout }) {
+  console.error('looktap: bundle loading from Metro…');
+  const t0 = Date.now();
+  for (let tick = 1; Date.now() - t0 < timeout; tick++) {
+    await sleep(1000);
+    if (!splashLike((await d.snapshot({ all })).elements)) {
+      console.error(`looktap: the bundle loaded after ${Math.round((Date.now() - t0) / 1000)} s`);
+      return settle(d, { all, changeTimeout: 0 });
+    }
+    if (tick % 15 === 0) console.error(`looktap: still loading (${tick} s)…`);
+  }
+  console.error(`looktap: still on the splash screen after ${Math.round(timeout / 1000)} s: is Metro serving (its terminal shows the bundle building)? looktap logs --errors shows what the app said`);
+  return settle(d, { all, changeTimeout: 0 });
+}
+
+/**
+ Run a command that carries a location, and fail without it: whatever the command said (an adb or simctl error quotes
+ its arguments) comes back as "failed: <reason>" with every coordinate-like number taken out.
+ */
+async function located(fn) {
+  try {
+    return await fn();
+  } catch (e) {
+    const reason = scrubCoords(String(e.message).split('\n').find((l) => l.trim()) || 'unknown').replace(/^.*? failed \(\d+\): /, '').trim();
+    const err = new (e instanceof UsageError ? UsageError : Error)(`failed: ${reason}`);
+    throw err;
+  }
+}
+
+/** Where looktap last put each device (a simulator can't be asked): `route --from-current` starts there. Kept on disk only. */
+const LOCATIONS = join(HOME, 'locations.json');
+function rememberLocation(d, at) {
+  const all = readJson(LOCATIONS, {});
+  if (at) all[deviceId(d)] = { at, t: Date.now() };
+  else delete all[deviceId(d)];
+  writeJson(LOCATIONS, all);
+}
+
+/** A route running in the background, per device: { pid, log, plan, m, ms, stillMs, started }. */
+const ROUTES = join(HOME, 'routes.json');
+
+/** Stop a background route on this device (its process), if one runs. Returns its record, or null. */
+async function stopRouteWorker(d) {
+  const all = readJson(ROUTES, {});
+  const r = all[deviceId(d)];
+  if (!r) return null;
+  delete all[deviceId(d)];
+  writeJson(ROUTES, all);
+  if (r.pid && run('ps', ['-o', 'command=', '-p', String(r.pid)], { allowFail: true }).includes('looktap')) {
+    try {
+      process.kill(r.pid, 'SIGTERM');
+    } catch {}
+    for (let i = 0; i < 20 && run('ps', ['-o', 'pid=', '-p', String(r.pid)], { allowFail: true }).trim(); i++) await sleep(100);
+  }
+  if (r.plan) rmSync(r.plan, { force: true });
+  return r;
+}
+
+/** `route …`: build the plan of fixes, then play it here or in the background; `route stop` / `route status`. */
+async function routeCommand(d, args, opts) {
+  const usage = 'route --from <lat,lon>|--from-current|--offset-from-pref <app>:<latKey>,<lonKey> --distance 630m [--bearing 0] [--speed 1.4] [--step 1s] [--then-still 7m] [--background] | route --gpx <file> … | route stop | route status';
+  if (args[0] === 'stop') {
+    const r = await stopRouteWorker(d);
+    const c = await located(() => d.clearLocation());
+    rememberLocation(d, null);
+    return console.log(`${r ? 'route stopped · ' : ''}${c?.note || 'location cleared'}`);
+  }
+  if (args[0] === 'status') {
+    const r = readJson(ROUTES, {})[deviceId(d)];
+    if (!r) return console.log('no route running in the background on this device');
+    // A device's route runs in its own process; the simulator's in the simulator, by the clock.
+    const alive = r.pid ? Boolean(run('ps', ['-o', 'pid=', '-p', String(r.pid)], { allowFail: true }).trim()) : Date.now() - r.started < r.ms + r.stillMs;
+    const failed = r.log && existsSync(r.log) ? readFileSync(r.log, 'utf8').split('\n').find((l) => l.startsWith('looktap: ')) : null;
+    const at = Date.now() - r.started;
+    const where = at < r.ms ? `${metres((at / r.ms) * r.m)} of ${metres(r.m)} · ${clockTime(at)} of ${clockTime(r.ms)}` : at < r.ms + r.stillMs ? `at the end, still · ${clockTime(at)} of ${clockTime(r.ms + r.stillMs)}` : `done: ${metres(r.m)}`;
+    if (failed) return console.log(`stopped: ${failed.slice(9)}`);
+    return console.log(`${alive ? 'running' : 'ended'}: ${where}`);
+  }
+  if (args.length) throw new UsageError(`usage: looktap ${usage}`);
+  // The background process `route --background` starts: its plan comes in a file, never on a command line.
+  const plan = process.env.LOOKTAP_ROUTE_PLAN;
+  if (plan && !mcpMode) {
+    delete process.env.LOOKTAP_ROUTE_PLAN;
+    return playRoute(d, JSON.parse(readFileSync(plan, 'utf8')));
+  }
+  const ms = (v, name) => {
+    const x = duration(v);
+    if (!(x >= 0)) throw new UsageError(`${name} takes a duration: 5s, 500ms, 7m`);
+    return x;
+  };
+  const step = opts.step != null ? ms(opts.step, '--step') : 1000;
+  const still = opts.thenStill != null ? ms(opts.thenStill, '--then-still') : 0;
+  const speed = opts.speed != null ? Number(opts.speed) : 1.4;
+  let fixes;
+  if (opts.gpx) {
+    if (opts.from || opts.flags.has('from-current') || opts.offsetFromPref || opts.distance) throw new UsageError('--gpx plays the file from its start: leave out --from and --distance');
+    fixes = gpxPlan(parseGpx(readFileSync(opts.gpx, 'utf8')), { speed, scale: opts.speedScale != null ? Number(opts.speedScale) : 1, step, still });
+  } else {
+    if ([opts.from, opts.flags.has('from-current'), opts.offsetFromPref].filter(Boolean).length !== 1) throw new UsageError(`usage: looktap ${usage} — start with one of --from, --from-current, --offset-from-pref`);
+    const brg = opts.bearing != null ? Number(opts.bearing) : 0;
+    if (!(brg >= 0 && brg <= 360)) throw new UsageError('--bearing takes degrees clockwise from north, 0–360 (90 = east)');
+    const from = opts.from ? point(opts.from) : opts.flags.has('from-current') ? await currentPoint(d) : await prefPoint(d, opts.offsetFromPref);
+    fixes = straightPlan({ from, brg, dist: distance(opts.distance), speed, step, still });
+  }
+  const sum = planSummary(fixes);
+  const what = `${metres(sum.m)} over ${clockTime(sum.ms)}${sum.stillMs ? `, then still for ${clockTime(sum.stillMs)}` : ''}`;
+  await stopRouteWorker(d); // one route per device
+  if (!opts.flags.has('background')) {
+    console.log(`route: ${what} (Ctrl+C stops it where it is)`);
+    return playRoute(d, { fixes, step });
+  }
+  // The simulator plays it itself: started, it runs on without looktap.
+  if (!d.feed) {
+    await located(() => d.route(fixes, { step }));
+    rememberLocation(d, fixes.at(-1).at);
+    writeJson(ROUTES, { ...readJson(ROUTES, {}), [deviceId(d)]: { pid: 0, log: '', ...sum, started: Date.now() } });
+    return console.log(`route started in the simulator: ${what}. looktap route stop ends it and clears the location`);
+  }
+  // A device is fed fix by fix: by a looktap process of its own, from a plan file (never on a command line).
+  const dir = join(HOME, 'routes');
+  mkdirSync(dir, { recursive: true });
+  const base = join(dir, deviceId(d).replace(/[^\w.-]/g, '_'));
+  writeFileSync(`${base}.plan.json`, JSON.stringify({ fixes, step }));
+  const { openSync } = await import('node:fs');
+  const out = openSync(`${base}.log`, 'w');
+  const { spawn } = await import('node:child_process');
+  const child = spawn(process.execPath, [new URL(import.meta.url).pathname, 'route', '-p', d.serial ? 'android' : 'ios', '-d', deviceId(d)], {
+    detached: true,
+    stdio: ['ignore', out, out],
+    env: { ...process.env, LOOKTAP_ROUTE_PLAN: `${base}.plan.json` },
+  });
+  child.unref();
+  writeJson(ROUTES, { ...readJson(ROUTES, {}), [deviceId(d)]: { pid: child.pid, log: `${base}.log`, plan: `${base}.plan.json`, ...sum, started: Date.now() } });
+  console.log(`route running in the background (pid ${child.pid}): ${what}. looktap route status says how far it got; looktap route stop ends it${d.serial ? ' and removes the test providers' : ''}`);
+}
+
+/** Play a plan here: fix by fix into the device's feed (Android, a lockdown iPhone), or simctl's player (the simulator). */
+async function playRoute(d, { fixes, step }) {
+  const sum = planSummary(fixes);
+  const every = Math.max(10e3, (sum.ms + sum.stillMs) / 10);
+  const progress = (f) => console.log(f.still ? `  still at the end · ${clockTime(f.ms)} of ${clockTime(sum.ms + sum.stillMs)}` : `  ${metres(f.m)} of ${metres(sum.m)} · ${clockTime(f.ms)} of ${clockTime(sum.ms)}`);
+  let stopped = false, last = null, shown = null;
+  const onStop = () => (stopped = true);
+  process.once('SIGINT', onStop);
+  process.once('SIGTERM', onStop);
+  const t0 = Date.now();
+  try {
+    // The simulator plays the route itself (simctl): looktap keeps time beside it. A device is fed each fix.
+    if (d.feed) await located(() => d.startMock());
+    else await located(() => d.route(fixes, { step }));
+    for (const f of fixes) {
+      while (!stopped && Date.now() - t0 < f.ms) await sleep(Math.min(250, f.ms - (Date.now() - t0)));
+      if (stopped) break;
+      if (d.feed) await located(() => d.feed(f));
+      last = f;
+      if (f === fixes.at(-1) || shown == null || f.ms - shown >= every) (shown = f.ms), progress(f);
+    }
+  } finally {
+    process.off('SIGINT', onStop);
+    process.off('SIGTERM', onStop);
+    if (last) rememberLocation(d, last.at);
+  }
+  if (stopped) {
+    // simctl's player runs on inside the simulator: pin it where the route had got to.
+    if (!d.feed && last) await located(() => d.location(...last.at));
+    return console.log(`route stopped after ${metres(last?.m || 0)} · the device stays there until looktap location clear`);
+  }
+  const off = last && (await d.realLocationLeak?.(last.at).catch(() => null));
+  if (off) console.error(`looktap: warning: ${REAL_GPS(off)}`);
+  console.log(`route done: ${metres(sum.m)} in ${clockTime(sum.ms)}${sum.stillMs ? ` and still for ${clockTime(sum.stillMs)}` : ''} · the device stays at its end until looktap location clear${d.serial ? ' (which removes the test providers)' : ''}`);
+}
+
+/** `route --from-current`: where the device is now (Android's last fix), else where looktap last put it. */
+async function currentPoint(d) {
+  const at = (await d.currentLocation?.().catch(() => null)) || readJson(LOCATIONS, {})[deviceId(d)]?.at;
+  if (!at) throw new UsageError(`--from-current: ${d.serial ? "the device has no last known location yet (is Location on?)" : "a simulator can't say where it is, and looktap hasn't set one"}: pass --from <lat,lon>, or set a start with looktap location first`);
+  return at;
+}
+
+/** `--offset-from-pref <app>:<latKey>,<lonKey>`: the start point the app saved in its preferences, never printed. */
+async function prefPoint(d, spec) {
+  const m = /^([^:]+):([^,]+),(.+)$/.exec(spec || '');
+  if (!m) throw new UsageError('--offset-from-pref takes <app>:<latKey>,<lonKey>, e.g. com.example.app:homeLat,homeLon');
+  const [, app, latKey, lonKey] = m;
+  if (!d.prefs) unsupported(d.kind, 'prefs');
+  const files = await d.prefs(app, { keys: [latKey, lonKey] });
+  const find = (k) => Object.values(files).find((v) => v && k in v)?.[k];
+  const [lat, lon] = [find(latKey), find(lonKey)].map(Number);
+  const missing = [latKey, lonKey].filter((k) => find(k) == null);
+  if (missing.length) throw new UsageError(`--offset-from-pref: ${app} has no ${missing.join(' or ')} in its preferences (looktap prefs ${app} lists its keys, coordinates redacted)`);
+  if (!(Math.abs(lat) <= 90 && Math.abs(lon) <= 180)) throw new UsageError(`--offset-from-pref: ${latKey} and ${lonKey} don't hold a latitude and longitude in degrees`);
+  return [lat, lon];
+}
+
+/** `prefs <app> [key …]`: the app's preferences as key = value, coordinates redacted. */
+async function showPrefs(d, args, opts) {
+  const usage = 'prefs <app> [key …] [--file name] [--redact key,…] [--json]';
+  const app = args[0] || d.app;
+  if (!app) throw new UsageError(`usage: looktap ${usage}`);
+  if (!d.prefs) unsupported(d.kind, 'prefs');
+  const keys = args.slice(1), extra = redactList(opts.redact);
+  const files = await d.prefs(app, { file: opts.file || null, keys });
+  const names = Object.keys(files);
+  const all = { redacted: [], missing: new Set(keys) };
+  const json = {};
+  for (const f of names) {
+    const r = formatPrefs(files[f], { keys, extra, all: opts.flags.has('all') });
+    all.redacted.push(...r.redacted);
+    for (const k of keys) if (!r.missing.includes(k)) all.missing.delete(k);
+    if (opts.flags.has('json')) json[f] = Object.fromEntries(r.entries.map(([k, v]) => [k, Buffer.isBuffer(v) ? `<data, ${v.length} bytes>` : typeof v === 'bigint' ? String(v) : v]));
+    else if (r.lines.length || !keys.length) {
+      if (names.length > 1) console.log(`# ${f}`);
+      console.log(r.lines.length ? r.lines.join('\n') : '(empty)');
+      if (r.hidden) console.log(`(${r.hidden} of Apple's own keys left out: --all shows them)`);
+    }
+  }
+  if (opts.flags.has('json')) console.log(JSON.stringify(names.length === 1 ? json[names[0]] : json));
+  if (all.redacted.length) console.error(`looktap: redacted ${[...new Set(all.redacted)].join(', ')}: they look like coordinates${extra.length ? ' or were named with --redact' : ' (--redact names more keys to hide)'}`);
+  if (all.missing.size) throw new Error(`not set: ${[...all.missing].join(', ')}`);
+}
+
+/** `geofences <app>` on Android: what Play services and AOSP hold for the app, coordinates never printed. */
+function printGeofences(app, g) {
+  if (!g.gmsClient && !g.fences.length && !g.aosp) {
+    console.log(`${app}: no geofences registered — Play services keeps no geofencing request for it, and AOSP's Geofence Manager has none`);
+    if (g.events.length) console.log(`earlier:\n${g.events.map((e) => `  ${e}`).join('\n')}`);
+    return;
+  }
+  if (g.gmsClient) console.log(`${app}: Play services is geofencing for it (its location request on the app's behalf: ${g.gmsClient})`);
+  if (g.fences.length) {
+    console.log(`${g.fences.length} geofence${g.fences.length === 1 ? '' : 's'}:`);
+    for (const f of g.fences) console.log(`  ${f.id ?? '(no id)'}${f.radius ? `  radius ${f.radius} m` : ''}${f.transitions ? `  ${f.transitions}` : ''}`);
+  } else if (g.gmsClient) console.log("  (this Play services build doesn't list each geofence's id and radius: log them from the app to see them)");
+  if (g.aosp) console.log(`AOSP Geofence Manager: ${g.aosp} line${g.aosp === 1 ? '' : 's'} name it (LocationManager proximity alerts)`);
+  if (g.events.length) console.log(`recent changes:\n${g.events.map((e) => `  ${e}`).join('\n')}`);
+}
+
+/** `battery [app] [--reset|--restore]`: Android batterystats for the app, before/after a scenario. */
+async function showBattery(d, arg, opts) {
+  if (!d.battery) unsupported(d.kind, 'battery');
+  if (opts.flags.has('restore')) {
+    await d.battery(null, { restore: true });
+    return console.log('battery: the device reports its real charging state again');
+  }
+  const app = explicitApp(d, arg, 'battery <app> [--reset|--restore]');
+  if (opts.flags.has('reset')) {
+    await d.battery(app, { reset: true });
+    return console.log(`battery stats reset, and the device counts as unplugged so they build up over the cable. Run the scenario, then looktap battery ${app}; looktap battery --restore when you're done`);
+  }
+  const r = await d.battery(app);
+  console.log(`${app}: ${r.mAh != null ? `${r.mAh} mAh estimated${r.detail ? ` ${r.detail}` : ''}` : 'no power estimate for it yet'}${r.since ? ` · on battery for ${r.since}` : ''}`);
+  for (const l of r.lines) console.log(`  ${l}`);
+  if (r.charging) console.error(`looktap: warning: the device is charging, so batterystats isn't counting: looktap battery ${app} --reset makes it count as unplugged`);
+}
+
+/**
+ `network <app> [--for 60s]`: the app's traffic over the window, sampled every 2 s from netstats: bytes and packets
+ each way, and the bursts it came in (a burst: traffic after a quiet sample). An app that batches its uploads
+ shows few bursts.
+ */
+async function networkUse(d, app, opts) {
+  if (!d.netTotals) unsupported(d.kind, 'network <app>');
+  const span = opts.for != null ? duration(opts.for) : 60e3;
+  if (!(span > 0)) throw new UsageError('--for takes a duration: 30s, 2m');
+  console.error(`looktap: watching ${app}'s traffic for ${clockTime(span)}…`);
+  const t0 = Date.now(), first = d.netTotals(app);
+  let prev = first, quiet = true;
+  const bursts = [];
+  while (Date.now() - t0 < span) {
+    await sleep(Math.min(2000, span - (Date.now() - t0)));
+    const now = d.netTotals(app);
+    const moved = now.tb > prev.tb || now.rb > prev.rb;
+    if (moved && quiet) bursts.push({ at: Date.now() - t0, tb: 0, rb: 0 });
+    if (moved) (bursts.at(-1).tb += now.tb - prev.tb), (bursts.at(-1).rb += now.rb - prev.rb);
+    quiet = !moved;
+    prev = now;
+  }
+  const kb = (b) => (b >= 1024 * 1024 ? `${(b / 1048576).toFixed(1)} MB` : `${(b / 1024).toFixed(1)} KB`);
+  console.log(`${app} over ${clockTime(Date.now() - t0)}: sent ${kb(prev.tb - first.tb)} (${prev.tp - first.tp} packets), received ${kb(prev.rb - first.rb)} (${prev.rp - first.rp} packets), in ${bursts.length} burst${bursts.length === 1 ? '' : 's'}`);
+  for (const b of bursts.slice(0, 20)) console.log(`  at ${clockTime(b.at)}: sent ${kb(b.tb)}, received ${kb(b.rb)}`);
+  if (bursts.length > 20) console.log(`  … ${bursts.length - 20} more`);
+}
+
+/** `logs mark [name]`: a marker now, for `logs --since <name>` (and crashes --since) to start from. */
+/** The warning when Play services' fused location is far from the simulated one: the phone's own location is mixed in. */
+const REAL_GPS = (off) =>
+  `the phone's own location is still reaching apps: Play services' fused location is ${metres(off)} from the simulated one (it mixes in Wi-Fi and cell positions, so a walk can look like a drive). Turn off Google Location Accuracy (Settings → Location → Location services) while testing`;
+
+/** `reverse <port>[:<port>]`, `reverse --list`, `reverse --remove <port>|all`: the device's localhost reaching this computer. */
+function reverseCommand(d, args, opts) {
+  if (!d.reverse) {
+    if (['ios-simulator', 'watchos-simulator'].includes(d.kind)) return console.log("the simulator shares this Mac's network: localhost on it is this Mac's, no rule needed");
+    unsupported(d.kind, 'reverse');
+  }
+  const show = (rules) => (rules.length ? rules.map((r) => `${r.remote} → this computer's ${r.local}`).join('\n') : 'no adb reverse rules');
+  if (opts.flags.has('list') || !args.length) {
+    const rules = d.reverses();
+    rememberReverses(d.serial, rules);
+    return console.log(show(rules));
+  }
+  if (args[0] === '--remove' || args[0] === 'remove') {
+    if (!args[1]) throw new UsageError('usage: looktap reverse remove <port>|all');
+    const rules = d.unreverse(args[1]);
+    rememberReverses(d.serial, rules);
+    return console.log(show(rules));
+  }
+  const m = /^(\d{1,5})(?::(\d{1,5}))?$/.exec(args[0]);
+  if (!m) throw new UsageError('usage: looktap reverse <port>[:<port>] (the device\'s port, then this computer\'s), reverse --list, reverse remove <port>|all');
+  const rules = d.reverse(Number(m[1]), Number(m[2] || m[1]));
+  rememberReverses(d.serial, rules);
+  console.log(`the device's localhost:${m[1]} now reaches this computer's port ${m[2] || m[1]}`);
+}
+
+/** `metro [port]`: is Metro answering on this computer, and can the device reach it? */
+async function metroCommand(d, args) {
+  const port = Number(args[0] || 8081);
+  const up = await metroUp(port);
+  console.log(up ? `Metro is running on this computer (localhost:${port}/status answers)` : `Metro isn't answering on this computer's port ${port}: start it (npx react-native start, or npx expo start)`);
+  if (!d.reverse) {
+    if (['ios-simulator', 'watchos-simulator'].includes(d.kind)) return console.log("the simulator shares this Mac's network: it reaches Metro at localhost");
+    return console.log('a real iPhone reaches Metro over Wi-Fi, at this Mac\'s IP address (the app\'s dev menu → Configure Bundler)');
+  }
+  let rules = d.reverses();
+  if (!rules.some((r) => r.remote === `tcp:${port}`)) {
+    rules = d.reverse(port, port);
+    console.log(`added adb reverse tcp:${port}: the device's localhost:${port} reaches this computer`);
+  } else console.log(`adb reverse tcp:${port} is set`);
+  rememberReverses(d.serial, rules);
+  if (!up) return;
+  const reach = d.reachesMetro(port);
+  console.log(reach == null ? "(the device has no nc to check it can reach Metro: the reverse rule is set)" : reach ? 'the device reaches Metro' : `the device doesn't reach Metro through the reverse rule: replug the cable, or looktap doctor -d ${d.serial}`);
+}
+
+/** `ps <app>`: its pid, how long it has run, and whether it's in front. */
+async function showPs(d, arg) {
+  const app = explicitApp(d, arg, 'ps <app>');
+  if (d.ps) {
+    const p = await d.ps(app);
+    if (!p) return console.log(`${app}: not running`);
+    return console.log(`${app}: pid ${p.pid}${p.secs != null ? `, up ${clockTime(p.secs * 1000)}` : ''}, ${p.front ? 'in front' : 'in the background'}`);
+  }
+  const pid = await d.pidOf(app);
+  if (!pid) return console.log(`${app}: not running`);
+  const front = (await d.foreground().catch(() => null))?.id === app;
+  // A simulator's apps are processes on this Mac: ps knows how long they've run.
+  const etime = ['ios-simulator', 'watchos-simulator'].includes(d.kind) ? run('ps', ['-o', 'etime=', '-p', String(pid)], { allowFail: true, timeout: 5000 }).trim() : '';
+  console.log(`${app}: pid ${pid}${etime ? `, up ${clockTime(etimeSecs(etime) * 1000)}` : ''}, ${front ? 'in front' : 'in the background'}`);
+}
+
+function markLogs(d, name = 'mark', opts) {
+  const t = setMark(deviceId(d), name);
+  console.log(`mark ${JSON.stringify(name)} at ${clock(t)} — after the action: looktap logs <app> --since ${name}`);
+}
+
+/**
  `shot --points`: one pixel per iOS point or Android dp, so a spot in the picture is tapxy's x y as it is. Android knows
  its density up front; iOS is shot at full size and shrunk to the screen's width in points.
  */
@@ -761,7 +1316,8 @@ async function handoff(d, args, opts) {
  */
 async function launchedUntil(d, app, opts) {
   if (!opts.until) return;
-  const timeout = opts.wait != null ? Number(opts.wait) * 1000 : 30e3;
+  // A first bundle from Metro over adb reverse takes 30-60 s on a real phone.
+  const timeout = opts.wait != null ? Number(opts.wait) * 1000 : d.fromMetro ? 120e3 : 30e3;
   try {
     const hit = await waitFor(d, deviceId(d), opts.until, { timeout });
     console.log(`launched ${app}: ${JSON.stringify(hit.label)} is on screen`);
@@ -839,10 +1395,17 @@ async function act(d, cmd, args, opts) {
       // "dismissLogBox": close React Native's toast first, then find the target again (it may have moved).
       if (d.dismissLogBox && (await closeLogBox(d, snap.elements))) ({ e, snap } = await target(d, isRef(args[0]) ? args[0] : args.join(' '), { ...opts, snap: null }));
       // Aimed at a part of it nothing covers: the tap lands on whatever is on top.
-      const { at, covers, avoided } = tapPoint(snap.elements, e);
+      let { at, covers, avoided } = tapPoint(snap.elements, e);
+      // React Native's LogBox toast over it: a tap there opens the LogBox. Close the toast, find the target again, once.
+      const toast = covers.some((c) => c.close) && (await closeLogBox(d, snap.elements));
+      if (toast) {
+        ({ e, snap } = await target(d, isRef(args[0]) ? args[0] : args.join(' '), { ...opts, snap: null }));
+        ({ at, covers, avoided } = tapPoint(snap.elements, e));
+      }
       await d.tapxy(...at);
       const name = (c) => JSON.stringify((c.label || c.type).slice(0, 40));
       console.log(`tapped ${JSON.stringify(e.label || e.type)} at ${at.join(',')}${avoided.length ? ` (off-centre: ${avoided.map(name).join(', ')} covers its middle)` : ''}`);
+      if (toast) console.error(`looktap: note: React Native's LogBox toast covered it, so looktap closed the toast first (its × at ${toast.join(',')}). If it keeps coming back: looktap dismiss logbox --until-gone, or "dismissLogBox": true in looktap.config.json`);
       warnCovered(covers);
       return;
     }
@@ -858,7 +1421,11 @@ async function act(d, cmd, args, opts) {
       else {
         const words = timed ? args.slice(0, -1) : args;
         let { e, snap } = await target(d, isRef(words[0]) ? words[0] : words.join(' '), opts);
-        if (d.dismissLogBox && (await closeLogBox(d, snap.elements))) ({ e, snap } = await target(d, isRef(words[0]) ? words[0] : words.join(' '), { ...opts, snap: null }));
+        const covered = tapPoint(snap.elements, e).covers.some((c) => c.close);
+        if ((d.dismissLogBox || covered) && (await closeLogBox(d, snap.elements))) {
+          ({ e, snap } = await target(d, isRef(words[0]) ? words[0] : words.join(' '), { ...opts, snap: null }));
+          if (covered) console.error("looktap: note: React Native's LogBox toast covered it, so looktap closed the toast first");
+        }
         const p = tapPoint(snap.elements, e);
         warnCovered(p.covers);
         (at = p.at), (what = `${JSON.stringify(e.label || e.type)} at ${at.join(',')}`);
@@ -883,10 +1450,13 @@ async function act(d, cmd, args, opts) {
     case 'tapxy': {
       need(2, 'tapxy <x> <y>');
       const [x, y] = [Number(args[0]), Number(args[1])];
-      if (d.dismissLogBox) {
-        // A point on the toast itself is aimed at it (a flow that taps its × by hand): leave it to the tap.
-        const els = (opts.snap || (await d.snapshot())).elements, toast = logBoxToast(els);
-        if (toast && !(x >= toast.x && x <= toast.x + toast.w && y >= toast.y && y <= toast.y + toast.h)) await closeLogBox(d, els);
+      // A point on the toast's card is aimed at it (a flow that taps its × by hand): left to the tap. One around it (the
+      // tab bar under its invisible container, which takes every touch there) closes the toast first.
+      const els = (opts.snap || (await d.snapshot())).elements, toast = logBoxToast(els);
+      const onCard = toast && x >= toast.x && x <= toast.x + toast.w && y >= toast.y && y <= toast.y + toast.h;
+      if (toast && !onCard && (d.dismissLogBox || logBoxAround(els, x, y))) {
+        await closeLogBox(d, els);
+        if (!d.dismissLogBox) console.error("looktap: note: React Native's LogBox toast takes the touches around it, so looktap closed it before tapping");
       }
       return d.tapxy(x, y);
     }
@@ -942,10 +1512,13 @@ async function act(d, cmd, args, opts) {
         console.log(`resumed ${app}`);
         return launchedUntil(d, app, opts);
       }
+      // A debug build loading its bundle from Metro on this Mac: reverse the port first, and wait longer for it.
+      d.fromMetro = d.metro ? await d.metro(app) : false;
       if (opts.flags.has('time')) return timedLaunch(d, app);
       await d.launch(app);
       if (opts.until) {
         if (!(await waitForApp(d, app, 10000)) && !(await d.pidOf(app))) throw new Error(`${app} exited right after it started — see: looktap crashes ${app}`);
+        if (d.fromMetro) console.error('looktap: bundle loading from Metro…');
         return launchedUntil(d, app, opts);
       }
       // Done means it's in front, not that the start was sent: an app that dies at once says so. It can reach the
@@ -972,7 +1545,11 @@ async function act(d, cmd, args, opts) {
     }
     case 'bio': need(1, 'bio match|nomatch'); return d.bio(args[0]);
     case 'dismiss': {
-      if (args[0]?.toLowerCase() !== 'logbox') throw new UsageError('usage: looktap dismiss logbox');
+      if (args[0]?.toLowerCase() !== 'logbox') throw new UsageError('usage: looktap dismiss logbox [--until-gone]');
+      if (opts.flags.has('until-gone')) {
+        const n = await logBoxGone(d, opts.wait != null ? Number(opts.wait) * 1000 : 10000);
+        return console.log(n ? `closed the LogBox toast ${n === 1 ? 'once' : `${n} times`}: it has stayed gone for 1 s` : 'no LogBox toast on screen (it stayed gone for 1 s)');
+      }
       const closed = await closeLogBox(d, (opts.snap || (await d.snapshot())).elements);
       return console.log(closed ? `closed the LogBox toast (tapped its × at ${closed.join(',')})` : 'no LogBox toast on screen');
     }
@@ -1002,16 +1579,21 @@ async function act(d, cmd, args, opts) {
       const { w, h } = await d.rotate();
       return console.log(`${r.position}: the ${r.screen?.id === 1 ? 'outer' : 'inner'} screen (${w}x${h})`);
     }
-    case 'logs': return showLogs(d, args[0], opts);
+    case 'logs': return args[0] === 'mark' ? markLogs(d, args[1], opts) : showLogs(d, args[0], opts);
     case 'crashes': return showCrashes(d, args[0], opts);
     case 'app': return opts.flags.has('paths') ? showPaths(d, args[0]) : showApp(d, args[0]);
     case 'apps': return showApps(d, args.join(' '), opts);
     case 'notifications': return showNotifications(d, args.join(' '), opts);
     case 'install': {
       need(1, 'install <path.app|path.apk> [--grant]');
-      const id = await d.install(args[0], { grant: opts.flags.has('grant') });
-      return console.log(`installed ${id || args[0]}`);
+      const t = Date.now();
+      const r = await d.install(args[0], { grant: opts.flags.has('grant') });
+      const { id, version } = r && typeof r === 'object' ? r : { id: r };
+      return console.log(`installed ${id || args[0]}${version ? ` (version code ${version})` : ''} in ${((Date.now() - t) / 1000).toFixed(1)} s`);
     }
+    case 'reverse': return reverseCommand(d, args, opts);
+    case 'metro': return metroCommand(d, args);
+    case 'ps': return showPs(d, args[0]);
     case 'uninstall': {
       const app = explicitApp(d, args[0], 'uninstall <app>');
       await d.uninstall(app);
@@ -1024,10 +1606,20 @@ async function act(d, cmd, args, opts) {
     }
     case 'location': {
       need(1, 'location <lat> <lon> | location clear');
-      if (args[0] === 'clear') return (await d.clearLocation(), console.log('location cleared'));
+      if (args[0] === 'clear') {
+        await stopRouteWorker(d);
+        const r = await located(() => d.clearLocation());
+        rememberLocation(d, null);
+        return console.log(r?.note || 'location cleared');
+      }
       const [lat, lon] = coordinates(args);
-      await d.location(lat, lon);
-      return console.log(`location ${lat}, ${lon}`);
+      await located(() => d.location(lat, lon));
+      rememberLocation(d, [lat, lon]);
+      // Never the coordinates: what an agent reads back shouldn't carry a location.
+      console.log('location set');
+      const off = await d.realLocationLeak?.([lat, lon]).catch(() => null);
+      if (off) console.error(`looktap: warning: ${REAL_GPS(off)}`);
+      return;
     }
     case 'appearance': {
       if (args[0] && !['dark', 'light'].includes(args[0])) throw new UsageError('usage: looktap appearance [dark|light]');
@@ -1046,7 +1638,9 @@ async function act(d, cmd, args, opts) {
       return console.log(args[0] === 'clean' ? 'status bar: 9:41, full battery and signal' : 'status bar: live');
     }
     case 'network': {
-      if (args[0] && !['offline', 'online'].includes(args[0])) throw new UsageError('usage: looktap network [offline|online]');
+      // An app id: how much it sent and received, and in how many bursts.
+      if (args[0] && /\./.test(args[0])) return networkUse(d, args[0], opts);
+      if (args[0] && !['offline', 'online'].includes(args[0])) throw new UsageError('usage: looktap network [offline|online] | network <app> [--for 60s]');
       return console.log(`network: ${await d.network(args[0])}`);
     }
     case 'push': {
@@ -1063,6 +1657,44 @@ async function act(d, cmd, args, opts) {
       const what = perms ? perms.join(', ') : args[1];
       return console.log(`${{ grant: 'granted', revoke: 'revoked', reset: 'reset (it will ask again)' }[args[0]]}: ${what} for ${app}`);
     }
+    case 'route': return routeCommand(d, args, opts);
+    case 'prefs': return showPrefs(d, args, opts);
+    case 'kill': {
+      const app = explicitApp(d, args[0], 'kill <app>');
+      if (!d.kill) unsupported(d.kind, 'kill');
+      const r = await d.kill(app);
+      if (!r.pid) return console.log(`${app} wasn't running`);
+      return console.log(
+        `killed ${app} (pid ${r.pid}) as the system does under memory pressure: ${r.how}. What it registered stays (${d.serial ? 'geofences, alarms, jobs, its services' : 'region monitoring, significant-change monitoring, background tasks'})${r.after ? ` · the system started it again right away, pid ${r.after}` : ''}`,
+      );
+    }
+    case 'background': {
+      const app = explicitApp(d, args[0], 'background <app>');
+      const was = await d.pidOf(app);
+      if (!was) throw new Error(`${app} isn't running: launch it first (looktap launch ${app})`);
+      if ((await d.foreground())?.id === app) {
+        await d.home();
+        for (let i = 0; i < 12 && (await d.foreground())?.id === app; i++) await sleep(250);
+        if ((await d.foreground())?.id === app) throw new Error(`pressed Home, but ${app} is still in front`);
+      }
+      const pid = await d.pidOf(app);
+      if (!pid) throw new Error(`${app} ended when it went to the background (pid ${was}) — see: looktap crashes ${app}`);
+      return console.log(`${app} is in the background, still running, pid ${pid}${pid !== was ? ` (it restarted: was ${was})` : ''}${d.serial ? '' : ' (iOS suspends it within seconds unless it has background work)'}`);
+    }
+    case 'value': {
+      need(1, 'value <label|@ref>');
+      const { e, snap } = await target(d, isRef(args[0]) ? args[0] : args.join(' '), opts);
+      // A label with no value of its own: the switch in its row (Android settings rows draw it apart from the text).
+      const v = e.value ?? valueBeside(snap.elements, e)?.value;
+      if (v == null) console.error(`looktap: ${JSON.stringify(e.label || e.type)} has no value (a ${e.type}), and no switch beside it: printed empty`);
+      return console.log(v ?? '');
+    }
+    case 'geofences': {
+      const app = explicitApp(d, args[0], 'geofences <app>');
+      if (!d.geofences) unsupported(d.kind, 'geofences');
+      return printGeofences(app, await d.geofences(app));
+    }
+    case 'battery': return showBattery(d, args[0], opts);
     case 'run': return runScript(d, args, opts);
     case 'test': return runTests(d, args, opts);
     case 'codegen': return codegen(d, args, opts);
@@ -1114,15 +1746,89 @@ function explicitApp(d, arg, usage) {
   return app;
 }
 
+/** Android log buffers `--buffer` takes. */
+const BUFFERS = ['main', 'system', 'crash', 'events', 'radio', 'kernel', 'all'];
+
+/**
+ A stale log: the device's newest log line is far behind its clock (a stopped logd, or a buffer nothing writes to),
+ so "no lines from the app" means nothing. Says so; returns the warning or null.
+ */
+function staleLog(d) {
+  if (!d.logAge) return null;
+  const { now, newest } = d.logAge();
+  if (!now || !newest || now - newest < 10 * 60e3) return null;
+  const msg = `the device's newest log line is ${clockTime(now - newest)} old (by the device's own clock): its log buffer is stale or logd has stopped, so a missing line proves nothing. looktap logs --clear starts it fresh; if new lines still don't come, reboot the device`;
+  console.error(`looktap: warning: ${msg}`);
+  return msg;
+}
+
 async function showLogs(d, arg, opts) {
+  if (opts.buffer && !BUFFERS.includes(opts.buffer)) throw new UsageError(`--buffer takes ${BUFFERS.join(', ')}`);
+  if ((opts.buffer || opts.tag) && !d.serial) throw new UsageError('--buffer and --tag are Android logcat filters (iOS: --grep)');
+  if (opts.flags.has('clear')) {
+    if (!d.clearLogs) throw new UsageError("logs --clear is Android's logcat -c (iOS keeps its log; logs mark and --since start from now)");
+    d.clearLogs(opts.buffer === 'all');
+    return console.log(`cleared the device's log${opts.buffer === 'all' ? ' (all buffers)' : ''}: the next logs starts from now`);
+  }
   const app = await whichApp(d, arg);
+  if (opts.flags.has('follow')) return followLogs(d, app, opts);
   const since = startOf(deviceId(d), `logs:${app}`, opts.since, 60e3);
   const keep = grepper(opts.grep);
-  const lines = (await d.readLogs(app, since, { errors: opts.flags.has('errors'), all: opts.flags.has('all') })).filter(keep);
+  const lines = (await d.readLogs(app, since, { errors: opts.flags.has('errors'), all: opts.flags.has('all'), buffer: opts.buffer, tag: opts.tag })).filter(keep);
+  if (!lines.length) staleLog(d);
   if (!lines.length) return console.log(`no ${opts.flags.has('errors') ? 'errors' : 'log lines'} from ${app} since ${clock(since)}`);
   const { shown, dropped } = tail(lines, opts.lines > 0 ? opts.lines : 80);
   if (dropped) console.log(`… ${dropped} earlier lines (--lines ${lines.length} to see them, or --grep / --errors to narrow)`);
   console.log(shown.map((l) => (l.text.length > 500 ? l.text.slice(0, 500) + ' …' : l.text)).join('\n'));
+}
+
+/**
+ `logs --follow`: the app's lines as they come (--grep, --errors filter them), and its process starting and ending as
+ events between them, until Ctrl+C or --for. Android follows the app's uid, so a relaunch is followed too; the
+ system's own line says why it started (a broadcast: a geofence's PendingIntent, an alarm).
+ */
+async function followLogs(d, app, opts) {
+  if (!d.followLogs) unsupported(d.kind, 'logs');
+  if (mcpMode && opts.for == null) throw new UsageError('logs --follow over MCP needs --for (e.g. --for 60s): a call has to end');
+  const span = opts.for != null ? duration(opts.for) : 0;
+  if (opts.for != null && !(span > 0)) throw new UsageError('--for takes a duration: 30s, 10m');
+  const since = opts.since ? sinceOf(deviceId(d), opts.since) : Date.now();
+  const keep = grepper(opts.grep), errors = opts.flags.has('errors');
+  let seen = (await d.pidOf(app).catch(() => 0)) || 0;
+  // --file: the capture goes to a file (appended), so it survives this terminal; the events go there too.
+  const file = opts.file ? resolve(opts.file) : null;
+  if (file) mkdirSync(dirname(file), { recursive: true }), appendFileSync(file, '');
+  const out = file ? (line) => appendFileSync(file, `${line}\n`) : (line) => console.log(line);
+  console.error(`looktap: following ${app}'s log${opts.grep ? ` (lines matching ${opts.grep})` : ''}${seen ? `, running as pid ${seen}` : ', not running now'}${file ? ` into ${file}` : ''} — ${span ? `for ${clockTime(span)}, or ` : ''}until Ctrl+C`);
+  staleLog(d);
+  const stop = d.followLogs(app, since, {
+    all: opts.flags.has('all'),
+    buffer: opts.buffer,
+    tag: opts.tag,
+    onGap: ({ from, to, by }) => {
+      const line = `── capture interrupted ${clock(from).slice(0, 8)}–${clock(to).slice(0, 8)}: ${by ? `adb restarted by ${by.from}` : 'adb dropped the connection'} (lines from that time were read back where the device still had them)`;
+      out(line);
+      if (file) console.error(`looktap: ${line.slice(3)}`);
+    },
+    onLine: (l) => {
+      if (errors && !/^\S+ [EF] /.test(l.text)) return;
+      if (keep(l)) out(l.text.length > 500 ? `${l.text.slice(0, 500)} …` : l.text);
+    },
+    onEvent: async (e) => {
+      if (e.kind === 'died') return out(`── ${app} ended (pid ${e.pid})${e.why ? `: ${e.why}` : ''}`);
+      if (e.pid === seen && !e.why) return;
+      // In front or not, a moment after it started: a region event relaunches it in the background.
+      await sleep(500);
+      const front = (await d.foreground().catch(() => null))?.id === app;
+      out(`── ${app} ${seen ? 'relaunched' : 'started'} ${front ? 'in front' : 'in the background'}, pid ${e.pid}${e.why ? ` (${e.why})` : ''}`);
+      seen = e.pid;
+    },
+  });
+  await new Promise((resolve) => {
+    if (span) setTimeout(resolve, span);
+    process.once('SIGINT', resolve);
+  });
+  stop();
 }
 
 async function showCrashes(d, arg, opts) {
@@ -1294,7 +2000,10 @@ async function showNotifications(d, app, opts) {
  `looktap mcp`: serve the commands over MCP (stdio). Each call's output — console.log/error anywhere
  in looktap — becomes the tool result; stdout carries nothing but protocol messages.
  */
+let mcpMode = false;
+
 async function mcp(outer) {
+  mcpMode = true;
   const { serveMcp } = await import('../lib/mcp.js');
   const config = loadConfig();
   // A client's working directory may be anywhere (even /): screenshots go to a fixed place by default.
@@ -1322,10 +2031,13 @@ async function mcp(outer) {
       else if (cmd === 'boot') capture(booted(await boot(args.join(' ') || null, { platform: opts.platform, ...display(opts, config) })));
       else if (cmd === 'shutdown') capture(shutDown(await shutdown(args.join(' ') || opts.device || null, { platform: opts.platform })));
       else if (['mcp', 'skill'].includes(cmd)) throw new UsageError(`${cmd} isn't available over MCP`);
+      else if (cmd === 'who') capture(whoLines(args[0] || opts.device || where.device || null).join('\n'));
+      else if (cmd === 'release') capture(await release(args[0] || opts.device || where.device, { force: opts.flags.has('force'), yes: opts.flags.has('yes') }));
       else {
+        knownCommand(cmd);
         const d = driverFor({ platform: opts.platform || where.platform, device: opts.device || where.device });
         const o = { ...base, ...opts, wait: opts.wait ?? base.wait, flags: opts.flags };
-        await dispatch(d, cmd, args, o).catch(async (e) => {
+        await drive(d, cmd, args, o).catch(async (e) => {
           await screenOnFailure(d, cmd, e, o);
           throw e;
         });
@@ -1339,7 +2051,7 @@ async function mcp(outer) {
       }
       // Name the tool parameters, not the command-line flags.
       const msg = e.message.replace('pass -p ios|android', 'pass platform: "ios" or "android"').replace(/pass -d one of/, 'pass device: one of');
-      return { text: (e.printed ? sink : [...sink, `looktap: ${msg}`]).join('\n'), error: true };
+      return { text: (e.printed ? sink : [...sink, `looktap: ${msg}`, ...(e.after ? [`looktap: ${e.after}`] : [])]).join('\n'), error: true };
     } finally {
       sink = null;
     }
@@ -1395,7 +2107,10 @@ async function runSteps(d, text, outer, { env = null } = {}) {
     try {
       await dispatch(d, cmd, stepArgs, { ...outer, ...opts, wait: opts.wait ?? outer.wait, flags: opts.flags });
     } catch (e) {
+      const rest = steps.slice(i + 1).map((w) => w.join(' '));
       e.message = `step ${i + 1} (${words.join(' ')}): ${e.message}`;
+      // What didn't run, so the agent can send the rest (or a corrected rest) once it has read the screen.
+      if (rest.length) e.after = `not run: ${rest.map((r, j) => `${i + 2 + j}. ${r}`).join(' · ')}. The app went another way: read the screen below (or looktap ls), then run the steps that fit it`;
       throw e;
     }
   }
@@ -1694,6 +2409,6 @@ function skillStatus(ok) {
 }
 
 main().catch((e) => {
-  if (!e.printed) console.error(`looktap: ${e.message}`);
+  if (!e.printed) console.error(`looktap: ${e.message}${e.after ? `\nlooktap: ${e.after}` : ''}`);
   process.exit(e instanceof UsageError ? 2 : 1);
 });

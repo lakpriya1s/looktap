@@ -2,10 +2,144 @@
 
 ## Unreleased
 
+### A script that went off course
+
+- **Chained commands stop at a failed action.** An agent often sends several looktap commands in one shell call, one
+  per line or joined with `;`, and the shell runs each even after one fails. When the app had gone another way, each
+  later command failed slowly against the wrong screen (minutes in all) or tapped something on it. Now, after an
+  action fails (not found, ambiguous), the later actions and waits from the same script are skipped at once:
+  `skipped: an earlier command in this script failed (looktap tap Checkout: not found: Checkout) …`. Reading the
+  screen (`ls`, `shot`) and `launch` still run and lift the stop; a terminal is never stopped; failed checks
+  (`expect`, `wait`) don't start it, so `expect X || looktap tap Y` works; `LOOKTAP_CONTINUE_AFTER_FAILURE=1` runs
+  them anyway.
+- **A failed `run` lists the steps it didn't reach** (`not run: 3. tap Internet · 4. wait Airplane`), after the
+  failure and the screen, so the agent sends the steps that fit the screen instead of the old ones.
+
+### Fixed on devices
+
+- **Closing LogBox on a real iPhone** tapped the middle of the screen: React Native gives a screen-wide container a
+  combined label that includes the toast's text, and that was taken for the toast. The smallest element saying it is
+  the toast now.
+- **An Android pinch holds both fingers still before lifting** (as `swipe` does), so nothing keeps zooming or sliding
+  after the gesture. Checked in Google Maps: the point under the fingers stays put.
+- `ls` no longer says `covered by ` with nothing after it when what covers a row isn't a listed row.
+
+### Watches
+
+- **Apple Watch simulators** are driven like iPhone simulators, by the same helper: `devices --all` lists them
+  (watchOS), `boot` starts one, and `ls`, `tap`, `swipe`, `shot`, `record`, `launch`, `logs`, `location`, `push`,
+  `perf`, `kill` and the rest work. Home is the Digital Crown (the watch face). Back taps the back button, else swipes
+  in from the left edge. The watch takes no hardware keyboard, so `type` taps its own keyboard's keys (letters and
+  spaces), and `key delete|space|return` tap its keys and Done. An app whose root reports no children (watchOS
+  Calculator) is read by hit-testing the screen. What the simulator refuses (appearance, text size, the status bar,
+  paste, Face ID, rotation) fails at once with the reason.
+- **Wear OS watches** are their own kind in `capabilities` (no rotation or fingerprint; an idle watch dims). Commands
+  that act on the screen wake a dimmed watch first, and an empty `ls` says it has dimmed.
+- The capability table has an Apple Watch simulator and a Wear OS watch column.
+
+### A stuck adb, raw adb, and several agents on one device
+
+From a day of testing on a Samsung over a USB hub and an iPhone X, with more than one agent session attached.
+
+- **No adb call can hang.** Every adb call has a timeout (15 s, `LOOKTAP_ADB_TIMEOUT`) and is killed when it runs out.
+  A call that ran out of time is an error naming the layer that failed (the adb server, the USB link, the device), never
+  an empty answer: `launch` no longer reports a stuck phone as "no launchable activity … is it installed?".
+- **A health probe before each device command** (`adb devices -l` and a timed `shell echo ok`, cached 10 s across
+  processes): `ok`, `slow` (over 3 s: a warning), `unresponsive`, `unauthorized`, `offline`, or `adb-server-hung` when
+  `adb devices` itself doesn't answer. Each fails at once with what to do.
+- **`doctor -d <serial>`** on Android now shows the adb server (version, pid, uptime), every adb process on the
+  computer and how long it has run, the probe and round-trip time, the USB port path with a warning for hubs
+  (`2-1.1.1`: two), the `adb reverse` rules, the lock screen, and whether `--app` is installed, then the recovery
+  steps in order. **`--fix`** restarts the adb server after listing every session and stream it will cut off and
+  asking (`--yes` doesn't ask), warns looktap holders, and puts the reverse rules back.
+- **The helper says why it didn't start**: the forward or the copy failed (adb's words), it crashed (its exception
+  from the log), or it runs but doesn't answer; with the command that failed.
+- **`launch`** falls back to `monkey -p <app> -c LAUNCHER 1` when the launcher activity doesn't resolve, after checking
+  the app is installed.
+- **New commands:** `reverse <port>[:<port>]` / `--list` / `remove`, `metro` (Metro answering, the reverse rule, and
+  the device reaching it), `ps <app>` (pid, uptime, in front), `who [device]`, `release <device> [--force]`.
+  `install` prints the version code and how long it took. `terminate` is `stop` and `screenshot` is `shot`; an
+  unknown command suggests the one meant (`logcat` → `logs`).
+- **`logs`**: `--buffer main|system|crash|events|all`, `--tag`, `--clear` (`logcat -c`), and `--follow --file <f>`. An
+  empty answer is checked against the device's clock, with a warning when its newest log line is hours old. A
+  `--follow` capture cut off by an adb restart attaches again and records the gap and who restarted adb, instead of
+  ending with code 137.
+- **Leases.** A command that changes a device holds it alone while it runs; another waits up to `--busy-wait` (10 s),
+  then fails with `device busy: <owner> running "<command>" for 2m14s`. Reads, screenshots and log streams share it.
+  Leases live in `~/.looktap/leases`, beat every 5 s, and are dead after 30 s of silence or when their process is gone.
+- **`location` and `route` on an Android phone** warn when Play services' fused location reports the phone's own
+  position alongside the simulated one: a fresh fix, not marked mock, over 100 m away (a stale fix doesn't count). On
+  a Samsung (Android 16) it showed the real position 900 km off seconds after the mock was set: turn off Google
+  Location Accuracy while testing.
+- **A real iPhone's `kill`** sends the pid as an archived NSNumber. As a raw int32 the service mishandled it, dropped its
+  connections (looktap's runner went with them) and the app kept running.
+- **`logs --follow` on a real iPhone** reports the app starting and ending from its pid (asked every 3 s), not only
+  when it logs a line.
+- **`devices` says Wear OS for a Wear OS emulator too** (`form: watch`), not only for a watch over Wi-Fi.
+- The app last seen in front stops counting after an hour: a reused emulator serial no longer warns that an app
+  from a month ago "is no longer running".
+
+
+From the notes of a device-testing session of a React Native app's location and geofence features (an Android 16
+phone over USB, an iOS 16 iPhone through lockdown).
+
+### Added
+
+- **`looktap route`** moves the device instead of putting it at a point: a fix every `--step` along a line from
+  `--from <lat,lon>`, `--from-current` or `--offset-from-pref <app>:<latKey>,<lonKey>` (a place the app saved), at
+  `--bearing`/`--distance`/`--speed`, or along a `--gpx` track at its own pace (`--speed-scale`), then held still for
+  `--then-still`. It runs in the foreground or with `--background` (`route status`, `route stop`), and prints distance
+  and time, never coordinates. iOS simulator: `simctl location start`, waypoints on stdin; iPhone on iOS 16 or older:
+  the developer image, a fix at a time; Android 12+: the shell's `gps` and `network` test providers, set up by looktap
+  (mock locations allowed for the shell, each add checked before use, since one that hasn't taken fails as "gps
+  provider is not a test provider"), so the fused provider and Play services' geofencing see the fixes. Android 16's
+  shell can't put speed or bearing on a fix; `capabilities` says so.
+- **`looktap kill <app>`** ends an app as the system does under memory pressure (Home, then Android `am kill`, retried
+  while the system re-ranks the app, or SIGKILL through `run-as`; iOS SIGKILL, as jetsam sends). Unlike `stop`, which
+  on Android is a force-stop that removes the app's geofences, alarms and jobs, what it registered survives.
+  **`looktap background <app>`** sends it to the background and checks it's still running.
+- **`looktap prefs <app> [key …]`** prints an app's UserDefaults (iOS simulator; a real iPhone's development builds,
+  over house_arrest) or SharedPreferences (Android debuggable builds, through `run-as`; `--file` picks the file) as
+  `key = value`. Values whose keys look like coordinates, a `lat,lon` pair in a string or coordinates inside JSON are
+  redacted by default; `--redact` names more keys. `--json` for scripts; a key asked for that isn't set exits 1.
+- **`looktap logs --follow`** streams the app's log until Ctrl+C or `--for`, with its process starting and ending as
+  events: `── app relaunched in the background, pid 4388 (broadcast GeofenceReceiver)`. Android follows the app's uid
+  and reads why ActivityManager started it; iOS reports a new pid. **`looktap logs mark [name]`** and `--since <name>`
+  read only what came after a marker (for `crashes` too).
+- **`looktap geofences <app>`** (Android): whether Play services is geofencing for the app (its location request on
+  the app's behalf, and when that was added or removed), each geofence's id, radius and transitions where the Play
+  services build lists them, and AOSP proximity alerts. No coordinates. iOS can't show an app's monitored regions:
+  `capabilities` and the skill give the recipe.
+- **`looktap battery <app> [--reset|--restore]`** (Android): batterystats for the app; `--reset` also makes a phone on
+  USB count as unplugged so the stats build up. **`looktap network <app> [--for 60s]`** (Android): what the app sent
+  and received, and in how many bursts, to check upload batching.
+- **`looktap value <label>`** prints an element's value alone (a switch: 1 or 0), for scripts. A label with no value
+  of its own reads the switch in its row (Android settings rows), and `expect "<label>" = 1` does the same.
+- **`looktap dismiss logbox --until-gone`** closes React Native's LogBox toast again each time it comes back, until it
+  stays gone for a second.
+- The skill has a new reference, `location.md`: moving the device, `kill` versus `stop`, and reading what happened.
+
 ### Changed
 
 - `skill --install` says the references went in too (`SKILL.md + 5 references` for each agent), so an install of
   the split skill no longer looks like one of the old single file.
+- **A label that names one control beats the groups around it.** On iOS a group's label is its children's labels run
+  together, so `tap "Driving, On"` used to be ambiguous with three groups and the switch. Now one button, switch or cell
+  matching exactly or by prefix wins over containers that only contain the text; two or more controls are still
+  ambiguous. A switch also answers to its spoken name (`"<label>, On"`).
+- **`tap` on an element React Native's LogBox toast covers closes the toast first**, finds the target again and taps
+  it, with a note. `tapxy` in the toast's invisible container (a tab bar under it) does the same. The skill now has a
+  section on React Native development builds, with `"dismissLogBox": true` up front.
+- **Android debug builds and Metro:** with Metro running on the Mac, `launch` runs `adb reverse tcp:8081` first, and
+  `launch --ls` prints "bundle loading from Metro…" and waits through the splash screen (up to 120 s, or `--wait`);
+  `launch --until` waits as long.
+- **`location` prints `location set`**, never the coordinates, and a failure prints `failed: <reason>` with any
+  coordinate-like number taken out. Android phones (12+) can now be given a location, through the same test
+  providers as `route`; `location clear` and `route stop` remove them and give the shell back its mock-location setting.
+- **`devices` asks every dump that can say an Android device is locked** (makers word it differently) and shows
+  `screen off` for a device asleep.
+- **`logs` on a real iPhone** notes when a development build's own code has logged nothing: Swift's `print()` never
+  reaches a device's log, only `NSLog` and `os_log`/`Logger` do (in the debugging reference too).
 
 ## 0.7.7
 

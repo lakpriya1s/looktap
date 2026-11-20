@@ -40,8 +40,12 @@ looktap tap "Messages" --exact
 looktap tap @7
 # a point, in the units ls prints; for things ls doesn't list
 looktap tapxy 205 874
-# React Native's LogBox toast (dev builds) takes the taps around it: close it
+# React Native's LogBox toast (dev builds) takes the taps around it: close it (tap closes it by itself when it
+# covers the target); --until-gone: again each time it comes back, until it stays gone 1 s (fails after --wait)
 looktap dismiss logbox
+looktap dismiss logbox --until-gone
+# an element's value alone, for scripts (a switch: 1 or 0; a field: its text)
+looktap value "Record walks and rides"
 # hold (default 800 ms): context menus, drag handles, edit modes
 looktap longpress "Photo"
 looktap longpress @4 1500
@@ -90,7 +94,12 @@ looktap launch com.example.myapp
 looktap launch com.example.myapp --resume
 # past the splash screen: until the text is on screen (up to --wait, default 30 s)
 looktap launch com.example.myapp --until "Welcome"
-looktap stop com.example.myapp   # terminate it; waits until the process is gone
+looktap stop com.example.myapp   # terminate it; waits until the process is gone (Android: force-stop)
+# (terminate is the same command, and screenshot is shot: the names other tools use)
+# end it as the system does under memory pressure: what it registered (geofences, alarms, jobs) survives, unlike stop
+looktap kill com.example.myapp
+# Home, and check it's in the background and still running
+looktap background com.example.myapp
 # Face ID / fingerprint
 looktap bio match
 looktap bio nomatch
@@ -126,6 +135,7 @@ looktap apps com.example
 looktap apps --all --json
 # a simulator .app, a device .app/.ipa (real iPhone) or an .apk (keeps the app's data; --grant: every runtime
 # permission); prints the app id. A failure says why (storage full, a downgrade, another signature) and what to do
+# prints the app id, its version code (Android) and how long it took
 looktap install build/MyApp.app
 looktap install app-debug.apk --grant
 looktap uninstall com.example.myapp
@@ -141,9 +151,14 @@ looktap permission reset camera com.example.myapp
 ## Conditions
 
 ```bash
-# simulated GPS (Android: emulators); `clear` on iOS
+# simulated GPS: prints "location set", never the coordinates. Android phones (12+): the shell's test providers;
+# clear removes them (the real GPS again)
 looktap location 51.5072 -0.1276
 looktap location clear
+# movement: a line (bearing, distance, speed, a fix every --step) or a GPX track, then still; --background, route stop.
+# Start points: --from <lat,lon>, --from-current, --offset-from-pref <app>:<latKey>,<lonKey>; --gpx <file>
+# [--speed-scale 2]. See location.md
+looktap route --from-current --bearing 90 --distance 630m --speed 1.4 --step 5s --then-still 7m
 # no argument prints the current value
 looktap appearance dark
 looktap appearance light
@@ -162,6 +177,8 @@ looktap fold
 # Android only: airplane mode
 looktap network offline
 looktap network online
+# Android: what an app sent and received over a window, and in how many bursts
+looktap network com.example.myapp --for 60s
 # iOS only: a remote notification; plain text, '{json}', or a .json file
 looktap push com.example.myapp "Your order has shipped"
 looktap push com.example.myapp '{"aps":{"alert":"Hi"},"orderId":7}'

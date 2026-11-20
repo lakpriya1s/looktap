@@ -118,8 +118,8 @@ export const SCENES = [
     kicker: '04 · Move',
     title: 'Swipe, scroll, hold, pinch',
     body: `<p><code>swipe</code> drags, <code>scrollto</code> swipes until a row is fully on screen (above the keyboard, when it's up), <code>longpress</code> holds, and <code>zoom</code> is a real two-finger pinch on both platforms.</p>
-<p><code>open</code> follows a deep link, <code>back</code> goes back (Android's system Back, or the iOS navigation bar's), <code>home</code> presses the Home button, and <code>location</code> moves the GPS.</p>`,
-    covers: ['swipe', 'scrollto', 'longpress', 'zoom', 'open', 'back', 'home', 'location'],
+<p><code>open</code> follows a deep link, <code>back</code> goes back (Android's system Back, or the iOS navigation bar's), <code>home</code> presses the Home button, <code>location</code> moves the GPS, and <code>route</code> walks it: a line or a GPX track at a set speed, out of a geofence and back.</p>`,
+    covers: ['swipe', 'scrollto', 'longpress', 'zoom', 'open', 'back', 'home', 'location', 'route'],
     start: (p) => p.show('home'),
     beats: [
       {
@@ -261,8 +261,9 @@ export const SCENES = [
     kicker: '07 · Debug',
     title: 'When the app vanishes, you hear why',
     body: `<p>An app that dies is named the moment looktap notices, right in the output of the tap that killed it.</p>
-<p><code>crashes</code> reads the crash report (exception, reason, the top frames), and on Android ANRs and <strong>low-memory kills</strong> too. <code>logs</code> shows only what's new since you last looked, with <code>--errors</code> and <code>--grep</code> to narrow it. <code>app</code> says what's in front, <code>perf</code> how much CPU and memory it uses, and <code>capabilities</code> what this device can't do.</p>`,
-    covers: ['logs', 'crashes', 'app', 'capabilities', 'perf'],
+<p><code>crashes</code> reads the crash report (exception, reason, the top frames), and on Android ANRs and <strong>low-memory kills</strong> too. <code>logs</code> shows only what's new since you last looked, with <code>--errors</code> and <code>--grep</code> to narrow it. <code>app</code> says what's in front, <code>perf</code> how much CPU and memory it uses, and <code>capabilities</code> what this device can't do.</p>
+<p>For background features: <code>logs --follow</code> shows a killed app being started again in the background, <code>prefs</code> reads what the app saved (coordinates redacted), and on Android <code>geofences</code>, <code>battery</code> and <code>network</code> show what it registered, what it cost and how it batched its uploads.</p>`,
+    covers: ['logs', 'crashes', 'app', 'capabilities', 'perf', 'prefs', 'geofences', 'battery'],
     start: (p) => p.show('home'),
     beats: [
       {
@@ -442,8 +443,9 @@ export const SCENES = [
     kicker: '10 · App state',
     title: 'Fresh installs and permission prompts, on demand',
     body: `<p><code>install</code> a build and get its app id back, and <code>apps</code> says what's installed, with versions. <code>reset</code> puts an app back to a fresh install (data and permissions cleared), and <code>permission grant|revoke|reset</code> uses the same names on both platforms: camera, location, photos, notifications and more.</p>
+<p><code>kill</code> ends an app as the system does under memory pressure, keeping what it registered (unlike <code>stop</code>), and <code>background</code> sends it to the background and checks it's still running.</p>
 <p>These commands always need the app id. They never act on whatever happens to be on screen.</p>`,
-    covers: ['install', 'apps', 'permission', 'reset', 'launch', 'stop', 'uninstall'],
+    covers: ['install', 'apps', 'permission', 'reset', 'launch', 'stop', 'uninstall', 'kill', 'background', 'ps'],
     start: (p) => p.show('springboardEmpty'),
     beats: [
       {
@@ -567,7 +569,7 @@ export const SCENES = [
     body: `<p><code>expect</code> checks the screen: a label is there, a field holds a value, an error is gone. It waits up to 3 s for it, and when it fails it says what's there instead.</p>
 <p>Every command is a plain shell call with an exit code, so the steps your agent got working run on their own: in a shell script, or saved as a flow file that <code>looktap test</code> runs in CI: a line per flow, a JUnit report, and for every failure the screen, a screenshot, error logs and crashes. An app that dies fails its flow.</p>
 <p>On Android, <code>looktap codegen</code> writes the flow while you use the phone: each touch becomes a tap by label, a fill, a scrollto.</p>`,
-    covers: ['expect', 'test', 'codegen'],
+    covers: ['expect', 'test', 'codegen', 'value'],
     start: (p) => {
       p.show('signin');
       p.set({ values: { Email: 'sam@example.com' } });
@@ -608,8 +610,8 @@ export const SCENES = [
     kicker: '14 · Setup',
     title: 'Nothing to install on simulators',
     body: `<p>No server to run and no npm dependencies. looktap's own small helpers start on first use: a macOS helper that speaks to the simulator through Apple's frameworks, and a 10 KB Android helper run with <code>app_process</code>. A real iPhone gets a small XCUITest runner, built and signed with your own Apple ID on first use.</p>
-<p><code>boot</code> starts a simulator or emulator by name and waits until it's ready; <code>shutdown</code> stops it. <code>wifi</code> takes an Android phone off its cable, <code>pair</code> connects one that never had one, and <code>connect</code> reaches a Wear OS watch by the address its debugging screen shows. Ready for the first command in under a second, against 8–29 s for mobile-mcp, Maestro and Appium.</p>`,
-    covers: ['doctor', 'devices', 'boot', 'shutdown', 'wifi', 'pair', 'connect', 'setup', 'teardown'],
+<p><code>boot</code> starts a simulator or emulator by name and waits until it's ready; <code>shutdown</code> stops it. A stuck adb link fails at once with the layer that failed, and <code>doctor -d</code> walks through it; <code>who</code> shows which agents and log captures are using a device, and <code>release</code> clears a dead one's hold. <code>wifi</code> takes an Android phone off its cable, <code>pair</code> connects one that never had one, and <code>connect</code> reaches a Wear OS watch by the address its debugging screen shows, and an Apple Watch simulator boots and takes the same commands as an iPhone one. Ready for the first command in under a second, against 8–29 s for mobile-mcp, Maestro and Appium.</p>`,
+    covers: ['doctor', 'devices', 'boot', 'shutdown', 'wifi', 'pair', 'connect', 'setup', 'teardown', 'who', 'release', 'reverse', 'metro'],
     start: (p) => p.show('springboard'),
     beats: [
       {
