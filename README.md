@@ -709,7 +709,7 @@ pointer and the glow show here too.
 
 With [`touches on`](#show-where-it-taps-touches), your clicks and drags show the pointer on the device but not the
 glow: the glow is what says an agent is driving. A real iPhone can't draw either, so the page draws them over its
-picture when an agent taps, presses or swipes it (looktap notes where each touch landed in its activity log).
+picture as an agent taps, presses or swipes it (looktap notes each touch in its activity log as it sends it).
 
 While the page is touching a device it holds that device the way a looktap command does, so it and an agent don't
 both act at once: if an agent is mid-command, the page says who has the device and the touch is dropped, and the

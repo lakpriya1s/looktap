@@ -656,8 +656,7 @@ const deviceId = (d) => d.udid || d.serial;
 async function logged(d, cmd, args, via, fn) {
   const t0 = Date.now();
   const done = async (ok, error) => {
-    const touch = await d.touchedShares?.().catch(() => null);
-    recordActivity({ device: deviceId(d), cmd, args, ok, ms: Date.now() - t0, error, via, touch });
+    recordActivity({ device: deviceId(d), cmd, args, ok, ms: Date.now() - t0, error, via });
     return d.noteActivity?.({ what: activitySummary(cmd, args), ok }, ACTIONS.has(cmd));
   };
   try {

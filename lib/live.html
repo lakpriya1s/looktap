@@ -498,7 +498,9 @@ function tile(d) {
     did: (entry) => {
       last = entry;
       lastText();
-      // Fresh, from an agent (the page's own touches are seen as they happen): draw where it touched.
+    },
+    touched: (entry) => {
+      // Fresh, from an agent (the page's own touches are seen as they happen): draw where it's touching.
       if (fx && entry.touch && entry.via !== 'live' && Date.now() - entry.t < 8000) {
         // In points when the command didn't read the screen's size: the phone's size from its runner turns them.
         const s = d.runner?.screen, share = (t) => (t.pts ? (s ? { ...t, x: t.x / s.w, y: t.y / s.h, x2: t.x2 / s.w, y2: t.y2 / s.h } : null) : t);
@@ -589,6 +591,8 @@ async function watch(d, screen, on) {
 const feedList = $('feedList'), feedEl = $('feed');
 let feed = [];
 function addActivity(e) {
+  // A touch about to happen on a real iPhone: drawn now, not a row in the list.
+  if (e.cmd === 'touch') return tiles.get(e.device)?.touched(e);
   feed.unshift(e);
   if (feed.length > 200) feed.length = 200;
   tiles.get(e.device)?.did(e);
