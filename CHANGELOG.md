@@ -1,5 +1,109 @@
 # Changelog
 
+## 0.9.0
+
+### Every device live in the browser
+
+- **`looktap live` serves one web page with every running simulator, emulator and Android phone on it**, each in a
+  phone's frame, showing its screen as it changes: watch an agent work on several devices at once. Chips take a
+  device off the canvas, the zoom fits them to the window, and a device that starts later appears by itself. It runs
+  until Ctrl+C, on the first free port from 4470 (or `--port`). No dependencies: Node's own http server.
+  - **Android** plays the device's own H.264 (its `screenrecord`), cut into frames on the Mac and decoded by the
+    browser (WebCodecs), at the phone's frame rate. The recorder is restarted every 3 minutes (its limit), with a blink.
+  - **iOS simulator** sends a JPEG from the helper each time the screen changes (the helper's new `stream`), up to
+    30 a second, while taps and reads carry on.
+  - **A real iPhone or iPad on a cable** is video too: its screen feed (the Mac helper's new `--feed`, the capture
+    device QuickTime uses), up to 30 frames a second. **On Wi-Fi** it is screenshots through its runner (whose
+    `shot` takes a JPEG quality now), about 5 a second. Gestures on a real iPhone are sent when the mouse is
+    released: a tap, a long press or a swipe.
+  - No frame is written to disk anywhere.
+- **The page drives the devices too**, once its Control switch is on: click to tap, hold to long-press, drag to move
+  the finger as the mouse moves (the helpers' new `touch`: down, move, up), wheel to scroll, type to type, Home and
+  Back under each phone. While it touches a device it holds that device's lease, so it and an agent don't act at
+  once: the one who came second is told who has it.
+- **This computer only by default.** A request must name the computer by a loopback address, and control must come
+  from the page itself, so another web page can't watch or drive. `--host 0.0.0.0` shares it on your network,
+  watch-only unless `--control`.
+
+### The live page: what's happening, and buttons for it
+
+- **Activity.** Every looktap command that touches a device is noted in `~/.looktap/activity.jsonl`: the command,
+  the device, how long it took, whether it worked and why not, and where it came from (a terminal or agent, MCP, or
+  the live page). Typed text is written only as its length. The file is cut to its newer half past 512 KB.
+  `looktap live` follows it: an Activity panel lists the commands as they run, and each device shows its last one.
+- **Buttons under each device:** Screenshot (full size, as `shot` takes it) and Record (the page's own video of the
+  device) for anyone watching; with Control on, Rotate, Dark, Light, Text size, Touches and Open link, the looktap
+  commands of those names, offered where the device can do them.
+- **Stream numbers:** frames a second, picture size, data rate, and how far the page is behind this computer (each
+  stream now carries a timestamp twice a second).
+- **Details:** battery, temperature, Android's thermal status, free storage, and the front app's CPU and memory
+  (Android and the simulator), read on a thread of their own every 10 s while open. For a real iPhone, its runner's
+  expiry date, and whether it was paused on the phone.
+- **Start and shut down simulators and emulators from the page** (with Control on): a Start picker lists the iOS
+  simulators and Android emulators that are off and boots the chosen one headless (`looktap boot`, in a child
+  process, so frames go on); Shut down under a simulator or emulator, on a second click, takes its lease first, so an
+  agent mid-command isn't cut off. Both go in the activity log.
+- **A real iPhone's touches are drawn on the page**: iOS lets nothing draw on the phone, so when an agent taps,
+  presses or swipes it, the page plays the pointer, the swipe's trail and the glow over the phone's picture. The
+  activity log now carries where a real iPhone's runner touched (`touch`: shares of the screen).
+- **A real iPhone's runner is built for the team that last worked for that phone** (`~/.looktap/device/<udid>/team`),
+  in every command, not only in `looktap live`: a phone registered with one team was rebuilt for the default team and
+  failed. `LOOKTAP_TEAM` still wins.
+- **The page's own touches show the pointer but not the glow** (with touches on): the glow says something automated
+  is driving, and a person at the page is not. Android's helper takes `noGlow` per touch; the simulator's apps are
+  told while the page holds the device (`com.looktap.touches.glow.off|on`).
+- **An Android device that turns** (by the page, an agent or the app) has its stream restarted at the new shape:
+  `screenrecord` keeps the size it started with, so the picture was letterboxed and the page's touches landed off.
+
+### The runner app has a screen
+
+- **Open "looktap runner" on the phone** and it shows what it is, the connected Mac and how (USB or Wi-Fi), the last
+  command and the session's counts, when its build stops working and which team signed it, and its recent actions.
+  It used to be a blank screen. The runner app now has a launch screen, so it fills the screen instead of being
+  letterboxed.
+- **Allow control** on that screen pauses looktap on the phone: reading the screen still works, actions are refused
+  with a message saying where to turn it back on. **Stop the runner** ends it until the next command.
+- The runner's `hello` now takes the Mac's name and the route, and answers with its build's expiry and the pause
+  state. A new runner version: each phone builds it once.
+
+### looktap runner for Android (opt-in)
+
+- **`looktap runner install`** puts *looktap runner* on an Android phone: the iPhone runner app's screen (the
+  connected computer, the last commands, recent actions) with **Allow control** and **Show touches** switches. It's
+  the only thing besides `wifi --always` that installs an app on Android, and only on request; `runner remove` takes
+  it off. Built like the Wi-Fi keeper (no Gradle), its icon the iPhone runner's.
+- The helper keeps the activity and the switches (`native/android/src/com/looktap/Companion.java`) and talks to the
+  app on 127.0.0.1:22089, answering only the app's uid (looked up in /proc/net/tcp). While paused it refuses all
+  input (a lifted finger aside), the CLI refuses actions that go through adb, and the pause outlasts a helper restart
+  (`/data/local/tmp/looktap-paused`).
+- Show touches and `looktap touches on|off` are one setting: either side moves the other's switch.
+- The iPhone runner app gets the same Show touches row, greyed out (iOS lets no app draw over another).
+
+### A pointer where it taps
+
+- **`touches on` draws a pointer on the device wherever a touch lands**: a dot while the finger is down, a fading
+  trail behind a swipe, two dots for a pinch, and a ring that lingers after a quick tap, in looktap's accent colour.
+  The inside edge of the screen glows while it's touching and fades about a second after. It's on the device's own
+  screen, so `record`, `shot`, `burst` and a person watching see it; it takes no touches and isn't in what `ls`
+  reads. `touches off` removes it; `touches` prints the state. Nothing is installed:
+  - **Android** (emulators and phones, Android 10+): the helper draws it on a display layer of its own, for every
+    app. Only looktap's touches are drawn, not a person's finger.
+  - **iOS simulator:** a small library (`native/ios-touches`, built to `lib/assets/looktap-touches.dylib`) is loaded
+    into every app started afterwards and draws inside it. The home screen restarts once so it and the system's
+    alerts show touches too, which closes the apps. Restarting the simulator switches it off.
+  - **A real iPhone:** iOS lets nothing draw over another app, so only an app built with
+    `native/ios-touches/LooktapTouches.m` (one file, Debug builds) shows it, when `looktap launch` starts it with
+    touches on. The device runner passes `LOOKTAP_TOUCHES=1` to the app, so the runner is rebuilt on the next
+    command. Not yet tried on a physical iPhone.
+- **`shot <name> --mark <label|@ref|x,y>`** draws the same pointer on a screenshot, where a tap on that label would
+  land. It works on every device, an app you don't build on a real iPhone included.
+
+### Fixed
+
+- **Android: a gesture cut off before its up no longer blocks every touch after it.** The system kept that finger
+  down and refused each new touch ("input injection failed"). The helper now cancels the old gesture and sends the
+  touch again.
+
 ## 0.8.0
 
 ### A script that went off course

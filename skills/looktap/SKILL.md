@@ -9,7 +9,7 @@ allowed-tools: Bash(looktap:*) Bash(npx @looktap/cli:*) Bash(npx -y @looktap/cli
 `looktap` lets you see, use and control the apps on an iPhone or Android device (simulator, emulator or real phone):
 the app the user is building, a system app or any other installed app. It reads the screen as text and taps by
 label. Every command is one short shell call that prints a few lines of plain text, so what worked can then become a
-script or a flow test the user's CI runs. Nothing is installed on simulators, emulators or Android devices; a real iPhone gets a small test runner. The helper starts on first use.
+script or a flow test the user's CI runs. Nothing is installed on simulators, emulators or Android devices unless the user asks for it (`runner install`, `wifi --always`); a real iPhone gets a small test runner (the *looktap runner* app). The helper starts on first use.
 
 ## Quick start
 
@@ -174,7 +174,7 @@ here, `looktap skill <name>` prints it.
 |---|---|
 | [references/commands.md](references/commands.md) | every command and option: gestures, typing, screenshots and video, installing and resetting apps, permissions, dark mode, text size, location, rotation, folding, network, push, reading notifications, the config file |
 | [references/flows.md](references/flows.md) | flow files as tests for CI (`test`), recording a flow (`codegen`), signing in, pages with no labels, handing over to the user (`handoff`) |
-| [references/devices.md](references/devices.md) | booting, choosing or setting up a device; watches (Wear OS, Apple Watch simulators); a real phone that isn't ready, is on Wi-Fi, runs iOS 16 or older, or is stuck; Metro and `adb reverse`; other agents using the same device (`who`, `release`) |
+| [references/devices.md](references/devices.md) | booting, choosing or setting up a device; watches (Wear OS, Apple Watch simulators); a real phone that isn't ready, is on Wi-Fi, runs iOS 16 or older, or is stuck; Metro and `adb reverse`; other agents using the same device (`who`, `release`); the user watching every device in a browser (`live`); the looktap runner app on an Android phone (`runner`) |
 | [references/debugging.md](references/debugging.md) | a crash or an error: logs (following them live, marks), crash reports, performance (`perf`, `launch --time`), the app's files and saved settings (`prefs`) |
 | [references/location.md](references/location.md) | location, geofence and background features: moving the device (`route`), the app killed or in the background (`kill`, `background`), the system's geofences, battery and network use |
 
@@ -212,6 +212,17 @@ here, `looktap skill <name>` prints it.
   are for a test account the user gave you (its password, its fixed or staging code) and for testing the form
   itself, never for a real account's one-time code.
 - **Never `burst` or `record` a sign-in or passcode screen.** The frames capture what's typed.
+- **A recording for a person to watch: `touches on` first**, so the video shows what was tapped and swiped, and
+  `touches off` after (on an iOS simulator it restarts the home screen once: launch the app after it, not before).
+  For a single picture, `shot <name> --mark "<label>"` draws the pointer where the tap would land. A real iPhone
+  can't show the pointer on the phone (iOS lets no app draw over another); `looktap live` draws it on its page.
+- **"paused on the iPhone" or "paused on the phone" means stop.** The person holding the phone turned Allow
+  control off in the looktap runner app. Don't retry, and don't work around it (no adb or simctl input): tell the
+  user, and carry on only after they turn it back on. Reading the screen (`ls`, `shot`) still works.
+- **The user may be watching or driving from `looktap live`**, the web page with every device on it: each looktap
+  command you run shows there as you run it. A device "in use by live (driven from the browser)" is the user
+  touching it on that page: wait for them, don't `release` it. To let the user watch, suggest they run
+  `looktap live` in their own terminal: it runs until Ctrl+C, so don't start it in yours (and MCP can't run it).
 - **Against a live backend every tap is real.** Use the smallest amounts, and undo what you create.
 - **`reset` signs the user out** of most apps: ask before resetting an app someone else signed in to.
 - **Set back what you change.** Appearance, text size, the status bar, the orientation, a foldable's fold and the

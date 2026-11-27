@@ -113,6 +113,9 @@ looktap shot checkout
 looktap shot checkout --scale 0.5
 # one pixel per point (iOS) or dp (Android): a spot you pick in the image is tapxy's x y as it is
 looktap shot checkout --points
+# a pointer drawn on the screenshot where a tap on that label (or @ref, or x,y) would land: any device. To show
+# which control a step is about, before tapping it
+looktap shot checkout --mark "Place order"
 # Android emulators capture FLAG_SECURE screens by default; --plain shows them black, as on a device
 looktap shot payment --plain
 # a frame each time the screen changes, for 3 s; duplicates dropped (start it in the background)
@@ -167,6 +170,12 @@ looktap textsize ax2
 # 9:41, full battery and signal, for screenshots; `live` to undo
 looktap statusbar clean
 looktap statusbar live
+# a pointer where each touch lands, on the device itself, so record, shot and anyone watching see what was tapped
+# (a swipe leaves a trail, and the screen's inside edge glows while looktap is touching it). Android: looktap's touches, every app. iOS simulator: apps started after it; the home
+# screen restarts once, closing the apps, so launch the app again. A real iPhone: only an app built with
+# LooktapTouches.m. No argument prints the state. Turn it off when the recording is done
+looktap touches on
+looktap touches off
 # portrait landscape left right upsidedown; ls, taps and shots follow the turned screen
 looktap rotate landscape --ls
 # a foldable simulator (iPhone Duo): closed (the outer screen), half or open (the inner one); ls, taps, shots

@@ -1,0 +1,728 @@
+<!doctype html>
+<!-- looktap live: served by lib/live.js. One file, no build step, nothing fetched from anywhere but that server. -->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>looktap live</title>
+<style>
+  :root { --bg: #070b14; --bar: #0b1220; --panel: #0d1526; --ink: #e6edf7; --mute: #8a97ad; --accent: #22d3ee; --line: #1c2740; --canvas: #0c1424; --dot: rgba(255, 255, 255, 0.045); --frame: #0d0f14; --frame-edge: #2b3242; --warn: #fbbf24; --bad: #f87171; --good: #34d399; }
+  @media (prefers-color-scheme: light) { :root { --bg: #f4f7fb; --bar: #fff; --panel: #fff; --ink: #0b1220; --mute: #5b6880; --accent: #0e7490; --line: #dbe3ef; --canvas: #e6eef6; --dot: rgba(11, 18, 32, 0.07); --frame: #14161c; --frame-edge: #3a4152; --warn: #b45309; --bad: #b91c1c; --good: #047857; } }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.4 -apple-system, 'Segoe UI', Roboto, sans-serif; display: flex; flex-direction: column; }
+  button, select, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:disabled { cursor: not-allowed; opacity: 0.5; }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* bar: which devices are on the canvas, how big, and whether the page may touch them */
+  .bar { background: var(--bar); border-bottom: 1px solid var(--line); padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .chips, .tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .chip, .pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--mute); }
+  .chip::before { content: ''; width: 9px; height: 9px; border-radius: 3px; background: currentColor; opacity: 0.6; }
+  .chip.android::before { border-radius: 50%; }
+  .chip[aria-pressed='true'], .pill[aria-pressed='true'] { color: var(--accent); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  .chip[aria-pressed='true']::before { opacity: 1; }
+  .zoom { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+  .zoom button { border: 0; background: transparent; padding: 6px 14px; color: var(--mute); }
+  .zoom button:hover, .tool:hover { color: var(--ink); }
+  .zoom output { min-width: 52px; text-align: center; font-variant-numeric: tabular-nums; }
+  .tool { border: 0; background: transparent; padding: 6px 8px; color: var(--mute); }
+  .state { margin-left: auto; color: var(--mute); display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 10%, transparent); }
+  .state::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .hint { color: var(--mute); font-size: 12px; margin: 0; }
+  /* Start a simulator or emulator that isn't running (with Control on). */
+  .start { display: none; align-items: center; gap: 6px; }
+  .control .start.some { display: inline-flex; }
+  .start select { max-width: 260px; border: 1px solid var(--line); background: var(--bar); border-radius: 999px; padding: 6px 12px; color: var(--ink); }
+  .start button { border: 1px solid var(--accent); background: transparent; color: var(--accent); border-radius: 999px; padding: 6px 14px; }
+  .actions button.danger { color: var(--bad); }
+  .actions button.danger.armed { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 14%, transparent); }
+
+  .main { flex: 1; display: flex; min-height: 0; }
+  /* canvas: the devices side by side, as they are */
+  .canvas { flex: 1; overflow: auto; background: var(--canvas) radial-gradient(var(--dot) 1px, transparent 1.5px) 0 0 / 22px 22px; }
+  .stage { display: flex; gap: 56px; align-items: flex-start; justify-content: safe center; padding: 56px; width: max-content; min-width: 100%; }
+  .empty { color: var(--mute); margin: 80px auto; max-width: 46ch; text-align: center; }
+  .device { display: flex; flex-direction: column; align-items: center; gap: 12px; width: min-content; }
+
+  /* A phone: the frame is rounded like its screen. The corner radius is a share of the screen's short side (from the
+     device), which is --s however the phone is turned: --w is the long side when it lies landscape. */
+  .phone { --s: 390px; --w: var(--s); --r: calc(var(--corner, 0.1) * var(--s)); --edge: 13px; position: relative; padding: var(--edge); border-radius: calc(var(--r) + var(--edge)); background: var(--frame);
+    box-shadow: inset 0 0 0 1.5px var(--frame-edge), inset 0 0 0 4px #000, 0 30px 60px -12px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.4); }
+  .phone::before, .phone::after { content: ''; position: absolute; width: 4px; border-radius: 2px; background: var(--frame-edge); }
+  .phone::before { left: -3px; top: 150px; height: 56px; box-shadow: 0 74px 0 var(--frame-edge); }
+  .phone::after { right: -3px; top: 190px; height: 92px; }
+  .device.picked .phone { outline: 2px solid var(--accent); outline-offset: 5px; }
+  .screen { width: var(--w); display: block; border-radius: var(--r); background: #000; aspect-ratio: 9 / 19.5; touch-action: none; }
+  .control .screen { cursor: pointer; }
+  /* What the glass has and the framebuffer doesn't: an iPhone's island or notch. */
+  .island, .notch { position: absolute; left: 50%; background: #000; pointer-events: none; }
+  .island { top: calc(var(--edge) + 11px); width: 124px; height: 36px; margin-left: -62px; border-radius: 20px; }
+  .notch { top: var(--edge); width: 164px; height: 32px; margin-left: -82px; border-radius: 0 0 20px 20px; }
+  .landscape .island, .landscape .notch, .landscape .phone::before, .landscape .phone::after { display: none; }
+  /* Why a device has no picture: on its screen, where the picture would be, in a line. */
+  .why { position: absolute; inset: var(--edge); display: flex; align-items: center; justify-content: center; padding: 0 36px; text-align: center; color: #c9d3e3; font-size: 17px; line-height: 1.45; pointer-events: none; }
+  .why:empty { display: none; }
+  /* A real iPhone can't draw looktap's pointer or glow (iOS lets no app draw over another): the page draws them over
+     its picture instead, for an agent's touches. Shares of the screen, so the zoom doesn't matter. */
+  .fx { position: absolute; inset: var(--edge); border-radius: var(--r); pointer-events: none; overflow: hidden; transition: box-shadow 0.5s ease-out; }
+  .fx.glowing { transition: box-shadow 0.15s ease-in; box-shadow: inset 0 0 0 3px color-mix(in srgb, #22d3ee 90%, transparent), inset 0 0 28px 8px color-mix(in srgb, #22d3ee 70%, transparent); }
+  .fx i { position: absolute; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; background: rgba(34, 211, 238, 0.35); border: 2.5px solid rgba(34, 211, 238, 0.95); box-shadow: 0 0 3px 1px rgba(0, 0, 0, 0.35); }
+  .fx i.speck { width: 14px; height: 14px; margin: -7px 0 0 -7px; border-width: 1.5px; }
+  /* Recording: a red ring on the frame and a dot with the time. */
+  .rec .phone { box-shadow: inset 0 0 0 1.5px var(--frame-edge), inset 0 0 0 4px #000, 0 0 0 3px var(--bad), 0 30px 60px -12px rgba(0, 0, 0, 0.55); }
+  .badge { position: absolute; top: -12px; right: 18px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--bad); color: #fff; display: none; }
+  .rec .badge { display: block; }
+
+  .label { text-align: center; max-width: 420px; }
+  .label h2 { font-size: 15px; margin: 0; }
+  .label p { margin: 2px 0 0; color: var(--mute); font-size: 12px; }
+  .label .stats { font-variant-numeric: tabular-nums; }
+  .label .last { color: var(--ink); opacity: 0.85; min-height: 1.4em; }
+  .label .last.failed { color: var(--bad); opacity: 1; }
+  .label .note { color: var(--warn); min-height: 1.4em; }
+  .label .note.ok { color: var(--good); }
+
+  /* The device's own buttons: system keys (when controlling), then what looktap can do to it. */
+  .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 430px; }
+  .actions button, .actions select { border: 1px solid var(--line); background: var(--bar); border-radius: 10px; padding: 5px 12px; color: var(--mute); font-size: 13px; }
+  .actions button:hover, .actions select:hover { color: var(--ink); border-color: var(--accent); }
+  .actions button[aria-pressed='true'] { color: var(--accent); border-color: var(--accent); }
+  .actions .ctl { display: none; }
+  .control .actions .ctl { display: inline-block; }
+  .actions .sep { width: 1px; background: var(--line); margin: 2px 2px; display: none; }
+  .control .actions .sep { display: block; }
+  .openlink { display: none; gap: 6px; width: 100%; max-width: 420px; }
+  .openlink.on { display: flex; }
+  .openlink input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--bar); border-radius: 10px; padding: 6px 10px; }
+  .openlink button { border: 1px solid var(--accent); background: transparent; color: var(--accent); border-radius: 10px; padding: 6px 12px; }
+
+  /* Details: how the device and its stream are doing. */
+  .details { width: 100%; max-width: 420px; border: 1px solid var(--line); background: var(--panel); border-radius: 12px; padding: 10px 14px; display: none; }
+  .details.on { display: block; }
+  .details dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; font-size: 13px; }
+  .details dt { color: var(--mute); }
+  .details dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .details dd.warn { color: var(--warn); }
+  .details .meter { display: inline-block; width: 46px; height: 6px; border-radius: 3px; background: var(--line); vertical-align: middle; margin-right: 8px; overflow: hidden; }
+  .details .meter i { display: block; height: 100%; background: var(--accent); }
+  .details .when { color: var(--mute); font-size: 11px; margin: 8px 0 0; text-align: right; }
+
+  /* Activity: what looktap did on the devices, from any terminal, agent or this page. */
+  .feed { width: 360px; border-left: 1px solid var(--line); background: var(--bar); display: none; flex-direction: column; min-height: 0; }
+  .feed.on { display: flex; }
+  .feed header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: baseline; gap: 8px; }
+  .feed h2 { font-size: 14px; margin: 0; }
+  .feed header p { margin: 0; color: var(--mute); font-size: 12px; }
+  .feed ol { list-style: none; margin: 0; padding: 6px 0; overflow: auto; flex: 1; }
+  .feed li { padding: 8px 16px; border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent); display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; font-size: 13px; }
+  .feed li .what { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12.5px; overflow-wrap: anywhere; }
+  .feed li.failed .what { color: var(--bad); }
+  .feed li .t { color: var(--mute); font-size: 12px; font-variant-numeric: tabular-nums; text-align: right; }
+  .feed li .who { color: var(--mute); font-size: 12px; grid-column: 1 / -1; }
+  .feed li .err { color: var(--bad); font-size: 12px; grid-column: 1 / -1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .feed .none { color: var(--mute); padding: 16px; font-size: 13px; }
+  @media (max-width: 760px) { .feed.on { position: fixed; inset: auto 0 0 0; height: 55vh; width: auto; border-left: 0; border-top: 1px solid var(--line); z-index: 5; } }
+</style></head>
+<body>
+<header class="bar">
+  <div class="chips" id="chips" aria-label="Devices on the canvas"></div>
+  <div class="tools">
+    <span class="zoom"><button id="out" aria-label="Zoom out">−</button><output id="pct">100%</output><button id="in" aria-label="Zoom in">+</button></span>
+    <button class="tool" id="fit">Fit</button>
+    <button class="tool" id="reload">Reload</button>
+    <button class="pill" id="control" aria-pressed="false">Control</button>
+    <button class="pill" id="activity" aria-pressed="false" aria-controls="feed">Activity</button>
+    <span class="start" id="start"><select id="startPick" aria-label="A simulator or emulator to start"></select><button id="startGo">Start</button></span>
+    <span class="state" id="state">looktap live</span>
+  </div>
+  <p class="hint" id="hint" hidden>Click to tap, drag to swipe, scroll to scroll. Keys go to the device you last touched.</p>
+</header>
+<div class="main">
+  <div class="canvas" id="canvas"><div class="stage" id="stage"><p class="empty">Looking for devices…</p></div></div>
+  <aside class="feed" id="feed" aria-label="Activity">
+    <header><h2>Activity</h2><p>every looktap command, from any terminal, agent or this page</p></header>
+    <ol id="feedList" aria-live="polite"><li class="none">Nothing yet. Commands show here as looktap runs them.</li></ol>
+  </aside>
+</div>
+<script>
+const KIND = { key: 1, delta: 2, reset: 3, error: 4, jpeg: 5, stamp: 6 };
+const $ = (id) => document.getElementById(id);
+const stage = $('stage'), canvasEl = $('canvas'), chips = $('chips');
+const store = { get: (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } }, set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
+let known = [], hidden = new Set(store.get('live.hidden', [])), zoom = store.get('live.zoom', 0), fitted = !zoom;
+let mayControl = false, controlling = false, picked = null, socket = null;
+/** This computer's clock minus the server's (ms), from the /devices round trip with the shortest wait. */
+let offset = 0, bestTrip = Infinity;
+const tiles = new Map();
+const nameOf = (id) => known.find((d) => d.id === id)?.name || id.slice(0, 12);
+
+// ── little formatters ────────────────────────────────────────────────────
+const ago = (t) => { const s = Math.max(0, Math.round((Date.now() - t) / 1000)); return s < 5 ? 'just now' : s < 60 ? `${s} s ago` : s < 3600 ? `${Math.floor(s / 60)} min ago` : `${Math.floor(s / 3600)} h ago`; };
+const clock = (t) => new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+const bytes = (n) => n == null ? '?' : n >= 1e9 ? `${(n / 1e9).toFixed(1)} GB` : `${Math.round(n / 1e6)} MB`;
+const rate = (bitsPerSecond) => bitsPerSecond >= 1e6 ? `${(bitsPerSecond / 1e6).toFixed(1)} Mbit/s` : `${Math.round(bitsPerSecond / 1e3)} kbit/s`;
+const secs = (ms) => ms < 1000 ? `${ms} ms` : `${(ms / 1000).toFixed(1)} s`;
+const VIA = { cli: 'terminal or agent', mcp: 'MCP', live: 'this page' };
+
+// ── control: one socket, opened while Control is on ──────────────────────
+function connect() {
+  if (socket || !controlling) return;
+  const ws = (socket = new WebSocket(`ws://${location.host}/control`));
+  ws.onmessage = (e) => { try { const m = JSON.parse(e.data); if (m.type === 'note') tiles.get(m.id)?.note(m.text, m.level); if (m.type === 'power') powerNote(m); } catch {} };
+  ws.onclose = () => { if (socket === ws) socket = null; if (controlling) setTimeout(connect, 1000); };
+}
+const send = (m) => socket?.readyState === 1 && socket.send(JSON.stringify(m));
+
+function setControl(on) {
+  controlling = on && mayControl;
+  document.body.classList.toggle('control', controlling);
+  const b = $('control');
+  b.setAttribute('aria-pressed', String(controlling));
+  b.disabled = !mayControl;
+  b.title = mayControl ? '' : 'This page was started for watching only (looktap live --control lets it drive)';
+  $('hint').hidden = !controlling;
+  if (controlling) connect();
+  else { socket?.close(); socket = null; pick(null); }
+  if (fitted) fit();
+}
+function pick(id) {
+  picked = id;
+  for (const [tid, t] of tiles) t.el.classList.toggle('picked', controlling && tid === id);
+}
+
+// Mouse and touch on a screen → a finger on the device. Positions are shares of the screen (0…1), so the picture's
+// size and the page's zoom don't come into it.
+function drive(d, screen) {
+  let down = false, moved = null, wheel = null;
+  const at = (e) => { const r = screen.getBoundingClientRect(); return { x: Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), y: Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)) }; };
+  const touch = (phase, p) => send({ id: d.id, type: 'touch', phase, x: p.x, y: p.y });
+  const endWheel = () => { if (!wheel) return; clearTimeout(wheel.timer); touch('up', wheel); wheel = null; };
+  screen.addEventListener('pointerdown', (e) => {
+    if (!controlling || e.button !== 0) return;
+    e.preventDefault();
+    endWheel();
+    pick(d.id);
+    try { screen.setPointerCapture(e.pointerId); } catch {} // keeps the drag ours when it leaves the screen's edge
+    down = true;
+    touch('down', at(e));
+  });
+  // One move a frame is plenty, and the server keeps only the newest one waiting anyway.
+  screen.addEventListener('pointermove', (e) => {
+    if (!down) return;
+    const first = !moved;
+    moved = at(e);
+    if (first) requestAnimationFrame(() => { if (down && moved) touch('move', moved); moved = null; });
+  });
+  const lift = (phase) => (e) => { if (!down) return; down = false; moved = null; touch(phase, at(e)); };
+  screen.addEventListener('pointerup', lift('up'));
+  screen.addEventListener('pointercancel', lift('cancel'));
+  // The wheel is a finger too: down where the mouse is, dragged by what the wheel turned, lifted once it rests.
+  screen.addEventListener('wheel', (e) => {
+    if (!controlling || down) return;
+    e.preventDefault();
+    const r = screen.getBoundingClientRect();
+    if (!wheel) { pick(d.id); wheel = at(e); touch('down', wheel); }
+    wheel.x = Math.min(0.98, Math.max(0.02, wheel.x - e.deltaX / r.width));
+    wheel.y = Math.min(0.98, Math.max(0.02, wheel.y - e.deltaY / r.height));
+    touch('move', wheel);
+    clearTimeout(wheel.timer);
+    wheel.timer = setTimeout(endWheel, 140);
+  }, { passive: false });
+  screen.addEventListener('contextmenu', (e) => controlling && e.preventDefault());
+}
+
+// Typing goes to the device last touched. Characters are gathered for a moment, so a pasted or fast-typed word goes
+// as one piece of text.
+const NAMED = { Enter: 'return', Backspace: 'delete', Tab: 'tab', Escape: 'escape' };
+let typed = '', typing = null;
+const flushTyped = () => { if (typed && picked) send({ id: picked, type: 'text', text: typed }); typed = ''; typing = null; };
+addEventListener('keydown', (e) => {
+  if (!controlling || !picked || e.metaKey || e.ctrlKey || e.altKey || e.target.closest?.('button, input, select')) return;
+  if (NAMED[e.key]) { e.preventDefault(); flushTyped(); return send({ id: picked, type: 'key', key: NAMED[e.key] }); }
+  if (e.key.length !== 1) return;
+  e.preventDefault();
+  typed += e.key;
+  typing ??= setTimeout(flushTyped, 60);
+});
+addEventListener('paste', (e) => {
+  const text = e.clipboardData?.getData('text');
+  if (!controlling || !picked || !text || e.target.closest?.('input')) return;
+  e.preventDefault();
+  send({ id: picked, type: 'text', text: text.slice(0, 2000) });
+});
+
+// ── a device on the canvas ───────────────────────────────────────────────
+const SIZES = [['extra-small', 'XS'], ['small', 'S'], ['medium', 'M'], ['large', 'Default'], ['extra-large', 'XL'], ['extra-extra-large', 'XXL'], ['extra-extra-extra-large', 'XXXL'], ['accessibility-large', 'AX2'], ['accessibility-extra-extra-extra-large', 'AX5']];
+
+function tile(d) {
+  const el = document.createElement('section');
+  el.className = 'device';
+  el.setAttribute('aria-label', d.name);
+  const can = new Set(d.actions || []);
+  el.innerHTML = `<div class="phone"><canvas class="screen" role="img"></canvas><p class="why" role="status"></p><span class="badge num">REC</span></div>
+    <div class="label"><h2></h2><p><span class="what"></span></p><p class="stats" title="frames a second · picture size · data rate · delay from this computer to the page">connecting…</p>
+      <p class="last" role="status"></p><p class="note" role="status"></p></div>
+    <div class="actions">
+      <button class="ctl" data-b="back">Back</button><button class="ctl" data-b="home">Home</button><span class="sep" aria-hidden="true"></span>
+      <button data-a="shot" title="Save the screen at full size">Screenshot</button>
+      <button data-a="rec" aria-pressed="false" title="Record what this page shows, as a video file">Record</button>
+      <button data-a="details" aria-pressed="false" aria-expanded="false">Details</button>
+      ${can.has('rotate') ? '<button class="ctl" data-a="rotate">Rotate</button>' : ''}
+      ${can.has('appearance') ? '<button class="ctl" data-a="dark">Dark</button><button class="ctl" data-a="light">Light</button>' : ''}
+      ${can.has('textsize') ? `<select class="ctl" data-a="textsize" aria-label="Text size"><option value="">Text size</option>${SIZES.map(([v, n]) => `<option value="${v}">${n}</option>`).join('')}</select>` : ''}
+      ${can.has('touches') ? '<button class="ctl" data-a="touches" aria-pressed="false" title="Show where each touch lands, on the device itself">Touches</button>' : ''}
+      ${can.has('open') ? '<button class="ctl" data-a="open" aria-expanded="false">Open link</button>' : ''}
+      ${d.kind === 'simulator' || d.kind === 'emulator' ? `<button class="ctl danger" data-a="power" title="Shut this ${d.kind} down (asks once more)">Shut down</button>` : ''}
+    </div>
+    <form class="openlink"><input type="url" placeholder="https://… or myapp://path" aria-label="Link to open on the device" required><button>Open</button></form>
+    <div class="details" role="region"><dl></dl><p class="when"></p></div>`;
+  el.querySelector('h2').textContent = d.name;
+  // A real iPhone is screenshots, and its gestures go when the mouse is released: say so, where it would surprise.
+  el.querySelector('.what').textContent = `${d.platform === 'ios' ? 'iOS' : 'Android'} ${d.kind}${d.os ? ' · ' + d.os : ''}${d.wired ? ' · USB' : d.slow ? ' · Wi-Fi' : ''}`;
+  if (d.slow) el.querySelector('.phone').title = `${d.wired ? 'A real iPhone on a cable is shown as video.' : 'A real iPhone on Wi-Fi is shown as screenshots, a few a second: plug it in for video.'} A tap or swipe here is sent when you release the mouse.`;
+  const statsEl = el.querySelector('.stats'), phone = el.querySelector('.phone'), screen = el.querySelector('.screen'), noteEl = el.querySelector('.note'), lastEl = el.querySelector('.last');
+  const detailsEl = el.querySelector('.details'), dl = detailsEl.querySelector('dl'), whenEl = detailsEl.querySelector('.when'), form = el.querySelector('.openlink');
+  screen.setAttribute('aria-label', `${d.name}, live screen`);
+  phone.style.setProperty('--corner', d.corner ?? 0);
+  if (d.cutout) phone.insertAdjacentHTML('beforeend', `<i class="${d.cutout}"></i>`);
+  const fx = d.slow ? phone.appendChild(Object.assign(document.createElement('div'), { className: 'fx' })) : null;
+  if (d.platform === 'ios') el.querySelector('[data-b=back]').remove(); // iOS has no system Back
+  for (const b of el.querySelectorAll('[data-b]')) b.onclick = () => { pick(d.id); send({ id: d.id, type: 'button', name: b.dataset.b }); };
+
+  // ── the stream's numbers ──
+  const stats = { frames: 0, bytes: 0, fps: 0, bps: 0, delay: null, codec: '', w: 0, h: 0, stamp: null };
+  let stopped = false, noteTimer = null, said = '';
+  const showStats = () => {
+    if (said) return (statsEl.textContent = 'no picture');
+    const parts = [stats.fps ? `${stats.fps} fps` : 'still'];
+    if (stats.w) parts.push(`${stats.w}×${stats.h}`);
+    if (stats.bps) parts.push(rate(stats.bps));
+    if (stats.delay != null) parts.push(`${secs(Math.max(0, stats.delay))} behind`);
+    statsEl.textContent = parts.join(' · ');
+  };
+  const timer = setInterval(() => {
+    stats.fps = stats.frames; stats.bps = stats.bytes * 8; stats.frames = stats.bytes = 0;
+    showStats();
+    if (last) lastText();
+    if (detailsOpen) drawDetails();
+  }, 1000);
+  const why = el.querySelector('.why');
+  const say = (text) => { said = text || ''; why.textContent = said; showStats(); };
+  // The picture's shape is the device's: set once known, and again when it turns.
+  const sized = (w, h) => {
+    if (screen.width === w && screen.height === h) return;
+    screen.width = w; screen.height = h; stats.w = w; stats.h = h;
+    const wide = w > h;
+    el.classList.toggle('landscape', wide);
+    phone.style.setProperty('--w', wide ? `${Math.round(390 * w / h)}px` : '390px');
+    screen.style.aspectRatio = `${w} / ${h}`;
+    if (fitted) fit();
+  };
+  watch(d, screen, {
+    frame: () => {
+      stats.frames++;
+      if (said) say('');
+      // The first frame drawn after a stamp: how long since the server had it, on the server's clock.
+      if (stats.stamp != null) { stats.delay = Math.round(Date.now() + offset - stats.stamp); stats.stamp = null; }
+    },
+    bytes: (n) => (stats.bytes += n),
+    stamp: (t) => (stats.stamp = t),
+    codec: (c) => (stats.codec = c),
+    sized, say, stopped: () => stopped,
+  });
+  drive(d, screen);
+
+  // ── an agent's touches on a real iPhone, drawn over its picture ──
+  let glowTimer = null;
+  const glowFor = (ms) => { fx.classList.add('glowing'); clearTimeout(glowTimer); glowTimer = setTimeout(() => fx.classList.remove('glowing'), ms + 1200); };
+  const dot = (x, y, speck) => { const i = document.createElement('i'); if (speck) i.className = 'speck'; i.style.left = `${x * 100}%`; i.style.top = `${y * 100}%`; fx.append(i); return i; };
+  const fade = (i, grow, ms = 400) => i.animate([{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: `scale(${grow})` }], { duration: ms, easing: 'ease-out' }).finished.then(() => i.remove(), () => i.remove());
+  async function play(touches) {
+    for (const t of touches) {
+      const ms = Math.max(t.k === 'swipe' ? 300 : t.k === 'press' ? t.ms : 120, 120);
+      glowFor(ms);
+      const i = dot(t.x, t.y);
+      i.animate([{ transform: 'scale(0.6)' }, { transform: 'scale(1)' }], { duration: 80 });
+      if (t.k === 'swipe') {
+        // The finger moves from where it went down to where it came up, leaving specks behind.
+        const t0 = performance.now();
+        let lastSpeck = 0;
+        await new Promise((done) => {
+          const step = (now) => {
+            const f = Math.min(1, (now - t0) / ms), x = t.x + (t.x2 - t.x) * f, y = t.y + (t.y2 - t.y) * f;
+            i.style.left = `${x * 100}%`; i.style.top = `${y * 100}%`;
+            if (now - lastSpeck > 35) { lastSpeck = now; fade(dot(x, y, true), 0.4); }
+            f < 1 ? requestAnimationFrame(step) : done();
+          };
+          requestAnimationFrame(step);
+        });
+      } else await new Promise((r) => setTimeout(r, ms));
+      fade(i, 1.7);
+      await new Promise((r) => setTimeout(r, 150));
+    }
+  }
+
+  // ── the last thing looktap did here ──
+  let last = null;
+  const lastText = () => {
+    lastEl.textContent = `${last.what} · ${ago(last.t)}${last.via === 'live' ? '' : ` · ${VIA[last.via] || last.via}`}`;
+    lastEl.classList.toggle('failed', !last.ok);
+    lastEl.title = last.ok ? `took ${secs(last.ms)}` : last.error || 'failed';
+  };
+
+  // ── the buttons ──
+  const action = (name, value) => { pick(d.id); send({ id: d.id, type: 'action', name, value }); };
+  const btn = (a) => el.querySelector(`[data-a="${a}"]`);
+  btn('shot').onclick = async () => {
+    const b = btn('shot');
+    b.disabled = true;
+    try {
+      const r = await fetch(`/shot/${encodeURIComponent(d.id)}`);
+      if (!r.ok) throw new Error(await r.text());
+      const name = /filename="([^"]+)"/.exec(r.headers.get('content-disposition') || '')?.[1] || 'screen.png';
+      save(await r.blob(), name);
+      tileNote(`saved ${name}`, 'ok');
+    } catch (e) { tileNote(`screenshot failed: ${e.message}`); }
+    b.disabled = false;
+  };
+  // Recording is the page's own: the canvas as it is drawn, so it works the same for every device.
+  let recorder = null, recStart = 0, recTimer = null;
+  btn('rec').onclick = () => {
+    const b = btn('rec'), badge = el.querySelector('.badge');
+    if (recorder) return recorder.stop();
+    if (!screen.captureStream || !window.MediaRecorder) return tileNote("this browser can't record a canvas");
+    const type = ['video/mp4;codecs=avc1', 'video/webm;codecs=vp9', 'video/webm'].find((t) => MediaRecorder.isTypeSupported(t));
+    const parts = [];
+    recorder = new MediaRecorder(screen.captureStream(30), { ...(type && { mimeType: type }), videoBitsPerSecond: 6e6 });
+    recorder.ondataavailable = (e) => e.data.size && parts.push(e.data);
+    recorder.onstop = () => {
+      clearInterval(recTimer);
+      el.classList.remove('rec');
+      b.setAttribute('aria-pressed', 'false'); b.textContent = 'Record';
+      const ext = (recorder.mimeType || type || '').includes('mp4') ? 'mp4' : 'webm';
+      const name = `${d.name.replace(/[^\w.-]+/g, '-')}-${new Date(recStart).toISOString().replace(/[:.]/g, '-').slice(0, 19)}.${ext}`;
+      save(new Blob(parts, { type: recorder.mimeType || type }), name);
+      tileNote(`saved ${name}`, 'ok');
+      recorder = null;
+    };
+    recorder.start(1000);
+    recStart = Date.now();
+    el.classList.add('rec');
+    b.setAttribute('aria-pressed', 'true'); b.textContent = 'Stop';
+    const tick = () => { const s = Math.round((Date.now() - recStart) / 1000); badge.textContent = `REC ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+    tick(); recTimer = setInterval(tick, 1000);
+  };
+  // Which way to turn: the device's own answer to the last turn, else the picture's shape. (A home screen that only
+  // stands upright keeps the picture portrait while the device counts as turned.)
+  let turned = null;
+  btn('rotate') && (btn('rotate').onclick = () => action('rotate', (turned ?? screen.width > screen.height) ? 'portrait' : 'landscape'));
+  btn('dark') && (btn('dark').onclick = () => action('appearance', 'dark'));
+  btn('light') && (btn('light').onclick = () => action('appearance', 'light'));
+  const sizeSel = btn('textsize');
+  sizeSel && (sizeSel.onchange = () => { if (sizeSel.value) action('textsize', sizeSel.value); sizeSel.value = ''; });
+  const touchesBtn = btn('touches');
+  const setTouches = (on) => touchesBtn?.setAttribute('aria-pressed', String(Boolean(on)));
+  setTouches(d.touches);
+  touchesBtn && (touchesBtn.onclick = () => { const on = touchesBtn.getAttribute('aria-pressed') !== 'true'; setTouches(on); action('touches', on ? 'on' : 'off'); });
+  // Shut down: a second click within 4 s does it (it closes everything running on that device).
+  const powerBtn = btn('power');
+  let armed = null;
+  powerBtn && (powerBtn.onclick = () => {
+    if (!armed) {
+      powerBtn.classList.add('armed'); powerBtn.textContent = 'Click again to shut down';
+      armed = setTimeout(() => { armed = null; powerBtn.classList.remove('armed'); powerBtn.textContent = 'Shut down'; }, 4000);
+      return;
+    }
+    clearTimeout(armed); armed = null;
+    powerBtn.classList.remove('armed'); powerBtn.textContent = 'Shutting down…'; powerBtn.disabled = true;
+    send({ id: d.id, type: 'shutdown' });
+  });
+  const openBtn = btn('open'), input = form.querySelector('input');
+  openBtn && (openBtn.onclick = () => { const on = !form.classList.contains('on'); form.classList.toggle('on', on); openBtn.setAttribute('aria-expanded', String(on)); if (on) input.focus(); });
+  form.onsubmit = (e) => { e.preventDefault(); if (input.value.trim()) action('open', input.value.trim()); };
+
+  // ── details: the device's health, the stream, the runner ──
+  let detailsOpen = false, health = null, asked = 0;
+  btn('details').onclick = () => {
+    detailsOpen = !detailsOpen;
+    detailsEl.classList.toggle('on', detailsOpen);
+    btn('details').setAttribute('aria-pressed', String(detailsOpen));
+    btn('details').setAttribute('aria-expanded', String(detailsOpen));
+    if (detailsOpen) readHealth(); else drawDetails();
+    if (fitted) fit();
+  };
+  const readHealth = async () => {
+    if (!detailsOpen || stopped) return;
+    asked = Date.now();
+    try { health = await (await fetch(`/health/${encodeURIComponent(d.id)}`)).json(); } catch { health = { error: "couldn't ask" }; }
+    drawDetails();
+  };
+  const healthTimer = setInterval(() => detailsOpen && Date.now() - asked > 9000 && readHealth(), 1000);
+  const meter = (share) => `<span class="meter" aria-hidden="true"><i style="width:${Math.round(Math.max(0, Math.min(1, share)) * 100)}%"></i></span>`;
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  function drawDetails() {
+    if (!detailsOpen) return;
+    const rows = [];
+    const row = (k, v, warn) => rows.push(`<dt>${k}</dt><dd${warn ? ' class="warn"' : ''}>${v}</dd>`);
+    const h = health || {};
+    row('Stream', `${stats.codec || '…'}${d.platform === 'ios' && d.kind !== 'simulator' ? (d.wired ? ' · USB screen feed' : ' · screenshots over Wi-Fi') : ''}`);
+    row('Picture', stats.w ? `${stats.w}×${stats.h} · ${stats.fps} fps · ${rate(stats.bps)}` : '…');
+    row('Delay', stats.delay != null ? `${secs(Math.max(0, stats.delay))} from this computer to the page` : '…');
+    if (h.battery) row('Battery', `${meter(h.battery.level / 100)}${h.battery.level}%${h.battery.full ? ' · full' : h.battery.charging ? ' · charging' : ''}${h.battery.temp != null ? ` · ${h.battery.temp} °C` : ''}`, h.battery.level <= 15 && !h.battery.charging);
+    if (h.thermal) row('Heat', h.thermal, h.thermal !== 'normal' && h.thermal !== 'light');
+    if (h.storage) row('Storage', `${meter(1 - h.storage.free / h.storage.total)}${bytes(h.storage.free)} free of ${bytes(h.storage.total)}`, h.storage.free / h.storage.total < 0.05);
+    if (h.app) row('App in front', esc(h.app.id));
+    if (h.app?.cpu != null) row('App CPU', `${h.app.cpu}% <span title="100% is one core">(of one core)</span>`, h.app.cpu > 80);
+    if (h.app?.memory != null) row('App memory', `${bytes(h.app.memory)} ${h.app.memoryKind ? `<span title="${h.app.memoryKind === 'pss' ? 'proportional set size: its share of the memory it uses' : 'memory footprint: what iOS counts against its limit'}">${h.app.memoryKind}</span>` : ''}`);
+    if (h.appNote) row('App use', esc(h.appNote));
+    const runner = h.runner || d.runner;
+    if (runner?.expires) {
+      const days = Math.floor((new Date(runner.expires) - Date.now()) / 864e5);
+      row('Runner works until', `${new Date(runner.expires).toLocaleDateString()} · ${days < 0 ? 'expired' : `${days} day${days === 1 ? '' : 's'}`}`, days <= 2);
+    }
+    if (runner && runner.allowed === false) row('Runner', 'paused on the phone (Allow control is off)', true);
+    if (h.error) row('Health', esc(h.error), true);
+    dl.innerHTML = rows.join('');
+    whenEl.textContent = health ? `read ${ago(health.at)}` : 'reading…';
+  }
+
+  const tileNote = (text, level) => { noteEl.textContent = text; noteEl.classList.toggle('ok', level === 'ok'); clearTimeout(noteTimer); noteTimer = setTimeout(() => (noteEl.textContent = ''), 6000); };
+  return {
+    el,
+    note: (text, level) => {
+      tileNote(text, level);
+      if (/^(portrait|landscape|upside down)/.test(text)) turned = !text.startsWith('portrait');
+      if (/^touches (on|off)/.test(text)) setTouches(text.startsWith('touches on'));
+    },
+    did: (entry) => {
+      last = entry;
+      lastText();
+      // Fresh, from an agent (the page's own touches are seen as they happen): draw where it touched.
+      if (fx && entry.touch && entry.via !== 'live' && Date.now() - entry.t < 8000) {
+        // In points when the command didn't read the screen's size: the phone's size from its runner turns them.
+        const s = d.runner?.screen, share = (t) => (t.pts ? (s ? { ...t, x: t.x / s.w, y: t.y / s.h, x2: t.x2 / s.w, y2: t.y2 / s.h } : null) : t);
+        play(entry.touch.map(share).filter(Boolean));
+      }
+    },
+    powered: (m) => { if (m.state === 'failed' && powerBtn) { powerBtn.disabled = false; powerBtn.textContent = 'Shut down'; } tileNote(m.text, m.state === 'failed' ? 'warn' : 'ok'); },
+    update: (fresh) => { d.runner = fresh.runner; if (fresh.touches != null && !touchesBtn?.matches(':focus')) setTouches(fresh.touches); },
+    stop: () => { stopped = true; recorder?.stop(); clearInterval(timer); clearInterval(healthTimer); el.remove(); },
+  };
+}
+
+/** Hand the browser a file to save. */
+function save(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+}
+
+// ── a device's stream: packets of [length u32][kind u8][payload], played into its canvas ──
+async function watch(d, screen, on) {
+  const ctx = screen.getContext('2d');
+  while (!on.stopped()) {
+    const abort = new AbortController();
+    let decoder = null, t = 0, drawn = 0, seq = 0;
+    const closeDecoder = () => { try { decoder?.close(); } catch {} decoder = null; };
+    const h264 = (key, data) => {
+      if (!('VideoDecoder' in window)) return on.say("this browser can't play Android's video (no WebCodecs): use a current Chrome, Edge or Safari");
+      if (!decoder) {
+        if (!key) return; // a picture can only begin at a key frame
+        // The key frame opens with the SPS: its first three bytes after the NAL header are the codec's profile and level.
+        const head = data[2] === 1 ? 4 : 5;
+        const codec = 'avc1.' + [data[head], data[head + 1], data[head + 2]].map((b) => b.toString(16).padStart(2, '0')).join('');
+        on.codec('H.264 from the device');
+        decoder = new VideoDecoder({
+          output: (f) => { on.sized(f.displayWidth, f.displayHeight); ctx.drawImage(f, 0, 0); f.close(); on.frame(); },
+          // A frame it can't use: ask for the stream again, which starts from a key frame.
+          error: () => abort.abort(),
+        });
+        decoder.configure({ codec, optimizeForLatency: true });
+      }
+      decoder.decode(new EncodedVideoChunk({ type: key ? 'key' : 'delta', timestamp: (t += 16666), data }));
+    };
+    const jpeg = async (data) => {
+      const n = ++seq;
+      // A JPEG, or from a phone whose runner is an older build a PNG.
+      const png = data[0] === 0x89;
+      on.codec(png ? 'PNG frames' : 'JPEG frames');
+      const bmp = await createImageBitmap(new Blob([data], { type: png ? 'image/png' : 'image/jpeg' }));
+      if (n > drawn && !on.stopped()) { drawn = n; on.sized(bmp.width, bmp.height); ctx.drawImage(bmp, 0, 0); on.frame(); }
+      bmp.close();
+    };
+    try {
+      const r = await fetch(`/stream/${encodeURIComponent(d.id)}`, { signal: abort.signal });
+      if (!r.ok) throw new Error(r.status === 404 ? 'not running any more' : `the stream answered ${r.status}`);
+      const reader = r.body.getReader();
+      let buf = new Uint8Array(0);
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done || on.stopped()) { reader.cancel().catch(() => {}); break; }
+        on.bytes(value.length);
+        if (buf.length) { const joined = new Uint8Array(buf.length + value.length); joined.set(buf); joined.set(value, buf.length); buf = joined; } else buf = value;
+        let at = 0;
+        while (buf.length - at >= 5) {
+          const len = new DataView(buf.buffer, buf.byteOffset + at, 4).getUint32(0);
+          if (buf.length - at < 4 + len) break;
+          const kind = buf[at + 4], data = buf.subarray(at + 5, at + 4 + len);
+          at += 4 + len;
+          if (kind === KIND.key || kind === KIND.delta) h264(kind === KIND.key, data);
+          else if (kind === KIND.jpeg) jpeg(data.slice());
+          else if (kind === KIND.stamp && data.length === 8) on.stamp(new DataView(data.buffer, data.byteOffset, 8).getFloat64(0));
+          else if (kind === KIND.reset) closeDecoder();
+          else if (kind === KIND.error) on.say(new TextDecoder().decode(data));
+        }
+        buf = buf.slice(at);
+      }
+    } catch (e) { if (e.name !== 'AbortError') on.say(e.message); }
+    closeDecoder();
+    await new Promise((r) => setTimeout(r, on.stopped() ? 0 : 500));
+  }
+}
+
+// ── activity: every looktap command, as it is run ────────────────────────
+const feedList = $('feedList'), feedEl = $('feed');
+let feed = [];
+function addActivity(e) {
+  feed.unshift(e);
+  if (feed.length > 200) feed.length = 200;
+  tiles.get(e.device)?.did(e);
+  if (feedEl.classList.contains('on')) drawFeed();
+}
+function drawFeed() {
+  if (!feed.length) return;
+  feedList.replaceChildren(...feed.map((e) => {
+    const li = document.createElement('li');
+    li.className = e.ok ? '' : 'failed';
+    const what = document.createElement('span'); what.className = 'what'; what.textContent = `looktap ${e.what}`;
+    const t = document.createElement('span'); t.className = 't'; t.textContent = clock(e.t); t.title = ago(e.t);
+    const who = document.createElement('span'); who.className = 'who'; who.textContent = `${nameOf(e.device)} · ${secs(e.ms)} · ${VIA[e.via] || e.via}`;
+    li.append(what, t, who);
+    if (!e.ok && e.error) { const err = document.createElement('span'); err.className = 'err'; err.textContent = e.error; err.title = e.error; li.append(err); }
+    return li;
+  }));
+}
+function setFeed(on) {
+  feedEl.classList.toggle('on', on);
+  $('activity').setAttribute('aria-pressed', String(on));
+  store.set('live.feed', on);
+  if (on) drawFeed();
+  if (fitted) fit();
+}
+$('activity').onclick = () => setFeed(!feedEl.classList.contains('on'));
+const events = new EventSource('/events');
+events.onmessage = (m) => { try { addActivity(JSON.parse(m.data)); } catch {} };
+
+// ── starting and shutting down simulators and emulators ──────────────────
+let startable = [];
+const starting = new Map(); // id → what the state pill says while it starts or shuts down
+let startKey = '';
+function drawStart() {
+  // Rebuilt only when the list changed: a rebuild closes the menu if it's open.
+  const key = JSON.stringify(startable);
+  if (key === startKey) return;
+  startKey = key;
+  const pick = $('startPick'), keep = pick.value;
+  const group = (label, list) => list.length ? `<optgroup label="${label}">${list.map((d) => `<option value="${d.id}">${d.name.replace(/[<&]/g, '')}${d.os ? ` · ${d.os}` : ''}</option>`).join('')}</optgroup>` : '';
+  pick.innerHTML = '<option value="">Start a simulator or emulator…</option>' + group('iOS simulators', startable.filter((d) => d.platform === 'ios')) + group('Android emulators', startable.filter((d) => d.platform === 'android'));
+  pick.value = startable.some((d) => d.id === keep) ? keep : '';
+  $('startGo').disabled = !pick.value;
+  $('start').classList.toggle('some', startable.length > 0);
+}
+$('startPick').onchange = () => ($('startGo').disabled = !$('startPick').value);
+$('startGo').onclick = () => {
+  const id = $('startPick').value;
+  if (!id) return;
+  $('startPick').value = '';
+  $('startGo').disabled = true;
+  hidden.delete(id); store.set('live.hidden', [...hidden]); // it comes onto the canvas when it's up
+  send({ id, type: 'boot' });
+};
+function powerNote(m) {
+  if (m.state === 'starting' || m.state === 'stopping') starting.set(m.id, m.text);
+  else starting.delete(m.id);
+  if (tiles.has(m.id)) tiles.get(m.id).powered(m);
+  showState(m.state === 'failed' ? `${m.name}: ${m.text}` : starting.size ? [...starting.values()].join(' · ') : m.text);
+  if (m.state === 'done' || m.state === 'failed') setTimeout(refresh, 300);
+}
+let stateTimer = null;
+function showState(text) {
+  $('state').textContent = text;
+  clearTimeout(stateTimer);
+  stateTimer = setTimeout(() => { stateTimer = null; draw(); }, starting.size ? 60000 : 5000);
+}
+
+// ── the canvas ───────────────────────────────────────────────────────────
+function setZoom(z, keep = true) {
+  zoom = Math.max(0.2, Math.min(1.5, z));
+  stage.style.zoom = zoom;
+  $('pct').textContent = `${Math.round(zoom * 100)}%`;
+  if (keep) store.set('live.zoom', zoom);
+}
+// As big as shows every device whole: all of them within the canvas's width, the tallest within its height.
+function fit() {
+  stage.style.zoom = 1;
+  const wide = stage.scrollWidth, tall = stage.scrollHeight;
+  setZoom(Math.min(canvasEl.clientWidth / wide, canvasEl.clientHeight / tall, 1), false);
+  fitted = true;
+  store.set('live.zoom', 0);
+}
+$('in').onclick = () => (fitted = false, setZoom(zoom + 0.1));
+$('out').onclick = () => (fitted = false, setZoom(zoom - 0.1));
+$('fit').onclick = fit;
+$('reload').onclick = () => { for (const [id, t] of tiles) (t.stop(), tiles.delete(id)); refresh(); };
+$('control').onclick = () => { setControl(!controlling); store.set('live.control', controlling); };
+addEventListener('resize', () => fitted && fit());
+
+function draw() {
+  chips.replaceChildren(...known.map((d) => {
+    const b = document.createElement('button');
+    b.className = `chip ${d.platform}`;
+    b.textContent = d.name;
+    b.disabled = !d.live;
+    b.title = d.live ? '' : d.why;
+    b.setAttribute('aria-pressed', String(d.live && !hidden.has(d.id)));
+    b.onclick = () => { hidden.has(d.id) ? hidden.delete(d.id) : hidden.add(d.id); store.set('live.hidden', [...hidden]); draw(); };
+    return b;
+  }));
+  const shown = known.filter((d) => d.live && !hidden.has(d.id));
+  for (const d of shown) {
+    if (tiles.has(d.id)) { tiles.get(d.id).update(d); continue; }
+    stage.querySelector('.empty')?.remove();
+    const t = tile(d);
+    tiles.set(d.id, t);
+    stage.append(t.el);
+    const last = feed.find((e) => e.device === d.id);
+    if (last) t.did(last);
+  }
+  for (const [id, t] of tiles) if (!shown.some((d) => d.id === id)) (t.stop(), tiles.delete(id), picked === id && pick(null));
+  const live = known.filter((d) => d.live).length;
+  if (!tiles.size && !stage.querySelector('.empty')) stage.innerHTML = `<p class="empty">${live ? 'Pick a device above.' : 'No running simulator, emulator or connected Android phone. Start one (looktap boot), and it appears here.'}</p>`;
+  if (!stateTimer) $('state').textContent = starting.size ? [...starting.values()].join(' · ') : `${tiles.size} of ${live} live`;
+  if (fitted) fit();
+}
+async function refresh() {
+  let answer;
+  const t0 = Date.now();
+  try { answer = await (await fetch('/devices')).json(); } catch { return ($('state').textContent = 'looktap live has stopped'); }
+  const trip = Date.now() - t0;
+  // The server's clock read halfway through the round trip; the shortest trip gives the best guess.
+  if (answer.now && trip <= bestTrip + 5) { bestTrip = Math.min(bestTrip, trip); offset = answer.now - (t0 + trip / 2); }
+  known = answer.devices;
+  startable = answer.startable || [];
+  drawStart();
+  if (mayControl !== answer.control) { mayControl = answer.control; setControl(store.get('live.control', false)); }
+  draw();
+}
+if (zoom) setZoom(zoom, false);
+setControl(false);
+if (store.get('live.feed', false)) setFeed(true);
+refresh();
+setInterval(refresh, 4000);
+</script>
+</body></html>

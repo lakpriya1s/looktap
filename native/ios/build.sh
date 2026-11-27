@@ -5,6 +5,6 @@ cd "$(dirname "$0")"
 mkdir -p ../../lib/assets
 clang -fobjc-arc -O2 -arch arm64 -arch x86_64 -mmacosx-version-min=12.0 -Wno-objc-method-access \
   -framework Foundation -framework AppKit -framework IOSurface -framework ImageIO -framework CoreGraphics \
-  -framework UniformTypeIdentifiers -framework AVFoundation -framework CoreMedia -framework CoreMediaIO -framework CoreVideo \
+  -framework UniformTypeIdentifiers -framework AVFoundation -framework CoreMedia -framework CoreMediaIO -framework CoreVideo -framework CoreImage \
   -o ../../lib/assets/looktap-sim looktap-sim.m
 echo "built lib/assets/looktap-sim ($(wc -c < ../../lib/assets/looktap-sim | tr -d ' ') bytes)"

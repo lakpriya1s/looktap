@@ -8,10 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		A10000000000000000000001 /* Runner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000002 /* Runner.swift */; };
+		A100000000000000000000F1 /* Panel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000000000000000000F2 /* Panel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		A10000000000000000000002 /* Runner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Runner.swift; sourceTree = "<group>"; };
+		A100000000000000000000F2 /* Panel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Panel.swift; sourceTree = "<group>"; };
 		A10000000000000000000003 /* LooktapRunner.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LooktapRunner.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -38,6 +40,7 @@
 			isa = PBXGroup;
 			children = (
 				A10000000000000000000002 /* Runner.swift */,
+				A100000000000000000000F2 /* Panel.swift */,
 			);
 			path = LooktapRunner;
 			sourceTree = "<group>";
@@ -103,6 +106,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000000000000000000001 /* Runner.swift in Sources */,
+				A100000000000000000000F1 /* Panel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

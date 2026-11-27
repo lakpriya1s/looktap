@@ -1046,8 +1046,11 @@ static NSDictionary *frames(void) {
   return out;
 }
 
-/** The surface as PNG, upright as the user sees it (see "orientation"), shrunk by `scale` when 0 < scale < 1. */
-static NSData *png(IOSurfaceRef s, double scale) {
+/**
+ The surface as a picture, upright as the user sees it (see "orientation"), shrunk by `scale` when 0 < scale < 1:
+ a PNG, or with `jpeg` in 0…1 a JPEG of that quality (the live stream's frames: smaller and quicker to make).
+ */
+static NSData *picture(IOSurfaceRef s, double scale, double jpeg) {
   IOSurfaceLock(s, kIOSurfaceLockReadOnly, NULL);
   size_t w = IOSurfaceGetWidth(s), h = IOSurfaceGetHeight(s), stride = IOSurfaceGetBytesPerRow(s);
   CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
@@ -1059,7 +1062,7 @@ static NSData *png(IOSurfaceRef s, double scale) {
     size_t sw = MAX(1, (size_t)round(w * scale)), sh = MAX(1, (size_t)round(h * scale));
     size_t ow = sideways() ? sh : sw, oh = sideways() ? sw : sh;
     CGContextRef ctx = CGBitmapContextCreate(NULL, ow, oh, 8, 0, cs, kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst);
-    CGContextSetInterpolationQuality(ctx, kCGInterpolationHigh);
+    CGContextSetInterpolationQuality(ctx, jpeg >= 0 ? kCGInterpolationMedium : kCGInterpolationHigh);
     // Turn the native image so the interface's top is up: 3 has it at the right edge (a quarter turn
     // counter-clockwise), 4 at the left (clockwise), 2 at the bottom.
     if (uiOrientation == 3) CGContextTranslateCTM(ctx, ow, 0), CGContextRotateCTM(ctx, M_PI_2);
@@ -1071,8 +1074,8 @@ static NSData *png(IOSurfaceRef s, double scale) {
     CGContextRelease(ctx);
   }
   NSMutableData *out = [NSMutableData data];
-  CGImageDestinationRef dst = CGImageDestinationCreateWithData((__bridge CFMutableDataRef)out, (__bridge CFStringRef)UTTypePNG.identifier, 1, NULL);
-  CGImageDestinationAddImage(dst, img, NULL);
+  CGImageDestinationRef dst = CGImageDestinationCreateWithData((__bridge CFMutableDataRef)out, (__bridge CFStringRef)(jpeg >= 0 ? UTTypeJPEG : UTTypePNG).identifier, 1, NULL);
+  CGImageDestinationAddImage(dst, img, jpeg >= 0 ? (__bridge CFDictionaryRef) @{(__bridge id)kCGImageDestinationLossyCompressionQuality : @(MIN(1, jpeg))} : NULL);
   CGImageDestinationFinalize(dst);
   CFRelease(dst);
   CGImageRelease(img);
@@ -1080,6 +1083,10 @@ static NSData *png(IOSurfaceRef s, double scale) {
   CGColorSpaceRelease(cs);
   IOSurfaceUnlock(s, kIOSurfaceLockReadOnly, NULL);
   return out;
+}
+
+static NSData *png(IOSurfaceRef s, double scale) {
+  return picture(s, scale, -1);
 }
 
 // ── server ───────────────────────────────────────────────────────────────
@@ -1131,6 +1138,8 @@ static NSDictionary *screenInfo(void) {
   return @{@"w" : @(round(v.width)), @"h" : @(round(v.height)), @"orientation" : @(uiOrientation)};
 }
 
+static void liveTouch(NSString *phase, double nx, double ny);
+
 static void handle(int fd, NSDictionary *r) {
   NSString *op = r[@"op"];
   if ([op isEqualToString:@"hello"]) return reply(fd, @{
@@ -1161,6 +1170,10 @@ static void handle(int fd, NSDictionary *r) {
   }
   if ([op isEqualToString:@"swipe"]) {
     swipe(num(r, @"x1", 0), num(r, @"y1", 0), num(r, @"x2", 0), num(r, @"y2", 0), (int)num(r, @"ms", 150));
+    return reply(fd, @{@"ok" : @YES}, nil);
+  }
+  if ([op isEqualToString:@"touch"]) {
+    liveTouch(r[@"phase"] ?: @"", num(r, @"nx", 0), num(r, @"ny", 0));
     return reply(fd, @{@"ok" : @YES}, nil);
   }
   if ([op isEqualToString:@"text"]) {
@@ -1239,18 +1252,134 @@ static void handle(int fd, NSDictionary *r) {
   reply(fd, @{@"ok" : @NO, @"error" : [NSString stringWithFormat:@"unknown op: %@", op]}, nil);
 }
 
+/** One request at a time across all clients: the translator and HID client are not reentrant. */
+static dispatch_queue_t workQueue(void) {
+  static dispatch_queue_t work;
+  static dispatch_once_t once;
+  dispatch_once(&once, ^{ work = dispatch_queue_create("looktap.work", DISPATCH_QUEUE_SERIAL); });
+  return work;
+}
+
+/** A frame of the stream: its head, then the picture. NO once the client has gone. */
+static BOOL sendFrame(int fd, NSDictionary *head, NSData *body) {
+  NSMutableDictionary *h = [head mutableCopy];
+  h[@"bytes"] = @(body.length);
+  NSMutableData *out = [[NSJSONSerialization dataWithJSONObject:h options:0 error:nil] mutableCopy];
+  [out appendBytes:"\n" length:1];
+  [out appendData:body];
+  const char *p = out.bytes;
+  for (size_t left = out.length; left;) {
+    ssize_t n = write(fd, p, left);
+    if (n <= 0) return NO;
+    p += n, left -= (size_t)n;
+  }
+  return YES;
+}
+
+/**
+ `stream` (looktap live): a JPEG each time the screen changes, at most `fps` a second, until the client hangs up.
+ It runs on its client's own thread, not the work queue, so taps and reads carry on while it does (a swipe would
+ otherwise freeze the picture it is making). Only what isn't safe off that queue goes through it: which surface is
+ the screen, and which way the interface is turned, looked at once a second.
+ */
+static void stream(int fd, NSDictionary *r) {
+  double scale = num(r, @"scale", 0.5), quality = num(r, @"quality", 0.6), fps = MIN(60, MAX(1, num(r, @"fps", 30)));
+  NSObject *guard = [NSObject new];
+  __block IOSurfaceRef surface = NULL;
+  __block BOOL over = NO;
+  void (^look)(void) = ^{
+    @try {
+      lookAtOrientation();
+    } @catch (id e) {
+    }
+    IOSurfaceRef s = mainSurface();
+    @synchronized(guard) {
+      if (over) return;
+      if (s) CFRetain(s);
+      if (surface) CFRelease(surface);
+      surface = s;
+    }
+  };
+  dispatch_sync(workQueue(), look);
+  uint32_t lastSeed = UINT32_MAX;
+  int lastOrientation = 0, sent = 0;
+  double lastSent = 0, lastLook = uptimeMs();
+  for (BOOL open = YES; open;) {
+    @autoreleasepool {
+      double now = uptimeMs();
+      if (now - lastLook > 1000) lastLook = now, dispatch_async(workQueue(), look);
+      IOSurfaceRef s;
+      @synchronized(guard) {
+        s = surface;
+        if (s) CFRetain(s);
+      }
+      uint32_t seed = s ? IOSurfaceGetSeed(s) : lastSeed;
+      // Sent again every 2 s even when nothing moved: that is how a client that went away is noticed.
+      if (s && (seed != lastSeed || uiOrientation != lastOrientation || now - lastSent > 2000)) {
+        BOOL same = seed == lastSeed && uiOrientation == lastOrientation;
+        lastSeed = seed, lastOrientation = uiOrientation, lastSent = now;
+        CGSize v = viewSize();
+        open = sendFrame(fd, @{@"frame" : @(same ? sent : ++sent), @"w" : @(round(v.width)), @"h" : @(round(v.height))}, picture(s, scale, quality));
+      }
+      if (s) CFRelease(s);
+      // The rest of this frame's time, not a whole one more: making the picture took some of it already.
+      double left = 1000 / fps - (uptimeMs() - now);
+      if (left > 1) usleep((useconds_t)(left * 1000));
+    }
+  }
+  @synchronized(guard) {
+    over = YES;
+    if (surface) CFRelease(surface);
+    surface = NULL;
+  }
+}
+
+/**
+ `touch` (looktap live's control): one finger, a phase at a time, so a drag in the browser moves the finger on the
+ screen as it goes. `nx`, `ny`: the point as a share of the screen as it is shown (0…1). A second `down` without an
+ `up` lifts the first.
+ */
+static void liveTouch(NSString *phase, double nx, double ny) {
+  static BOOL down;
+  static double lastX, lastY;
+  CGSize v = viewSize();
+  double x = MIN(v.width - 1, MAX(0, nx * v.width)), y = MIN(v.height - 1, MAX(0, ny * v.height));
+  if ([phase isEqualToString:@"down"]) {
+    if (down) touch(TouchEnd, lastX, lastY);
+    lookAtOrientation();
+    v = viewSize(), x = MIN(v.width - 1, MAX(0, nx * v.width)), y = MIN(v.height - 1, MAX(0, ny * v.height));
+    touch(TouchStart, x, y);
+    hidSync();
+    down = YES;
+  } else if (!down) {
+    return;
+  } else if ([phase isEqualToString:@"move"]) {
+    touch(TouchMove, x, y);
+  } else {
+    // up, or cancel: the simulator's digitizer has no cancel, so the finger lifts where it last was.
+    BOOL up = [phase isEqualToString:@"up"];
+    touch(TouchEnd, up ? x : lastX, up ? y : lastY);
+    hidSync();
+    down = NO;
+    return;
+  }
+  lastX = x, lastY = y;
+}
+
 static void serve(int fd) {
   FILE *in = fdopen(dup(fd), "r");
   char *line = NULL;
   size_t cap = 0;
-  static dispatch_queue_t work;
-  static dispatch_once_t once;
-  dispatch_once(&once, ^{ work = dispatch_queue_create("looktap.work", DISPATCH_QUEUE_SERIAL); });
+  dispatch_queue_t work = workQueue();
   while (getline(&line, &cap, in) > 0) {
     @autoreleasepool {
       NSData *data = [NSData dataWithBytes:line length:strlen(line)];
       NSDictionary *req = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
       if (![req isKindOfClass:NSDictionary.class]) continue;
+      if ([req[@"op"] isEqual:@"stream"]) {
+        stream(fd, req);
+        break; // the client has gone
+      }
       // One request at a time across all clients: the translator and HID client are not reentrant.
       dispatch_sync(work, ^{
         @try {
@@ -1426,8 +1555,125 @@ static int capture(NSString *name, NSString *logPath, NSString *askedPath) {
   return 0;
 }
 
+// ---- `--feed`: the same screen feed as pictures, for `looktap live` ---------------------------------------------
+//
+// A real iPhone on a cable, as video: each frame of the feed that differs from the one before goes to stdout as a
+// JPEG, 4 bytes of length (big-endian) before it, at most `fps` a second and at least one a second (a small change
+// can slip under the comparison, and the reader learns that way that the feed is alive). Problems are a line on
+// stderr starting "error ". It ends when its reader goes away or the phone does.
+
+@interface FeedSender : NSObject <AVCaptureVideoDataOutputSampleBufferDelegate>
+@property(nonatomic) double scale, quality, gap;
+@property(atomic) BOOL gone;
+@end
+
+@implementation FeedSender {
+  NSMutableData *_prev;
+  double _sent;
+  CIContext *_context;
+  CGColorSpaceRef _srgb;
+}
+- (void)captureOutput:(AVCaptureOutput *)output didOutputSampleBuffer:(CMSampleBufferRef)buffer fromConnection:(AVCaptureConnection *)connection {
+  CVPixelBufferRef px = CMSampleBufferGetImageBuffer(buffer);
+  double now = uptimeMs();
+  if (!px || self.gone || now - _sent < self.gap) return;
+  // The same comparison as --capture, but far more willing to call a frame new: for a count of frames a small change
+  // must not count, for a picture it must show (a switch flipping moves a handful of these samples).
+  CVPixelBufferLockBaseAddress(px, kCVPixelBufferLock_ReadOnly);
+  size_t w = CVPixelBufferGetWidthOfPlane(px, 0), h = CVPixelBufferGetHeightOfPlane(px, 0), row = CVPixelBufferGetBytesPerRowOfPlane(px, 0);
+  const uint8_t *base = CVPixelBufferGetBaseAddressOfPlane(px, 0);
+  NSMutableData *cur = [NSMutableData dataWithCapacity:(w / 8 + 1) * (h / 8 + 1)];
+  for (size_t y = 0; y < h; y += 8)
+    for (size_t x = 0; x < w; x += 8) [cur appendBytes:base + y * row + x length:1];
+  CVPixelBufferUnlockBaseAddress(px, kCVPixelBufferLock_ReadOnly);
+  int moved = 0;
+  if (_prev.length == cur.length) {
+    const uint8_t *a = _prev.bytes, *b = cur.bytes;
+    for (NSUInteger i = 0; i < cur.length && moved < 3; i++) moved += abs((int)a[i] - (int)b[i]) > 24;
+  }
+  if (_prev && _prev.length == cur.length && moved < 3 && now - _sent < 1000) return;
+  _prev = cur;
+  _sent = now;
+  if (!_context) _context = [CIContext context], _srgb = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+  CIImage *image = [CIImage imageWithCVPixelBuffer:px];
+  if (self.scale > 0 && self.scale < 1) image = [image imageByApplyingTransform:CGAffineTransformMakeScale(self.scale, self.scale)];
+  NSData *jpeg = [_context JPEGRepresentationOfImage:image colorSpace:_srgb options:@{(__bridge id)kCGImageDestinationLossyCompressionQuality : @(self.quality)}];
+  if (!jpeg.length) return;
+  uint32_t length = htonl((uint32_t)jpeg.length);
+  NSMutableData *out = [NSMutableData dataWithBytes:&length length:4];
+  [out appendData:jpeg];
+  const char *p = out.bytes;
+  for (size_t left = out.length; left;) {
+    ssize_t n = write(STDOUT_FILENO, p, left);
+    if (n <= 0) {
+      self.gone = YES;
+      return;
+    }
+    p += n, left -= (size_t)n;
+  }
+}
+@end
+
+/** The "iOS Device" capture device named `name` (or the only one), waited for up to 20 s: it appears a moment after
+ screen capture is allowed, and only once an earlier capture has let go of it. */
+static AVCaptureDevice *feedDevice(NSString *name) {
+  CMIOObjectPropertyAddress prop = {kCMIOHardwarePropertyAllowScreenCaptureDevices, kCMIOObjectPropertyScopeGlobal, kCMIOObjectPropertyElementMain};
+  UInt32 allow = 1;
+  CMIOObjectSetPropertyData(kCMIOObjectSystemObject, &prop, 0, NULL, sizeof allow, &allow);
+  for (int i = 0; i < 40; i++) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    AVCaptureDeviceType external = AVCaptureDeviceTypeExternalUnknown; // macOS 12–13's name for it
+#pragma clang diagnostic pop
+    if (@available(macOS 14.0, *)) external = AVCaptureDeviceTypeExternal;
+    NSArray *all = [AVCaptureDeviceDiscoverySession discoverySessionWithDeviceTypes:@[ external ] mediaType:AVMediaTypeMuxed
+                                                                            position:AVCaptureDevicePositionUnspecified].devices;
+    NSMutableArray *phones = [NSMutableArray array];
+    for (AVCaptureDevice *d in all)
+      if ([d.modelID isEqualToString:@"iOS Device"]) [phones addObject:d];
+    for (AVCaptureDevice *d in phones)
+      if (!name.length || [d.localizedName isEqualToString:name] || phones.count == 1) return d;
+    [NSRunLoop.currentRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
+  }
+  return nil;
+}
+
+static int feed(NSString *name, double scale, double quality, double fps) {
+  signal(SIGPIPE, SIG_IGN);
+  AVCaptureDevice *device = feedDevice(name);
+  if (!device) {
+    fprintf(stderr, "error no screen feed for %s: it needs a USB cable and an unlocked phone\n", name.UTF8String);
+    return 1;
+  }
+  NSError *error = nil;
+  AVCaptureDeviceInput *input = [AVCaptureDeviceInput deviceInputWithDevice:device error:&error];
+  AVCaptureSession *session = [AVCaptureSession new];
+  if (!input || ![session canAddInput:input]) {
+    fprintf(stderr, "error %s\n", (error.localizedDescription ?: @"the screen feed is in use (QuickTime, or looktap perf --frames)").UTF8String);
+    return 1;
+  }
+  [session addInput:input];
+  AVCaptureVideoDataOutput *output = [AVCaptureVideoDataOutput new];
+  output.videoSettings = @{(id)kCVPixelBufferPixelFormatTypeKey : @(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange)};
+  output.alwaysDiscardsLateVideoFrames = YES; // a picture that is late is no use: the next one is on its way
+  FeedSender *sender = [FeedSender new];
+  sender.scale = scale, sender.quality = quality, sender.gap = 1000 / MIN(60, MAX(1, fps)) - 4;
+  [output setSampleBufferDelegate:sender queue:dispatch_queue_create("looktap.feed", DISPATCH_QUEUE_SERIAL)];
+  [session addOutput:output];
+  [session startRunning];
+  fprintf(stderr, "started\n");
+  while (session.isRunning && device.isConnected && !sender.gone) [NSRunLoop.currentRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
+  [session stopRunning];
+  if (!sender.gone) fprintf(stderr, "error the screen feed ended: the cable came out, or the phone locked\n");
+  return 0;
+}
+
 int main(int argc, char **argv) {
   @autoreleasepool {
+    if (argc > 1 && !strcmp(argv[1], "--feed")) {
+      if (argc < 3) die(@"usage: looktap-sim --feed <device name> [scale] [quality] [fps]");
+      return feed(@(argv[2]), argc > 3 ? atof(argv[3]) : 0.5, argc > 4 ? atof(argv[4]) : 0.6, argc > 5 ? atof(argv[5]) : 30);
+    }
     if (argc > 1 && !strcmp(argv[1], "--capture")) {
       NSString *name = argc > 2 ? @(argv[2]) : @"", *logPath = argc > 3 ? @(argv[3]) : nil, *asked = argc > 4 ? @(argv[4]) : nil;
       if (!logPath || !asked) die(@"usage: looktap-sim --capture <device name> <log> <asked-file>");
@@ -1463,6 +1709,8 @@ int main(int argc, char **argv) {
     });
     dispatch_resume(watch);
 
+    // A stream's client hangs up without a word: the write that finds out must fail, not end the helper.
+    signal(SIGPIPE, SIG_IGN);
     for (;;) {
       int fd = accept(srv, NULL, NULL);
       if (fd < 0) continue;

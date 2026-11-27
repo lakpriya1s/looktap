@@ -2,20 +2,24 @@
 import { createHash } from 'node:crypto';
 import { createInterface } from 'node:readline';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
-import { homedir } from 'node:os';
+import { homedir, networkInterfaces } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 
 import { Android, RECORD_LIMIT_S, adbDevices, overWifi, wifiTwin } from '../lib/android.js';
 import { KEEPER, connect, hasKeeper, installKeeper, pair, removeKeeper, wifi } from '../lib/wifi.js';
 import { Ios, bootedSimulators } from '../lib/ios.js';
-import { IosDevice, physicalDevices } from '../lib/iosdevice.js';
+import { IosDevice, lastTeam, physicalDevices } from '../lib/iosdevice.js';
 import { clock, grepper, setMark, sinceOf, startOf, tail, whichApp } from '../lib/logs.js';
 import { ACTIONS as PERMISSION_ACTIONS } from '../lib/permissions.js';
 import { COMMANDS, KINDS, capabilities, capability, unsupported } from '../lib/capabilities.js';
 import { Recorder, TouchReader, classify, mapper, quote } from '../lib/codegen.js';
 import { AGENTS, PROJECT_DEFAULT, claudePlugin, detectAgents, installSkill, installedVersion, pickAgents, skillsDir, uninstallSkill } from '../lib/agents.js';
 import { boot, shutdown } from '../lib/boot.js';
-import { resizePng } from '../lib/png.js';
+import { decodePng, encodePng, resizePng } from '../lib/png.js';
+import { drawPointer } from '../lib/touches.js';
+import { record as recordActivity, summary as activitySummary } from '../lib/activity.js';
+import { COMPANION, hasCompanion, installCompanion, removeCompanion } from '../lib/companion.js';
+import { isLoopback, lanAddress, serveLive } from '../lib/live.js';
 import { formatDevice, inventory, lastDevice, rememberDevice } from '../lib/devices.js';
 import { ORIENTATIONS, coordinates, foldPosition, pushPayload, rotation, textSize } from '../lib/conditions.js';
 import { LOGBOX, appGone, center, logBoxAround, valueBeside, coverage, expectOn, fillCode, poller, tapPoint, forgetFront, formatCoverage, formatRow, isRef, lastFront, logBoxToast, rememberFront, onlyStatusBar, resolveRef, saveRefs, scrollTo, settle, signature, sliding, stillScreen, visibleRows, waitFor } from '../lib/screen.js';
@@ -53,6 +57,12 @@ setup & info
                                   it's ready. Default: a window (LOOKTAP_HEADLESS=1 or "headless": true in config
                                   for headless). On a running simulator --window opens its window
   shutdown [name]                 shut down a simulator or emulator
+  live [--port n] [--host addr] [--control]
+                                  every running simulator, emulator and connected phone, live in one web page
+                                  (prints its address; Ctrl+C stops it). The page can drive them too: click to
+                                  tap, drag to swipe, type. A real iPhone: video on a cable, screenshots (about
+                                  5 a second) on Wi-Fi. This computer only, unless --host shares it (0.0.0.0:
+                                  your network), which is watch-only without --control
   wifi [--tcpip|--always|--off]   Android phone on USB: connect it over Wi-Fi too, so the cable can come out
                                   (-d still takes its USB serial). Turns on Wireless debugging (Android 11+),
                                   else adb tcpip 5555 (--tcpip: always). Both go off when the phone restarts.
@@ -95,6 +105,8 @@ look
                                   screenshot → <out>/<name>.png; --scale 0.5 = half size, fewer image tokens;
                                   --points: one pixel per iOS point / Android dp, so a spot in the image is
                                   tapxy's x y as is (Android emulators bypass FLAG_SECURE; --plain doesn't)
+  shot <name> --mark <label|@ref|x,y>
+                                  the same, with a pointer drawn where a tap on it would land (any device)
   burst <dir> <seconds>           a frame whenever the screen changes; duplicates removed
   record start [name] | stop      screen video → <out>/<name>.mp4, in the background until stopped
                                   (Android: at most 3 min, and FLAG_SECURE screens record black)
@@ -206,6 +218,13 @@ conditions
   textsize [size]                 Dynamic Type / font scale: xs s m l xl xxl xxxl ax1…ax5 (or the iOS
                                   names, e.g. accessibility-large); no argument prints the current one
   statusbar clean|live            9:41, full battery and signal, for screenshots
+  touches [on|off]                a pointer where each touch lands, live on the device and in shot/record:
+                                  Android: looktap's touches, in every app · iOS simulator: every app started
+                                  after it (the home screen restarts once) · a real iPhone: only an app built
+                                  with LooktapTouches.m. No argument prints the current state
+  runner [install|remove]         Android: the looktap runner app, a screen on the phone showing what looktap
+                                  does there, with a switch to pause it, as a real iPhone's runner has
+                                  (installs com.looktap.app; opt-in). No argument: installed, and paused?
   network [offline|online]        Android: airplane mode; no argument prints the current state (the iOS
                                   simulator shares the Mac's network)
   push <app> <payload>            iOS: a remote notification. Payload: a .json file, '{json}', or plain
@@ -263,7 +282,7 @@ Never burst or record a sign-in screen: frames capture typed credentials.`;
 const ALIASES = { terminate: 'stop', screenshot: 'shot' };
 
 /** Commands that run without a device. */
-const HOST_COMMANDS = ['help', 'doctor', 'skill', 'mcp', 'devices', 'boot', 'wifi', 'pair', 'connect', 'shutdown', 'who', 'release'];
+const HOST_COMMANDS = ['help', 'doctor', 'skill', 'mcp', 'devices', 'boot', 'wifi', 'pair', 'connect', 'shutdown', 'who', 'release', 'live'];
 
 // ── a chain of commands that went off course ───────────────────────────────
 // An agent often sends several looktap commands in one shell call, one per line or joined with ";". The shell runs
@@ -313,6 +332,33 @@ function lookedAgain(d, cmd) {
 }
 
 /** A command looktap doesn't have: say so before looking for a device, with the one probably meant. */
+/**
+ `live [--port n] [--host addr] [--control]`: every running device's screen in a web page, until Ctrl+C. On this
+ computer only by default, where the page may also drive the devices; shared with --host, it only watches unless
+ --control says otherwise, because whoever can open the page then holds the phones.
+ */
+async function live(opts) {
+  const host = opts.host || '127.0.0.1';
+  const port = opts.port == null ? 0 : Number(opts.port);
+  if (!Number.isInteger(port) || port < 0 || port > 65535) throw new UsageError('--port takes a port number, e.g. --port 4470');
+  const local = isLoopback(host);
+  const control = local || opts.flags.has('control');
+  const team = process.env.LOOKTAP_TEAM || loadConfig().ios?.team || null;
+  const server = await serveLive({ host, port, control, team, log: (m) => console.error(m) }).catch((e) => {
+    throw e.code === 'EADDRNOTAVAIL' || e.code === 'ENOTFOUND' ? new UsageError(`--host ${host} isn't an address of this computer (0.0.0.0 is all of them)`) : e;
+  });
+  console.log(`looktap live: ${server.url}`);
+  const lan = !local && lanAddress(networkInterfaces());
+  if (lan && host !== lan) console.log(`on your network: http://${lan}:${server.port}/`);
+  console.error(
+    local ? 'looktap: this computer only. The page can drive the devices once its Control switch is on. Ctrl+C stops it'
+    : control ? 'looktap: warning: anyone who can open that address sees these screens, what is typed on them included, and can drive the devices (--control). Ctrl+C stops it'
+    : 'looktap: warning: anyone who can open that address sees these screens, what is typed on them included. Watching only: --control would let them drive. Ctrl+C stops it',
+  );
+  await new Promise((stop) => (process.once('SIGINT', stop), process.once('SIGTERM', stop)));
+  await server.close();
+}
+
 function knownCommand(cmd) {
   const known = [...HOST_COMMANDS, ...COMMANDS];
   if (known.includes(cmd)) return;
@@ -364,6 +410,9 @@ function parse(argv) {
     else if (a === '--for') opts.for = val();
     else if (a === '--agents') opts.agents = val();
     else if (a === '--until') opts.until = val();
+    else if (a === '--mark') opts.mark = val();
+    else if (a === '--port') opts.port = val();
+    else if (a === '--host') opts.host = val();
     else if (a === '--wait-unlock') opts.waitUnlock = val();
     else if (a === '--duration') opts.duration = val();
     else if (a === '--from') opts.from = val();
@@ -380,7 +429,7 @@ function parse(argv) {
     else if (a === '--busy-wait') opts.busyWait = val();
     else if (a === '--tag') opts.tag = val();
     else if (a === '--buffer') opts.buffer = val();
-    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window', '--paths', '--frames', '--time', '--resume', '--project', '--uninstall', '--list', '--settle', '--points', '--covered', '--tcpip', '--always', '--off', '--until-gone', '--follow', '--background', '--from-current', '--reset', '--restore', '--yes', '--force', '--fix', '--clear'].includes(a)) opts.flags.add(a.slice(2));
+    else if (['--all', '--plain', '--exact', '--ls', '--json', '--gone', '--up', '--install', '--errors', '--grant', '--config', '--headless', '--window', '--paths', '--frames', '--time', '--resume', '--project', '--uninstall', '--list', '--settle', '--points', '--covered', '--tcpip', '--always', '--off', '--until-gone', '--follow', '--background', '--from-current', '--reset', '--restore', '--yes', '--force', '--fix', '--clear', '--control'].includes(a)) opts.flags.add(a.slice(2));
     else if (a === '--') pos.push(...argv.slice(i + 1)), (i = argv.length);
     // An option looktap doesn't know is a mistake, not an argument: dropped quietly, a guessed flag changes nothing
     // and nobody hears of it. Negative numbers (-0.1276) and a lone - stay arguments.
@@ -456,7 +505,7 @@ function pickDriver(opts, config) {
   const wait = 1000 * Number(opts.wait ?? process.env.LOOKTAP_WAIT ?? config.wait ?? 3);
   if (!(wait >= 0)) throw new UsageError('--wait takes seconds, e.g. --wait 5');
   const d =
-    platform === 'ios' && physicalUdid(device) ? new IosDevice(device, { out, app, wait, team: process.env.LOOKTAP_TEAM || config.ios?.team })
+    platform === 'ios' && physicalUdid(device) ? new IosDevice(device, { out, app, wait, team: process.env.LOOKTAP_TEAM || lastTeam(device) || config.ios?.team })
     : platform === 'ios' ? new Ios(device, { out, app, wait })
     : new Android(device, { out, app, wait });
   const unlock = Number(opts.waitUnlock ?? process.env.LOOKTAP_WAIT_UNLOCK ?? config.waitUnlock ?? 0);
@@ -577,13 +626,14 @@ async function main() {
   if (cmd === 'shutdown') return console.log(shutDown(await shutdown(args.join(' ') || opts.device || null, { platform: opts.platform })));
   if (cmd === 'who') return console.log(whoLines(args[0] || opts.device || null).join('\n'));
   if (cmd === 'release') return console.log(await release(args[0] || opts.device, { force: opts.flags.has('force'), yes: opts.flags.has('yes') }));
+  if (cmd === 'live') return live(opts);
   knownCommand(cmd);
 
   const config = loadConfig();
   const d = pickDriver(opts, config);
   try {
     afterFailure(d, cmd);
-    const r = await drive(d, cmd, args, opts).catch((e) => {
+    const r = await logged(d, cmd, args, 'cli', () => drive(d, cmd, args, opts)).catch((e) => {
       failedIn(d, cmd, args, e);
       throw e;
     });
@@ -598,6 +648,62 @@ async function main() {
 }
 
 const deviceId = (d) => d.udid || d.serial;
+
+/**
+ Run a device command and note it in the activity log (lib/activity.js), which `looktap live` shows, and on an
+ Android phone with the looktap runner app, in its list too. An action on a phone paused from that app is refused first.
+ */
+async function logged(d, cmd, args, via, fn) {
+  const t0 = Date.now();
+  const done = async (ok, error) => {
+    const touch = await d.touchedShares?.().catch(() => null);
+    recordActivity({ device: deviceId(d), cmd, args, ok, ms: Date.now() - t0, error, via, touch });
+    return d.noteActivity?.({ what: activitySummary(cmd, args), ok }, ACTIONS.has(cmd));
+  };
+  try {
+    if (ACTIONS.has(cmd)) await d.assertAllowed?.();
+    const r = await fn();
+    await done(true);
+    return r;
+  } catch (e) {
+    await done(false, e.message);
+    throw e;
+  }
+}
+
+/**
+ `runner [install|remove]`: looktap runner for Android, a screen on the phone showing what looktap does there with a
+ switch to pause it: what a real iPhone's runner app shows. Opt-in: nothing else looktap does installs an app on
+ Android (its helper runs through adb).
+ */
+async function runnerCommand(d, args) {
+  if (!(d instanceof Android)) unsupported(d.kind, 'runner');
+  const id = d.serial;
+  if (args[0] === 'install') {
+    const apk = await installCompanion(id, { say: (m) => console.error(`looktap: ${m}`) });
+    // Its helper, for it to talk to, with touches on (the app's switch starts on; whoever holds the phone can turn it
+    // off), and the app itself on the screen, for them.
+    await d.showTouches('on').catch(() => d.helper());
+    d.adb(['shell', 'am', 'start', '-n', `${COMPANION}/.MainActivity`], { allowFail: true });
+    console.log(`installed looktap runner (${COMPANION}) on ${id}, from ${apk}, and opened it: it shows what looktap does on the phone, with a switch to pause it. looktap runner remove takes it off`);
+    return;
+  }
+  if (args[0] === 'remove') {
+    const had = removeCompanion(id);
+    // A helper paused from the app would stay paused with nothing left to unpause it: it starts again unpaused.
+    await (await d.helper())?.call('stop').catch(() => {});
+    return console.log(had ? `removed looktap runner from ${id}` : `looktap runner isn't on ${id}`);
+  }
+  if (args[0]) throw new UsageError('usage: looktap runner [install|remove]');
+  if (!hasCompanion(id)) return console.log(`not installed on ${id}. looktap runner install puts it on: a screen showing what looktap does on the phone, with a switch to pause it`);
+  let paused = false;
+  try {
+    await d.assertAllowed();
+  } catch {
+    paused = true;
+  }
+  console.log(`installed on ${id}${paused ? ': paused (Allow control is off on the phone)' : ''}`);
+}
 
 const ALWAYS_HINT = 'The phone turns Wireless debugging off when it restarts: looktap wifi --always keeps it on (installs looktap\'s small Wi-Fi keeper app; looktap wifi --off removes it)';
 
@@ -1257,6 +1363,28 @@ function markLogs(d, name = 'mark', opts) {
  `shot --points`: one pixel per iOS point or Android dp, so a spot in the picture is tapxy's x y as it is. Android knows
  its density up front; iOS is shot at full size and shrunk to the screen's width in points.
  */
+/**
+ `shot --mark <label|@ref|x,y>`: the point to draw the pointer at, in points/dp, with the screen's size: a label or
+ @ref is the point a tap on it would land (off-centre when something covers its middle), x,y is that point.
+ */
+async function markPoint(d, what, opts) {
+  const xy = /^(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)$/.exec(what);
+  if (xy) return { at: [Number(xy[1]), Number(xy[2])], what: `${xy[1]},${xy[2]}`, screen: (await d.snapshot()).screen };
+  const { e, snap } = await target(d, what, opts);
+  const at = tapPoint(snap.elements, e).at;
+  return { at, what: `${JSON.stringify(e.label || e.type)} at ${at.join(',')}`, screen: snap.screen };
+}
+
+/** Draw the pointer (the one `touches on` shows) onto a saved screenshot, at a point given in points/dp. */
+function markShot(path, { at, what, screen }) {
+  const img = decodePng(readFileSync(path));
+  if (!img || img.channels < 3 || !(screen?.w > 0)) throw new Error(`couldn't mark ${path}: the screenshot isn't an RGB PNG, or the screen's size is unknown`);
+  const scale = img.width / screen.w; // the picture's px per point, whatever --scale or --points made it
+  drawPointer(img.pixels, img.width, img.height, img.channels, at[0] * scale, at[1] * scale, scale);
+  writeFileSync(path, encodePng(img.width, img.height, img.pixels, img.channels));
+  console.log(`marked ${what}`);
+}
+
 async function shotInPoints(d, name, opts) {
   const path = shotPath(d.out, name);
   if (d.serial) await d.shot(name, { plain: opts.flags.has('plain'), scale: Math.min(1, 1 / d.scale) });
@@ -1378,13 +1506,17 @@ async function act(d, cmd, args, opts) {
       return console.log(`found ${JSON.stringify(hit.label)} at ${center(hit).join(',')}`);
     }
     case 'shot': {
-      need(1, 'shot <name> [--scale f] [--points]');
+      need(1, 'shot <name> [--scale f] [--points] [--mark <label|@ref|x,y>]');
       if (opts.scale != null && !(opts.scale > 0 && opts.scale <= 1)) throw new UsageError('--scale takes a factor between 0 and 1, e.g. --scale 0.5');
+      // --mark: where a tap on it would land, found before the picture is taken, so both are of the same screen.
+      const mark = opts.mark != null ? await markPoint(d, opts.mark, opts) : null;
       if (opts.flags.has('points')) {
         if (opts.scale != null) throw new UsageError('shot takes --scale or --points, not both');
-        return shotInPoints(d, args[0], opts);
+        await shotInPoints(d, args[0], opts);
+        return mark && markShot(shotPath(d.out, args[0]), mark);
       }
       await d.shot(args[0], { plain: opts.flags.has('plain'), scale: opts.scale ?? 1 });
+      if (mark) markShot(shotPath(d.out, args[0]), mark);
       return shotSize(d, shotPath(d.out, args[0]), opts.scale ?? 1);
     }
     case 'burst': return burst(d, args[0], args[1]);
@@ -1636,6 +1768,14 @@ async function act(d, cmd, args, opts) {
       if (!['clean', 'live'].includes(args[0])) throw new UsageError('usage: looktap statusbar clean|live');
       await d.statusBar(args[0] === 'clean');
       return console.log(args[0] === 'clean' ? 'status bar: 9:41, full battery and signal' : 'status bar: live');
+    }
+    case 'runner': return runnerCommand(d, args);
+    case 'touches': {
+      if (args.length > 1 || (args[0] && !['on', 'off'].includes(args[0]))) throw new UsageError('usage: looktap touches [on|off]');
+      const r = await d.showTouches(args[0]);
+      console.log(`touches: ${r.on ? 'on' : 'off'}`);
+      for (const note of r.notes) console.error(`looktap: note: ${note}`);
+      return;
     }
     case 'network': {
       // An app id: how much it sent and received, and in how many bursts.
@@ -2031,13 +2171,14 @@ async function mcp(outer) {
       else if (cmd === 'boot') capture(booted(await boot(args.join(' ') || null, { platform: opts.platform, ...display(opts, config) })));
       else if (cmd === 'shutdown') capture(shutDown(await shutdown(args.join(' ') || opts.device || null, { platform: opts.platform })));
       else if (['mcp', 'skill'].includes(cmd)) throw new UsageError(`${cmd} isn't available over MCP`);
+      else if (cmd === 'live') throw new UsageError('live runs until it is stopped, so it needs a terminal of its own: ask the user to run looktap live there');
       else if (cmd === 'who') capture(whoLines(args[0] || opts.device || where.device || null).join('\n'));
       else if (cmd === 'release') capture(await release(args[0] || opts.device || where.device, { force: opts.flags.has('force'), yes: opts.flags.has('yes') }));
       else {
         knownCommand(cmd);
         const d = driverFor({ platform: opts.platform || where.platform, device: opts.device || where.device });
         const o = { ...base, ...opts, wait: opts.wait ?? base.wait, flags: opts.flags };
-        await drive(d, cmd, args, o).catch(async (e) => {
+        await logged(d, cmd, args, 'mcp', () => drive(d, cmd, args, o)).catch(async (e) => {
           await screenOnFailure(d, cmd, e, o);
           throw e;
         });

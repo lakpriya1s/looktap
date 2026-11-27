@@ -224,8 +224,9 @@ export const SCENES = [
     kicker: '06 · Capture',
     title: 'Screenshots, bursts and video',
     body: `<p><code>shot</code> saves a PNG and prints its path: an agent opens it only when layout or colour matters. <code>--scale 0.5</code> halves the image tokens. On Android emulators it captures <code>FLAG_SECURE</code> screens too.</p>
-<p><code>burst</code> keeps a frame each time the screen changes, to catch a spinner or a toast. <code>record start</code> … <code>record stop</code> saves an MP4 of a whole flow.</p>`,
-    covers: ['shot', 'burst', 'record'],
+<p><code>burst</code> keeps a frame each time the screen changes, to catch a spinner or a toast. <code>record start</code> … <code>record stop</code> saves an MP4 of a whole flow.</p>
+<p><code>touches on</code> draws a pointer where each touch lands, on the device itself, so the video shows what was tapped and swiped. <code>shot --mark</code> draws the same pointer on a screenshot, where a tap on that label would land.</p>`,
+    covers: ['shot', 'burst', 'record', 'touches'],
     start: (p) => p.show('home'),
     beats: [
       {
@@ -235,6 +236,7 @@ export const SCENES = [
           return ['shots/home.png'];
         },
       },
+      { cmd: 'looktap touches on', run: async () => ['touches: on'] },
       {
         cmd: 'looktap record start checkout',
         run: async (p) => {
@@ -610,8 +612,9 @@ export const SCENES = [
     kicker: '14 · Setup',
     title: 'Nothing to install on simulators',
     body: `<p>No server to run and no npm dependencies. looktap's own small helpers start on first use: a macOS helper that speaks to the simulator through Apple's frameworks, and a 10 KB Android helper run with <code>app_process</code>. A real iPhone gets a small XCUITest runner, built and signed with your own Apple ID on first use.</p>
+<p><code>live</code> puts every running device's screen in one web page as it happens, where you can watch an agent work on all of them, and drive them yourself.</p>
 <p><code>boot</code> starts a simulator or emulator by name and waits until it's ready; <code>shutdown</code> stops it. A stuck adb link fails at once with the layer that failed, and <code>doctor -d</code> walks through it; <code>who</code> shows which agents and log captures are using a device, and <code>release</code> clears a dead one's hold. <code>wifi</code> takes an Android phone off its cable, <code>pair</code> connects one that never had one, and <code>connect</code> reaches a Wear OS watch by the address its debugging screen shows, and an Apple Watch simulator boots and takes the same commands as an iPhone one. Ready for the first command in under a second, against 8–29 s for mobile-mcp, Maestro and Appium.</p>`,
-    covers: ['doctor', 'devices', 'boot', 'shutdown', 'wifi', 'pair', 'connect', 'setup', 'teardown', 'who', 'release', 'reverse', 'metro'],
+    covers: ['doctor', 'devices', 'boot', 'shutdown', 'wifi', 'pair', 'connect', 'setup', 'teardown', 'who', 'release', 'reverse', 'metro', 'live', 'runner'],
     start: (p) => p.show('springboard'),
     beats: [
       {
