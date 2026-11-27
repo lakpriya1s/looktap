@@ -76,6 +76,8 @@ code, so the steps that worked with the agent run on their own afterwards:
 | 🧪 | **Tests in CI.** `expect "Welcome"`, `expect "Email" = sam@example.com`, `expect "Error" --gone` check the screen. `test flows/` runs flow files as tests, one line per flow, and a failure leaves its screen, screenshot, error logs and crashes behind. `--junit` for CI reports. On Android, `codegen` records a flow while you use the phone |
 | 📸 | **Screenshots.** `shot` saves a PNG and prints its path, with `--scale 0.5` for fewer image tokens. On Android emulators it also captures `FLAG_SECURE` screens |
 | 🎞️ | **Burst capture and video.** `burst` saves a frame each time the screen changes, to catch spinners, toasts and transitions. `record start` … `record stop` saves an MP4 of everything in between |
+| 🖥️ | **Every device live in your browser.** `looktap live` opens one web page with every running simulator, emulator and connected phone on it, each in a phone's frame, as it happens: watch an agent work on several devices at once. Switch on Control and the page drives them too: click to tap, drag to swipe, type |
+| 👆 | **A pointer where it taps.** `touches on` draws a pointer on the device wherever a touch lands, with a trail behind a swipe and a glow inside the screen's edge while it's driving, so a recording (or someone watching) sees what was tapped. `shot --mark "Sign in"` draws the same pointer on a screenshot. Nothing is installed for it |
 | 🪵 | **Logs.** `logs` shows the app's log since your last look. `--errors` and `--grep` narrow it, and on iOS Apple-framework chatter is filtered out |
 | ⏱️ | **Performance.** `perf` reads the app's CPU, memory and threads, once or each second with `--for 10s`; `perf --frames` adds frames, jank and frame-time percentiles (on iOS, from the screen itself). `launch --time` times a cold start until the first screen settles |
 | 💥 | **Crashes.** `crashes` reads iOS crash reports (exception, reason, top frames) and Android crashes, ANRs and **low-memory kills**, so "the app vanished" always comes with a reason |
@@ -313,6 +315,24 @@ device is restarted. While the device is locked, commands that need the screen s
 config, `LOOKTAP_WAIT_UNLOCK=60`) waits up to that many seconds for someone to unlock it instead, then runs the
 command; useful in a long flow, where the phone locks itself after a while. A runner can lose its permission to drive the screen while it keeps running (seen after the
 device sat idle); looktap then starts a fresh one, once, and carries on.
+
+#### The runner app on the phone
+
+The runner shows up on the home screen as *looktap runner*. Open it and it says
+what it is and how it's doing: which Mac is connected and how (USB or Wi-Fi), the last thing it did, how many
+actions and screen reads this session, when its build stops working and which team signed it, and its recent actions
+(typed text appears only as a character count). The **Allow control** switch stops looktap acting on the phone:
+while it's off, looktap can still read the screen and take screenshots, but taps, typing, swipes, launches and
+links are refused with "paused on the iPhone", until someone turns it back on on the phone. **Stop the runner**
+ends it; the next looktap command starts it again. Its **Show touches** switch is greyed out: iOS lets no app draw
+over another (see [touches](#show-where-it-taps-touches)).
+
+**On an Android phone** looktap needs no app, but the same screen is there if you want it:
+`looktap runner install` puts *looktap runner* (`com.looktap.app`, Android 10+) on the phone and opens it. Its
+**Allow control** switch pauses looktap the same way ("paused on the phone"), and **Show touches** turns the
+[pointer](#show-where-it-taps-touches) on and off for every app, in step with `looktap touches on|off` (it starts on).
+It talks only to looktap's helper on the same phone, over the phone's own loopback, and the helper answers no other
+app. `looktap runner remove` takes it off.
 
 #### How looktap reaches the phone
 
@@ -627,6 +647,118 @@ looktap record stop                     # prints the path and the length
 - **Android** records with the device's `screenrecord`: at most 3 minutes, and `FLAG_SECURE` screens come out
   black.
 - **iOS** records with `simctl io recordVideo`. A recording started in landscape is marked to play turned.
+
+### Show where it taps (`touches`)
+
+A recording of an agent's run shows screens changing with no sign of what was touched. `touches on` draws a pointer
+on the device wherever a touch lands: a dot while the finger is down, a fading trail behind a swipe, two dots for a
+pinch, and a ring that lingers for a moment after a quick tap. While it's touching, the inside edge of the screen
+glows in looktap's accent colour, and fades about a second after the last touch, so a glance tells you looktap is
+driving.
+
+```bash
+looktap touches on                      # touches: on
+looktap record start checkout
+looktap tap "Add to cart"               # the video shows the pointer on the button
+looktap swipe 200 600 200 300
+looktap record stop
+looktap touches off
+```
+
+The pointer is on the device's own screen, so `record`, `shot`, `burst` and a person watching all see it. It stays
+out of the app's way: it takes no touches and isn't in what `ls` reads. Nothing is installed.
+
+| Device | What shows the pointer | How |
+|---|---|---|
+| Android emulator or phone | looktap's touches, in every app and on the home screen | looktap's helper draws on a display layer of its own (Android 10+). It's there only while a pointer is on screen |
+| iOS simulator | Every app started after `touches on`, and the home screen and system alerts. A mouse click in the Simulator window shows too | A small library is loaded into the simulator's apps and draws inside each one. The home screen restarts once so it has it, which closes the apps; an app already running needs `looktap launch` again |
+| Real iPhone or iPad | Only your own app, built with one extra file | iOS lets nothing draw over another app or load into one. Add `native/ios-touches/LooktapTouches.m` (`looktap touches on` prints its path) to your app's target for Debug builds; it draws nothing until `looktap launch` starts the app with touches on |
+
+- **Android draws looktap's own touches**, not a person's finger: Developer options → Show taps does that.
+- **`touches off` takes effect at once.** On a simulator, restarting it switches touches off too.
+- **React Native and Expo apps** take `LooktapTouches.m` like any Objective-C file: add it to the app target in
+  Xcode. It needs no bridging header and no setup call.
+- **On a screenshot, any device:** `looktap shot step-2 --mark "Sign in"` draws the pointer where a tap on that
+  label would land (or `--mark @3`, `--mark 180,420`). This is the one way to show a touch in an app you don't
+  build on a real iPhone.
+
+### Watch every device in your browser (`live`)
+
+```bash
+looktap live
+# looktap live: http://127.0.0.1:4470/
+```
+
+Open that address. Every running simulator, emulator and connected phone is on one canvas, each in a
+phone's frame, showing its screen as it changes. Run your agent or your flows in another terminal and watch all the
+devices at once. The chips along the top take a device off the canvas or put it back, and the zoom fits them to the
+window. A device that starts later appears by itself, and with [`touches on`](#show-where-it-taps-touches) the
+pointer and the glow show here too.
+
+**Control.** Switch on **Control** in the page and it drives the devices:
+
+| In the page | On the device |
+|---|---|
+| Click | Tap |
+| Click and hold | Long press |
+| Drag | The finger moves as the mouse does: swipe, scroll, drag a slider |
+| Mouse wheel or trackpad scroll | Scrolls |
+| Typing, Enter, Backspace, Tab, Escape, paste | Typed into the device you last touched |
+| Home and Back under each phone | Home, and Android's Back |
+
+With [`touches on`](#show-where-it-taps-touches), your clicks and drags show the pointer on the device but not the
+glow: the glow is what says an agent is driving. A real iPhone can't draw either, so the page draws them over its
+picture when an agent taps, presses or swipes it (looktap notes where each touch landed in its activity log).
+
+While the page is touching a device it holds that device the way a looktap command does, so it and an agent don't
+both act at once: if an agent is mid-command, the page says who has the device and the touch is dropped, and the
+other way round. It lets go two seconds after your last action.
+
+| Device | How it's shown | Notes |
+|---|---|---|
+| Android emulator or phone | The device's own video encoder, passed through and decoded by the browser | Smooth (the phone's frame rate). Needs a browser with WebCodecs: current Chrome, Edge or Safari. Screens an app marks secure are black, as in any recording |
+| iOS simulator | A picture each time the screen changes, from looktap's helper | Up to 30 frames a second, at half resolution |
+| Real iPhone or iPad on a USB cable | Video: the phone's screen feed, the one QuickTime uses | Up to 30 frames a second. The phone must be unlocked, and nothing else may be using the feed (QuickTime, `perf --frames`); while it isn't available the phone is shown as on Wi-Fi |
+| Real iPhone or iPad on Wi-Fi | Screenshots through looktap's runner | About 5 a second: iOS gives the Mac no video of a phone's screen over the network. Plug it in for video |
+
+On a real iPhone, a tap, long press or swipe is sent when you release the mouse, not as you drag, and there is no
+Back button (iOS has none). The first time, the runner is built and signed, as for any looktap command on one.
+
+**Under each device:**
+
+- **Screenshot** saves the screen at full size, as `looktap shot` takes it (not the stream's smaller frames).
+  **Record** saves what the page shows of that device as a video (WebM or MP4, as the browser records), until you
+  click Stop. Both work while you only watch.
+- With Control on: **Rotate**, **Dark** and **Light**, **Text size**, **Touches** (the [pointer](#show-where-it-taps-touches))
+  and **Open link** (a URL or your app's deep link). They are the looktap commands of the same names, so a device
+  shows only those it can do: a real iPhone has no text size or touches switch. What the device answered shows
+  under it. When an Android device turns (by these buttons, an agent or the app), its stream starts again at the new
+  shape.
+- Under the name: frames a second, the picture's size, the data rate, and how far the page is behind this computer
+  (the time from a frame reaching the Mac to the page drawing it; the device's own delay isn't in it). Then the
+  last looktap command on that device, from anywhere, and how long ago.
+- **Details** opens how the device is doing, read every 10 s while open: battery (level, charging, temperature),
+  heat (Android's thermal status), free storage, and the app in front with its CPU and memory (Android and the
+  simulator; on a real iPhone those come from Instruments, so use `looktap perf`). For a real iPhone, also when its
+  runner's build stops working, and whether it was paused on the phone.
+
+**Start and shut down simulators and emulators** from the page, with Control on: the **Start** picker in the top
+bar lists the iOS simulators and Android emulators that aren't running, and starts the one you pick headless (you
+watch it here); its tile appears once it's up. **Shut down** under a simulator or emulator stops it after a second
+click. If an agent is using it at that moment, the page says who and leaves it running. Real phones have neither.
+
+**Activity** (top right) lists every looktap command as it runs, from any terminal, agent, MCP client or the page
+itself, with the device, how long it took, and why it failed when it did. looktap keeps them in
+`~/.looktap/activity.jsonl` (at most 512 KB: it drops its older half past that). Typed text (`type`, `paste`,
+`fill`, `code`) is written only as its length, never the text.
+
+- **It serves this computer only.** `--host 0.0.0.0` shares the page with your network, and prints the address to
+  give people. Shared, it only watches; add `--control` to let viewers drive. Anyone who can open the page sees the
+  screens, what is typed on them included, so don't share it while signing in.
+- **`--port`** picks the port; without it, the first free one from 4470.
+- It needs a terminal of its own (it runs until Ctrl+C), so it isn't available over MCP.
+- **Nothing is saved** unless you click Screenshot or Record. Frames go from the device to the page and are gone:
+  none is written to disk, on the Mac or the device.
 
 ### Start from a clean state: install, reset, permissions
 
@@ -1072,6 +1204,7 @@ to settle unless asked (`--ls`).
 | `looktap expect <label\|@ref> [= value] [--gone] [--exact]` | Checks it's on screen, with `= value` that its value is exactly that, or with `--gone` that it isn't. Matches like `wait` (`--exact`: the whole label only). Waits up to `--wait` (3 s) for it to come true. Exits 1 with what's there instead: `expect failed: "Email" is "sam@example.com", expected "kim@example.com"` |
 | `looktap scrollto <label> [--up]` | Swipes until the element is fully on screen. Each swipe holds still before lifting, so the list stops where it was dragged instead of coasting. With the keyboard up it swipes above it, and stops with a message if the keyboard leaves no room. Fails at the end of the list, or after 15 swipes |
 | `looktap shot <name> [--plain] [--scale f] [--points]` | Saves `<out>/<name>.png` (or the absolute path given) and prints its path. On stderr, how the image maps to the screen: `216x384 px = 360x640 dp: tapxy x y = image x y × 1.667`. `--points` saves it at one pixel per iOS point or Android dp, so a spot picked in the image is `tapxy`'s `x y` as it is, with no scale maths |
+| `looktap shot <name> --mark <label\|@ref\|x,y>` | The same screenshot with a pointer drawn where a tap on that label or `@ref` would land, or at the point `x,y`. Works on every device, with `--scale` and `--points` too |
 | `looktap burst <dir> <seconds>` | A frame each time the screen changes. Only distinct frames are kept |
 | `looktap record start [name]` · `record stop` | An MP4 of everything in between, saved to `<out>/<name>.mp4`; `stop` prints the path and the length. Android: at most 3 minutes, `FLAG_SECURE` screens black |
 | **Act** (add `--ls` to print the settled screen afterwards) | |
@@ -1126,6 +1259,7 @@ to settle unless asked (`--ls`).
 | `looktap appearance [dark\|light]` | Dark mode. Without an argument, prints the current mode. Android: says when the app in front restarted for the change (refs are then stale) |
 | `looktap textsize [size]` | Dynamic Type (iOS) / font scale (Android): `xs s m l xl xxl xxxl ax1…ax5`, or iOS names such as `accessibility-large`. Without an argument, prints the current size. Android: says when the app in front restarted for the change (refs are then stale) |
 | `looktap statusbar clean\|live` | A screenshot-clean status bar (9:41, full battery and Wi-Fi), or back to live values |
+| `looktap touches [on\|off]` | A pointer where each touch lands, on the device itself, so `shot`, `record` and anyone watching see it; a swipe leaves a fading trail, and the screen's inside edge glows while looktap is touching it. Android: looktap's touches, in every app. iOS simulator: every app started after it, and the home screen (restarted once). A real iPhone: only an app built with `LooktapTouches.m`. No argument prints the current state. See [Show where it taps](#show-where-it-taps-touches) |
 | `looktap network [offline\|online]` | Android only: airplane mode on or off, waiting until the device has lost (or regained) its connection. Without an argument, prints the current state |
 | `looktap push <app> <payload>` | iOS: a remote notification. The payload can be a `.json` file, inline JSON, or plain text for an alert |
 | `looktap notifications [app] [--until <text>] [--all] [--json]` | What Notification Center (iOS) or the notification shade (Android) holds, newest first: app, title, body (iOS simulator: the push payload too). `--until` waits until one has the text (up to `--wait`, default 30 s). A real iPhone is read off its screen, with Notification Center pulled down for a moment. `--all`: ongoing ones too |
@@ -1140,6 +1274,8 @@ to settle unless asked (`--ls`).
 | `looktap devices [--all] [--json]` | What's running or connected, and what each is: simulator, emulator (with its AVD name) or real device (model, OS version, `Wear OS` for a watch, USB or Wi-Fi, and `locked` while its lock screen is up), and whether it has a window or runs headless. An Android phone on both USB and Wi-Fi is one row (`USB + Wi-Fi`), and commands drive it over USB; `-d` with its Wi-Fi id still picks Wi-Fi. A phone that's connected but not ready is listed with what to do (accept the USB or Wi-Fi debugging prompt, tap Trust, turn on Developer Mode, wake a device that gives adb no answer). A simulator or emulator still starting is listed as such. `--all` also lists what `boot` can start; `--json` for scripts and agents |
 | `looktap boot [name] [--window\|--headless]` | Boots an iOS simulator or Android emulator by name, UDID or AVD name (exact, else a unique prefix or substring; `-p` to choose a platform) and waits until it's ready to drive. Opens its window unless `--headless` (or `LOOKTAP_HEADLESS=1`, or `"headless": true` in the config file). Already running: says so, and `--window` opens a simulator's window. One that's still starting (adb lists an emulator offline while it boots) is waited for, not started twice. A running device can't drop its window (closing the Simulator app shuts its simulators down; an emulator starts with or without one), so `--headless` then says how to restart it. From Xcode 27.1 simulators show in Device Hub, one window for the device picked in its sidebar: `--window` opens Device Hub, and you pick the simulator there |
 | `looktap shutdown [name]` | Shuts down a simulator or emulator (name, UDID, AVD name or serial), and waits until it's gone |
+| `looktap live [--port n] [--host addr] [--control]` | Every running simulator, emulator and connected phone live in one web page (a real iPhone as video on a cable, as screenshots on Wi-Fi); prints the page's address and runs until Ctrl+C. With the page's Control switch on, a click taps, a drag swipes, the wheel scrolls and typing types, and each device's buttons rotate it, switch dark mode, text size and touches, and open links. Screenshot and Record save a device's screen; Details shows battery, heat, storage and the front app's CPU and memory; Activity lists every looktap command as it runs. This computer only by default; `--host 0.0.0.0` shares it on your network, watch-only unless `--control`. See [Watch every device in your browser](#watch-every-device-in-your-browser-live) |
+| `looktap runner [install\|remove]` | Android: the looktap runner app (`com.looktap.app`, opt-in), the same screen a real iPhone's runner app has: which computer is connected, the last commands, and two switches for whoever holds the phone, **Allow control** (off: looktap can still read the screen, but every action is refused with "paused on the phone") and **Show touches** (the [pointer](#show-where-it-taps-touches), in step with `looktap touches`). `install` puts it on with touches on and opens it; `remove` takes it off; no argument says whether it's installed and paused. Android 10+. See [The runner app on the phone](#the-runner-app-on-the-phone) |
 | `looktap wifi [--tcpip\|--always\|--off]` | An Android phone on USB: connects it over Wi-Fi as well, so the cable can come out. Android 11+: turns on Wireless debugging and waits until adb reaches it (the phone may ask "Allow wireless debugging on this network?" first); older Android, or `--tcpip`: `adb tcpip 5555` and `adb connect`. `-d` with the USB serial still finds the phone once it's unplugged. Either way the phone turns it off when it restarts: plug in and run `wifi` again, or once `wifi --always` (Android 11+): it installs looktap's Wi-Fi keeper (`com.looktap.wifi`, 13 KB, no screen; downloaded the first time from looktap's GitHub releases, where GitHub Actions builds and signs it), which turns Wireless debugging back on after each restart and whenever the phone joins Wi-Fi. To change that setting it gets `WRITE_SECURE_SETTINGS`, granted over adb; it's installed only by `--always`, and `wifi --off` removes it. It works before the first unlock after a restart. A network the phone wasn't told to always allow still asks first, and if someone turns Wireless debugging off (or declines that prompt), the keeper leaves it off until the phone next joins Wi-Fi |
 | `looktap pair <code> [host:port]` | An Android phone with no cable: pairs this computer with it over Wi-Fi using the six-digit code from Developer options → Wireless debugging → Pair device with pairing code (looktap finds the phone on the network; or pass the host:port shown under the code), then connects. Once paired, adb reconnects by itself whenever Wireless debugging is on |
 | `looktap connect <host[:port]>` | An Android device with no cable and no pairing code: connects to the address its debugging screen shows, such as a Wear OS watch's Developer options → Debug over Wi-Fi (Galaxy Watch 4 and others like it), or any device after `adb tcpip`. Port 5555 when left out. Checks the address answers first, then waits up to a minute while the device asks "Allow debugging?". It goes off when the device restarts: turn it back on and run `connect` again. See [Wear OS watches](#wear-os-watches) |
@@ -1202,9 +1338,11 @@ front of you (`--json` for every command).
 | `reverse` | ⚠️ nothing to set up: the simulator shares the Mac's network, so its localhost is the Mac's | ❌ usbmuxd has no reverse port forwarding: the phone reaches this Mac over Wi-Fi, at its IP address (a React Native app: dev menu → Configure Bundler) | ✅ | ✅ | ⚠️ nothing to set up: the simulator shares the Mac's network, so its localhost is the Mac's | ✅ |
 | `rotate` | ✅ | ✅ | ⚠️ turned while the home screen is in front, it doesn't last: the next app reopens in the orientation it was last shown in. Turn it with the app in front | ⚠️ turned while the home screen is in front, it doesn't last: the next app reopens in the orientation it was last shown in. Turn it with the app in front | ❌ a watch screen keeps its orientation | ❌ a watch screen keeps its orientation |
 | `route` | ⚠️ simctl plays the points at one speed (the route's average): a GPX track's changes of pace are smoothed out | ⚠️ iOS 16 and older only (through the developer image, one fix at a time; iOS works out speed and course from them); a newer iPhone uses its own GPS | ⚠️ Android 12+, through the shell's gps and network test providers (nothing installed). Android 16's shell takes a fix's position, accuracy and time, not its speed or bearing, so apps work those out from the fixes; an app that checks Location.isMock sees them as mock | ⚠️ Android 12+, through the shell's gps and network test providers (nothing installed). Android 16's shell takes a fix's position, accuracy and time, not its speed or bearing, so apps work those out from the fixes; an app that checks Location.isMock sees them as mock | ⚠️ simctl plays the points at one speed (the route's average): a GPX track's changes of pace are smoothed out | ⚠️ Android 12+, through the shell's gps and network test providers (nothing installed). Android 16's shell takes a fix's position, accuracy and time, not its speed or bearing, so apps work those out from the fixes; an app that checks Location.isMock sees them as mock |
+| `runner` | ❌ the runner app is for a phone in someone's hand: a simulator is on the Mac already, and looktap live shows what it does | ❌ a real iPhone gets it with its first looktap command: open the looktap runner app on it | ⚠️ Android 10+; installs an app (com.looktap.app), the only command besides wifi --always that does | ⚠️ Android 10+; installs an app (com.looktap.app), the only command besides wifi --always that does | ❌ the runner app is for a phone in someone's hand: a simulator is on the Mac already, and looktap live shows what it does | ❌ the runner app's screen is built for a phone |
 | `shot` | ✅ | ✅ | ✅ | ⚠️ FLAG_SECURE screens come out black (emulators bypass it) | ✅ | ✅ |
 | `statusbar` | ✅ | ❌ only simulators can override the status bar | ✅ | ✅ | ❌ the simulator can't override a watch's status bar | ✅ |
 | `textsize` | ✅ | ❌ change it in Settings → Display & Brightness → Text Size | ✅ | ✅ | ❌ the simulator refuses a text size change: set it on the watch, Settings › Display & Brightness › Text Size | ✅ |
+| `touches` | ⚠️ every app started after it's switched on, and the home screen, which is restarted once (closing the apps); a simulator restart switches it off | ⚠️ only an app built with looktap's LooktapTouches.m (one file, Debug builds), started with looktap launch: iOS lets nothing draw over another app. shot --mark draws the pointer on a screenshot of any app | ⚠️ looktap's own touches, in every app (a person's finger: Developer options → Show taps); Android 10+, through the Android helper | ⚠️ looktap's own touches, in every app (a person's finger: Developer options → Show taps); Android 10+, through the Android helper | ❌ the pointer is built for iPhone and iPad simulators: shot --mark draws it on a watch's screenshot | ⚠️ looktap's own touches, drawn as on a phone (Android 10+, Wear OS 3 and later); not yet tried on a watch |
 | `type` | ✅ | ✅ | ✅ | ✅ | ⚠️ the watch takes no hardware keyboard: looktap taps its on-screen keyboard's keys, so letters and spaces only, and the keyboard capitalizes and corrects as it does for a person. Open the keyboard first by tapping the field | ✅ |
 | `zoom` | ✅ | ⚠️ around the screen's centre only | ⚠️ only through the Android helper (the default): adb input has no multi-touch | ⚠️ only through the Android helper (the default): adb input has no multi-touch | ✅ | ⚠️ only through the Android helper (the default): adb input has no multi-touch |
 <!-- /capabilities -->
@@ -1404,7 +1542,8 @@ Ideas and votes welcome in [Issues](https://github.com/lakpriya1s/looktap/issues
 
 - **Never script a sign-in with real credentials,** whether from a shell script or an AI agent. A person signs in
   and enters OTPs, then looktap takes over.
-- **Never `burst` or `record` a sign-in or passcode screen.** The frames capture what's typed.
+- **Never `burst` or `record` a sign-in or passcode screen.** The frames capture what's typed. The same goes for
+  `looktap live` shared with `--host`: everyone watching sees it.
 - **Against a live backend, every tap is real.** Use the smallest amounts, then undo what you created.
 - **Logs can contain tokens and personal data.** Quote only the lines that matter, and don't commit screenshots of
   real customer data.

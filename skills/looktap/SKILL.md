@@ -212,6 +212,9 @@ here, `looktap skill <name>` prints it.
   are for a test account the user gave you (its password, its fixed or staging code) and for testing the form
   itself, never for a real account's one-time code.
 - **Never `burst` or `record` a sign-in or passcode screen.** The frames capture what's typed.
+- **A recording for a person to watch: `touches on` first**, so the video shows what was tapped and swiped, and
+  `touches off` after (on an iOS simulator it restarts the home screen once: launch the app after it, not before).
+  For a single picture, `shot <name> --mark "<label>"` draws the pointer where the tap would land.
 - **Against a live backend every tap is real.** Use the smallest amounts, and undo what you create.
 - **`reset` signs the user out** of most apps: ask before resetting an app someone else signed in to.
 - **Set back what you change.** Appearance, text size, the status bar, the orientation, a foldable's fold and the

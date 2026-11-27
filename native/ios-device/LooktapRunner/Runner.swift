@@ -18,6 +18,10 @@ final class Runner: XCTestCase {
     let port = UInt16(env["LOOKTAP_PORT"] ?? "") ?? 22087
     let server = Server(version: env["LOOKTAP_VERSION"] ?? "")
     try server.listen(port: port)
+    // What whoever opens the runner app sees (Panel.swift): what it is, who is connected, a switch to stop it acting.
+    Panel.shared.version = server.version
+    Panel.shared.onStop = { server.stopped = true }
+    Panel.shared.show()
     while !server.stopped { _ = RunLoop.current.run(mode: .default, before: Date(timeIntervalSinceNow: 0.5)) }
   }
 }
@@ -44,6 +48,13 @@ final class Server {
 
   private func accept(_ c: NWConnection) {
     let q = DispatchQueue(label: "looktap.conn")
+    c.stateUpdateHandler = { state in
+      switch state {
+      case .ready: DispatchQueue.main.async { Panel.shared.connected() }
+      case .cancelled, .failed: DispatchQueue.main.async { Panel.shared.disconnected() }
+      default: break
+      }
+    }
     c.start(queue: q)
     var buf = Data()
     func next() {
@@ -75,19 +86,38 @@ final class Server {
 
   private func handle(_ r: [String: Any]) -> ([String: Any], Data?) {
     let op = r["op"] as? String ?? ""
-    if op == "hello" { return (["ok": true, "version": version, "pid": getpid(), "input": "xcuitest"], nil) }
+    let panel = Panel.shared
+    if op == "hello" {
+      // Who is asking, for the panel: the Mac's name, and the way it came (USB or Wi-Fi).
+      if let host = r["host"] as? String, !host.isEmpty { panel.mac = host }
+      if let via = r["via"] as? String, !via.isEmpty { panel.via = via }
+      var out: [String: Any] = ["ok": true, "version": version, "pid": getpid(), "input": "xcuitest", "allowed": panel.allowed, "touches": panel.touches]
+      if let expires = panel.signed.expires { out["expires"] = ISO8601DateFormatter().string(from: expires) }
+      return (out, nil)
+    }
     if op == "stop" {
       stopped = true
       return (["ok": true], nil)
     }
+    if op == "touches" {
+      // looktap touches on|off: the panel's switch follows.
+      if let on = r["on"] as? Bool { panel.touches = on }
+      return (["ok": true, "touches": panel.touches], nil)
+    }
+    // Paused on the phone: looktap may still look, not act. ("notifications" acts only when asked to open the sheet.)
+    if !panel.allowed, ACTION_OPS.contains(op) || (op == "notifications" && r["open"] as? Bool == true) {
+      return (["ok": false, "error": "paused on the iPhone: turn Allow control back on in the looktap runner app"], nil)
+    }
     lastIssue = nil
+    var reply: ([String: Any], Data?)
     do {
       let out = try ops.run(op, r)
-      if let issue = lastIssue { return (["ok": false, "error": issue], nil) }
-      return out
+      reply = lastIssue.map { (["ok": false, "error": $0], nil) } ?? out
     } catch {
-      return (["ok": false, "error": "\(error)"], nil)
+      reply = (["ok": false, "error": "\(error)"], nil)
     }
+    panel.did(op, r, ok: reply.0["ok"] as? Bool ?? false)
+    return reply
   }
 }
 
@@ -198,8 +228,20 @@ final class Ops {
       return (["ok": true, "shown": frontApp().keyboards.count > 0], nil)
 
     case "shot":
-      let png = XCUIScreen.main.screenshot().pngRepresentation
+      let shot = XCUIScreen.main.screenshot()
       let scale = num("scale", 1)
+      // "jpeg": a quality 0…1 (looktap live's frames: a fraction of a PNG's size, which over Wi-Fi is most of the
+      // wait). The screen's size in points comes with it, so a point on the picture can be turned into a tap.
+      if let quality = r["jpeg"] as? Double {
+        let img = shot.image
+        let size = CGSize(width: img.size.width * img.scale * min(1, scale), height: img.size.height * img.scale * min(1, scale))
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        format.opaque = true
+        let jpeg = UIGraphicsImageRenderer(size: size, format: format).jpegData(withCompressionQuality: CGFloat(quality)) { _ in img.draw(in: CGRect(origin: .zero, size: size)) }
+        return (["ok": true, "w": img.size.width.rounded(), "h": img.size.height.rounded()], jpeg)
+      }
+      let png = shot.pngRepresentation
       return (["ok": true], scale < 1 ? shrink(png, scale) : png)
 
     case "rotate":
@@ -212,6 +254,11 @@ final class Ops {
 
     case "launch":
       let id = r["app"] as? String ?? ""
+      // "env": variables for this start only (looktap touches on → LOOKTAP_TOUCHES=1, for an app built with
+      // LooktapTouches.m). Set every time, so an earlier launch's don't carry over.
+      var env = r["env"] as? [String: String] ?? [:]
+      if Panel.shared.touches { env["LOOKTAP_TOUCHES"] = "1" } // the panel's Show touches switch
+      app(id).launchEnvironment = env
       app(id).launch()
       known.removeAll { $0 == id }
       known.insert(id, at: 0)

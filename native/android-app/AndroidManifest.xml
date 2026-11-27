@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- looktap runner for Android: installed only by "looktap runner install", removed by "looktap runner remove".
+     A screen showing what looktap does on this phone, and a switch to pause it. It talks only to looktap's helper on
+     this phone (127.0.0.1), which is why it asks for INTERNET: it never reaches the network. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.looktap.app" android:versionCode="1" android:versionName="1">
+  <uses-permission android:name="android.permission.INTERNET" />
+  <application android:label="looktap runner" android:icon="@mipmap/ic_launcher" android:allowBackup="false" android:hasCode="true"
+      android:theme="@android:style/Theme.DeviceDefault.DayNight" android:usesCleartextTraffic="true">
+    <activity android:name=".MainActivity" android:exported="true" android:configChanges="orientation|screenSize|uiMode|screenLayout">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
+  </application>
+</manifest>

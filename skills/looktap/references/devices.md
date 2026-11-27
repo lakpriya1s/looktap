@@ -11,6 +11,18 @@ looktap devices --all
 # One that's still starting (devices says so) is waited for: use boot, not an adb/simctl polling loop
 looktap boot "iPhone 16 Pro" --window
 looktap boot Pixel_9a --headless
+# for the person, not for you: every running simulator, emulator and connected phone live in one web page (a real
+# iPhone as video on a cable, as screenshots on Wi-Fi), where they
+# can watch what you do on each device and (with the page's Control switch) tap, swipe and type themselves. It runs
+# until Ctrl+C, so it needs a terminal of its own: suggest it, don't run it in yours. --port picks the port (default
+# the first free from 4470); --host 0.0.0.0 shares it on the network, watch-only unless --control. The page lists
+# every looktap command you run as you run it (from ~/.looktap/activity.jsonl), so the person sees what you're doing
+looktap live
+looktap live --port 4480 --host 0.0.0.0 --control
+# Android, only when the user asks for it: the looktap runner app, a screen on the phone showing what you do there,
+# with Allow control (the person can pause you) and Show touches switches. It installs com.looktap.app
+looktap runner install
+looktap runner remove
 looktap shutdown Pixel_9a
 # an Android phone on USB: connect it over Wi-Fi too, then the cable can come out (--tcpip: adb tcpip, any Android)
 looktap wifi
@@ -117,6 +129,12 @@ looktap reverse remove all
   An Android phone on both USB and Wi-Fi is one row (`USB + Wi-Fi`) and is driven over USB.
   A phone marked "not ready" needs the user: tell them exactly what it says (accept the USB debugging prompt, tap
   Trust, turn on Developer Mode). One marked "still starting" needs no one: `looktap boot <name>` waits for it.
+  An action that fails with "paused on the iPhone" or "paused on the phone" was stopped by the person holding it
+  (the looktap runner app's Allow control switch): stop acting on it and tell the user; reading the screen still works.
+- **looktap runner on an Android phone** (opt-in, for the person holding it): a screen showing what looktap does
+  there, with switches for Allow control and Show touches, as a real iPhone's runner app has. It installs an app,
+  so only when the user asks: `looktap runner install` (and `looktap runner remove`); `looktap runner` says whether
+  it's on and paused.
 - **An Android phone off the cable:** with it plugged in, `looktap wifi` connects it over Wi-Fi too (Wireless
   debugging on Android 11+, else adb tcpip; `--tcpip` forces that); then the cable can come out and `-d <its USB serial>`
   still finds it. With no cable, the user opens Developer options → Wireless debugging → Pair device with pairing code

@@ -54,6 +54,7 @@ public final class Server {
         // AccessibilityInteractionClient builds Handlers on the main looper; app_process has none by default.
         Looper.prepareMainLooper();
         ua = connect();
+        Companion.start(); // the companion app's way in (Companion.java), when it's installed
         System.err.println("looktap helper " + version + " ready");
         for (;;) {
             final LocalSocket client = server.accept();
@@ -97,6 +98,7 @@ public final class Server {
     }
 
     static void serve(LocalSocket client) {
+        Companion.client(true);
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream(), StandardCharsets.UTF_8));
             OutputStream out = client.getOutputStream();
@@ -109,11 +111,13 @@ public final class Server {
                         handle(req, out);
                     }
                 } catch (Throwable e) {
+                    if (show) Pointer.lift(); // a gesture that failed half-way leaves no pointer behind
                     reply(out, new JSONObject().put("ok", false).put("error", String.valueOf(e)), null);
                 }
             }
         } catch (Throwable ignored) {
         } finally {
+            Companion.client(false);
             try {
                 client.close();
             } catch (Exception ignored) {
@@ -134,9 +138,40 @@ public final class Server {
 
     static void handle(JSONObject req, OutputStream out) throws Exception {
         String op = req.getString("op");
+        // "show": true on a gesture draws the pointer for it (looktap touches on).
+        show = Companion.touches != null ? Companion.touches : req.optBoolean("show");
+        // A person driving from looktap live: the pointer shows where they touched, but no glow, which says that
+        // something automated is driving the phone.
+        glows = !req.optBoolean("noGlow");
+        // Paused by the person holding the phone (the companion app's switch): reading goes on, input doesn't.
+        if (Companion.refused(op, req)) {
+            reply(out, new JSONObject().put("ok", false).put("error", Companion.PAUSED_ERROR).put("paused", true), null);
+            return;
+        }
         switch (op) {
+            case "pointer":
+                // Draw one tap's pointer in the middle of the screen, touching nothing: can this device show touches?
+                reply(out, Pointer.probe(), null);
+                return;
             case "hello":
-                reply(out, ok().put("version", version).put("pid", android.os.Process.myPid()), null);
+                // host, via: the Mac's name and the way in (USB or Wi-Fi), for the companion app to show.
+                Companion.hello(req);
+                reply(out, ok().put("version", version).put("pid", android.os.Process.myPid()).put("allowed", Companion.allowed).put("app", Companion.connected())
+                        .put("touches", Companion.touches == null ? JSONObject.NULL : Companion.touches), null);
+                return;
+            case "touches":
+                // looktap touches on|off: the runner app's switch follows it.
+                Companion.setTouches(req.getBoolean("on"));
+                reply(out, ok(), null);
+                return;
+            case "allowed":
+                // Paused on the phone? Asked before an action that goes through adb, not the helper (launch, open…).
+                reply(out, ok().put("allowed", Companion.allowed), null);
+                return;
+            case "note":
+                // A looktap command the Mac ran on this device, for the companion app's list.
+                Companion.note(req);
+                reply(out, ok(), null);
                 return;
             case "tree":
                 // fresh: drop the node cache first. An app whose events don't reach the cache (or arrive late) can
@@ -150,15 +185,19 @@ public final class Server {
             case "tap":
                 noteFocus(req.getInt("x"), req.getInt("y"));
                 tap(req.getInt("x"), req.getInt("y"), req.optInt("hold", 50));
-                reply(out, ok(), null);
+                reply(out, shown(), null);
                 return;
             case "pinch":
                 pinch(req.getInt("x"), req.getInt("y"), req.getInt("r0"), req.getInt("r1"), req.optInt("ms", 400));
-                reply(out, ok(), null);
+                reply(out, shown(), null);
+                return;
+            case "touch":
+                liveTouch(req.getString("phase"), req.getDouble("nx"), req.getDouble("ny"));
+                reply(out, shown(), null);
                 return;
             case "swipe":
                 swipe(req.getInt("x1"), req.getInt("y1"), req.getInt("x2"), req.getInt("y2"), req.optInt("ms", 300), req.optInt("hold", 0));
-                reply(out, ok(), null);
+                reply(out, shown(), null);
                 return;
             case "text":
                 text(req.getString("s"));
@@ -508,6 +547,315 @@ public final class Server {
         reply(out, ok().put("done", true).put("frames", frames).put("distinct", sent), null);
     }
 
+    // ── pointer (looktap touches on) ─────────────────────────────────────
+
+    /** Set per request: draw the pointer for this gesture. */
+    static boolean show;
+    static volatile boolean glows = true;
+
+    /** A gesture's reply: ok, with why the pointer couldn't be drawn when it was asked for and couldn't. */
+    static JSONObject shown() throws Exception {
+        JSONObject r = ok();
+        if (show && Pointer.error != null) r.put("pointer", Pointer.error);
+        return r;
+    }
+
+    /**
+     Where each touch lands, drawn on a layer of its own on top of the display. The layer goes straight to
+     SurfaceFlinger (the shell may: ACCESS_SURFACE_FLINGER), not through the window manager, which gives a shell
+     process no window. So it is no window: it takes no touches, isn't in the accessibility tree `ls` reads, and can't
+     count as covering the app. Screenshots and recordings show it, as they show the display. It exists only while a
+     pointer or its glow is on screen: while a finger is down, and under two seconds after it lifts.
+     */
+    static final class Pointer {
+        static final int DOWN = 0, MOVE = 1, UP = 2;
+        static final int FADE_MS = 400, GROW_MS = 80, FRAME_MS = 16;
+        static final float RADIUS_DP = 20, SPECK_DP = 7, STEP_DP = 10;
+        /** looktap's accent (the site's --accent): the pointer, and the glow around the screen's edge. */
+        static final int ACCENT = 0x22d3ee;
+        /** The glow: how far it reaches in from the edge, and how long it comes, stays after the last touch, and goes. */
+        static final float GLOW_DP = 22;
+        static final int GLOW_IN_MS = 150, GLOW_STAY_MS = 1200, GLOW_OUT_MS = 500;
+
+        /** A finger (id ≥ 0 while down, -1 once lifted) or a dot of its trail (speck). */
+        static final class Mark {
+            int id;
+            boolean speck, glows;
+            float x, y, trailX, trailY;
+            long down, up;
+        }
+
+        /** Why the pointer can't be drawn here; null while it can. */
+        static volatile String error;
+        static android.os.Handler handler;
+        static final java.util.ArrayList<Mark> marks = new java.util.ArrayList<>();
+        static android.view.SurfaceControl layer;
+        static android.view.Surface surface;
+        static float dp = 1;
+        static int width, height;
+        static boolean ticking;
+        /** When the glow came on, and the last moment a finger was on the screen. */
+        static long glowStart, lastTouch;
+        static final android.graphics.Paint glow = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        static final android.graphics.RectF glowRect = new android.graphics.RectF();
+        static float corner;
+        static final android.graphics.Paint fill = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        static final android.graphics.Paint ring = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        static final Runnable FRAME = new Runnable() {
+            public void run() {
+                frame();
+            }
+        };
+
+        static synchronized android.os.Handler handler() {
+            if (handler == null) {
+                HandlerThread t = new HandlerThread("looktap-pointer");
+                t.start();
+                handler = new android.os.Handler(t.getLooper());
+                ring.setStyle(android.graphics.Paint.Style.STROKE);
+            }
+            return handler;
+        }
+
+        /** From the thread injecting the touch: never waits, and never fails the touch. */
+        static void event(final int id, final int kind, final float x, final float y) {
+            final boolean glowing = glows;
+            try {
+                handler().post(new Runnable() {
+                    public void run() {
+                        apply(id, kind, x, y, glowing);
+                    }
+                });
+            } catch (Throwable e) {
+                error = String.valueOf(e);
+            }
+        }
+
+        /** One tap's pointer at the middle of the screen, with no touch sent: {ok} or {ok: false, error}. */
+        static JSONObject probe() throws Exception {
+            final JSONObject d = display();
+            if (d == null) return new JSONObject().put("ok", false).put("error", "the display's size isn't readable on this Android");
+            final java.util.concurrent.CountDownLatch drawn = new java.util.concurrent.CountDownLatch(1);
+            handler().post(new Runnable() {
+                public void run() {
+                    apply(0, DOWN, d.optInt("w") / 2f, d.optInt("h") / 2f);
+                    apply(0, UP, 0, 0);
+                    drawn.countDown();
+                }
+            });
+            drawn.await(3, java.util.concurrent.TimeUnit.SECONDS);
+            return error == null ? ok() : new JSONObject().put("ok", false).put("error", error);
+        }
+
+        /** Every finger still down lifts now: its gesture ended without an up. */
+        static void lift() {
+            try {
+                handler().post(new Runnable() {
+                    public void run() {
+                        for (Mark m : new java.util.ArrayList<>(marks)) if (m.id >= 0) apply(m.id, UP, m.x, m.y);
+                    }
+                });
+            } catch (Throwable ignored) {
+            }
+        }
+
+        static Mark finger(int id) {
+            for (Mark m : marks) if (m.id == id && !m.speck) return m;
+            return null;
+        }
+
+        static void apply(int id, int kind, float x, float y) {
+            apply(id, kind, x, y, true);
+        }
+
+        /** `glowing`: does this touch light the glow? Not a person's from looktap live. */
+        static void apply(int id, int kind, float x, float y, boolean glowing) {
+            long now = SystemClock.uptimeMillis();
+            if (glowing) {
+                if (now - lastTouch > GLOW_STAY_MS + GLOW_OUT_MS) glowStart = now; // it had gone: it comes on again
+                lastTouch = now;
+            }
+            Mark m = finger(id);
+            if (kind == DOWN) {
+                if (m != null) m.id = -1; // a finger that never lifted (a gesture that threw): let it fade
+                m = new Mark();
+                m.id = id;
+                m.x = m.trailX = x;
+                m.y = m.trailY = y;
+                m.down = now;
+                m.glows = glowing;
+                marks.add(m);
+            } else if (m != null && kind == MOVE) {
+                m.x = x;
+                m.y = y;
+                float dx = x - m.trailX, dy = y - m.trailY, step = STEP_DP * dp;
+                if (dx * dx + dy * dy >= step * step) {
+                    Mark s = new Mark();
+                    s.id = -1;
+                    s.speck = true;
+                    s.x = m.trailX;
+                    s.y = m.trailY;
+                    s.up = now;
+                    marks.add(marks.indexOf(m), s); // under the finger
+                    m.trailX = x;
+                    m.trailY = y;
+                }
+            } else if (m != null && kind == UP) {
+                m.id = -1;
+                m.up = now;
+            }
+            if (!ticking) {
+                ticking = true;
+                frame();
+            }
+        }
+
+        /** Draw what's on screen now; again in 16 ms while anything is, else take the layer away. */
+        static void frame() {
+            long now = SystemClock.uptimeMillis();
+            for (int i = marks.size() - 1; i >= 0; i--) {
+                Mark m = marks.get(i);
+                // A finger down for a minute was never lifted: its gesture's connection went away.
+                if (m.up > 0 ? now - m.up >= FADE_MS : now - m.down > 60000) marks.remove(i);
+            }
+            for (Mark m : marks) if (m.up == 0 && m.glows) lastTouch = now; // a finger held still keeps the glow on
+            try {
+                if (marks.isEmpty() && now - lastTouch >= GLOW_STAY_MS + GLOW_OUT_MS) {
+                    release();
+                    ticking = false;
+                    return;
+                }
+                if (layer == null) create();
+                android.graphics.Canvas c = surface.lockCanvas(null);
+                try {
+                    c.drawColor(0, android.graphics.PorterDuff.Mode.CLEAR);
+                    glow(c, now);
+                    for (Mark m : marks) draw(c, m, now);
+                } finally {
+                    surface.unlockCanvasAndPost(c);
+                }
+                error = null;
+                handler.postDelayed(FRAME, FRAME_MS);
+            } catch (Throwable e) {
+                // No pointer on this device (Android 9 and older have no public SurfaceControl): the touches still go.
+                error = e instanceof NoClassDefFoundError || e instanceof NoSuchMethodError ? "showing touches needs Android 10 or later" : String.valueOf(e);
+                marks.clear();
+                release();
+                ticking = false;
+            }
+        }
+
+        static int argb(float alpha, int rgb) {
+            return (Math.round(255 * Math.max(0, Math.min(1, alpha))) << 24) | rgb;
+        }
+
+        /**
+         A glow inside the screen's edge while looktap is touching it, and for a moment after: whoever is watching (or
+         the recording) sees that something else is driving. Strongest at the edge, gone GLOW_DP in.
+         */
+        static void glow(android.graphics.Canvas c, long now) {
+            float in = Math.min(1, (now - glowStart) / (float) GLOW_IN_MS);
+            float out = Math.max(0, Math.min(1, (lastTouch + GLOW_STAY_MS + GLOW_OUT_MS - now) / (float) GLOW_OUT_MS));
+            float alpha = in * out;
+            if (alpha <= 0) return;
+            // Rings one inside the next, each the screen's own shape (its corners rounded as the glass is) and fainter
+            // than the one outside it: straight bands would leave the corners dark, cut off by the rounding.
+            float reach = GLOW_DP * dp, step = Math.max(1, 1.5f * dp);
+            glow.setStrokeWidth(step);
+            for (float d = step / 2; d < reach; d += step) {
+                float t = d / reach;
+                float strength = t < 0.18f ? 0.9f - (0.5f * t / 0.18f) : t < 0.5f ? 0.4f - 0.28f * (t - 0.18f) / 0.32f : 0.12f * (1 - t) / 0.5f;
+                glow.setColor(argb(strength * alpha, ACCENT));
+                float r = Math.max(0, corner - d);
+                glowRect.set(d, d, width - d, height - d);
+                c.drawRoundRect(glowRect, r, r, glow);
+            }
+        }
+
+        /** The radius of the screen's rounded corners in px (Android 12+ says; 0 where it doesn't: square). */
+        static float cornerRadius(Object info) {
+            int max = 0;
+            try {
+                Object corners = info.getClass().getField("roundedCorners").get(info);
+                Method get = corners.getClass().getMethod("getRoundedCorner", int.class);
+                for (int position = 0; position < 4; position++) {
+                    Object one = get.invoke(corners, position);
+                    if (one != null) max = Math.max(max, (Integer) one.getClass().getMethod("getRadius").invoke(one));
+                }
+            } catch (Throwable ignored) {
+            }
+            return max;
+        }
+
+        /** The accent inside and as its ring, with a soft dark halo so it shows on a light screen too. */
+        static void draw(android.graphics.Canvas c, Mark m, long now) {
+            float life = m.up == 0 ? 0 : Math.min(1, (now - m.up) / (float) FADE_MS);
+            float alpha = 1 - life;
+            float scale = m.speck ? 1 - 0.6f * life : m.up == 0 ? Math.min(1, 0.6f + 0.4f * (now - m.down) / GROW_MS) : 1 + 0.7f * life;
+            float r = (m.speck ? SPECK_DP : RADIUS_DP) * dp * scale;
+            float stroke = (m.speck ? 1.5f : 2.5f) * dp;
+            fill.setColor(argb(0.35f * alpha, ACCENT));
+            c.drawCircle(m.x, m.y, r, fill);
+            ring.setStrokeWidth(stroke);
+            ring.setColor(argb(0.95f * alpha, ACCENT));
+            ring.setShadowLayer(3 * dp, 0, 0, argb(0.45f * alpha, 0x000000));
+            c.drawCircle(m.x, m.y, r - stroke / 2, ring);
+        }
+
+        /** A layer the size of the display as apps see it (turned with it), above everything on it. */
+        static void create() throws Exception {
+            Object dm = Class.forName("android.hardware.display.DisplayManagerGlobal").getMethod("getInstance").invoke(null);
+            Object info = dm.getClass().getMethod("getDisplayInfo", int.class).invoke(dm, 0);
+            Class<?> ic = info.getClass();
+            int w = ic.getField("logicalWidth").getInt(info), h = ic.getField("logicalHeight").getInt(info);
+            dp = ic.getField("logicalDensityDpi").getInt(info) / 160f;
+            width = w;
+            height = h;
+            corner = cornerRadius(info);
+            glow.setStyle(android.graphics.Paint.Style.STROKE);
+            int stack = 0;
+            try {
+                stack = ic.getField("layerStack").getInt(info);
+            } catch (Throwable ignored) {
+            }
+            android.view.SurfaceControl sc = new android.view.SurfaceControl.Builder().setName("looktap touches").setBufferSize(w, h)
+                    .setFormat(android.graphics.PixelFormat.TRANSLUCENT).build();
+            android.view.SurfaceControl.Transaction t = new android.view.SurfaceControl.Transaction();
+            // Hidden: which display a layer with no parent is on.
+            android.view.SurfaceControl.Transaction.class.getMethod("setLayerStack", android.view.SurfaceControl.class, int.class).invoke(t, sc, stack);
+            // Android 12+ drops touches under a layer it doesn't trust, and looktap's own taps go right under this one.
+            // Trusted (the shell may say so), it's left out of that check, as the system's own overlays are.
+            try {
+                android.view.SurfaceControl.Transaction.class.getMethod("setTrustedOverlay", android.view.SurfaceControl.class, boolean.class).invoke(t, sc, true);
+            } catch (NoSuchMethodException e) {
+                if (android.os.Build.VERSION.SDK_INT >= 31) throw e; // before 12 there is no such check
+            }
+            t.setLayer(sc, Integer.MAX_VALUE - 1).setVisibility(sc, true).apply();
+            layer = sc;
+            surface = new android.view.Surface(sc);
+        }
+
+        static void release() {
+            try {
+                if (surface != null) surface.release();
+                if (layer != null) {
+                    android.view.SurfaceControl.Transaction t = new android.view.SurfaceControl.Transaction();
+                    try {
+                        // Hidden before Android 14 and absent before 11: taken off the display now, not at the next GC.
+                        android.view.SurfaceControl.Transaction.class.getMethod("remove", android.view.SurfaceControl.class).invoke(t, layer);
+                    } catch (Throwable e) {
+                        t.setVisibility(layer, false);
+                    }
+                    t.apply();
+                    layer.release();
+                }
+            } catch (Throwable ignored) {
+            }
+            surface = null;
+            layer = null;
+        }
+    }
+
     // ── input ────────────────────────────────────────────────────────────
 
     /** Hidden injectInputEvent(event, sync, waitForAnimations) where present (API 33+): the public one waits for animations. */
@@ -537,10 +885,68 @@ public final class Server {
     }
 
     static void touch(int action, long down, long at, float x, float y) {
+        if (show) Pointer.event(0, action == MotionEvent.ACTION_DOWN ? Pointer.DOWN : action == MotionEvent.ACTION_UP ? Pointer.UP : Pointer.MOVE, x, y);
         MotionEvent e = MotionEvent.obtain(down, at, action, x, y, 0);
         e.setSource(InputDevice.SOURCE_TOUCHSCREEN);
-        inject(e, action != MotionEvent.ACTION_MOVE);
+        try {
+            inject(e, action != MotionEvent.ACTION_MOVE);
+        } catch (IllegalStateException failed) {
+            // A gesture cut off before its up (a helper that was stopped mid-press) leaves the system holding a finger
+            // down, and it refuses every new down after that. Cancel the old one, then send this down again.
+            if (action != MotionEvent.ACTION_DOWN) throw failed;
+            MotionEvent c = MotionEvent.obtain(down, at, MotionEvent.ACTION_CANCEL, x, y, 0);
+            c.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+            try {
+                inject(c, true);
+            } catch (IllegalStateException ignored) {
+            }
+            c.recycle();
+            inject(e, true);
+        }
         e.recycle();
+    }
+
+    /** When the finger `touch` holds down went down (uptime ms); 0 while there is none. And where it last was. */
+    static long liveDown;
+    static float liveX, liveY;
+
+    /**
+     One finger, a phase at a time (looktap live's control): a drag in the browser moves the finger on the screen as it
+     goes. `nx`, `ny`: the point as a share of the display as it is shown (0…1). A second `down` without an `up`
+     cancels the first, and so does `cancel` (the browser went away mid-drag).
+     */
+    static void liveTouch(String phase, double nx, double ny) {
+        JSONObject d = display();
+        if (d == null) throw new IllegalStateException("the display's size isn't readable on this Android");
+        float x = (float) Math.max(0, Math.min(d.optInt("w") - 1, nx * d.optInt("w"))), y = (float) Math.max(0, Math.min(d.optInt("h") - 1, ny * d.optInt("h")));
+        long now = SystemClock.uptimeMillis();
+        boolean down = phase.equals("down");
+        if (liveDown != 0 && (down || phase.equals("cancel"))) {
+            if (show) Pointer.event(0, Pointer.UP, liveX, liveY);
+            MotionEvent c = MotionEvent.obtain(liveDown, now, MotionEvent.ACTION_CANCEL, liveX, liveY, 0);
+            c.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+            try {
+                inject(c, true);
+            } catch (IllegalStateException ignored) {
+            }
+            c.recycle();
+            liveDown = 0;
+        }
+        if (down) {
+            liveDown = now;
+            touch(MotionEvent.ACTION_DOWN, liveDown, now, x, y);
+        } else if (liveDown == 0) {
+            return;
+        } else if (phase.equals("move")) {
+            touch(MotionEvent.ACTION_MOVE, liveDown, now, x, y);
+        } else if (phase.equals("up")) {
+            long was = liveDown;
+            liveDown = 0;
+            touch(MotionEvent.ACTION_UP, was, now, x, y);
+            return;
+        }
+        liveX = x;
+        liveY = y;
     }
 
     /** A tap, or with a long `hold` a long press: the finger stays down that long. */
@@ -564,6 +970,16 @@ public final class Server {
             coords[i].y = cy;
             coords[i].pressure = 1;
             coords[i].size = 1;
+        }
+        if (show) {
+            // The second finger comes down with POINTER_DOWN and lifts with POINTER_UP; the first with DOWN and UP.
+            int masked = action & MotionEvent.ACTION_MASK;
+            for (int i = 0; i < count; i++) {
+                boolean last = i == count - 1;
+                int kind = (masked == MotionEvent.ACTION_DOWN || masked == MotionEvent.ACTION_POINTER_DOWN) && last ? Pointer.DOWN
+                        : (masked == MotionEvent.ACTION_UP || masked == MotionEvent.ACTION_POINTER_UP) && last ? Pointer.UP : Pointer.MOVE;
+                Pointer.event(i, kind, coords[i].x, coords[i].y);
+            }
         }
         MotionEvent e = MotionEvent.obtain(down, at, action, count, props, coords, 0, 0, 1, 1, 0, 0, InputDevice.SOURCE_TOUCHSCREEN, 0);
         inject(e, action != MotionEvent.ACTION_MOVE);
