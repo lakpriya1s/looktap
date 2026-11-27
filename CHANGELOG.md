@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- **A real iPhone driven from looktap live's page shows no glow.** Since 0.9.1 drew its touches early, the page's own
+  taps on a real iPhone were noted as an agent's and lit the glow. Now they show the pointer only, as on Android and
+  the simulator; an agent's touches still get both.
+
 ## 0.9.1
 
 - **`ls` lists an Android app's own number keys again.** A rule for iOS 27's number-pad keyboard (ten digit keys and

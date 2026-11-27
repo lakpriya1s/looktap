@@ -335,7 +335,8 @@ function tile(d) {
 
   // ── an agent's touches on a real iPhone, drawn over its picture ──
   let glowTimer = null;
-  const glowFor = (ms) => { fx.classList.add('glowing'); clearTimeout(glowTimer); glowTimer = setTimeout(() => fx.classList.remove('glowing'), ms + 1200); };
+  let glowing = true; // an agent's touches: the pointer and the glow; a person's from this page: the pointer only
+  const glowFor = (ms) => { if (!glowing) return; fx.classList.add('glowing'); clearTimeout(glowTimer); glowTimer = setTimeout(() => fx.classList.remove('glowing'), ms + 1200); };
   const dot = (x, y, speck) => { const i = document.createElement('i'); if (speck) i.className = 'speck'; i.style.left = `${x * 100}%`; i.style.top = `${y * 100}%`; fx.append(i); return i; };
   const fade = (i, grow, ms = 400) => i.animate([{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: `scale(${grow})` }], { duration: ms, easing: 'ease-out' }).finished.then(() => i.remove(), () => i.remove());
   async function play(touches) {
@@ -500,8 +501,10 @@ function tile(d) {
       lastText();
     },
     touched: (entry) => {
-      // Fresh, from an agent (the page's own touches are seen as they happen): draw where it's touching.
-      if (fx && entry.touch && entry.via !== 'live' && Date.now() - entry.t < 8000) {
+      // Fresh: draw where it's touching. An agent's touch gets the glow too; a person's from this page, the pointer
+      // only (as on Android and the simulator, where the device draws it).
+      if (fx && entry.touch && Date.now() - entry.t < 8000) {
+        glowing = entry.via !== 'live';
         // In points when the command didn't read the screen's size: the phone's size from its runner turns them.
         const s = d.runner?.screen, share = (t) => (t.pts ? (s ? { ...t, x: t.x / s.w, y: t.y / s.h, x2: t.x2 / s.w, y2: t.y2 / s.h } : null) : t);
         play(entry.touch.map(share).filter(Boolean));
