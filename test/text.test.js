@@ -59,4 +59,6 @@ test("iOS 27's number pad is a keyboard when a field is on screen, and an app's 
   const field = el('', 'TextField', 20, 286, 44, 52);
   assert.equal(keyboardArea([field, ...pad, el('Delete', 'Button', 311, 589, 153, 56)]).y, 421);
   assert.equal(keyboardArea([el('Enter PIN', 'StaticText', 20, 100, 200, 22), ...pad]), null);
+  // An Android calculator: its own keys under its display field (an EditText) are the app, not a keyboard.
+  assert.equal(keyboardArea([el('', 'EditText', 37, 51, 321, 109), ...pad]), null);
 });

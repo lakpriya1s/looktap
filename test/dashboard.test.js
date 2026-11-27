@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 
-import { follow, parse, recent, record, summary } from '../lib/activity.js';
+import { follow, noteTouch, parse, recent, record, summary } from '../lib/activity.js';
 import { actionValue, actionsFor, kindOf } from '../lib/live-actions.js';
 import { parseBattery, parseDf, parseThermal } from '../lib/live-health.js';
 import { controlMessage, displayTurns } from '../lib/live.js';
@@ -63,6 +63,18 @@ test('activity: follow hands over what is written after it started', async () =>
   await new Promise((r) => setTimeout(r, 100));
   stop();
   assert.deepEqual(got, ['tap', 'home']);
+});
+
+test('activity: a touch is noted before it is sent, for the page to draw at once', async () => {
+  const path = temp();
+  const got = [];
+  const stop = follow((e) => got.push(e), { path, every: 1000 });
+  await new Promise((r) => setTimeout(r, 30));
+  noteTouch('A', [{ k: 'tap', x: 0.5, y: 0.25, ms: 0 }], path);
+  noteTouch('A', [], path); // nothing to draw: nothing written
+  await new Promise((r) => setTimeout(r, 300)); // well under the 1 s poll: the file watcher brought it
+  stop();
+  assert.deepEqual(got.map((e) => [e.cmd, e.touch?.[0]?.x]), [['touch', 0.5]]);
 });
 
 test('health: Android battery, storage and heat from dumpsys and df', () => {

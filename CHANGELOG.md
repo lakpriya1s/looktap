@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.1
+
+- **`ls` lists an Android app's own number keys again.** A rule for iOS 27's number-pad keyboard (ten digit keys and
+  a text field on screen) also matched an Android app's keypad under its display field, a calculator say, and
+  folded the keys into a "Keyboard" row an agent couldn't tap from. It now applies to iOS only.
+- **looktap live draws a real iPhone's touches as they're sent**, not after the phone has done them and answered:
+  looktap notes a touch in the activity log just before sending it (one append, nothing on the command's way), and
+  the page follows the log the moment it changes instead of every half second. The dot now shows about 1–1.5 s
+  sooner.
+
 ## 0.9.0
 
 ### Every device live in the browser
